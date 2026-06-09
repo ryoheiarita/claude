@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Article</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      background: #101010;
+      color: #fff;
+      max-width: 390px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Skeleton animation ── */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.06) 25%,
+        rgba(255,255,255,0.12) 50%,
+        rgba(255,255,255,0.06) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 4px;
+    }
+
+    .skeleton-circle {
+      background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.06) 25%,
+        rgba(255,255,255,0.12) 50%,
+        rgba(255,255,255,0.06) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 50%;
+    }
+
+    /* ── Domino blur reveal ── */
+    @keyframes blurReveal {
+      0% {
+        -webkit-filter: blur(12px);
+        filter: blur(12px);
+        opacity: 0;
+        -webkit-transform: translateY(8px);
+        transform: translateY(8px);
+      }
+      100% {
+        -webkit-filter: blur(0px);
+        filter: blur(0px);
+        opacity: 1;
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+      }
+    }
+    @-webkit-keyframes blurReveal {
+      0% {
+        -webkit-filter: blur(12px);
+        opacity: 0;
+        -webkit-transform: translateY(8px);
+      }
+      100% {
+        -webkit-filter: blur(0px);
+        opacity: 1;
+        -webkit-transform: translateY(0);
+      }
+    }
+
+    .article-content {
+      opacity: 1;
+    }
+    .article-content .reveal-item {
+      opacity: 0;
+      -webkit-filter: blur(12px);
+      filter: blur(12px);
+      -webkit-transform: translateY(8px);
+      transform: translateY(8px);
+      will-change: filter, opacity, transform;
+    }
+    .article-content.loaded .reveal-item {
+      -webkit-animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    .skeleton-wrapper {
+      transition: opacity 0.3s ease;
+    }
+    .skeleton-wrapper.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Navigation Bar ── */
+    .nav-bar {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.58), transparent);
+      z-index: 100;
+      padding-bottom: 8px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      gap: 6px;
+    }
+    .status-bar-time {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 590;
+      line-height: 22px;
+      padding-top: 2px;
+    }
+    .dynamic-island { width: 125px; height: 37px; border-radius: 100px; flex-shrink: 0; }
+    .status-icons {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding-top: 1px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      padding-left: 12px;
+      gap: 4px;
+    }
+    .toolbar-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toolbar-btn svg { width: 24px; height: 24px; }
+
+    /* ── Main content area ── */
+    .scroll-area {
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px 16px 0 0;
+      min-height: 100dvh;
+      padding-top: 120px;
+      padding-bottom: 100px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .article-inner {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .article-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .article-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .article-date {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── H1: Article title ── */
+    .article-title {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: -0.4px;
+      color: #fff;
+    }
+
+    /* ── H2: Section heading (note.com mobile) ── */
+    .article-h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.875rem;
+      letter-spacing: 0.04em;
+      font-feature-settings: "palt" 1;
+      color: #fff;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      width: 100%;
+    }
+
+    /* ── H3: Sub heading (note.com mobile) ── */
+    .article-h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.875rem;
+      letter-spacing: 0.04em;
+      font-feature-settings: "palt" 1;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: -0.28px;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    /* ── Body text (note.com mobile) ── */
+    .article-body {
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 28px;
+      color: rgba(255,255,255,0.7);
+    }
+    .article-body p { margin-bottom: 24px; }
+    .article-body p:last-child { margin-bottom: 0; }
+
+    /* ── Bulleted list (note.com mobile) ── */
+    .article-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding: 0;
+    }
+    .article-list li {
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.875rem;
+      color: rgba(255,255,255,0.7);
+      padding-left: 18px;
+      position: relative;
+    }
+    .article-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* ── Inline highlight mark ── */
+    .highlight-mark {
+      background: rgba(255,179,71,0.22);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .article-image {
+      width: 100%;
+      aspect-ratio: 382 / 240;
+      border-radius: 14px 14px 8px 8px;
+      object-fit: cover;
+    }
+
+    /* ── Inline image block with independent skeleton ── */
+    .img-block {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 382 / 240;
+      border-radius: 14px 14px 8px 8px;
+      overflow: hidden;
+    }
+    .img-block-skeleton {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.06) 25%,
+        rgba(255,255,255,0.12) 50%,
+        rgba(255,255,255,0.06) 75%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      z-index: 1;
+      opacity: 1;
+      transition: opacity 0.35s ease;
+    }
+    .img-block.img-revealed .img-block-skeleton {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .img-block-actual {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      -webkit-filter: blur(12px);
+      filter: blur(12px);
+      -webkit-transform: translateY(8px);
+      transform: translateY(8px);
+      will-change: filter, opacity, transform;
+    }
+    .img-block.img-revealed .img-block-actual {
+      -webkit-animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* ── Floating action buttons ── */
+    .fab-group {
+      position: fixed;
+      bottom: 92px;
+      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
+      display: flex;
+      gap: 8px;
+      z-index: 90;
+    }
+    .fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .fab svg { width: 24px; height: 24px; }
+
+    /* ── Heart button Lottie ── */
+    #heartBtn {
+      overflow: visible; /* バースト粒子をはみ出させる */
+      position: relative;
+    }
+    .heart-lottie {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 72px;
+      pointer-events: none;
+    }
+
+    /* ── Bookmark button Lottie ── */
+    #bookmarkBtn {
+      overflow: visible;
+      position: relative;
+    }
+    .bookmark-lottie {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 72px;
+      pointer-events: none;
+    }
+
+    /* ── Comment bar ── */
+    .comment-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      height: 80px;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border-top: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px 20px 0 0;
+      padding: 8px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 100;
+    }
+    .comment-bar-handle {
+      width: 57px;
+      height: 4px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.5);
+      align-self: center;
+    }
+    .comment-bar-content {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .comment-bar-content svg { width: 24px; height: 24px; flex-shrink: 0; }
+    .comment-label {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 22px;
+      color: #fff;
+    }
+    .comment-count {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      color: rgba(255,255,255,0.75);
+      margin-left: 8px;
+    }
+
+    /* ── Skeleton layout ── */
+    .skeleton-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding-top: 120px;
+      z-index: 10;
+    }
+    .skeleton-inner {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .skeleton-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skeleton-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    /* date: font 14px */
+    .sk-date { width: 80px; height: 14px; }
+
+    /* H1 title: font 20px, line-height 28px → gap 8px */
+    .sk-title-1 { width: 100%; height: 20px; }
+    .sk-title-2 { width: 85%; height: 20px; }
+    .sk-title-3 { width: 40%; height: 20px; }
+
+    .sk-badges { display: flex; gap: 4px; }
+    .sk-badge { width: 90px; height: 24px; border-radius: 24px; }
+
+    /* body text: font 16px, line-height 28px → mb 12px (16+12=28) */
+    .sk-body-line { width: 100%; height: 16px; margin-bottom: 12px; }
+    .sk-body-line:last-child { margin-bottom: 0; }
+    .sk-body-line.short { width: 70%; }
+    .sk-body-line.mid { width: 85%; }
+
+    .sk-image {
+      width: 100%;
+      aspect-ratio: 382 / 240;
+      border-radius: 14px 14px 8px 8px;
+    }
+
+    /* H2: font 20px */
+    .sk-h2 { width: 65%; height: 20px; }
+    /* H3: font 18px */
+    .sk-h3 { width: 48%; height: 18px; }
+
+    /* list: font 16px, gap 9px → mb 9px */
+    .sk-list-line { width: 90%; height: 16px; margin-bottom: 9px; margin-left: 18px; }
+    .sk-list-line:last-child { margin-bottom: 0; }
+    .sk-list-line.short { width: 70%; }
+
+    /* ── Skeleton for FABs ── */
+    .sk-fab { width: 48px; height: 48px; }
+    .sk-comment-label { width: 60px; height: 22px; }
+    .sk-comment-count { width: 40px; height: 22px; }
+
+    /* ── Loading icon overlay (icon mode) ── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: #101010;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* nav-bar(~92px) と comment-bar(80px) の裏に隠れる z-index */
+      z-index: 95;
+      /* アイコンをコンテンツ領域の中央に配置 */
+      padding-top: 92px;
+      padding-bottom: 80px;
+      pointer-events: auto;
+      /* フェードアウト時のみトランジション */
+      transition: opacity 0.3s ease;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* 表示時はトランジションなしで即時表示 */
+    .loading-overlay.instant-show {
+      transition: none;
+    }
+
+    /* ── Verify bar ── */
+    .verify-bar {
+      position: fixed;
+      top: 44px;
+      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 3px 3px 3px 10px;
+    }
+    .verify-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .verify-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.06);
+      border-radius: 18px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .verify-btn {
+      padding: 5px 11px;
+      border-radius: 16px;
+      font-family: 'Figtree', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .verify-btn.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .verify-replay {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .verify-replay:active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Icon Overlay (icon mode) -->
+  <div class="loading-overlay hidden" id="loadingIconOverlay">
+    <div id="loadingIconContainer"></div>
+  </div>
+
+  <!-- Verify bar -->
+  <div class="verify-bar" id="verifyBar">
+    <span class="verify-label">Loading</span>
+    <div class="verify-toggle">
+      <button class="verify-btn active" id="btnSkeleton">Skeleton</button>
+      <button class="verify-btn" id="btnIcon">Icon</button>
+    </div>
+    <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
+  </div>
+
+  <!-- Navigation Bar -->
+  <div class="nav-bar">
+    <div class="status-bar">
+      <div class="status-bar-time">9:41</div>
+      <div class="dynamic-island"></div>
+      <div class="status-icons">
+        <svg width="19" height="12" viewBox="0 0 19 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="4" y="2" width="3" height="10" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="8" y="1" width="3" height="11" rx="1" fill="white"/><rect x="12" y="0" width="3" height="12" rx="1" fill="white"/></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.5C10.4 2.5 12.1 3.3 13.3 4.5L14.7 3.1C13.1 1.5 10.9 0.5 8.5 0.5C6.1 0.5 3.9 1.5 2.3 3.1L3.7 4.5C4.9 3.3 6.6 2.5 8.5 2.5ZM8.5 6.5C9.6 6.5 10.6 6.9 11.3 7.6L12.7 6.2C11.6 5.1 10.1 4.5 8.5 4.5C6.9 4.5 5.4 5.1 4.3 6.2L5.7 7.6C6.4 6.9 7.4 6.5 8.5 6.5ZM10 10L8.5 8.5L7 10C7.4 10.4 7.9 10.5 8.5 10.5C9.1 10.5 9.6 10.4 10 10Z" fill="white"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0" y="0.5" width="24" height="12" rx="3" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><rect x="1.5" y="2" width="21" height="9" rx="2" fill="white"/><rect x="25" y="4" width="2" height="5" rx="1" fill="rgba(255,255,255,0.4)"/></svg>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-btn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll area -->
+  <div class="scroll-area">
+
+    <!-- Skeleton Loading -->
+    <div class="skeleton-wrapper" id="skeletonWrapper">
+      <div class="skeleton-inner">
+        <div class="skeleton-header">
+          <div class="skeleton-meta">
+            <div class="skeleton sk-date"></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="skeleton sk-title-1"></div>
+              <div class="skeleton sk-title-2"></div>
+              <div class="skeleton sk-title-3"></div>
+            </div>
+          </div>
+          <div class="sk-badges">
+            <div class="skeleton sk-badge"></div>
+            <div class="skeleton sk-badge"></div>
+            <div class="skeleton sk-badge"></div>
+          </div>
+        </div>
+        <div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line mid"></div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line short"></div>
+        </div>
+        <div class="skeleton sk-image"></div>
+        <!-- Skeleton: H2 -->
+        <div class="skeleton sk-h2"></div>
+        <div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line mid"></div>
+        </div>
+        <!-- Skeleton: H3 -->
+        <div class="skeleton sk-h3"></div>
+        <!-- Skeleton: list -->
+        <div>
+          <div class="skeleton sk-list-line"></div>
+          <div class="skeleton sk-list-line"></div>
+          <div class="skeleton sk-list-line"></div>
+          <div class="skeleton sk-list-line short"></div>
+        </div>
+        <div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line"></div>
+          <div class="skeleton sk-body-line mid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actual Article Content -->
+    <div class="article-content" id="articleContent">
+      <div class="article-inner">
+        <!-- H1: Article title -->
+        <div class="reveal-item" data-reveal="0">
+          <div class="article-meta">
+            <div class="article-date">2025.06.08</div>
+            <h1 class="article-title">BMSGが描く「新しいエンタメ」の全貌——アーティストファーストが生み出すもの</h1>
+          </div>
+        </div>
+        <div class="badges reveal-item" data-reveal="1">
+          <span class="badge">Feature</span>
+          <span class="badge">BMSG</span>
+          <span class="badge">BE:FIRST</span>
+        </div>
+        <div class="article-body reveal-item" data-reveal="2">
+          <p>2021年の設立から4年。BMSG（B'z Music and Street Giga）は、日本の音楽シーンに一石を投じ続けている。SKY-HIが自ら立ち上げたこのレーベルは、既存の芸能事務所モデルとは一線を画す思想で運営されており、その動向は業界関係者だけでなく、多くのファンからも強い関心を集めている。</p>
+          <p>「アーティストが主体であること」——この一言がBMSGのすべての判断軸になっている。契約のあり方、収益の分配、プロモーションの手法。どれをとっても、従来の「事務所ありき」の構造とは異なるアプローチが貫かれている。</p>
+        </div>
+        <img class="article-image reveal-item" data-reveal="3" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BE:FIRST at SUMMER SONIC 2025">
+
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="4">オーディションから始まった革命</h2>
+        <div class="article-body reveal-item" data-reveal="5">
+          <p>BMSGが一躍注目を集めたのは、2021年に放送されたオーディション番組「THE FIRST」だった。参加者がアーティストとしての資質だけでなく、人間性やビジョンも問われるこの番組は、従来のアイドルオーディションとは明確に異なる空気を持っていた。</p>
+          <p>審査の過程はすべてドキュメンタリー形式で公開され、SKY-HI自身が涙を流しながら選考する姿も包み隠さず映し出された。視聴者はその透明性に驚き、そして共鳴した。完成されたパッケージを提示するのではなく、悩み抜くプロセスを見せること——それ自体がBMSGのブランドを形成していった。</p>
+        </div>
+
+        <!-- H3 -->
+        <h3 class="article-h3 reveal-item" data-reveal="6">BE:FIRSTの誕生と世界への視線</h3>
+        <div class="article-body reveal-item" data-reveal="7">
+          <p>オーディションを経て結成されたBE:FIRSTは、デビュー直後から国際的な視点で活動を展開した。英語と日本語を織り交ぜた楽曲、K-POPに影響を受けながらも独自のサウンドを追求するスタンス、そしてメンバー自身がクリエイティブに関わる姿勢。これらすべてが「グローバルで戦えるアーティスト」を育てるというBMSGの意志の表れだった。</p>
+          <p>デビューシングル「Gifted.」はリリース直後からSNSで拡散し、日本国内だけでなく海外のリスナーにも届いた。その後も「Smile Again」「Mainstream」「Be Crazy」と続くリリースは、毎回異なる音楽的挑戦を含んでおり、グループとしての成長軌跡が明確に見える。</p>
+        </div>
+
+        <!-- Inline image 1 — 独立スケルトン -->
+        <div class="img-block reveal-item" data-reveal="8">
+          <div class="img-block-skeleton"></div>
+          <img class="img-block-actual" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BE:FIRST live performance">
+        </div>
+
+        <!-- Highlight — 単体セクション -->
+        <div class="article-body reveal-item" data-reveal="9">
+          <p>SKY-HIはインタビューでこう語っている。<span class="highlight-mark">「アーティストが損をしない仕組みを作ることが、日本の音楽産業全体を底上げすることに繋がる」</span>。この言葉は、単なる理想論ではなく、BMSG自身の契約モデルや収益構造に具体的に落とし込まれている。</p>
+        </div>
+
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="10">レーベルとしての設計思想</h2>
+        <div class="article-body reveal-item" data-reveal="11">
+          <p>BMSGが他のレーベルと一線を画すのは、「アーティストの自律」を経営の中心に置いている点だ。所属アーティストは、楽曲のクリエイティブ方向性について強い発言権を持ち、マーケティング戦略においても積極的に意見を出すことが奨励されている。</p>
+          <p>また、SNSでの発信についても、事前承認を必要としない範囲が広く設けられており、アーティスト自身がファンと直接コミュニケーションを取りやすい環境が整っている。こうした設計は、長期的な信頼関係の構築に繋がっており、BMSG所属アーティストのファンエンゲージメントの高さとして表れている。</p>
+        </div>
+
+        <!-- Inline image 2 — 独立スケルトン -->
+        <div class="img-block reveal-item" data-reveal="12">
+          <div class="img-block-skeleton"></div>
+          <img class="img-block-actual" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BMSG label scene">
+        </div>
+
+        <!-- Bullet list — 単体セクション -->
+        <h3 class="article-h3 reveal-item" data-reveal="13">BMSGが掲げる主な取り組み</h3>
+        <ul class="article-list reveal-item" data-reveal="14">
+          <li>楽曲制作への参加権限をアーティストに開放</li>
+          <li>収益分配の透明化と公平な報酬設計</li>
+          <li>グローバル市場を見据えたプロモーション戦略</li>
+          <li>SNS発信の自由度を高めたコミュニケーション設計</li>
+          <li>所属アーティスト間のコラボレーションを積極的に促進</li>
+        </ul>
+
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="15">これからのBMSGと日本の音楽</h2>
+        <div class="article-body reveal-item" data-reveal="16">
+          <p>2025年現在、BMSGはBE:FIRSTに続く新たなアーティストの育成にも着手している。第二のグループ、ソロアーティスト、そしてプロデューサーやクリエイターとの協業——その範囲はエンタテインメント全体に広がりつつある。</p>
+          <p>日本の音楽業界が長年抱えてきた構造的な問題——アーティストの権利の弱さ、透明性の欠如、グローバル展開の遅れ——に対して、BMSGは実験的でありながら誠実なアプローチで向き合っている。すべてが成功しているわけではないかもしれない。だがその試みの誠実さが、ファンだけでなく業界内外から支持を集め続ける理由になっている。</p>
+          <p>「まだ途中だ」とSKY-HIは言う。それは謙虚さではなく、現在進行形の意志の表明だ。BMSGの物語は、まだ序章にある。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Buttons -->
+  <div class="fab-group">
+    <div class="fab" id="heartBtn">
+      <!-- Lottie: 全状態をこれで管理 -->
+      <div class="heart-lottie" id="heartLottie"></div>
+    </div>
+    <div class="fab" id="bookmarkBtn">
+      <div class="bookmark-lottie" id="bookmarkLottie"></div>
+    </div>
+  </div>
+
+  <!-- Comment Bar -->
+  <div class="comment-bar">
+    <div class="comment-bar-handle"></div>
+    <div class="comment-bar-content">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.663 3.04094 17.0829 4.73812 18.875L3.28064 21.1875C3.09064 21.4969 3.31939 21.8906 3.67877 21.8594L7.59375 21.5156C8.96627 22.1481 10.4425 22.5 12 22.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><circle cx="8" cy="12" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="12" cy="12" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="16" cy="12" r="1" fill="rgba(255,255,255,0.7)"/></svg>
+      <span class="comment-label">コメント</span>
+      <span class="comment-count">1,234</span>
+    </div>
+  </div>
+
+  <!-- lottie-web -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
+  <script type="module">
+    import { createLoadingIcon } from './loading-icon.js';
+
+    const STAGGER_DELAY         = 80;
+    const REVEAL_DURATION       = 500;
+    const LOADING_DURATION      = 1000;
+    const IMG_SKELETON_DURATION = 1000;
+
+    let currentMode = 'skeleton';
+    let iconInstance = null;
+    let sessionId    = 0; // リプレイごとに古いタイムアウトを無効化
+
+    const items     = document.querySelectorAll('.reveal-item');
+    const imgBlocks = document.querySelectorAll('.img-block');
+
+    // --- stagger delay を各 reveal-item に事前セット ---
+    items.forEach((el) => {
+      const idx = parseInt(el.dataset.reveal, 10);
+      el.style.animationDelay = `${idx * STAGGER_DELAY}ms`;
+    });
+
+    // --- コンテンツをリセット ---
+    function resetContent() {
+      sessionId++; // 前セッションのタイムアウトを無効化
+      const ac = document.getElementById('articleContent');
+      ac.classList.remove('loaded');
+      ac.style.opacity = '0'; // 直接非表示（GPU layer 問題対策）
+      items.forEach((el) => {
+        el.style.animation       = 'none';
+        el.style.webkitAnimation = 'none';
+        el.style.webkitFilter    = '';
+        el.style.filter          = '';
+        el.style.opacity         = '';
+        el.style.webkitTransform = '';
+        el.style.transform       = '';
+      });
+      imgBlocks.forEach((b) => {
+        b.classList.remove('img-revealed');
+        delete b.dataset.imgTriggered;
+      });
+      document.querySelector('.scroll-area').scrollTop = 0;
+    }
+
+    // --- コンテンツ出現（ドミノ blurReveal + 画像 SK） ---
+    function revealContent() {
+      const mySession = sessionId; // このセッションを記憶
+      const ac = document.getElementById('articleContent');
+
+      ac.style.opacity = ''; // 直接非表示を解除
+      items.forEach((el) => {
+        el.style.animation       = '';
+        el.style.webkitAnimation = '';
+      });
+      void ac.offsetWidth; // reflow でアニメーション再トリガー
+      ac.classList.add('loaded');
+
+      // iOS Safari: アニメーション終了後に filter を明示リセット（古いセッションは無視）
+      items.forEach((el) => {
+        const idx = parseInt(el.dataset.reveal, 10);
+        setTimeout(() => {
+          if (sessionId !== mySession) return; // 古いセッションはスキップ
+          el.style.webkitFilter    = 'none';
+          el.style.filter          = 'none';
+          el.style.opacity         = '1';
+          el.style.webkitTransform = 'translateY(0)';
+          el.style.transform       = 'translateY(0)';
+        }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
+      });
+
+      // 画像: viewport に入ったタイミングから 1s SK → blurReveal
+      imgBlocks.forEach((block) => {
+        const idx = parseInt(block.dataset.reveal, 10);
+        setTimeout(() => {
+          if (sessionId !== mySession) return;
+          const obs = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && !block.dataset.imgTriggered) {
+                block.dataset.imgTriggered = 'true';
+                setTimeout(() => block.classList.add('img-revealed'), IMG_SKELETON_DURATION);
+                obs.disconnect();
+              }
+            });
+          }, { threshold: 0.2 });
+          obs.observe(block);
+        }, idx * STAGGER_DELAY + REVEAL_DURATION);
+      });
+    }
+
+    // --- ローディング開始 ---
+    function startLoading() {
+      resetContent();
+
+      if (currentMode === 'skeleton') {
+        // ── Skeleton モード ──
+        const sk = document.getElementById('skeletonWrapper');
+        sk.classList.remove('hidden');
+
+        setTimeout(() => {
+          sk.classList.add('hidden');
+          revealContent();
+        }, LOADING_DURATION);
+
+      } else {
+        // ── Icon モード ──
+        const overlay   = document.getElementById('loadingIconOverlay');
+        const container = document.getElementById('loadingIconContainer');
+
+        if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+        container.innerHTML = '';
+
+        // 即時表示（フェードインなし → フェードアウトのみトランジション）
+        overlay.classList.add('instant-show');
+        overlay.classList.remove('hidden');
+        void overlay.offsetWidth;
+        overlay.classList.remove('instant-show');
+
+        iconInstance = createLoadingIcon({ container, size: 100, backgroundColor: 'transparent' });
+
+        setTimeout(() => {
+          overlay.classList.add('hidden'); // フェードアウト 0.3s
+          if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+          setTimeout(revealContent, 300); // フェードアウト完了後
+        }, LOADING_DURATION);
+      }
+    }
+
+    // --- Verify bar の操作 ---
+    document.getElementById('btnSkeleton').addEventListener('click', () => {
+      currentMode = 'skeleton';
+      document.getElementById('btnSkeleton').classList.add('active');
+      document.getElementById('btnIcon').classList.remove('active');
+    });
+    document.getElementById('btnIcon').addEventListener('click', () => {
+      currentMode = 'icon';
+      document.getElementById('btnIcon').classList.add('active');
+      document.getElementById('btnSkeleton').classList.remove('active');
+    });
+    document.getElementById('btnReplay').addEventListener('click', startLoading);
+
+    // --- デバッグ用: 外部からアクセス可能に ---
+    window.__verifyReplay = startLoading;
+    window.__verifySetMode = (m) => {
+      currentMode = m;
+      document.getElementById('btnSkeleton').classList.toggle('active', m === 'skeleton');
+      document.getElementById('btnIcon').classList.toggle('active', m === 'icon');
+    };
+
+    // --- ハートボタン Lottie ---
+    (async () => {
+      const res  = await fetch('./heart-like.json');
+      const data = await res.json();
+
+      // アウトライン系レイヤーを白に変更
+      // layers[0] = "heart 3"（解除時アウトライン）, layers[2] = "heart"（初期アウトライン）
+      data.layers[0].shapes[1].c.k = [1, 1, 1, 1];
+      data.layers[2].shapes[1].c.k = [1, 1, 1, 1];
+
+      const lottieContainer = document.getElementById('heartLottie');
+      const LIKE_START   = 17;
+      const FILLED_FRAME = 90;
+      const UNLIKE_START = 105;
+
+      const heartAnim = lottie.loadAnimation({
+        container: lottieContainer,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        animationData: data,
+      });
+      heartAnim.goToAndStop(0, true);
+
+      let isLiked   = false;
+      let animating = false;
+
+      document.getElementById('heartBtn').addEventListener('click', () => {
+        if (animating) return;
+
+        const heartBtn = document.getElementById('heartBtn');
+        if (!isLiked) {
+          isLiked   = true;
+          animating = true;
+          heartBtn.style.borderColor = 'rgba(255,62,62,0.6)';
+          heartAnim.goToAndPlay(LIKE_START, true);
+
+          const onFrame = (e) => {
+            if (e.currentTime >= FILLED_FRAME) {
+              heartAnim.pause();
+              heartAnim.removeEventListener('enterFrame', onFrame);
+              animating = false;
+            }
+          };
+          heartAnim.addEventListener('enterFrame', onFrame);
+        } else {
+          isLiked   = false;
+          animating = true;
+          heartBtn.style.borderColor = '';
+          heartAnim.goToAndPlay(UNLIKE_START, true);
+
+          heartAnim.addEventListener('complete', () => {
+            heartAnim.goToAndStop(0, true);
+            animating = false;
+          }, { once: true });
+        }
+      });
+    })();
+
+    // --- ブックマークボタン Lottie ---
+    (async () => {
+      const res  = await fetch('./bookmark-like.json');
+      const data = await res.json();
+
+      // アウトライン系レイヤーを白に変更
+      data.layers[0].shapes[1].c.k = [1, 1, 1, 1];
+      data.layers[2].shapes[1].c.k = [1, 1, 1, 1];
+
+      const lottieContainer = document.getElementById('bookmarkLottie');
+      const LIKE_START   = 17;
+      const FILLED_FRAME = 90;
+      const UNLIKE_START = 105;
+
+      const bookmarkAnim = lottie.loadAnimation({
+        container: lottieContainer,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        animationData: data,
+      });
+      bookmarkAnim.goToAndStop(0, true);
+
+      let isBookmarked = false;
+      let animating    = false;
+
+      document.getElementById('bookmarkBtn').addEventListener('click', () => {
+        if (animating) return;
+
+        const bmBtn = document.getElementById('bookmarkBtn');
+        if (!isBookmarked) {
+          isBookmarked = true;
+          animating    = true;
+          bmBtn.style.borderColor = 'rgba(255,209,51,0.6)';
+          bookmarkAnim.goToAndPlay(LIKE_START, true);
+
+          const onFrame = (e) => {
+            if (e.currentTime >= FILLED_FRAME) {
+              bookmarkAnim.pause();
+              bookmarkAnim.removeEventListener('enterFrame', onFrame);
+              animating = false;
+            }
+          };
+          bookmarkAnim.addEventListener('enterFrame', onFrame);
+        } else {
+          isBookmarked = false;
+          animating    = true;
+          bmBtn.style.borderColor = '';
+          bookmarkAnim.goToAndPlay(UNLIKE_START, true);
+
+          bookmarkAnim.addEventListener('complete', () => {
+            bookmarkAnim.goToAndStop(0, true);
+            animating = false;
+          }, { once: true });
+        }
+      });
+    })();
+
+    // --- 初回ロード ---
+    document.addEventListener('DOMContentLoaded', startLoading);
+  </script>
+</body>
+</html>
