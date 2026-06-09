@@ -133,7 +133,7 @@ export function createLoadingIcon({
     for (let i = 0; i < steps; i++) {
       const t = i / steps;
       const phaseT = (t * NUM_PHASES) % 1;
-      sum += (0.3 + 2.5 * speedProfile(phaseT)) / steps;
+      sum += (0.6 + 1.5 * speedProfile(phaseT)) / steps;
     }
     return sum;
   })();
@@ -146,9 +146,9 @@ export function createLoadingIcon({
     for (let i = 0; i < steps; i++) {
       const t = (i / steps) * cycleT;
       const phaseT = (t * NUM_PHASES) % 1;
-      integral += (0.3 + 2.5 * speedProfile(phaseT)) * (cycleT / steps);
+      integral += (0.6 + 1.5 * speedProfile(phaseT)) * (cycleT / steps);
     }
-    return (fullCycles * fullCycleIntegral + integral) * Math.PI * 2 * 3;
+    return (fullCycles * fullCycleIntegral + integral) * Math.PI * 2 * 4;
   }
 
   // --- drawing ---

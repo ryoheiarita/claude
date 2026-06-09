@@ -119,7 +119,7 @@ export function createLoadingIconText({
     for (let i = 0; i < steps; i++) {
       const t = i / steps;
       const phaseT = (t * NUM_PHASES) % 1;
-      sum += (0.3 + 2.5 * speedProfile(phaseT)) / steps;
+      sum += (0.6 + 1.5 * speedProfile(phaseT)) / steps;
     }
     return sum;
   })();
@@ -132,15 +132,15 @@ export function createLoadingIconText({
     for (let i = 0; i < steps; i++) {
       const t = (i / steps) * cycleT;
       const phaseT = (t * NUM_PHASES) % 1;
-      integral += (0.3 + 2.5 * speedProfile(phaseT)) * (cycleT / steps);
+      integral += (0.6 + 1.5 * speedProfile(phaseT)) * (cycleT / steps);
     }
-    return (fullCycles * fullCycleIntegral + integral) * Math.PI * 2 * 4.5;
+    return (fullCycles * fullCycleIntegral + integral) * Math.PI * 2 * 6;
   }
 
   function getRotationSpeed(time) {
     const cycleT = (time % FULL_CYCLE) / FULL_CYCLE;
     const phaseT = (cycleT * NUM_PHASES) % 1;
-    return 0.3 + 2.5 * speedProfile(phaseT);
+    return 0.6 + 1.5 * speedProfile(phaseT);
   }
 
   function buildPath(cx, cy, points) {
