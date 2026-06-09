@@ -190,7 +190,7 @@ export function createLoadingIconText({
     ctx.rotate(textAngle);
 
     ctx.font = '600 30px Figtree, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.textBaseline = 'top';
     ctx.textAlign = 'center';
 
