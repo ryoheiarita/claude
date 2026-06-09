@@ -569,14 +569,6 @@
       border-radius: 24px;
       padding: 3px 3px 3px 10px;
     }
-    .verify-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.3);
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
     .verify-toggle {
       display: flex;
       background: rgba(255,255,255,0.06);
@@ -631,7 +623,6 @@
 
   <!-- Verify bar -->
   <div class="verify-bar" id="verifyBar">
-    <span class="verify-label">Loading</span>
     <div class="verify-toggle">
       <button class="verify-btn active" id="btnIcon">Icon</button>
       <button class="verify-btn" id="btnIconText">Text</button>
@@ -965,9 +956,9 @@
       document.getElementById('btnIconText').classList.toggle('active', mode === 'iconText');
       document.getElementById('btnSkeleton').classList.toggle('active', mode === 'skeleton');
     }
-    document.getElementById('btnSkeleton').addEventListener('click', () => setMode('skeleton'));
-    document.getElementById('btnIcon').addEventListener('click', () => setMode('icon'));
-    document.getElementById('btnIconText').addEventListener('click', () => setMode('iconText'));
+    document.getElementById('btnSkeleton').addEventListener('click', () => { setMode('skeleton'); startLoading(); });
+    document.getElementById('btnIcon').addEventListener('click', () => { setMode('icon'); startLoading(); });
+    document.getElementById('btnIconText').addEventListener('click', () => { setMode('iconText'); startLoading(); });
     document.getElementById('btnReplay').addEventListener('click', startLoading);
 
     // --- デバッグ用: 外部からアクセス可能に ---
