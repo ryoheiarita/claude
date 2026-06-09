@@ -634,6 +634,7 @@
     <span class="verify-label">Loading</span>
     <div class="verify-toggle">
       <button class="verify-btn active" id="btnIcon">Icon</button>
+      <button class="verify-btn" id="btnIconText">Text</button>
       <button class="verify-btn" id="btnSkeleton">Skeleton</button>
     </div>
     <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
@@ -817,6 +818,7 @@
 
   <script type="module">
     import { createLoadingIcon } from './loading-icon.js';
+    import { createLoadingIconText } from './loading-icon-text.js';
 
     const STAGGER_DELAY         = 80;
     const REVEAL_DURATION       = 500;
@@ -886,13 +888,14 @@
         }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
       });
 
-      // iconモード: 画像スケルトンにローディングアイコンを重ねる
-      if (currentMode === 'icon') {
+      if (currentMode === 'icon' || currentMode === 'iconText') {
         imgBlocks.forEach((block) => {
           const wrap = document.createElement('div');
           wrap.className = 'img-block-icon';
           block.appendChild(wrap);
-          createLoadingIcon({ container: wrap, size: 64, backgroundColor: 'transparent' });
+          const imgFactory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
+          const imgIconSize = currentMode === 'iconText' ? 120 : 64;
+          imgFactory({ container: wrap, size: imgIconSize, backgroundColor: 'transparent' });
         });
       }
 
@@ -930,7 +933,7 @@
         }, LOADING_DURATION);
 
       } else {
-        // ── Icon モード ──
+        // ── Icon / IconText モード ──
         document.getElementById('skeletonWrapper').classList.add('hidden');
         const overlay   = document.getElementById('loadingIconOverlay');
         const container = document.getElementById('loadingIconContainer');
@@ -938,13 +941,14 @@
         if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
         container.innerHTML = '';
 
-        // 即時表示（フェードインなし → フェードアウトのみトランジション）
         overlay.classList.add('instant-show');
         overlay.classList.remove('hidden');
         void overlay.offsetWidth;
         overlay.classList.remove('instant-show');
 
-        iconInstance = createLoadingIcon({ container, size: 100, backgroundColor: 'transparent' });
+        const factory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
+        const iconSize = currentMode === 'iconText' ? 200 : 100;
+        iconInstance = factory({ container, size: iconSize, backgroundColor: 'transparent' });
 
         setTimeout(() => {
           overlay.classList.add('hidden'); // フェードアウト 0.3s
@@ -955,25 +959,20 @@
     }
 
     // --- Verify bar の操作 ---
-    document.getElementById('btnSkeleton').addEventListener('click', () => {
-      currentMode = 'skeleton';
-      document.getElementById('btnSkeleton').classList.add('active');
-      document.getElementById('btnIcon').classList.remove('active');
-    });
-    document.getElementById('btnIcon').addEventListener('click', () => {
-      currentMode = 'icon';
-      document.getElementById('btnIcon').classList.add('active');
-      document.getElementById('btnSkeleton').classList.remove('active');
-    });
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnIcon').classList.toggle('active', mode === 'icon');
+      document.getElementById('btnIconText').classList.toggle('active', mode === 'iconText');
+      document.getElementById('btnSkeleton').classList.toggle('active', mode === 'skeleton');
+    }
+    document.getElementById('btnSkeleton').addEventListener('click', () => setMode('skeleton'));
+    document.getElementById('btnIcon').addEventListener('click', () => setMode('icon'));
+    document.getElementById('btnIconText').addEventListener('click', () => setMode('iconText'));
     document.getElementById('btnReplay').addEventListener('click', startLoading);
 
     // --- デバッグ用: 外部からアクセス可能に ---
     window.__verifyReplay = startLoading;
-    window.__verifySetMode = (m) => {
-      currentMode = m;
-      document.getElementById('btnSkeleton').classList.toggle('active', m === 'skeleton');
-      document.getElementById('btnIcon').classList.toggle('active', m === 'icon');
-    };
+    window.__verifySetMode = (m) => setMode(m);
 
     // --- ハートボタン Lottie ---
     (async () => {
