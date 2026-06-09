@@ -331,6 +331,20 @@
       opacity: 0;
       pointer-events: none;
     }
+    .img-block-icon {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .img-block.img-revealed .img-block-icon {
+      opacity: 0;
+    }
     .img-block-actual {
       position: absolute;
       inset: 0;
@@ -839,6 +853,8 @@
       imgBlocks.forEach((b) => {
         b.classList.remove('img-revealed');
         delete b.dataset.imgTriggered;
+        const oldIcon = b.querySelector('.img-block-icon');
+        if (oldIcon) { oldIcon.remove(); }
       });
       document.querySelector('.scroll-area').scrollTop = 0;
     }
@@ -868,6 +884,16 @@
           el.style.transform       = 'translateY(0)';
         }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
       });
+
+      // iconモード: 画像スケルトンにローディングアイコンを重ねる
+      if (currentMode === 'icon') {
+        imgBlocks.forEach((block) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'img-block-icon';
+          block.appendChild(wrap);
+          createLoadingIcon({ container: wrap, size: 40, backgroundColor: 'transparent' });
+        });
+      }
 
       // 画像: viewport に入ったタイミングから 1s SK → blurReveal
       imgBlocks.forEach((block) => {
