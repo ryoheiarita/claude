@@ -626,6 +626,7 @@
     <div class="verify-toggle">
       <button class="verify-btn active" id="btnIcon">Icon</button>
       <button class="verify-btn" id="btnIconText">Text</button>
+      <button class="verify-btn" id="btnArtist">Artist</button>
       <button class="verify-btn" id="btnSkeleton">Skeleton</button>
     </div>
     <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
@@ -879,14 +880,23 @@
         }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
       });
 
-      if (currentMode === 'icon' || currentMode === 'iconText') {
+      if (currentMode !== 'skeleton') {
         imgBlocks.forEach((block) => {
           const wrap = document.createElement('div');
           wrap.className = 'img-block-icon';
           block.appendChild(wrap);
-          const imgFactory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
-          const imgIconSize = currentMode === 'iconText' ? 120 : 64;
-          imgFactory({ container: wrap, size: imgIconSize, backgroundColor: 'transparent' });
+
+          if (currentMode === 'artist') {
+            const logo = document.createElement('img');
+            logo.src = 'assets/befirst-logo.svg';
+            logo.style.width = '160px';
+            logo.style.height = 'auto';
+            wrap.appendChild(logo);
+          } else {
+            const imgFactory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
+            const imgIconSize = currentMode === 'iconText' ? 120 : 64;
+            imgFactory({ container: wrap, size: imgIconSize, backgroundColor: 'transparent' });
+          }
         });
       }
 
@@ -924,7 +934,7 @@
         }, LOADING_DURATION);
 
       } else {
-        // ── Icon / IconText モード ──
+        // ── Icon / IconText / Artist モード ──
         document.getElementById('skeletonWrapper').classList.add('hidden');
         const overlay   = document.getElementById('loadingIconOverlay');
         const container = document.getElementById('loadingIconContainer');
@@ -937,8 +947,9 @@
         void overlay.offsetWidth;
         overlay.classList.remove('instant-show');
 
-        const factory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
-        const iconSize = currentMode === 'iconText' ? 200 : 100;
+        const useText = currentMode === 'iconText' || currentMode === 'artist';
+        const factory = useText ? createLoadingIconText : createLoadingIcon;
+        const iconSize = useText ? 200 : 100;
         iconInstance = factory({ container, size: iconSize, backgroundColor: 'transparent' });
 
         setTimeout(() => {
@@ -952,13 +963,16 @@
     // --- Verify bar の操作 ---
     function setMode(mode) {
       currentMode = mode;
-      document.getElementById('btnIcon').classList.toggle('active', mode === 'icon');
-      document.getElementById('btnIconText').classList.toggle('active', mode === 'iconText');
-      document.getElementById('btnSkeleton').classList.toggle('active', mode === 'skeleton');
+      ['btnIcon','btnIconText','btnArtist','btnSkeleton'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      const map = { icon:'btnIcon', iconText:'btnIconText', artist:'btnArtist', skeleton:'btnSkeleton' };
+      document.getElementById(map[mode]).classList.add('active');
     }
     document.getElementById('btnSkeleton').addEventListener('click', () => { setMode('skeleton'); startLoading(); });
     document.getElementById('btnIcon').addEventListener('click', () => { setMode('icon'); startLoading(); });
     document.getElementById('btnIconText').addEventListener('click', () => { setMode('iconText'); startLoading(); });
+    document.getElementById('btnArtist').addEventListener('click', () => { setMode('artist'); startLoading(); });
     document.getElementById('btnReplay').addEventListener('click', startLoading);
 
     // --- デバッグ用: 外部からアクセス可能に ---
