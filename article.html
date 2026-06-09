@@ -618,8 +618,8 @@
   <div class="verify-bar" id="verifyBar">
     <span class="verify-label">Loading</span>
     <div class="verify-toggle">
-      <button class="verify-btn active" id="btnSkeleton">Skeleton</button>
-      <button class="verify-btn" id="btnIcon">Icon</button>
+      <button class="verify-btn active" id="btnIcon">Icon</button>
+      <button class="verify-btn" id="btnSkeleton">Skeleton</button>
     </div>
     <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
   </div>
@@ -646,7 +646,7 @@
   <div class="scroll-area">
 
     <!-- Skeleton Loading -->
-    <div class="skeleton-wrapper" id="skeletonWrapper">
+    <div class="skeleton-wrapper hidden" id="skeletonWrapper">
       <div class="skeleton-inner">
         <div class="skeleton-header">
           <div class="skeleton-meta">
@@ -808,7 +808,7 @@
     const LOADING_DURATION      = 1000;
     const IMG_SKELETON_DURATION = 1000;
 
-    let currentMode = 'skeleton';
+    let currentMode = 'icon';
     let iconInstance = null;
     let sessionId    = 0; // リプレイごとに古いタイムアウトを無効化
 
@@ -904,6 +904,7 @@
 
       } else {
         // ── Icon モード ──
+        document.getElementById('skeletonWrapper').classList.add('hidden');
         const overlay   = document.getElementById('loadingIconOverlay');
         const container = document.getElementById('loadingIconContainer');
 
