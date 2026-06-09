@@ -183,7 +183,7 @@ export function createLoadingIconText({
     lastTime = time;
 
     const speed = getRotationSpeed(time);
-    textAngle += speed * -0.00052 * dt;
+    textAngle += speed * -0.00104 * dt;
 
     ctx.save();
     ctx.translate(cx, cy);
