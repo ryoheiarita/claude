@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      background: #101010;
+      color: #fff;
+      max-width: 390px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Loading overlay ── */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: opacity 0.4s ease;
+      pointer-events: auto;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px;
+      height: 44px;
+    }
+    .status-time {
+      font-family: 'SF Pro Display', -apple-system, sans-serif;
+      font-weight: 590;
+      font-size: 17px;
+      line-height: 22px;
+    }
+    .status-icons {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .status-icons svg { display: block; }
+
+    /* ── Navigation bar ── */
+    .nav-bar {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      z-index: 200;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.58), transparent);
+      padding-bottom: 8px;
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      padding: 0 24px;
+    }
+    .toolbar-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .toolbar-left img { height: 29px; width: auto; }
+    .toolbar-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+    .btn-fanclub {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      font-family: 'Figtree', sans-serif;
+      font-weight: 500;
+      font-size: 12px;
+      line-height: 16px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-qr {
+      width: 40px;
+      height: 40px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      object-fit: cover;
+    }
+
+    /* ── Main content ── */
+    .main-content {
+      padding-top: 92px;
+      padding-bottom: 34px;
+    }
+
+    /* ── Hero area ── */
+    .hero {
+      position: relative;
+      width: 390px;
+      height: 500px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-mask {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-circle {
+      width: 360px;
+      height: 360px;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      margin-top: -20px;
+    }
+    .hero-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ── Album cards ── */
+    .album-cards {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 8px;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .album-card {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .album-card img {
+      display: block;
+      object-fit: cover;
+    }
+    .album-card.center {
+      width: 141px;
+      height: 141px;
+      border: 2px solid rgba(255,255,255,0.9);
+      z-index: 2;
+    }
+    .album-card.side {
+      width: 80px;
+      height: 80px;
+      opacity: 0.8;
+    }
+
+    /* ── HANA button ── */
+    .hero-btn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+    }
+    .btn-hana {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 16px 6px 24px;
+      border-radius: 999px;
+      border: 1px solid #fff;
+      background: transparent;
+      color: #fff;
+      font-family: 'Figtree', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 28px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-hana svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* ── NEWS section ── */
+    .news-section {
+      border-top: 1px solid rgba(255,255,255,0.15);
+      padding: 16px 16px 12px;
+    }
+    .news-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .news-label {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0.06px;
+    }
+    .news-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .news-dot {
+      width: 24px;
+      height: 2px;
+      border-radius: 1px;
+      background: rgba(255,255,255,0.3);
+    }
+    .news-dot.active { background: #fff; }
+
+    .news-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      height: 64px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .news-thumb {
+      position: relative;
+      width: 154px;
+      height: 64px;
+      border-radius: 8px;
+      background: #2a2a2a;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .news-thumb img {
+      height: 16px;
+      width: auto;
+      opacity: 0.6;
+    }
+    .news-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .news-title {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      height: 43px;
+    }
+    .news-meta {
+      font-weight: 400;
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: 0.06px;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+    }
+
+    /* ── Home indicator ── */
+    .home-indicator {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      height: 34px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      z-index: 300;
+    }
+    .home-indicator-bar {
+      width: 134px;
+      height: 5px;
+      border-radius: 100px;
+      background: #fff;
+    }
+
+    /* ── Verify bar (same as article) ── */
+    .verify-bar {
+      position: fixed;
+      top: 44px;
+      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
+      z-index: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 3px;
+    }
+    .verify-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.06);
+      border-radius: 18px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .verify-btn {
+      padding: 5px 11px;
+      border-radius: 16px;
+      font-family: 'Figtree', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .verify-btn.active {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .verify-replay {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div id="loadingIconContainer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"></div>
+  </div>
+
+  <!-- Verify bar -->
+  <div class="verify-bar" id="verifyBar">
+    <div class="verify-toggle">
+      <button class="verify-btn active" id="btnIcon">Icon</button>
+      <button class="verify-btn" id="btnIconText">Text</button>
+      <button class="verify-btn" id="btnArtist">Artist</button>
+      <button class="verify-btn" id="btnSkeleton">Skeleton</button>
+    </div>
+    <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
+  </div>
+
+  <!-- Navigation bar -->
+  <div class="nav-bar">
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div style="width:125px"></div>
+      <div class="status-icons">
+        <svg width="19" height="12" viewBox="0 0 19 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity="0.3"/><rect x="4" y="2" width="3" height="10" rx="1" fill="white" opacity="0.3"/><rect x="8" y="1" width="3" height="11" rx="1" fill="white"/><rect x="12" y="0" width="3" height="12" rx="1" fill="white"/></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><path d="M8.5 3.5C10.3 3.5 11.9 4.2 13.1 5.4L14.5 4C12.9 2.4 10.8 1.5 8.5 1.5C6.2 1.5 4.1 2.4 2.5 4L3.9 5.4C5.1 4.2 6.7 3.5 8.5 3.5ZM8.5 7.5C9.3 7.5 10.1 7.8 10.7 8.4L8.5 11L6.3 8.4C6.9 7.8 7.7 7.5 8.5 7.5Z"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="white" opacity="0.35"/><rect x="2" y="2" width="19" height="9" rx="2" fill="white"/><path d="M24 4.5V8.5C25.1 8 25.1 5 24 4.5Z" fill="white" opacity="0.4"/></svg>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <img src="assets/befirst-logo.svg" alt="BwU" style="height:29px;filter:brightness(10);">
+      </div>
+      <div class="toolbar-right">
+        <a class="btn-fanclub">ファンクラブ一覧</a>
+        <div class="btn-qr">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M3 11h2V3h8v2H5v6H3zm0 2h2v6h8v2H3v-8zm18-2h-2V5h-6V3h8v8zm-2 2h2v8h-8v-2h6v-6zM7 7h4v4H7V7zm0 6h4v4H7v-4zm6-6h4v4h-4V7zm0 6h4v4h-4v-4z" opacity="0.8"/></svg>
+        </div>
+        <img class="avatar" src="https://www.figma.com/api/mcp/asset/f0d99630-49ea-4737-b0dc-bb9f4de39397" alt="">
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-circle">
+        <img src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="Hero">
+      </div>
+
+      <!-- Album cards -->
+      <div class="album-cards">
+        <div class="album-card side">
+          <img src="https://www.figma.com/api/mcp/asset/b1524627-1fb1-44e3-9af4-0a1665e91fe2" alt="" style="width:100%;height:100%;">
+        </div>
+        <div class="album-card side">
+          <img src="https://www.figma.com/api/mcp/asset/57a5d4aa-81d9-4a4f-a0e0-0a050d9a6d87" alt="" style="width:100%;height:100%;">
+        </div>
+        <div class="album-card center">
+          <img src="https://www.figma.com/api/mcp/asset/fcfc8452-d586-4b1b-9b14-3b9edc601b5b" alt="" style="width:100%;height:100%;">
+        </div>
+        <div class="album-card side">
+          <img src="https://www.figma.com/api/mcp/asset/776f01b0-4753-4bc0-8ef3-20fb09b6fef5" alt="" style="width:100%;height:100%;">
+        </div>
+        <div class="album-card side">
+          <img src="https://www.figma.com/api/mcp/asset/9fee86da-c75d-488e-86d5-8b6b44a553b0" alt="" style="width:100%;height:100%;">
+        </div>
+      </div>
+    </div>
+
+    <!-- HANA button -->
+    <div class="hero-btn-wrap">
+      <a class="btn-hana" href="#">
+        HANA
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <!-- NEWS section -->
+    <div class="news-section">
+      <div class="news-header">
+        <span class="news-label">NEWS</span>
+        <div class="news-dots">
+          <div class="news-dot active"></div>
+          <div class="news-dot"></div>
+          <div class="news-dot"></div>
+        </div>
+      </div>
+      <a class="news-item" id="newsLink" href="article.html">
+        <div class="news-thumb">
+          <img src="assets/befirst-logo.svg" alt="BwU">
+        </div>
+        <div class="news-body">
+          <p class="news-title">2025/10/29(水)発売 BE:FIRSTベストアルバム"BE:ST"2025/10/29(水)発売 BE:FIRSTベストアルバム"BE:ST"</p>
+          <p class="news-meta">2025.08.16・HANA</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Home indicator -->
+  <div class="home-indicator">
+    <div class="home-indicator-bar"></div>
+  </div>
+
+  <script type="module">
+    import { createLoadingIcon } from './loading-icon.js';
+    import { createLoadingIconText } from './loading-icon-text.js';
+
+    const LOADING_DURATION = 1000;
+    let currentMode = 'icon';
+    let iconInstance = null;
+
+    function startLoading() {
+      const overlay = document.getElementById('loadingOverlay');
+      const container = document.getElementById('loadingIconContainer');
+
+      if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+      container.innerHTML = '';
+
+      overlay.style.transition = 'none';
+      overlay.classList.remove('hidden');
+      void overlay.offsetWidth;
+      overlay.style.transition = '';
+
+      if (currentMode !== 'skeleton') {
+        const useText = currentMode === 'iconText' || currentMode === 'artist';
+        const factory = useText ? createLoadingIconText : createLoadingIcon;
+        const iconSize = useText ? 200 : 100;
+        iconInstance = factory({ container, size: iconSize, backgroundColor: 'transparent' });
+      }
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+      }, LOADING_DURATION);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      ['btnIcon','btnIconText','btnArtist','btnSkeleton'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      const map = { icon:'btnIcon', iconText:'btnIconText', artist:'btnArtist', skeleton:'btnSkeleton' };
+      document.getElementById(map[mode]).classList.add('active');
+    }
+
+    document.getElementById('btnIcon').addEventListener('click', () => { setMode('icon'); startLoading(); });
+    document.getElementById('btnIconText').addEventListener('click', () => { setMode('iconText'); startLoading(); });
+    document.getElementById('btnArtist').addEventListener('click', () => { setMode('artist'); startLoading(); });
+    document.getElementById('btnSkeleton').addEventListener('click', () => { setMode('skeleton'); startLoading(); });
+    document.getElementById('btnReplay').addEventListener('click', startLoading);
+
+    // Pass mode to article.html via URL param
+    document.getElementById('newsLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = `article.html?mode=${currentMode}`;
+    });
+
+    // Read mode from URL param (coming back or linked)
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('mode')) {
+      setMode(params.get('mode'));
+    }
+
+    // Initial load
+    startLoading();
+  </script>
+</body>
+</html>

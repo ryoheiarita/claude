@@ -644,9 +644,9 @@
       </div>
     </div>
     <div class="toolbar">
-      <div class="toolbar-btn">
+      <a class="toolbar-btn" id="backBtn" href="home.html">
         <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
+      </a>
     </div>
   </div>
 
@@ -817,9 +817,10 @@
     const LOADING_DURATION      = 1000;
     const IMG_SKELETON_DURATION = 1000;
 
-    let currentMode = 'icon';
+    const _params = new URLSearchParams(window.location.search);
+    let currentMode = _params.get('mode') || 'icon';
     let iconInstance = null;
-    let sessionId    = 0; // リプレイごとに古いタイムアウトを無効化
+    let sessionId    = 0;
 
     const items     = document.querySelectorAll('.reveal-item');
     const imgBlocks = document.querySelectorAll('.img-block');
@@ -975,6 +976,11 @@
     document.getElementById('btnArtist').addEventListener('click', () => { setMode('artist'); startLoading(); });
     document.getElementById('btnReplay').addEventListener('click', startLoading);
 
+    document.getElementById('backBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = `home.html?mode=${currentMode}`;
+    });
+
     // --- デバッグ用: 外部からアクセス可能に ---
     window.__verifyReplay = startLoading;
     window.__verifySetMode = (m) => setMode(m);
@@ -1097,6 +1103,7 @@
     })();
 
     // --- 初回ロード ---
+    if (_params.has('mode')) setMode(currentMode);
     document.addEventListener('DOMContentLoaded', startLoading);
   </script>
 </body>
