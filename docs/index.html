@@ -224,6 +224,10 @@
         <span class="val" id="centerYV">0</span>
       </div>
       <div class="toggle" data-center-ctl style="opacity:.4;pointer-events:none;margin:10px 0 0">
+        <span>黒(#000000)を金属フレームに</span>
+        <div class="sw"><input type="checkbox" id="blackFrame"><label for="blackFrame"></label></div>
+      </div>
+      <div class="toggle" data-center-ctl style="opacity:.4;pointer-events:none;margin:10px 0 0">
         <span>差し色モード（領域を塗る）</span>
         <div class="sw"><input type="checkbox" id="accentMode"><label for="accentMode"></label></div>
       </div>
@@ -359,6 +363,7 @@ const state = {
   centerY: 0,
   accentMode: false,    // interpret center SVG fills as coloured enamel cells
   accentRim: true,      // raised metal outline around each accent cell
+  blackFrame: false,    // "#000000 = frame" rule: black fills → metal, others → enamel
   accentColors: [],     // per-region colour (auto from SVG fill, overridable)
   convertSvgText: null, // raw SVG text for convert mode
   viewMode: 'front',    // front (locked) | back (locked) | free
@@ -430,6 +435,8 @@ function applyLight(){
 applyLight();
 
 const badge = new THREE.Group();
+// default tilt: 5° about the central X axis — top leans back, bottom comes forward
+badge.rotation.x = -5 * Math.PI/180;
 scene.add(badge);
 
 document.getElementById('loading').remove();
@@ -743,9 +750,12 @@ function buildFrameBadge(){
     front.add(floor);
   }
 
-  // 3 ── Center SVG → coloured accent cells (accent mode) or metal emblem ──
+  // 3 ── Center SVG → black=metal rule / coloured accent cells / metal emblem ──
   if(state.centerShapes && state.centerShapes.length){
-    if(state.accentMode){
+    if(state.blackFrame){
+      const g = buildColorRule(state.centerShapes, metalTop - enamelDrop, metalTop, mMat, domeH, innerR);
+      if(g) front.add(g);
+    } else if(state.accentMode){
       const cells = buildAccentCells(state.centerShapes, metalTop - enamelDrop, metalTop, mMat, domeH, innerR);
       if(cells) front.add(cells);
     } else {
@@ -895,6 +905,48 @@ function buildAccentCells(shapes, baseEnamelTop, frameTop, mMat, domeH, rMax){
       rim.position.z = rimTop - rimGeo.boundingBox.max.z;
       conformToDome(rimGeo, domeH, rMax, groupY);
       g.add(rim);
+    }
+  });
+  g.position.y += groupY;
+  return g;
+}
+
+// is this fill colour (near) black?  → used by the "#000000 = frame" rule
+function isBlackish(hex){
+  if(!hex) return false;
+  const h = hex.replace('#',''); if(h.length < 6) return false;
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  return (0.299*r + 0.587*g + 0.114*b) < 40;     // luminance threshold (#000000, near-black)
+}
+// "#000000 = frame" rule: black fills → raised metal (frame height), other fills → enamel (flush)
+function buildColorRule(shapes, baseEnamelTop, frameTop, mMat, domeH, rMax){
+  const g = new THREE.Group();
+  const norm = normalizeSvg(shapes, (state.centerScale/100 * R)*2);
+  if(!norm.length) return null;
+  const groupY = state.centerY/100 * R;
+  const eDepth = frameTop*0.42, eBevT = frameTop*0.26, eTop = eDepth + eBevT;  // metal (match emblem)
+  const flushZ = baseEnamelTop + 0.05, baseZ = baseEnamelTop - 0.10, STEP = 0.005;
+  let ei = 0;
+  norm.forEach(item=>{
+    if(isBlackish(item.color)){
+      // black → metal, raised to the badge frame height
+      const geo = new THREE.ExtrudeGeometry(item.shape, {
+        depth:eDepth, bevelEnabled:true, bevelThickness:eBevT, bevelSize:0.05, bevelSegments:4, curveSegments:72,
+      });
+      conformToDome(geo, domeH, rMax, groupY);
+      const m = new THREE.Mesh(geo, mMat.clone());
+      m.position.z = frameTop - eTop;
+      g.add(m);
+    } else {
+      // non-black → enamel cell (its own colour), flush with the base enamel
+      const geo = new THREE.ExtrudeGeometry(item.shape, {
+        depth:flushZ-baseZ, bevelEnabled:true, bevelThickness:0.02, bevelSize:0.02, bevelSegments:2, curveSegments:64,
+      });
+      geo.computeBoundingBox();
+      const m = new THREE.Mesh(geo, enamelMat(item.color || state.enamel));
+      m.position.z = (flushZ + ei*STEP) - geo.boundingBox.max.z;
+      conformToDome(geo, domeH, rMax, groupY);
+      g.add(m); ei++;
     }
   });
   g.position.y += groupY;
@@ -1153,7 +1205,10 @@ function applyBuiltinEmblem(name){
   rebuild();
 }
 $$('#emblems button').forEach(b=> b.onclick = ()=> applyBuiltinEmblem(b.dataset.emblem));
-$('#accentMode').onchange = e=>{ state.accentMode = e.target.checked; updateAccentUI(); rebuild(); };
+$('#blackFrame').onchange = e=>{ state.blackFrame = e.target.checked;
+  if(e.target.checked){ state.accentMode=false; $('#accentMode').checked=false; } updateAccentUI(); rebuild(); };
+$('#accentMode').onchange = e=>{ state.accentMode = e.target.checked;
+  if(e.target.checked){ state.blackFrame=false; $('#blackFrame').checked=false; } updateAccentUI(); rebuild(); };
 $('#accentRim').onchange  = e=>{ state.accentRim = e.target.checked; rebuild(); };
 $('#clearCenter').onclick = ()=>{
   state.centerShapes = null; state.centerSvgText = null; state.centerBuiltin = null;
@@ -1237,7 +1292,7 @@ function snapshot(){
     mode:state.mode, shape:state.shape, metal:state.metal, metalRough:state.metalRough,
     enamel:state.enamel, frameW:state.frameW, depth:state.depth,
     centerSvgText:state.centerSvgText||null, centerBuiltin:state.centerBuiltin||null, centerScale:state.centerScale, centerY:state.centerY,
-    accentMode:state.accentMode, accentRim:state.accentRim, accentColors:[...state.accentColors],
+    accentMode:state.accentMode, accentRim:state.accentRim, blackFrame:state.blackFrame, accentColors:[...state.accentColors],
     convertSvgText:state.convertSvgText||null, convertEdge:state.convertEdge, useSvgColors:state.useSvgColors,
     enamelImageURL:state.enamelImageURL||null,
     light:{...light}, autoRotate:state.autoRotate, bg:state.bg,
@@ -1246,7 +1301,7 @@ function snapshot(){
 function applySnapshot(s){
   if(!s) return;
   ['mode','shape','metal','metalRough','enamel','frameW','depth','centerScale','centerY',
-   'accentMode','accentRim','convertEdge','useSvgColors','autoRotate','bg'].forEach(k=>{
+   'accentMode','accentRim','blackFrame','convertEdge','useSvgColors','autoRotate','bg'].forEach(k=>{
     if(s[k]!==undefined) state[k]=s[k];
   });
   state.accentColors = Array.isArray(s.accentColors) ? [...s.accentColors] : [];
@@ -1286,6 +1341,7 @@ function syncUIFromState(){
   $('#centerScale').value=state.centerScale; $('#centerScaleV').textContent=state.centerScale;
   $('#centerY').value=state.centerY; $('#centerYV').textContent=state.centerY;
   $('#accentMode').checked=state.accentMode;
+  $('#blackFrame').checked=state.blackFrame;
   $('#accentRim').checked=state.accentRim;
   updateAccentUI();
   $('#convertName').textContent = state.convertData ? 'プリセットから復元' : '塗り→エナメル / 輪郭→金属フレーム';
