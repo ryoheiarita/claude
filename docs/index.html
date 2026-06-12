@@ -182,6 +182,12 @@
         <label>カスタム</label>
         <input type="color" id="enamelColor" value="#222428">
       </div>
+      <div class="row">
+        <label>反射（艶）</label>
+        <input type="range" id="enamelReflect" min="0" max="100" value="40">
+        <span class="val" id="enamelReflectV">.40</span>
+      </div>
+      <div class="note">左=マット / 右=光沢（鏡面）</div>
       <label class="filebtn" for="enamelImage" style="margin-top:10px">
         エナメルに画像を適用
         <small id="enamelImageName">色を画像に置き換え（エナメル形状でクロップ）</small>
@@ -352,6 +358,7 @@ const state = {
   metal: '#d4d6dd',
   metalRough: 0.28,
   enamel: '#222428',
+  enamelReflect: 0.4,   // enamel reflectivity: 0 = matte … 1 = glossy
   enamelTexture: null,  // THREE.Texture applied to the base enamel (replaces its colour)
   enamelImageURL: null, // data URL of the uploaded image (for presets / restore)
   frameW: 3,        // % of radius (min by default)
@@ -456,13 +463,15 @@ function metalMat(){
 }
 function enamelMat(hex, withImage){
   const useImg = withImage && state.enamelTexture;
+  const clamp = (v,lo,hi)=> Math.max(lo, Math.min(hi, v));
+  const r = state.enamelReflect;            // 0 = matte … 1 = glossy (0.4 ≈ default look)
   const m = new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(useImg ? 0xffffff : (hex || state.enamel)),
     metalness: 0.0,
-    roughness: 0.38,
-    clearcoat: 0.5,
-    clearcoatRoughness: 0.34,
-    envMapIntensity: 0.55,
+    roughness:          clamp(0.38 - (r-0.4)*0.60, 0.05, 0.75),
+    clearcoat:          clamp(0.50 + (r-0.4)*0.80, 0.05, 1.0),
+    clearcoatRoughness: clamp(0.34 - (r-0.4)*0.50, 0.04, 0.6),
+    envMapIntensity:    clamp(0.55 + (r-0.4)*1.60, 0.05, 2.2),
     sheen: 0.25,
     sheenRoughness: 0.7,
     sheenColor: new THREE.Color(0xffffff),
@@ -1114,6 +1123,11 @@ $('#enamelColor').oninput = e=>{
   $$('#enamelSwatches .swatch').forEach(x=>x.classList.remove('on'));
   rebuild();
 };
+$('#enamelReflect').oninput = e=>{
+  state.enamelReflect = +e.target.value/100;
+  $('#enamelReflectV').textContent = state.enamelReflect.toFixed(2).slice(1);
+  rebuild();
+};
 
 // enamel image — replaces the base enamel colour, clipped to the enamel shape
 const texLoader = new THREE.TextureLoader();
@@ -1275,9 +1289,31 @@ function applyBg(val){
 }
 $('#bg').oninput = e=>{ state.bg = +e.target.value; applyBg(state.bg); saveLast(); };
 $('#snap').onclick = ()=>{
+  const SIZE = 500, MARGIN = 1.03;          // 500×500 PNG, ~3% margin (minimal)
+  const dpr = renderer.getPixelRatio();
+  const oldAspect = camera.aspect, oldPos = camera.position.clone(), oldTgt = controls.target.clone();
+
+  // square buffer, framed tightly on the (tilted) badge
+  renderer.setPixelRatio(1);
+  renderer.setSize(SIZE, SIZE, false);
+  camera.aspect = 1;
+  const box = new THREE.Box3().setFromObject(badge);
+  const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  const half = Math.max(s.x, s.y) * 0.5 * MARGIN;
+  const dist = half / Math.tan(camera.fov*Math.PI/180/2) + s.z*0.5;
+  camera.position.set(c.x, c.y, c.z + dist);
+  camera.lookAt(c); camera.updateProjectionMatrix();
   renderer.render(scene, camera);
+  const url = renderer.domElement.toDataURL('image/png');
+
+  // restore live view
+  renderer.setPixelRatio(dpr);
+  camera.aspect = oldAspect; camera.position.copy(oldPos); controls.target.copy(oldTgt);
+  camera.lookAt(controls.target); camera.updateProjectionMatrix();
+  resize();
+
   const a = document.createElement('a');
-  a.download = 'badge.png'; a.href = renderer.domElement.toDataURL('image/png'); a.click();
+  a.download = 'badge.png'; a.href = url; a.click();
 };
 
 function toHexInput(c){ return c.length===7 ? c : c; }
@@ -1290,7 +1326,7 @@ const LKEY = 'badge3d:last', PKEY = 'badge3d:presets';
 function snapshot(){
   return {
     mode:state.mode, shape:state.shape, metal:state.metal, metalRough:state.metalRough,
-    enamel:state.enamel, frameW:state.frameW, depth:state.depth,
+    enamel:state.enamel, enamelReflect:state.enamelReflect, frameW:state.frameW, depth:state.depth,
     centerSvgText:state.centerSvgText||null, centerBuiltin:state.centerBuiltin||null, centerScale:state.centerScale, centerY:state.centerY,
     accentMode:state.accentMode, accentRim:state.accentRim, blackFrame:state.blackFrame, accentColors:[...state.accentColors],
     convertSvgText:state.convertSvgText||null, convertEdge:state.convertEdge, useSvgColors:state.useSvgColors,
@@ -1300,7 +1336,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s) return;
-  ['mode','shape','metal','metalRough','enamel','frameW','depth','centerScale','centerY',
+  ['mode','shape','metal','metalRough','enamel','enamelReflect','frameW','depth','centerScale','centerY',
    'accentMode','accentRim','blackFrame','convertEdge','useSvgColors','autoRotate','bg'].forEach(k=>{
     if(s[k]!==undefined) state[k]=s[k];
   });
@@ -1329,6 +1365,8 @@ function syncUIFromState(){
   $('#metalRoughV').textContent = state.metalRough.toFixed(2).slice(1);
   $('#enamelColor').value = state.enamel;
   $$('#enamelSwatches .swatch').forEach(x=> x.classList.toggle('on', x.dataset.enamel===state.enamel));
+  $('#enamelReflect').value = Math.round(state.enamelReflect*100);
+  $('#enamelReflectV').textContent = state.enamelReflect.toFixed(2).slice(1);
   $('#clearEnamelImage').classList.toggle('hidden', !state.enamelImageURL);
   $('#enamelImageName').textContent = state.enamelImageURL ? '画像を適用中' : '色を画像に置き換え（エナメル形状でクロップ）';
   $('#frameW').value=state.frameW; $('#frameWV').textContent=state.frameW;
