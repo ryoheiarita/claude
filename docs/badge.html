@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enamel Pin Badge Generator — 3D</title>
+<style>
+  :root{
+    --panel:#16171c; --panel2:#1e2027; --line:#2b2d36;
+    --txt:#e8e8ee; --sub:#9498a6; --accent:#7c8cff;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans",sans-serif;
+    background:#000; color:var(--txt); }
+  #app{ display:flex; height:100%; }
+
+  /* ───── Canvas stage ───── */
+  #stage{ position:relative; flex:1; min-width:0;
+    background:radial-gradient(circle at 50% 38%, #1a1a1f 0%, #050506 70%); }
+  #stage canvas{ display:block; }
+  #hint{ position:absolute; left:50%; bottom:18px; transform:translateX(-50%);
+    font-size:12px; color:#666; letter-spacing:.04em; pointer-events:none; user-select:none; }
+  #loading{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:#888; background:#070708; z-index:5; }
+
+  /* ───── Control panel ───── */
+  #panel{ width:320px; flex:0 0 320px; background:var(--panel);
+    border-left:1px solid var(--line); overflow-y:auto; padding:18px 18px 60px; }
+  #panel h1{ font-size:15px; margin:0 0 4px; letter-spacing:.02em; }
+  #panel .tagline{ font-size:11px; color:var(--sub); margin:0 0 18px; line-height:1.5; }
+  .group{ margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+  .group:last-child{ border-bottom:none; }
+  .group > label{ display:block; font-size:11px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--sub); margin-bottom:9px; font-weight:600; }
+
+  .seg{ display:flex; background:var(--panel2); border-radius:9px; padding:3px; gap:3px; }
+  .seg button{ flex:1; border:none; background:transparent; color:var(--sub);
+    padding:8px 4px; font-size:12px; border-radius:6px; cursor:pointer; transition:.15s; }
+  .seg button.on{ background:var(--accent); color:#fff; }
+  .seg button:hover:not(.on){ color:var(--txt); }
+
+  .shapes{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .emblems{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .emblems button{ aspect-ratio:1; border:1px solid var(--line); background:var(--panel2);
+    border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:.15s; }
+  .emblems button svg{ width:55%; height:55%; fill:#8a8d99; }
+  .emblems button.on{ border-color:var(--accent); background:#23253a; }
+  .emblems button.on svg{ fill:var(--accent); }
+  .shapes button{ aspect-ratio:1; border:1px solid var(--line); background:var(--panel2);
+    border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:.15s; padding:0; }
+  .shapes button svg{ width:60%; height:60%; }
+  .shapes button.on{ border-color:var(--accent); background:#23253a; }
+  .shapes button.on svg{ stroke:var(--accent); }
+  .shapes button svg{ stroke:#8a8d99; fill:none; stroke-width:2; }
+
+  .swatches{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .swatch{ width:30px; height:30px; border-radius:50%; cursor:pointer;
+    border:2px solid transparent; transition:.12s; }
+  .swatch.on{ border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .row label{ font-size:12px; color:var(--sub); flex:0 0 78px; }
+  input[type=color]{ width:42px; height:30px; border:1px solid var(--line);
+    border-radius:6px; background:none; cursor:pointer; padding:2px; }
+  input[type=range]{ flex:1; accent-color:var(--accent); }
+  .val{ font-size:11px; color:var(--sub); flex:0 0 36px; text-align:right; }
+
+  .filebtn{ display:block; width:100%; text-align:center; border:1px dashed var(--line);
+    background:var(--panel2); color:var(--txt); padding:14px; border-radius:9px;
+    font-size:12px; cursor:pointer; transition:.15s; }
+  .filebtn:hover{ border-color:var(--accent); color:#fff; }
+  .filebtn small{ display:block; color:var(--sub); margin-top:3px; font-size:10px; }
+  input[type=file]{ display:none; }
+
+  .toggle{ display:flex; align-items:center; justify-content:space-between; }
+  .toggle span{ font-size:12px; color:var(--txt); }
+  .sw{ position:relative; width:42px; height:24px; }
+  .sw input{ display:none; }
+  .sw label{ position:absolute; inset:0; background:var(--panel2); border-radius:99px;
+    cursor:pointer; transition:.2s; border:1px solid var(--line); }
+  .sw label::after{ content:''; position:absolute; top:3px; left:3px; width:16px; height:16px;
+    background:#888; border-radius:50%; transition:.2s; }
+  .sw input:checked + label{ background:var(--accent); border-color:var(--accent); }
+  .sw input:checked + label::after{ transform:translateX(18px); background:#fff; }
+
+  .btn{ width:100%; border:none; background:var(--accent); color:#fff; padding:12px;
+    border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; }
+  .btn:hover{ background:#6a7bff; }
+  .btn.ghost{ background:var(--panel2); border:1px solid var(--line); color:var(--txt); margin-top:8px; }
+  .views{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .views button{ border:1px solid var(--line); background:var(--panel2); color:var(--txt);
+    padding:9px 0; font-size:12px; border-radius:7px; cursor:pointer; transition:.12s; }
+  .views button:hover{ border-color:var(--accent); color:#fff; }
+  .views button.on{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .lpresets{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .lpresets button{ border:1px solid var(--line); background:var(--panel2); color:var(--sub);
+    padding:9px 0; font-size:12px; border-radius:7px; cursor:pointer; transition:.12s; }
+  .lpresets button:hover{ color:var(--txt); }
+  .lpresets button.on{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  input[type=text], select{ background:var(--panel2); border:1px solid var(--line); color:var(--txt);
+    border-radius:7px; padding:9px; font-size:12px; font-family:inherit; flex:1; min-width:0; }
+  input[type=text]:focus, select:focus{ outline:none; border-color:var(--accent); }
+  .palette{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:12px; }
+  .palette .cell{ display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .palette .cell input[type=color]{ width:100%; height:28px; padding:2px; }
+  .palette .cell span{ font-size:9px; color:var(--sub); }
+  .hidden{ display:none !important; }
+  .note{ font-size:10.5px; color:var(--sub); line-height:1.5; margin-top:8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="loading">Loading 3D engine…</div>
+    <div id="hint">ドラッグで回転 · スクロールでズーム</div>
+  </div>
+
+  <div id="panel">
+    <h1>Enamel Pin Badge</h1>
+    <p class="tagline">金属フレーム＋エナメルの質感を3Dで再現。ドラッグで回転、裏表とも同一ビジュアル。</p>
+
+    <!-- Mode -->
+    <div class="group">
+      <label>モード</label>
+      <div class="seg" id="mode">
+        <button data-mode="frame" class="on">フレーム生成</button>
+        <button data-mode="svg">SVG変換</button>
+      </div>
+    </div>
+
+    <!-- Frame shape (frame mode only) -->
+    <div class="group" data-only="frame">
+      <label>フレーム形状</label>
+      <div class="shapes" id="shapes">
+        <button data-shape="circle" class="on" title="円">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></button>
+        <button data-shape="diamond" title="菱形">
+          <svg viewBox="0 0 24 24"><path d="M12 2 L22 12 L12 22 L2 12 Z"/></svg></button>
+        <button data-shape="pentagon" title="5角形">
+          <svg viewBox="0 0 24 24"><path d="M12 2 L22 9.5 L18 21 L6 21 L2 9.5 Z"/></svg></button>
+        <button data-shape="hexagon" title="6角形">
+          <svg viewBox="0 0 24 24"><path d="M3 7 L12 2 L21 7 L21 17 L12 22 L3 17 Z"/></svg></button>
+        <button data-shape="crest" title="クレスト">
+          <svg viewBox="0 0 24 24"><path d="M8 3 L8 5 L4 5 L4 17 L7 17 L7 19 L17 19 L17 17 L20 17 L20 5 L16 5 L16 3 Z"/></svg></button>
+        <button data-shape="emblem" title="エンブレム">
+          <svg viewBox="0 0 24 24"><path d="M5 4 L19 4 L21 11 L18 18 L12 22 L6 18 L3 11 Z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Frame (metal) color -->
+    <div class="group">
+      <label>フレームの色（金属）</label>
+      <div class="swatches" id="metalSwatches">
+        <div class="swatch" data-metal="#e6c45c" style="background:linear-gradient(145deg,#fbe9a0,#b8902f)" title="ゴールド"></div>
+        <div class="swatch on" data-metal="#d4d6dd" style="background:linear-gradient(145deg,#ffffff,#9a9da8)" title="シルバー"></div>
+        <div class="swatch" data-metal="#e0a080" style="background:linear-gradient(145deg,#ffd9c2,#b06a48)" title="ローズゴールド"></div>
+        <div class="swatch" data-metal="#3a3d44" style="background:linear-gradient(145deg,#6b6f78,#1c1e22)" title="ガンメタル"></div>
+      </div>
+      <div class="row">
+        <label>カスタム</label>
+        <input type="color" id="metalColor" value="#d4d6dd">
+        <input type="range" id="metalRough" min="5" max="60" value="28">
+        <span class="val" id="metalRoughV">.28</span>
+      </div>
+      <div class="note">右スライダー = 金属の粗さ（小さいほど鏡面）</div>
+    </div>
+
+    <!-- Interior (enamel) color -->
+    <div class="group">
+      <label>内部の色（エナメル）</label>
+      <div class="swatches" id="enamelSwatches">
+        <div class="swatch" data-enamel="#ec4d6e" style="background:#ec4d6e"></div>
+        <div class="swatch" data-enamel="#33c0ec" style="background:#33c0ec"></div>
+        <div class="swatch" data-enamel="#4caf3f" style="background:#4caf3f"></div>
+        <div class="swatch" data-enamel="#f5a623" style="background:#f5a623"></div>
+        <div class="swatch" data-enamel="#e8e2d4" style="background:#e8e2d4"></div>
+        <div class="swatch on" data-enamel="#222428" style="background:#222428"></div>
+      </div>
+      <div class="row">
+        <label>カスタム</label>
+        <input type="color" id="enamelColor" value="#222428">
+      </div>
+      <div class="row">
+        <label>反射（艶）</label>
+        <input type="range" id="enamelReflect" min="0" max="100" value="40">
+        <span class="val" id="enamelReflectV">.40</span>
+      </div>
+      <div class="note">左=マット / 右=光沢（鏡面）</div>
+      <label class="filebtn" for="enamelImage" style="margin-top:10px">
+        エナメルに画像を適用
+        <small id="enamelImageName">色を画像に置き換え（エナメル形状でクロップ）</small>
+      </label>
+      <input type="file" id="enamelImage" accept="image/*">
+      <button class="btn ghost hidden" id="clearEnamelImage" style="margin-top:8px">画像を外す</button>
+    </div>
+
+    <!-- Frame width -->
+    <div class="group" data-only="frame">
+      <label>フレーム幅 / 厚み</label>
+      <div class="row">
+        <label>縁の幅</label>
+        <input type="range" id="frameW" min="3" max="22" value="3">
+        <span class="val" id="frameWV">3</span>
+      </div>
+      <div class="row">
+        <label>立体感</label>
+        <input type="range" id="depth" min="20" max="120" value="20">
+        <span class="val" id="depthV">20</span>
+      </div>
+    </div>
+
+    <!-- Center SVG (frame mode) -->
+    <div class="group" data-only="frame">
+      <label>中央エンブレム（SVG / 金属線）</label>
+      <label class="filebtn" for="centerFile">
+        SVGをアップロード
+        <small id="centerName">線・文字としてフレームと同じ金属に変換</small>
+      </label>
+      <input type="file" id="centerFile" accept=".svg,image/svg+xml">
+      <div class="row" data-center-ctl style="opacity:.4;pointer-events:none">
+        <label>大きさ</label>
+        <input type="range" id="centerScale" min="10" max="95" value="55">
+        <span class="val" id="centerScaleV">55</span>
+      </div>
+      <div class="row" data-center-ctl style="opacity:.4;pointer-events:none">
+        <label>上下位置</label>
+        <input type="range" id="centerY" min="-50" max="50" value="0">
+        <span class="val" id="centerYV">0</span>
+      </div>
+      <div class="toggle" data-center-ctl style="opacity:.4;pointer-events:none;margin:10px 0 0">
+        <span>黒(#000000)を金属フレームに</span>
+        <div class="sw"><input type="checkbox" id="blackFrame"><label for="blackFrame"></label></div>
+      </div>
+      <div class="toggle" data-center-ctl style="opacity:.4;pointer-events:none;margin:10px 0 0">
+        <span>差し色モード（領域を塗る）</span>
+        <div class="sw"><input type="checkbox" id="accentMode"><label for="accentMode"></label></div>
+      </div>
+      <div class="toggle hidden" id="accentRimRow" style="margin-top:10px">
+        <span>金属の縁取り</span>
+        <div class="sw"><input type="checkbox" id="accentRim" checked><label for="accentRim"></label></div>
+      </div>
+      <div id="accentPalette" class="palette hidden"></div>
+      <button class="btn ghost hidden" id="clearCenter" data-center-ctl style="margin-top:12px">エンブレムを削除</button>
+      <div class="note">金属線・文字 → 同じ金属（フレームと同化）。差し色モード → 各閉領域を色付きエナメルに（SVGの色を自動取込・個別変更可）。</div>
+    </div>
+
+    <!-- SVG convert mode -->
+    <div class="group hidden" data-only="svg">
+      <label>SVGをこの質感に変換</label>
+      <label class="filebtn" for="convertFile">
+        SVGをアップロード
+        <small id="convertName">塗り→エナメル / 輪郭→金属フレーム</small>
+      </label>
+      <input type="file" id="convertFile" accept=".svg,image/svg+xml">
+      <div class="row">
+        <label>線の太さ</label>
+        <input type="range" id="convertEdge" min="0" max="14" value="5">
+        <span class="val" id="convertEdgeV">5</span>
+      </div>
+      <div class="toggle" style="margin-top:10px">
+        <span>元のSVG配色を使う</span>
+        <div class="sw"><input type="checkbox" id="useSvgColors"><label for="useSvgColors"></label></div>
+      </div>
+      <div class="note">SVGの各塗りがエナメル、輪郭が立ち上がった金属になります。OFFなら上の内部色で統一。</div>
+    </div>
+
+    <!-- View direction -->
+    <div class="group">
+      <label>視点（クリックで静止）</label>
+      <div class="views" id="views">
+        <button data-view="front" class="on">正面</button>
+        <button data-view="back">裏面</button>
+        <button data-view="free">自由</button>
+      </div>
+    </div>
+
+    <!-- Lighting -->
+    <div class="group">
+      <label>ライティング</label>
+      <div class="lpresets" id="lpresets">
+        <button data-lp="studio" class="on">スタジオ</button>
+        <button data-lp="top">トップ</button>
+        <button data-lp="dramatic">ドラマ</button>
+        <button data-lp="soft">ソフト</button>
+        <button data-lp="left">左</button>
+        <button data-lp="right">右</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label>光の向き</label>
+        <input type="range" id="lightAz" min="0" max="360" value="135">
+        <span class="val" id="lightAzV">135°</span>
+      </div>
+      <div class="row">
+        <label>高さ</label>
+        <input type="range" id="lightEl" min="-10" max="90" value="55">
+        <span class="val" id="lightElV">55°</span>
+      </div>
+      <div class="row">
+        <label>強さ</label>
+        <input type="range" id="lightInt" min="20" max="450" value="240">
+        <span class="val" id="lightIntV">2.4</span>
+      </div>
+    </div>
+
+    <!-- Render options -->
+    <div class="group">
+      <label>表示</label>
+      <div class="toggle" style="margin-bottom:12px">
+        <span>自動回転</span>
+        <div class="sw"><input type="checkbox" id="autoRotate"><label for="autoRotate"></label></div>
+      </div>
+      <div class="row">
+        <label>背景</label>
+        <input type="range" id="bg" min="0" max="40" value="6">
+        <span class="val" id="bgV">6</span>
+      </div>
+      <button class="btn" id="snap" style="margin-top:6px">PNGで書き出し</button>
+    </div>
+
+    <!-- Presets (saved in browser) -->
+    <div class="group">
+      <label>プリセット（ブラウザに保存）</label>
+      <div class="row">
+        <input type="text" id="presetName" placeholder="プリセット名">
+        <button class="btn" id="savePreset" style="width:auto;padding:9px 16px">保存</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <select id="presetList"><option value="">— 保存済み —</option></select>
+        <button class="btn ghost" id="loadPreset" style="width:auto;padding:9px 12px;margin-top:0">読込</button>
+        <button class="btn ghost" id="deletePreset" style="width:auto;padding:9px 12px;margin-top:0">削除</button>
+      </div>
+      <div class="note">現在の全設定（形状・色・SVG・差し色・ライティング・背景）を保存。リロードしても最後の状態を自動復元します。</div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+
+/* ════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+const state = {
+  mode: 'frame',
+  shape: 'circle',
+  metal: '#d4d6dd',
+  metalRough: 0.28,
+  enamel: '#222428',
+  enamelReflect: 0.4,   // enamel reflectivity: 0 = matte … 1 = glossy
+  enamelTexture: null,  // THREE.Texture applied to the base enamel (replaces its colour)
+  enamelImageURL: null, // data URL of the uploaded image (for presets / restore)
+  frameW: 3,        // % of radius (min by default)
+  depth: 20,        // arbitrary units → mapped (min by default)
+  centerShapes: null,   // parsed SVG shapes for center emblem
+  centerSvgText: null,  // raw SVG text (so presets can re-parse it)
+  centerBuiltin: null,  // name of a built-in emblem (star/heart/bolt/circle)
+  centerScale: 55,
+  centerY: 0,
+  accentMode: false,    // interpret center SVG fills as coloured enamel cells
+  accentRim: true,      // raised metal outline around each accent cell
+  blackFrame: false,    // "#000000 = frame" rule: black fills → metal, others → enamel
+  accentColors: [],     // per-region colour (auto from SVG fill, overridable)
+  convertSvgText: null, // raw SVG text for convert mode
+  viewMode: 'front',    // front (locked) | back (locked) | free
+  autoRotate: false,
+  bg: 6,
+  convertData: null,    // parsed SVG for convert mode
+  convertEdge: 5,
+  useSvgColors: false,
+};
+
+const R = 5;            // base badge radius (world units)
+
+/* ════════════════════════════════════════════════════════════════
+   THREE SETUP
+═══════════════════════════════════════════════════════════════════ */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.3;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 0, 26);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 12;
+controls.maxDistance = 40;
+controls.autoRotateSpeed = 2.2;
+
+// Environment (studio reflections for the metal/enamel)
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// Adjustable studio rig. key direction is driven by az/el; presets set the mood.
+// Neutral white rig — no colour tints. Default lights the badge top brighter than bottom.
+const key  = new THREE.DirectionalLight(0xffffff, 2.6);
+const rim  = new THREE.DirectionalLight(0xffffff, 0.5);
+const fill = new THREE.DirectionalLight(0xffffff, 0.18);
+const amb  = new THREE.AmbientLight(0xffffff, 0.30);
+const head = new THREE.DirectionalLight(0xffffff, 0.10); // follows camera (kept low so the top→bottom gradient survives)
+scene.add(key, rim, fill, amb, head);
+
+const light = { az:90, el:66, keyInt:2.6, rimInt:0.5, fillInt:0.18, ambInt:0.30, headInt:0.10, exposure:1.28 };
+
+const LIGHT_PRESETS = {
+  studio:   { az:90,  el:66, keyInt:2.6, rimInt:0.5, fillInt:0.18, ambInt:0.30, headInt:0.10, exposure:1.28 }, // top-bright (default)
+  top:      { az:90,  el:86, keyInt:2.5, rimInt:0.5, fillInt:0.25, ambInt:0.38, headInt:0.10, exposure:1.26 },
+  dramatic: { az:112, el:30, keyInt:3.4, rimInt:0.4, fillInt:0.06, ambInt:0.12, headInt:0.06, exposure:1.24 },
+  soft:     { az:90,  el:62, keyInt:1.4, rimInt:0.7, fillInt:0.55, ambInt:0.58, headInt:0.18, exposure:1.34 },
+  left:     { az:150, el:58, keyInt:2.6, rimInt:0.5, fillInt:0.15, ambInt:0.30, headInt:0.10, exposure:1.28 },
+  right:    { az:30,  el:58, keyInt:2.6, rimInt:0.5, fillInt:0.15, ambInt:0.30, headInt:0.10, exposure:1.28 },
+};
+
+function applyLight(){
+  const r = 16;
+  const az = light.az*Math.PI/180, el = light.el*Math.PI/180;
+  key.position.set(r*Math.cos(el)*Math.cos(az), r*Math.sin(el), r*Math.cos(el)*Math.sin(az));
+  rim.position.set(-r*0.4, r*0.55, -r*0.4);    // upper-back edge light
+  fill.position.set(0, -r*0.35, r*0.7);         // gentle front fill, slightly low
+  key.intensity=light.keyInt; rim.intensity=light.rimInt; fill.intensity=light.fillInt;
+  amb.intensity=light.ambInt; head.intensity=light.headInt;
+  renderer.toneMappingExposure = light.exposure;
+}
+applyLight();
+
+const badge = new THREE.Group();
+// default tilt: 5° about the central X axis — top leans back, bottom comes forward
+badge.rotation.x = -5 * Math.PI/180;
+scene.add(badge);
+
+document.getElementById('loading').remove();
+
+/* ════════════════════════════════════════════════════════════════
+   MATERIALS
+═══════════════════════════════════════════════════════════════════ */
+function metalMat(){
+  return new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(state.metal),
+    metalness: 1.0,
+    roughness: state.metalRough,
+    envMapIntensity: 2.0,
+    clearcoat: 0.3,
+    clearcoatRoughness: 0.2,
+  });
+}
+function enamelMat(hex, withImage){
+  const useImg = withImage && state.enamelTexture;
+  const clamp = (v,lo,hi)=> Math.max(lo, Math.min(hi, v));
+  const r = state.enamelReflect;            // 0 = matte … 1 = glossy (0.4 ≈ default look)
+  const m = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(useImg ? 0xffffff : (hex || state.enamel)),
+    metalness: 0.0,
+    roughness:          clamp(0.38 - (r-0.4)*0.60, 0.05, 0.75),
+    clearcoat:          clamp(0.50 + (r-0.4)*0.80, 0.05, 1.0),
+    clearcoatRoughness: clamp(0.34 - (r-0.4)*0.50, 0.04, 0.6),
+    envMapIntensity:    clamp(0.55 + (r-0.4)*1.60, 0.05, 2.2),
+    sheen: 0.25,
+    sheenRoughness: 0.7,
+    sheenColor: new THREE.Color(0xffffff),
+  });
+  if(useImg) m.map = state.enamelTexture;   // base enamel colour replaced by the image
+  return m;
+}
+
+// planar UVs so an uploaded image maps flat across the enamel (clipped to its shape).
+// vMode 'y'  → geometry already in the badge xy-plane (polygon cap).
+// vMode 'negz' → lathe geometry (mesh is rotated x+90°, so badge-vertical = -localZ).
+function applyPlanarUV(geo, size, vMode){
+  const pos = geo.attributes.position;
+  const uv = new Float32Array(pos.count*2);
+  for(let i=0;i<pos.count;i++){
+    const v = (vMode==='negz') ? -pos.getZ(i) : pos.getY(i);
+    uv[i*2]   = pos.getX(i)/size + 0.5;
+    uv[i*2+1] = v/size + 0.5;
+  }
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SHAPE BUILDERS  (rounded regular polygons + circle)
+═══════════════════════════════════════════════════════════════════ */
+function polyVerts(n, radius, rot){
+  const v = [];
+  for(let i=0;i<n;i++){
+    const a = rot + (i/n)*Math.PI*2;
+    v.push(new THREE.Vector2(Math.cos(a)*radius, Math.sin(a)*radius));
+  }
+  return v;
+}
+
+function buildRoundedInto(target, verts, cr){
+  const n = verts.length;
+  for(let i=0;i<n;i++){
+    const c = verts[i], p = verts[(i-1+n)%n], nx = verts[(i+1)%n];
+    const toP = p.clone().sub(c); const toN = nx.clone().sub(c);
+    const lP = toP.length(), lN = toN.length();
+    const r = Math.min(cr, lP*0.5, lN*0.5);
+    const s = c.clone().add(toP.multiplyScalar(r/lP));
+    const e = c.clone().add(toN.multiplyScalar(r/lN));
+    if(i===0) target.moveTo(s.x, s.y); else target.lineTo(s.x, s.y);
+    target.quadraticCurveTo(c.x, c.y, e.x, e.y);
+  }
+  target.closePath();
+}
+
+// custom silhouettes given as normalized vertex lists (fill the unit circle), CCW-corrected
+function mkVerts(raw){
+  let a=0; for(let i=0;i<raw.length;i++){ const p=raw[i], q=raw[(i+1)%raw.length]; a += p[0]*q[1]-q[0]*p[1]; }
+  return a<0 ? raw.slice().reverse() : raw;
+}
+// "crest": stepped-shoulder square with a flat banner bottom.
+const CREST_VERTS = mkVerts([
+  [-0.686, 1.00], [-0.686, 0.814], [-0.943, 0.814], [-0.943, -0.686],
+  [-0.743, -0.686], [-0.743, -0.914], [0.743, -0.914], [0.743, -0.686],
+  [0.943, -0.686], [0.943, 0.814], [0.686, 0.814], [0.686, 1.00],
+]);
+// "emblem": rounded shield/crest — wide rounded top, tapering to a rounded bottom point.
+const EMBLEM_VERTS = mkVerts([
+  [-0.74, 0.96], [0.74, 0.96], [0.97, 0.26], [0.64, -0.44],
+  [0.0, -1.02], [-0.64, -0.44], [-0.97, 0.26],
+]);
+
+const SHAPE_DEF = {
+  circle:   { n:0 },
+  diamond:  { n:4, rot:-Math.PI/2, cr:0.6  },
+  pentagon: { n:5, rot:Math.PI/2,  cr:0.5  },
+  hexagon:  { n:6, rot:0,          cr:0.45 },
+  crest:    { verts:CREST_VERTS,   cr:0.2  },
+  emblem:   { verts:EMBLEM_VERTS,  cr:0.45 },
+};
+
+// custom vertices scaled to `radius`, optionally inset inward by world-width `w` (radial)
+function customVerts(verts, radius, w){
+  return verts.map(([vx,vy])=>{
+    let x = vx*radius, y = vy*radius;
+    if(w){ const L = Math.hypot(x,y) || 1; const f = (L-w)/L; x*=f; y*=f; }
+    return new THREE.Vector2(x, y);
+  });
+}
+
+// outer silhouette at given radius (Shape, or Path if asPath)
+function outerShape(radius, asPath){
+  const d = SHAPE_DEF[state.shape];
+  const t = asPath ? new THREE.Path() : new THREE.Shape();
+  if(d.verts){ buildRoundedInto(t, customVerts(d.verts, radius, 0), d.cr * (radius/R)); return t; }
+  if(d.n === 0){ t.absarc(0,0,radius,0,Math.PI*2, asPath); return t; }
+  buildRoundedInto(t, polyVerts(d.n, radius, d.rot), d.cr * (radius/R));
+  return t;
+}
+// inset silhouette (for enamel / frame hole) — every edge moved inward by world-width w
+function insetShape(w, asPath){
+  const d = SHAPE_DEF[state.shape];
+  const t = asPath ? new THREE.Path() : new THREE.Shape();
+  if(d.verts){ buildRoundedInto(t, customVerts(d.verts, R, w), Math.max(0.06, d.cr - w*0.3) * ((R-w)/R)); return t; }
+  if(d.n === 0){ t.absarc(0,0,R-w,0,Math.PI*2, asPath); return t; }
+  // regular polygon: apothem shrinks by w  →  new circumradius
+  const newR = R - w / Math.cos(Math.PI/d.n);
+  buildRoundedInto(t, polyVerts(d.n, newR, d.rot), Math.max(0.06, d.cr - w*0.3) * (newR/R));
+  return t;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SEAMLESS CIRCLE PROFILES (revolved with LatheGeometry → no seam)
+═══════════════════════════════════════════════════════════════════ */
+function arcPoints(out, cx, cz, r, a0, a1, n){
+  for(let i=0;i<=n;i++){
+    const a = a0 + (a1-a0)*(i/n);
+    out.push(new THREE.Vector2(cx + Math.cos(a)*r, cz + Math.sin(a)*r));
+  }
+}
+// SOLID metal body cross-section with a recessed circular well on the front face.
+// front half spans z 0..topZ; the bottom (z=0) is the mirror plane. The outer edge
+// is ONE continuous arc bulging at the equator so the mirrored rim reads as a single
+// rounded edge (not a double ridge).
+function circleBodyProfile(innerR, outerR, topZ, bev, wellBottom){
+  const p = [];
+  p.push(new THREE.Vector2(0, 0));                       // centre bottom (mirror plane)
+  p.push(new THREE.Vector2(outerR, 0));                  // equator — max radius
+  const edgeInset = Math.min(topZ*0.7, (outerR-innerR)*0.4);
+  const segs = 16;                                       // single rim arc: equator → frame top
+  for(let i=1;i<=segs;i++){
+    const t = i/segs;
+    const z = topZ*Math.sin(t*Math.PI/2);
+    const r = outerR - edgeInset*(1-Math.cos(t*Math.PI/2));
+    p.push(new THREE.Vector2(r, z));
+  }
+  p.push(new THREE.Vector2(innerR + bev, topZ));         // flat frame top
+  arcPoints(p, innerR + bev, topZ - bev, bev, Math.PI/2, Math.PI, 8);  // inner lip round
+  p.push(new THREE.Vector2(innerR, wellBottom));         // down the well wall
+  p.push(new THREE.Vector2(0, wellBottom));              // across the well floor
+  p.push(new THREE.Vector2(0, 0));                       // close up the axis
+  return p;
+}
+// domed enamel disc that drops into the well (radius, z). baseZ sits on the well floor.
+function circleEnamelProfile(rOuter, topZ, baseZ, dome){
+  const p = [];
+  p.push(new THREE.Vector2(0, baseZ));                   // bottom centre (start)
+  p.push(new THREE.Vector2(rOuter, baseZ));              // bottom edge
+  p.push(new THREE.Vector2(rOuter, topZ));              // up the side wall to the rim
+  const segs = 28;                                       // shallow dome edge → centre
+  for(let i=1;i<=segs;i++){
+    const t = i/segs;
+    p.push(new THREE.Vector2(rOuter*(1-t), topZ + dome*Math.sin(t*Math.PI/2)));
+  }
+  p.push(new THREE.Vector2(0, baseZ));                   // close down the axis
+  return p;
+}
+// LatheGeometry leaves a normal seam where the revolution closes (θ=0 vs 2π):
+// the first and last vertex columns share positions but get different normals,
+// breaking the highlight. Weld them by averaging so the surface reads continuous.
+function weldLatheSeam(geo, rows, segments){
+  const nrm = geo.attributes.normal;
+  const last = segments*rows;
+  for(let j=0;j<rows;j++){
+    const a=j, b=last+j;
+    const nx=(nrm.getX(a)+nrm.getX(b)), ny=(nrm.getY(a)+nrm.getY(b)), nz=(nrm.getZ(a)+nrm.getZ(b));
+    const l=Math.hypot(nx,ny,nz)||1;
+    nrm.setXYZ(a, nx/l, ny/l, nz/l);
+    nrm.setXYZ(b, nx/l, ny/l, nz/l);
+  }
+  nrm.needsUpdate = true;
+}
+function latheMesh(profile, mat){
+  const segments = 220;
+  const geo = new THREE.LatheGeometry(profile, segments);
+  geo.computeVertexNormals();
+  weldLatheSeam(geo, profile.length, segments);
+  const m = new THREE.Mesh(geo, mat);
+  m.rotation.x = Math.PI/2;     // revolve axis Y → badge depth axis Z (+z front)
+  return m;
+}
+
+// Build a domed enamel cap for ANY shape: a radially-tessellated mountain (apex at the
+// centre, rim at edgeZ) plus a short skirt down to baseZ. Extrude caps can't dome because
+// they have no interior vertices — this does, so the centre genuinely lifts.
+function domedCapMesh(shape, edgeZ, baseZ, dome, mat, rings){
+  rings = rings || 16;
+  let pts = shape.getPoints(8);
+  if(pts.length>1 && pts[0].distanceTo(pts[pts.length-1])<1e-5) pts = pts.slice(0,-1);
+  const N = pts.length;
+  let cx=0, cy=0; for(const p of pts){ cx+=p.x; cy+=p.y; } cx/=N; cy/=N;
+  const pos=[], idx=[];
+  const prof = f => (Math.cos(f*Math.PI)+1)*0.5;     // 1 at centre → 0 at rim
+  pos.push(cx, cy, edgeZ + dome);                    // 0: apex
+  for(let k=1;k<=rings;k++){
+    const f=k/rings, z=edgeZ + dome*prof(f);
+    for(let i=0;i<N;i++) pos.push(cx+(pts[i].x-cx)*f, cy+(pts[i].y-cy)*f, z);
+  }
+  const baseStart = 1 + rings*N;
+  for(let i=0;i<N;i++) pos.push(pts[i].x, pts[i].y, baseZ);   // base ring (skirt bottom)
+  for(let i=0;i<N;i++) idx.push(0, 1+i, 1+(i+1)%N);           // apex fan
+  for(let k=1;k<rings;k++){                                   // between rings
+    const s0=1+(k-1)*N, s1=1+k*N;
+    for(let i=0;i<N;i++){ const j=(i+1)%N;
+      idx.push(s0+i, s1+i, s0+j); idx.push(s0+j, s1+i, s1+j);
+    }
+  }
+  const topB = 1+(rings-1)*N;                                 // skirt
+  for(let i=0;i<N;i++){ const j=(i+1)%N;
+    idx.push(topB+i, baseStart+i, topB+j); idx.push(topB+j, baseStart+i, baseStart+j);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  mat.side = THREE.DoubleSide;
+  return new THREE.Mesh(geo, mat);
+}
+
+// height of the enamel dome at a point (relative to the rim), so SVG art can ride the dome
+function domeRiseAt(x, y, domeH, rMax){
+  const f = Math.min(1, Math.hypot(x,y)/(rMax||1));
+  return domeH * (Math.cos(f*Math.PI)+1)*0.5;     // domeH at centre → 0 at rim
+}
+// lift every vertex of a geometry onto the dome surface so the art follows the curve
+function conformToDome(geo, domeH, rMax, groupY){
+  groupY = groupY || 0;
+  const p = geo.attributes.position;
+  for(let i=0;i<p.count;i++){
+    p.setZ(i, p.getZ(i) + domeRiseAt(p.getX(i), p.getY(i)+groupY, domeH, rMax));
+  }
+  p.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BADGE BUILD
+═══════════════════════════════════════════════════════════════════ */
+function clearGroup(g){
+  for(let i=g.children.length-1;i>=0;i--){
+    const c = g.children[i];
+    c.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+    g.remove(c);
+  }
+}
+
+// build the FRONT half into a fresh group (z range 0..top), then mirror for back
+function buildFrameBadge(){
+  const front = new THREE.Group();
+  const half = state.depth/100 * 0.45 + 0.08;      // metal half-thickness — thin like a real pin
+  const enamelDrop = half * 0.4;                    // enamel sits below frame top (scales with thickness)
+  const wWorld = state.frameW/100 * R;             // frame width in world units
+  const domeH = 0;                                  // enamel dome disabled (flat)
+  const mMat = metalMat();
+  const innerR = R - wWorld;
+  let metalTop;
+
+  if(state.shape === 'circle'){
+    // ── Seamless circle: solid metal body with a recessed well + domed enamel ──
+    metalTop = half;
+    const bev = Math.min(0.16, half*0.45, wWorld*0.5);
+    const wellBottom = Math.max(0.06, half*0.4);
+    const enTop = half - enamelDrop;                       // enamel rim below frame top
+    front.add(latheMesh(circleBodyProfile(innerR, R, half, bev, wellBottom), mMat));
+    const enMesh = latheMesh(circleEnamelProfile(innerR - 0.04, enTop, wellBottom - 0.05, domeH), enamelMat(state.enamel, true));
+    applyPlanarUV(enMesh.geometry, 2*innerR, 'negz');
+    front.add(enMesh);
+  } else {
+    // ── Polygons: extruded ring with inner hole + recessed enamel ──
+    const ringShape = outerShape(R);
+    ringShape.holes.push(insetShape(wWorld, true));
+    const ringGeo = new THREE.ExtrudeGeometry(ringShape, {
+      depth: half*0.5, bevelEnabled:true,
+      bevelThickness: half*0.5, bevelSize: 0.07, bevelSegments: 6, curveSegments: 140,
+    });
+    ringGeo.computeBoundingBox();
+    metalTop = ringGeo.boundingBox.max.z;
+    front.add(new THREE.Mesh(ringGeo, mMat));
+
+    // domed enamel — radial tessellation so the centre actually lifts into a cabochon
+    const edgeZ = metalTop - enamelDrop;
+    const enMesh = domedCapMesh(insetShape(wWorld), edgeZ, 0, domeH, enamelMat(state.enamel, true), 18);
+    applyPlanarUV(enMesh.geometry, 2*innerR, 'y');
+    front.add(enMesh);
+
+    // thin metal floor behind the enamel (so the well has a base)
+    const floorGeo = new THREE.ExtrudeGeometry(insetShape(wWorld), {
+      depth: 0.04, bevelEnabled:false, curveSegments: 120,
+    });
+    const floor = new THREE.Mesh(floorGeo, mMat);
+    floor.position.z = -0.001;
+    front.add(floor);
+  }
+
+  // 3 ── Center SVG → black=metal rule / coloured accent cells / metal emblem ──
+  if(state.centerShapes && state.centerShapes.length){
+    if(state.blackFrame){
+      const g = buildColorRule(state.centerShapes, metalTop - enamelDrop, metalTop, mMat, domeH, innerR);
+      if(g) front.add(g);
+    } else if(state.accentMode){
+      const cells = buildAccentCells(state.centerShapes, metalTop - enamelDrop, metalTop, mMat, domeH, innerR);
+      if(cells) front.add(cells);
+    } else {
+      const emblem = buildEmblem(state.centerShapes, mMat.clone(), metalTop, domeH, innerR);
+      if(emblem) front.add(emblem);
+    }
+  }
+
+  assembleDoubleSided(front, metalTop);
+}
+
+// SVG convert mode: each filled shape becomes an enamel cell whose top sits flush,
+// with a raised metal rim/outline showing around it (enamel inset toward its own centroid).
+function buildConvertBadge(){
+  if(!state.convertData){ buildFrameBadge(); return; }
+  const front = new THREE.Group();
+  const half = state.depth/100 * 0.45 + 0.08;
+  const mMat = metalMat();
+
+  const norm = normalizeSvg(state.convertData.shapes, R*1.7);
+  if(!norm.length){ buildFrameBadge(); return; }
+
+  // rim width driven by the edge slider (inset of the enamel toward each centroid)
+  const inset = state.convertEdge/100;          // 0..0.14 fraction
+  const s = 1 - inset;
+
+  // 1 ── metal bodies (full silhouette, beveled) ----------------------
+  let metalTop = 0;
+  const geos = norm.map(item=>{
+    const g = new THREE.ExtrudeGeometry(item.shape, {
+      depth: half*0.55, bevelEnabled:true,
+      bevelThickness: half*0.45, bevelSize: 0.05, bevelSegments: 5, curveSegments: 56,
+    });
+    g.computeBoundingBox();
+    metalTop = Math.max(metalTop, g.boundingBox.max.z);
+    return g;
+  });
+  geos.forEach(g=> front.add(new THREE.Mesh(g, mMat.clone())));
+
+  // 2 ── enamel insets, top flush just above the metal cap ------------
+  norm.forEach((item, i)=>{
+    const g = new THREE.ExtrudeGeometry(item.shape, {
+      depth: half*0.55, bevelEnabled:true,
+      bevelThickness: 0.05, bevelSize: 0.03, bevelSegments: 3, curveSegments: 56,
+    });
+    g.computeBoundingBox();
+    const col = state.useSvgColors && item.color ? item.color : state.enamel;
+    const m = new THREE.Mesh(g, enamelMat(col));
+    const c = shapeCentroid(item.shape);
+    m.scale.set(s, s, 1);                         // inset in-plane only
+    m.position.x = c.x*(1-s);
+    m.position.y = c.y*(1-s);
+    m.position.z = (metalTop + 0.015) - g.boundingBox.max.z;
+    front.add(m);
+  });
+
+  assembleDoubleSided(front, metalTop);
+}
+
+function shapeCentroid(shape){
+  const pts = shape.getPoints(48);
+  let x=0,y=0;
+  pts.forEach(p=>{ x+=p.x; y+=p.y; });
+  return { x:x/pts.length, y:y/pts.length };
+}
+
+// build emblem group from parsed shapes, scaled+positioned, raised to metalTop
+function buildEmblem(shapes, mat, metalTop, domeH, rMax){
+  const g = new THREE.Group();
+  const targetR = state.centerScale/100 * R;
+  const norm = normalizeSvg(shapes, targetR*2);
+  if(!norm.length) return null;
+  const eDepth = metalTop*0.42, eBevT = metalTop*0.26;
+  const eTop = eDepth + eBevT;            // local max z of each emblem geometry
+  const groupY = state.centerY/100 * R;
+  norm.forEach(item=>{
+    const geo = new THREE.ExtrudeGeometry(item.shape, {
+      depth: eDepth, bevelEnabled:true,
+      bevelThickness:eBevT, bevelSize:0.06, bevelSegments:4, curveSegments:72,
+    });
+    conformToDome(geo, domeH, rMax, groupY);   // ride the enamel dome so it never sinks
+    g.add(new THREE.Mesh(geo, mat));
+  });
+  // emblem top rides the dome; stays proud of the enamel by ~enamelDrop everywhere
+  g.position.z = metalTop - eTop;
+  g.position.y += groupY;
+  return g;
+}
+
+// ring = outer contour of a shape with an inset hole (so the metal rim is an outline,
+// NOT a cap that would cover the flush enamel). Keeps the shape's own holes too.
+function ringShapeFromShape(shape, s){
+  const ring = new THREE.Shape();
+  const outer = shape.getPoints(220);
+  outer.forEach((p,i)=> i===0 ? ring.moveTo(p.x,p.y) : ring.lineTo(p.x,p.y));
+  ring.closePath();
+  (shape.holes||[]).forEach(h=>{
+    const hp = new THREE.Path();
+    h.getPoints(220).forEach((p,i)=> i===0 ? hp.moveTo(p.x,p.y) : hp.lineTo(p.x,p.y));
+    ring.holes.push(hp);
+  });
+  const c = shapeCentroid(shape);
+  const inset = new THREE.Path();
+  outer.forEach((p,i)=>{
+    const x = c.x+(p.x-c.x)*s, y = c.y+(p.y-c.y)*s;
+    i===0 ? inset.moveTo(x,y) : inset.lineTo(x,y);
+  });
+  inset.closePath();
+  ring.holes.push(inset);
+  return ring;
+}
+
+// build accent cells: each closed SVG region → a coloured enamel patch FLUSH with the
+// base enamel, optionally outlined by a thin raised metal ring. Overlapping cells get a
+// tiny per-index z step so the shared area never z-fights (no flicker).
+function buildAccentCells(shapes, baseEnamelTop, frameTop, mMat, domeH, rMax){
+  const g = new THREE.Group();
+  const targetR = state.centerScale/100 * R;
+  const norm = normalizeSvg(shapes, targetR*2);
+  if(!norm.length) return null;
+  const flushZ = baseEnamelTop + 0.05;         // enamel top ≈ base enamel surface (flush)
+  const baseZ  = baseEnamelTop - 0.10;          // body sinks into the base enamel
+  const rimTop = frameTop;                       // metal outline reaches the badge frame height
+  const STEP   = 0.005;                          // per-cell depth step → kills z-fighting
+  const groupY = state.centerY/100 * R;
+  norm.forEach((item, i)=>{
+    const z = i*STEP;
+    // coloured enamel patch — sits flush on the (domed) base enamel
+    const enGeo = new THREE.ExtrudeGeometry(item.shape, {
+      depth: flushZ-baseZ, bevelEnabled:true, bevelThickness:0.02, bevelSize:0.02, bevelSegments:2, curveSegments:64,
+    });
+    enGeo.computeBoundingBox();
+    const col = state.accentColors[i] || item.color || state.enamel;
+    const en = new THREE.Mesh(enGeo, enamelMat(col));
+    en.position.z = (flushZ + z) - enGeo.boundingBox.max.z;
+    conformToDome(enGeo, domeH, rMax, groupY);   // follow the dome
+    g.add(en);
+    // thin raised metal outline (ring with a hole → never caps the enamel)
+    if(state.accentRim){
+      const rimGeo = new THREE.ExtrudeGeometry(ringShapeFromShape(item.shape, 0.85), {
+        depth: rimTop-baseZ, bevelEnabled:true, bevelThickness:0.03, bevelSize:0.02, bevelSegments:3, curveSegments:64,
+      });
+      rimGeo.computeBoundingBox();
+      const rim = new THREE.Mesh(rimGeo, mMat.clone());
+      // ALL SVG frame parts share exactly the badge frame height (no per-cell step).
+      // overlaps are silver-on-silver so there is no colour flicker.
+      rim.position.z = rimTop - rimGeo.boundingBox.max.z;
+      conformToDome(rimGeo, domeH, rMax, groupY);
+      g.add(rim);
+    }
+  });
+  g.position.y += groupY;
+  return g;
+}
+
+// is this fill colour (near) black?  → used by the "#000000 = frame" rule
+function isBlackish(hex){
+  if(!hex) return false;
+  const h = hex.replace('#',''); if(h.length < 6) return false;
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  return (0.299*r + 0.587*g + 0.114*b) < 40;     // luminance threshold (#000000, near-black)
+}
+// "#000000 = frame" rule: black fills → raised metal (frame height), other fills → enamel (flush)
+function buildColorRule(shapes, baseEnamelTop, frameTop, mMat, domeH, rMax){
+  const g = new THREE.Group();
+  const norm = normalizeSvg(shapes, (state.centerScale/100 * R)*2);
+  if(!norm.length) return null;
+  const groupY = state.centerY/100 * R;
+  const eDepth = frameTop*0.42, eBevT = frameTop*0.26, eTop = eDepth + eBevT;  // metal (match emblem)
+  const flushZ = baseEnamelTop + 0.05, baseZ = baseEnamelTop - 0.10, STEP = 0.005;
+  let ei = 0;
+  norm.forEach(item=>{
+    if(isBlackish(item.color)){
+      // black → metal, raised to the badge frame height
+      const geo = new THREE.ExtrudeGeometry(item.shape, {
+        depth:eDepth, bevelEnabled:true, bevelThickness:eBevT, bevelSize:0.05, bevelSegments:4, curveSegments:72,
+      });
+      conformToDome(geo, domeH, rMax, groupY);
+      const m = new THREE.Mesh(geo, mMat.clone());
+      m.position.z = frameTop - eTop;
+      g.add(m);
+    } else {
+      // non-black → enamel cell (its own colour), flush with the base enamel
+      const geo = new THREE.ExtrudeGeometry(item.shape, {
+        depth:flushZ-baseZ, bevelEnabled:true, bevelThickness:0.02, bevelSize:0.02, bevelSegments:2, curveSegments:64,
+      });
+      geo.computeBoundingBox();
+      const m = new THREE.Mesh(geo, enamelMat(item.color || state.enamel));
+      m.position.z = (flushZ + ei*STEP) - geo.boundingBox.max.z;
+      conformToDome(geo, domeH, rMax, groupY);
+      g.add(m); ei++;
+    }
+  });
+  g.position.y += groupY;
+  return g;
+}
+
+// Normalize a set of {shape,color} so combined bbox fits within `size`, centered at origin, Y-up
+function normalizeSvg(items, size){
+  if(!items || !items.length) return [];
+  // bounding box across all shape points
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  items.forEach(it=>{
+    it.shape.getPoints(40).forEach(p=>{
+      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+    });
+    (it.shape.holes||[]).forEach(h=>h.getPoints(40).forEach(p=>{
+      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+    }));
+  });
+  const w = maxX-minX, h = maxY-minY;
+  const scale = size / Math.max(w,h);
+  const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+  // rebuild shapes transformed: center, scale, flip Y (SVG y-down → world y-up)
+  const out = [];
+  items.forEach(it=>{
+    const ns = new THREE.Shape();
+    copyTransformed(it.shape, ns, cx, cy, scale);
+    (it.shape.holes||[]).forEach(hole=>{
+      const nh = new THREE.Path();
+      copyTransformed(hole, nh, cx, cy, scale);
+      ns.holes.push(nh);
+    });
+    out.push({ shape:ns, color: it.color });
+  });
+  return out;
+}
+function copyTransformed(src, dst, cx, cy, scale){
+  // sample, center, scale, flip Y (SVG y-down → world y-up).
+  // flipping Y reverses winding → reverse point order to restore it,
+  // otherwise ExtrudeGeometry caps face backwards and get culled.
+  const pts = src.getPoints(64).map(p=>({
+    x:(p.x-cx)*scale, y:-(p.y-cy)*scale,
+  })).reverse();
+  pts.forEach((p,i)=> i===0 ? dst.moveTo(p.x,p.y) : dst.lineTo(p.x,p.y));
+}
+
+// take a FRONT group (geometry spanning z 0..top, capped toward +z) and
+// mirror it across the z=0 plane to make an identical back. The two halves
+// meet at z=0 and never overlap.
+function assembleDoubleSided(front, top){
+  clearGroup(badge);
+  front.position.z = 0;
+  badge.add(front);
+  // 180° rotation (not a mirror) so the back is an identical, readable copy
+  // facing the other way — text/emblems stay correct, not flipped.
+  const back = front.clone();
+  back.rotation.y = Math.PI;   // geometry now spans -top..0, capped toward -z
+  back.position.z = 0;
+  badge.add(back);
+  badge.position.z = 0;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   REBUILD dispatcher
+═══════════════════════════════════════════════════════════════════ */
+function rebuild(){
+  if(state.mode === 'svg') buildConvertBadge();
+  else buildFrameBadge();
+  if(typeof saveLast === 'function') saveLast();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SVG PARSING
+═══════════════════════════════════════════════════════════════════ */
+const svgLoader = new SVGLoader();
+function parseSvgText(text){
+  const data = svgLoader.parse(text);
+  const items = [];
+  data.paths.forEach(path=>{
+    const shapes = SVGLoader.createShapes(path);
+    const color = path.color && path.userData?.style?.fill !== 'none'
+      ? '#' + path.color.getHexString() : null;
+    shapes.forEach(s=> items.push({ shape:s, color }));
+  });
+  return items;
+}
+
+// ── Built-in emblems (authored in SVG y-down convention so normalizeSvg orients them) ──
+function embStar(){
+  const s = new THREE.Shape(), rO=100, rI=46, n=10, rot=-Math.PI/2;
+  for(let i=0;i<n;i++){ const r=i%2?rI:rO, a=rot+i/n*Math.PI*2, x=Math.cos(a)*r, y=Math.sin(a)*r;
+    i? s.lineTo(x,y) : s.moveTo(x,y); }
+  s.closePath(); return s;
+}
+function embHeart(){
+  const s = new THREE.Shape();
+  s.moveTo(0,-32);
+  s.bezierCurveTo(-16,-58, -58,-56, -58,-16);
+  s.bezierCurveTo(-58,16, -22,38, 0,62);
+  s.bezierCurveTo(22,38, 58,16, 58,-16);
+  s.bezierCurveTo(58,-56, 16,-58, 0,-32);
+  s.closePath(); return s;
+}
+function embBolt(){
+  const s = new THREE.Shape();
+  [[18,-62],[-30,8],[-2,8],[-18,62],[34,-12],[6,-12]].forEach((p,i)=> i? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1]));
+  s.closePath(); return s;
+}
+function embCircle(){ const s = new THREE.Shape(); s.absarc(0,0,72,0,Math.PI*2,false); return s; }
+const BUILTIN_EMBLEMS = { star:embStar, heart:embHeart, bolt:embBolt, circle:embCircle };
+function builtinEmblem(name){
+  const fn = BUILTIN_EMBLEMS[name]; if(!fn) return null;
+  return [{ shape: fn(), color: null }];   // metal (same as frame)
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UI WIRING
+═══════════════════════════════════════════════════════════════════ */
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+
+// mode
+$$('#mode button').forEach(b=> b.onclick = ()=>{
+  $$('#mode button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  state.mode = b.dataset.mode;
+  $$('[data-only="frame"]').forEach(el=> el.classList.toggle('hidden', state.mode!=='frame'));
+  $$('[data-only="svg"]').forEach(el=> el.classList.toggle('hidden', state.mode!=='svg'));
+  rebuild();
+});
+
+// shape
+$$('#shapes button').forEach(b=> b.onclick = ()=>{
+  $$('#shapes button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); state.shape = b.dataset.shape; rebuild();
+});
+
+// metal swatches
+$$('#metalSwatches .swatch').forEach(sw=> sw.onclick = ()=>{
+  $$('#metalSwatches .swatch').forEach(x=>x.classList.remove('on'));
+  sw.classList.add('on'); state.metal = sw.dataset.metal;
+  $('#metalColor').value = toHexInput(state.metal); rebuild();
+});
+$('#metalColor').oninput = e=>{
+  state.metal = e.target.value;
+  $$('#metalSwatches .swatch').forEach(x=>x.classList.remove('on'));
+  rebuild();
+};
+$('#metalRough').oninput = e=>{
+  state.metalRough = +e.target.value/100;
+  $('#metalRoughV').textContent = state.metalRough.toFixed(2).slice(1);
+  rebuild();
+};
+
+// enamel swatches
+$$('#enamelSwatches .swatch').forEach(sw=> sw.onclick = ()=>{
+  $$('#enamelSwatches .swatch').forEach(x=>x.classList.remove('on'));
+  sw.classList.add('on'); state.enamel = sw.dataset.enamel;
+  $('#enamelColor').value = toHexInput(state.enamel); rebuild();
+});
+$('#enamelColor').oninput = e=>{
+  state.enamel = e.target.value;
+  $$('#enamelSwatches .swatch').forEach(x=>x.classList.remove('on'));
+  rebuild();
+};
+$('#enamelReflect').oninput = e=>{
+  state.enamelReflect = +e.target.value/100;
+  $('#enamelReflectV').textContent = state.enamelReflect.toFixed(2).slice(1);
+  rebuild();
+};
+
+// enamel image — replaces the base enamel colour, clipped to the enamel shape
+const texLoader = new THREE.TextureLoader();
+function loadEnamelTexture(url){
+  texLoader.load(url, tex=>{
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    state.enamelTexture = tex;
+    rebuild();
+  });
+}
+$('#enamelImage').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    state.enamelImageURL = reader.result;
+    loadEnamelTexture(reader.result);
+    $('#enamelImageName').textContent = f.name;
+    $('#clearEnamelImage').classList.remove('hidden');
+  };
+  reader.readAsDataURL(f);
+};
+$('#clearEnamelImage').onclick = ()=>{
+  state.enamelTexture = null; state.enamelImageURL = null;
+  $('#enamelImage').value = '';
+  $('#enamelImageName').textContent = '色を画像に置き換え（エナメル形状でクロップ）';
+  $('#clearEnamelImage').classList.add('hidden');
+  rebuild();
+};
+
+// sliders
+$('#frameW').oninput = e=>{ state.frameW=+e.target.value; $('#frameWV').textContent=e.target.value; rebuild(); };
+$('#depth').oninput  = e=>{ state.depth=+e.target.value; $('#depthV').textContent=e.target.value; rebuild(); };
+$('#centerScale').oninput = e=>{ state.centerScale=+e.target.value; $('#centerScaleV').textContent=e.target.value; rebuild(); };
+$('#centerY').oninput = e=>{ state.centerY=+e.target.value; $('#centerYV').textContent=e.target.value; rebuild(); };
+$('#convertEdge').oninput = e=>{ state.convertEdge=+e.target.value; $('#convertEdgeV').textContent=e.target.value; rebuild(); };
+$('#useSvgColors').onchange = e=>{ state.useSvgColors=e.target.checked; rebuild(); };
+
+// center SVG upload
+const ACCENT_FALLBACK = ['#ec4d6e','#33c0ec','#4caf3f','#f5a623','#e8e2d4','#9b6cf0','#ff7043','#26c6da'];
+function renderAccentPalette(){
+  const wrap = $('#accentPalette');
+  wrap.innerHTML = '';
+  const shapes = state.centerShapes || [];
+  shapes.forEach((sh,i)=>{
+    const cell = document.createElement('div'); cell.className='cell';
+    const inp = document.createElement('input'); inp.type='color'; inp.value = state.accentColors[i];
+    inp.oninput = ev=>{ state.accentColors[i] = ev.target.value; rebuild(); };
+    const lab = document.createElement('span'); lab.textContent = (i+1);
+    cell.append(inp, lab); wrap.appendChild(cell);
+  });
+  const show = state.accentMode && shapes.length;
+  wrap.classList.toggle('hidden', !show);
+}
+function updateAccentUI(){
+  $('#accentRimRow').classList.toggle('hidden', !state.accentMode);
+  renderAccentPalette();
+}
+$('#centerFile').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const text = await f.text();
+  state.centerSvgText = text; state.centerBuiltin = null;
+  state.centerShapes = parseSvgText(text);
+  // seed per-region colours from SVG fills (fallback palette if none)
+  state.accentColors = state.centerShapes.map((s,i)=> s.color || ACCENT_FALLBACK[i % ACCENT_FALLBACK.length]);
+  // auto-enable accent mode only for clearly multi-colour art (≥2 distinct fills);
+  // single-colour / no-fill SVGs stay as a metal emblem (toggle on to colour them).
+  state.accentMode = new Set(state.centerShapes.map(s=>s.color).filter(Boolean)).size >= 2;
+  $('#accentMode').checked = state.accentMode;
+  $('#centerName').textContent = f.name;
+  $$('#emblems button').forEach(b=>b.classList.remove('on'));
+  $$('[data-center-ctl]').forEach(el=>{ el.style.opacity='1'; el.style.pointerEvents='auto'; });
+  $('#clearCenter').classList.remove('hidden');
+  updateAccentUI();
+  rebuild();
+};
+// built-in emblems (metal, like the reference star)
+function applyBuiltinEmblem(name){
+  state.centerBuiltin = name; state.centerSvgText = null;
+  state.centerShapes = builtinEmblem(name);
+  state.accentMode = false; state.accentColors = [];
+  $('#accentMode').checked = false;
+  $('#centerName').textContent = '組み込み: ' + name;
+  $$('#emblems button').forEach(b=> b.classList.toggle('on', b.dataset.emblem===name));
+  $$('[data-center-ctl]').forEach(el=>{ el.style.opacity='1'; el.style.pointerEvents='auto'; });
+  $('#clearCenter').classList.remove('hidden');
+  updateAccentUI();
+  rebuild();
+}
+$$('#emblems button').forEach(b=> b.onclick = ()=> applyBuiltinEmblem(b.dataset.emblem));
+$('#blackFrame').onchange = e=>{ state.blackFrame = e.target.checked;
+  if(e.target.checked){ state.accentMode=false; $('#accentMode').checked=false; } updateAccentUI(); rebuild(); };
+$('#accentMode').onchange = e=>{ state.accentMode = e.target.checked;
+  if(e.target.checked){ state.blackFrame=false; $('#blackFrame').checked=false; } updateAccentUI(); rebuild(); };
+$('#accentRim').onchange  = e=>{ state.accentRim = e.target.checked; rebuild(); };
+$('#clearCenter').onclick = ()=>{
+  state.centerShapes = null; state.centerSvgText = null; state.centerBuiltin = null;
+  state.accentColors = []; state.accentMode = false;
+  $('#accentMode').checked = false;
+  $('#centerName').textContent = '線・文字としてフレームと同じ金属に変換';
+  $('#centerFile').value='';
+  $$('#emblems button').forEach(b=>b.classList.remove('on'));
+  $$('[data-center-ctl]').forEach(el=>{ el.style.opacity='.4'; el.style.pointerEvents='none'; });
+  $('#clearCenter').classList.add('hidden');
+  updateAccentUI();
+  rebuild();
+};
+
+// convert SVG upload
+$('#convertFile').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const text = await f.text();
+  state.convertSvgText = text;
+  state.convertData = { shapes: parseSvgText(text) };
+  $('#convertName').textContent = f.name;
+  rebuild();
+};
+
+// view modes: front / back are LOCKED (drag to peek, springs back on release); free = orbit
+const camDist = 26;
+const ORIGIN = new THREE.Vector3(0,0,0);
+const VIEW_TARGET = { front:new THREE.Vector3(0,0,camDist), back:new THREE.Vector3(0,0,-camDist) };
+const _sph = new THREE.Spherical(), _tgt = new THREE.Spherical(), _off = new THREE.Vector3();
+let dragging = false;
+function setView(name){
+  state.viewMode = name;
+  $$('#views button').forEach(b=> b.classList.toggle('on', b.dataset.view===name));
+  if(name==='front' || name==='back'){
+    controls.autoRotate = false; $('#autoRotate').checked = false; state.autoRotate = false;
+  }
+}
+$$('#views button').forEach(b=> b.onclick = ()=> setView(b.dataset.view));
+controls.addEventListener('start', ()=>{ dragging = true; });
+controls.addEventListener('end',   ()=>{ dragging = false; });
+
+// lighting presets
+function applyPreset(name){
+  const p = LIGHT_PRESETS[name]; if(!p) return;
+  Object.assign(light, p);
+  $('#lightAz').value = light.az;  $('#lightAzV').textContent = light.az+'°';
+  $('#lightEl').value = light.el;  $('#lightElV').textContent = light.el+'°';
+  $('#lightInt').value = Math.round(light.keyInt*100); $('#lightIntV').textContent = light.keyInt.toFixed(2);
+  applyLight();
+  $$('#lpresets button').forEach(b=> b.classList.toggle('on', b.dataset.lp===name));
+}
+$$('#lpresets button').forEach(b=> b.onclick = ()=> applyPreset(b.dataset.lp));
+$('#lightAz').oninput = e=>{ light.az=+e.target.value; $('#lightAzV').textContent=e.target.value+'°'; applyLight(); };
+$('#lightEl').oninput = e=>{ light.el=+e.target.value; $('#lightElV').textContent=e.target.value+'°'; applyLight(); };
+$('#lightInt').oninput = e=>{ light.keyInt=+e.target.value/100; $('#lightIntV').textContent=light.keyInt.toFixed(2); applyLight(); };
+
+// render options — auto-rotate implies free view
+$('#autoRotate').onchange = e=>{ state.autoRotate = e.target.checked; controls.autoRotate = e.target.checked;
+  if(e.target.checked) setView('free'); saveLast(); };
+controls.autoRotate = false;
+function applyBg(val){
+  const v = val/100; $('#bgV').textContent = val;
+  stage.style.background = `radial-gradient(circle at 50% 38%, rgb(${26*v*5|0},${26*v*5|0},${31*v*5|0}) 0%, #050506 70%)`;
+}
+$('#bg').oninput = e=>{ state.bg = +e.target.value; applyBg(state.bg); saveLast(); };
+$('#snap').onclick = ()=>{
+  const SIZE = 500, MARGIN = 1.03;          // 500×500 PNG, ~3% margin (minimal)
+  const dpr = renderer.getPixelRatio();
+  const oldAspect = camera.aspect, oldPos = camera.position.clone(), oldTgt = controls.target.clone();
+
+  // square buffer, framed tightly on the (tilted) badge
+  renderer.setPixelRatio(1);
+  renderer.setSize(SIZE, SIZE, false);
+  camera.aspect = 1;
+  const box = new THREE.Box3().setFromObject(badge);
+  const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  const half = Math.max(s.x, s.y) * 0.5 * MARGIN;
+  const dist = half / Math.tan(camera.fov*Math.PI/180/2) + s.z*0.5;
+  camera.position.set(c.x, c.y, c.z + dist);
+  camera.lookAt(c); camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  const url = renderer.domElement.toDataURL('image/png');
+
+  // restore live view
+  renderer.setPixelRatio(dpr);
+  camera.aspect = oldAspect; camera.position.copy(oldPos); controls.target.copy(oldTgt);
+  camera.lookAt(controls.target); camera.updateProjectionMatrix();
+  resize();
+
+  const a = document.createElement('a');
+  a.download = 'badge.png'; a.href = url; a.click();
+};
+
+function toHexInput(c){ return c.length===7 ? c : c; }
+
+/* ════════════════════════════════════════════════════════════════
+   PRESETS — full state, persisted in localStorage
+═══════════════════════════════════════════════════════════════════ */
+const LKEY = 'badge3d:last', PKEY = 'badge3d:presets';
+
+function snapshot(){
+  return {
+    mode:state.mode, shape:state.shape, metal:state.metal, metalRough:state.metalRough,
+    enamel:state.enamel, enamelReflect:state.enamelReflect, frameW:state.frameW, depth:state.depth,
+    centerSvgText:state.centerSvgText||null, centerBuiltin:state.centerBuiltin||null, centerScale:state.centerScale, centerY:state.centerY,
+    accentMode:state.accentMode, accentRim:state.accentRim, blackFrame:state.blackFrame, accentColors:[...state.accentColors],
+    convertSvgText:state.convertSvgText||null, convertEdge:state.convertEdge, useSvgColors:state.useSvgColors,
+    enamelImageURL:state.enamelImageURL||null,
+    light:{...light}, autoRotate:state.autoRotate, bg:state.bg,
+  };
+}
+function applySnapshot(s){
+  if(!s) return;
+  ['mode','shape','metal','metalRough','enamel','enamelReflect','frameW','depth','centerScale','centerY',
+   'accentMode','accentRim','blackFrame','convertEdge','useSvgColors','autoRotate','bg'].forEach(k=>{
+    if(s[k]!==undefined) state[k]=s[k];
+  });
+  state.accentColors = Array.isArray(s.accentColors) ? [...s.accentColors] : [];
+  state.centerSvgText = s.centerSvgText || null;
+  state.centerBuiltin = s.centerBuiltin || null;
+  state.centerShapes  = state.centerSvgText ? parseSvgText(state.centerSvgText)
+                      : state.centerBuiltin ? builtinEmblem(state.centerBuiltin) : null;
+  state.convertSvgText = s.convertSvgText || null;
+  state.convertData    = state.convertSvgText ? { shapes: parseSvgText(state.convertSvgText) } : null;
+  state.enamelTexture = null; state.enamelImageURL = s.enamelImageURL || null;
+  if(state.enamelImageURL) loadEnamelTexture(state.enamelImageURL);  // async → triggers its own rebuild
+  if(s.light) Object.assign(light, s.light);
+  applyLight();
+  syncUIFromState();
+  rebuild();
+}
+function syncUIFromState(){
+  $$('#mode button').forEach(b=> b.classList.toggle('on', b.dataset.mode===state.mode));
+  $$('[data-only="frame"]').forEach(el=> el.classList.toggle('hidden', state.mode!=='frame'));
+  $$('[data-only="svg"]').forEach(el=> el.classList.toggle('hidden', state.mode!=='svg'));
+  $$('#shapes button').forEach(b=> b.classList.toggle('on', b.dataset.shape===state.shape));
+  $('#metalColor').value = state.metal;
+  $$('#metalSwatches .swatch').forEach(x=> x.classList.toggle('on', x.dataset.metal===state.metal));
+  $('#metalRough').value = Math.round(state.metalRough*100);
+  $('#metalRoughV').textContent = state.metalRough.toFixed(2).slice(1);
+  $('#enamelColor').value = state.enamel;
+  $$('#enamelSwatches .swatch').forEach(x=> x.classList.toggle('on', x.dataset.enamel===state.enamel));
+  $('#enamelReflect').value = Math.round(state.enamelReflect*100);
+  $('#enamelReflectV').textContent = state.enamelReflect.toFixed(2).slice(1);
+  $('#clearEnamelImage').classList.toggle('hidden', !state.enamelImageURL);
+  $('#enamelImageName').textContent = state.enamelImageURL ? '画像を適用中' : '色を画像に置き換え（エナメル形状でクロップ）';
+  $('#frameW').value=state.frameW; $('#frameWV').textContent=state.frameW;
+  $('#depth').value=state.depth;  $('#depthV').textContent=state.depth;
+  const hasCenter = !!state.centerShapes;
+  $('#centerName').textContent = hasCenter ? 'プリセットから復元' : '線・文字としてフレームと同じ金属に変換';
+  $$('[data-center-ctl]').forEach(el=>{ el.style.opacity=hasCenter?'1':'.4'; el.style.pointerEvents=hasCenter?'auto':'none'; });
+  $('#clearCenter').classList.toggle('hidden', !hasCenter);
+  $$('#emblems button').forEach(b=> b.classList.toggle('on', b.dataset.emblem===state.centerBuiltin));
+  $('#centerScale').value=state.centerScale; $('#centerScaleV').textContent=state.centerScale;
+  $('#centerY').value=state.centerY; $('#centerYV').textContent=state.centerY;
+  $('#accentMode').checked=state.accentMode;
+  $('#blackFrame').checked=state.blackFrame;
+  $('#accentRim').checked=state.accentRim;
+  updateAccentUI();
+  $('#convertName').textContent = state.convertData ? 'プリセットから復元' : '塗り→エナメル / 輪郭→金属フレーム';
+  $('#convertEdge').value=state.convertEdge; $('#convertEdgeV').textContent=state.convertEdge;
+  $('#useSvgColors').checked=state.useSvgColors;
+  $('#lightAz').value=light.az; $('#lightAzV').textContent=Math.round(light.az)+'°';
+  $('#lightEl').value=light.el; $('#lightElV').textContent=Math.round(light.el)+'°';
+  $('#lightInt').value=Math.round(light.keyInt*100); $('#lightIntV').textContent=light.keyInt.toFixed(2);
+  $$('#lpresets button').forEach(b=> b.classList.remove('on'));
+  $('#autoRotate').checked=state.autoRotate; controls.autoRotate=state.autoRotate;
+  if(state.autoRotate) setView('free'); else setView(state.viewMode||'front');
+  $('#bg').value=state.bg; applyBg(state.bg);
+}
+
+let saveTimer=null;
+function saveLast(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ try{ localStorage.setItem(LKEY, JSON.stringify(snapshot())); }catch(err){} }, 250);
+}
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(PKEY)) || {}; }catch(err){ return {}; } }
+function savePresets(o){ try{ localStorage.setItem(PKEY, JSON.stringify(o)); }catch(err){ alert('保存に失敗しました（容量超過の可能性）'); } }
+function refreshPresetList(sel){
+  const presets = loadPresets();
+  const names = Object.keys(presets).sort();
+  const list = $('#presetList');
+  list.innerHTML = '<option value="">— 保存済み（'+names.length+'）—</option>'
+    + names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}"${n===sel?' selected':''}>${n}</option>`).join('');
+}
+$('#savePreset').onclick = ()=>{
+  const name = ($('#presetName').value || '').trim();
+  if(!name){ $('#presetName').focus(); return; }
+  const presets = loadPresets();
+  presets[name] = snapshot();
+  savePresets(presets);
+  refreshPresetList(name);
+  $('#presetName').value = '';
+};
+$('#loadPreset').onclick = ()=>{
+  const name = $('#presetList').value; if(!name) return;
+  const presets = loadPresets();
+  if(presets[name]) applySnapshot(presets[name]);
+};
+$('#deletePreset').onclick = ()=>{
+  const name = $('#presetList').value; if(!name) return;
+  if(!confirm(`プリセット「${name}」を削除しますか？`)) return;
+  const presets = loadPresets();
+  delete presets[name]; savePresets(presets); refreshPresetList();
+};
+
+/* ════════════════════════════════════════════════════════════════
+   RESIZE + LOOP
+═══════════════════════════════════════════════════════════════════ */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w,h); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+// restore presets list + last session (auto-saved in localStorage)
+refreshPresetList();
+const lastState = (()=>{ try{ return JSON.parse(localStorage.getItem(LKEY)); }catch(err){ return null; } })();
+if(lastState) applySnapshot(lastState);
+else { applyBg(state.bg); rebuild(); }
+
+renderer.setAnimationLoop(()=>{
+  const locked = (state.viewMode==='front' || state.viewMode==='back');
+  if(locked && !dragging){
+    // seamlessly spring the camera back to the selected face — swing around (not through)
+    controls.target.lerp(ORIGIN, 0.2);
+    _sph.setFromVector3(_off.copy(camera.position).sub(controls.target));
+    _tgt.setFromVector3(VIEW_TARGET[state.viewMode]);
+    _sph.radius += (_tgt.radius - _sph.radius)*0.14;
+    _sph.phi    += (_tgt.phi    - _sph.phi   )*0.14;
+    let d = _tgt.theta - _sph.theta;
+    while(d >  Math.PI) d -= 2*Math.PI;
+    while(d < -Math.PI) d += 2*Math.PI;
+    _sph.theta += d*0.14;
+    _sph.makeSafe();
+    camera.position.copy(controls.target).add(_off.setFromSpherical(_sph));
+    camera.lookAt(controls.target);
+  } else {
+    controls.update();   // dragging, or free orbit / auto-rotate
+  }
+  head.position.copy(camera.position);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
