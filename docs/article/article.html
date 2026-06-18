@@ -553,65 +553,6 @@
       transition: none;
     }
 
-    /* ── Verify bar ── */
-    .verify-bar {
-      position: fixed;
-      top: 44px;
-      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 3px 3px 3px 10px;
-    }
-    .verify-toggle {
-      display: flex;
-      background: rgba(255,255,255,0.06);
-      border-radius: 18px;
-      padding: 2px;
-      gap: 2px;
-    }
-    .verify-btn {
-      padding: 5px 11px;
-      border-radius: 16px;
-      font-family: 'Figtree', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,0.4);
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      white-space: nowrap;
-    }
-    .verify-btn.active {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-    }
-    .verify-replay {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: transparent;
-      color: rgba(255,255,255,0.55);
-      font-size: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, color 0.15s;
-      flex-shrink: 0;
-    }
-    .verify-replay:active {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-    }
   </style>
 </head>
 <body>
@@ -621,16 +562,6 @@
     <div id="loadingIconContainer"></div>
   </div>
 
-  <!-- Verify bar -->
-  <div class="verify-bar" id="verifyBar">
-    <div class="verify-toggle">
-      <button class="verify-btn active" id="btnIcon">Icon</button>
-      <button class="verify-btn" id="btnIconText">Text</button>
-      <button class="verify-btn" id="btnArtist">Artist</button>
-      <button class="verify-btn" id="btnSkeleton">Skeleton</button>
-    </div>
-    <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
-  </div>
 
   <!-- Navigation Bar -->
   <div class="nav-bar">
@@ -810,15 +741,12 @@
 
   <script type="module">
     import { createLoadingIcon } from './loading-icon.js';
-    import { createLoadingIconText } from './loading-icon-text.js';
 
     const STAGGER_DELAY         = 80;
     const REVEAL_DURATION       = 500;
     const LOADING_DURATION      = 1000;
     const IMG_SKELETON_DURATION = 1000;
 
-    const _params = new URLSearchParams(window.location.search);
-    let currentMode = _params.get('mode') || 'icon';
     let iconInstance = null;
     let sessionId    = 0;
 
@@ -881,25 +809,17 @@
         }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
       });
 
-      if (currentMode !== 'skeleton') {
-        imgBlocks.forEach((block) => {
-          const wrap = document.createElement('div');
-          wrap.className = 'img-block-icon';
-          block.appendChild(wrap);
+      imgBlocks.forEach((block) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'img-block-icon';
+        block.appendChild(wrap);
 
-          if (currentMode === 'artist') {
-            const logo = document.createElement('img');
-            logo.src = 'assets/befirst-logo.svg';
-            logo.style.width = '90px';
-            logo.style.height = 'auto';
-            wrap.appendChild(logo);
-          } else {
-            const imgFactory = currentMode === 'iconText' ? createLoadingIconText : createLoadingIcon;
-            const imgIconSize = currentMode === 'iconText' ? 120 : 64;
-            imgFactory({ container: wrap, size: imgIconSize, backgroundColor: 'transparent' });
-          }
-        });
-      }
+        const logo = document.createElement('img');
+        logo.src = 'assets/befirst-logo.svg';
+        logo.style.width = '90px';
+        logo.style.height = 'auto';
+        wrap.appendChild(logo);
+      });
 
       // 画像: viewport に入ったタイミングから 1s SK → blurReveal
       imgBlocks.forEach((block) => {
@@ -924,66 +844,31 @@
     function startLoading() {
       resetContent();
 
-      if (currentMode === 'skeleton') {
-        // ── Skeleton モード ──
-        const sk = document.getElementById('skeletonWrapper');
-        sk.classList.remove('hidden');
+      document.getElementById('skeletonWrapper').classList.add('hidden');
+      const overlay   = document.getElementById('loadingIconOverlay');
+      const container = document.getElementById('loadingIconContainer');
 
-        setTimeout(() => {
-          sk.classList.add('hidden');
-          revealContent();
-        }, LOADING_DURATION);
+      if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+      container.innerHTML = '';
 
-      } else {
-        // ── Icon / IconText / Artist モード ──
-        document.getElementById('skeletonWrapper').classList.add('hidden');
-        const overlay   = document.getElementById('loadingIconOverlay');
-        const container = document.getElementById('loadingIconContainer');
+      overlay.classList.add('instant-show');
+      overlay.classList.remove('hidden');
+      void overlay.offsetWidth;
+      overlay.classList.remove('instant-show');
 
+      iconInstance = createLoadingIcon({ container, size: 100, backgroundColor: 'transparent' });
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
         if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
-        container.innerHTML = '';
-
-        overlay.classList.add('instant-show');
-        overlay.classList.remove('hidden');
-        void overlay.offsetWidth;
-        overlay.classList.remove('instant-show');
-
-        const useText = currentMode === 'iconText' || currentMode === 'artist';
-        const factory = useText ? createLoadingIconText : createLoadingIcon;
-        const iconSize = useText ? 200 : 100;
-        iconInstance = factory({ container, size: iconSize, backgroundColor: 'transparent' });
-
-        setTimeout(() => {
-          overlay.classList.add('hidden'); // フェードアウト 0.3s
-          if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
-          setTimeout(revealContent, 300); // フェードアウト完了後
-        }, LOADING_DURATION);
-      }
+        setTimeout(revealContent, 300);
+      }, LOADING_DURATION);
     }
-
-    // --- Verify bar の操作 ---
-    function setMode(mode) {
-      currentMode = mode;
-      ['btnIcon','btnIconText','btnArtist','btnSkeleton'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
-      });
-      const map = { icon:'btnIcon', iconText:'btnIconText', artist:'btnArtist', skeleton:'btnSkeleton' };
-      document.getElementById(map[mode]).classList.add('active');
-    }
-    document.getElementById('btnSkeleton').addEventListener('click', () => { setMode('skeleton'); startLoading(); });
-    document.getElementById('btnIcon').addEventListener('click', () => { setMode('icon'); startLoading(); });
-    document.getElementById('btnIconText').addEventListener('click', () => { setMode('iconText'); startLoading(); });
-    document.getElementById('btnArtist').addEventListener('click', () => { setMode('artist'); startLoading(); });
-    document.getElementById('btnReplay').addEventListener('click', startLoading);
 
     document.getElementById('backBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      window.location.href = `home.html?mode=${currentMode}`;
+      window.location.href = 'home.html';
     });
-
-    // --- デバッグ用: 外部からアクセス可能に ---
-    window.__verifyReplay = startLoading;
-    window.__verifySetMode = (m) => setMode(m);
 
     // --- ハートボタン Lottie ---
     (async () => {
@@ -1103,7 +988,6 @@
     })();
 
     // --- 初回ロード ---
-    if (_params.has('mode')) setMode(currentMode);
     document.addEventListener('DOMContentLoaded', startLoading);
   </script>
 </body>

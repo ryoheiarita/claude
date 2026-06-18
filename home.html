@@ -339,60 +339,6 @@
       background: #fff;
     }
 
-    /* ── Verify bar (same as article) ── */
-    .verify-bar {
-      position: fixed;
-      top: 44px;
-      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
-      z-index: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 3px;
-    }
-    .verify-toggle {
-      display: flex;
-      background: rgba(255,255,255,0.06);
-      border-radius: 18px;
-      padding: 2px;
-      gap: 2px;
-    }
-    .verify-btn {
-      padding: 5px 11px;
-      border-radius: 16px;
-      font-family: 'Figtree', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,0.4);
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      white-space: nowrap;
-    }
-    .verify-btn.active {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-    }
-    .verify-replay {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: transparent;
-      color: rgba(255,255,255,0.55);
-      font-size: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
   </style>
 </head>
 <body>
@@ -402,16 +348,6 @@
     <div id="loadingIconContainer" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"></div>
   </div>
 
-  <!-- Verify bar -->
-  <div class="verify-bar" id="verifyBar">
-    <div class="verify-toggle">
-      <button class="verify-btn active" id="btnIcon">Icon</button>
-      <button class="verify-btn" id="btnIconText">Text</button>
-      <button class="verify-btn" id="btnArtist">Artist</button>
-      <button class="verify-btn" id="btnSkeleton">Skeleton</button>
-    </div>
-    <button class="verify-replay" id="btnReplay" title="Replay">↺</button>
-  </div>
 
   <!-- Navigation bar -->
   <div class="nav-bar">
@@ -503,10 +439,8 @@
 
   <script type="module">
     import { createLoadingIcon } from './loading-icon.js';
-    import { createLoadingIconText } from './loading-icon-text.js';
 
     const LOADING_DURATION = 1000;
-    let currentMode = 'icon';
     let iconInstance = null;
 
     function startLoading() {
@@ -521,12 +455,7 @@
       void overlay.offsetWidth;
       overlay.style.transition = '';
 
-      if (currentMode !== 'skeleton') {
-        const useText = currentMode === 'iconText' || currentMode === 'artist';
-        const factory = useText ? createLoadingIconText : createLoadingIcon;
-        const iconSize = useText ? 200 : 100;
-        iconInstance = factory({ container, size: iconSize, backgroundColor: 'transparent' });
-      }
+      iconInstance = createLoadingIcon({ container, size: 100, backgroundColor: 'transparent' });
 
       setTimeout(() => {
         overlay.classList.add('hidden');
@@ -534,32 +463,10 @@
       }, LOADING_DURATION);
     }
 
-    function setMode(mode) {
-      currentMode = mode;
-      ['btnIcon','btnIconText','btnArtist','btnSkeleton'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
-      });
-      const map = { icon:'btnIcon', iconText:'btnIconText', artist:'btnArtist', skeleton:'btnSkeleton' };
-      document.getElementById(map[mode]).classList.add('active');
-    }
-
-    document.getElementById('btnIcon').addEventListener('click', () => { setMode('icon'); startLoading(); });
-    document.getElementById('btnIconText').addEventListener('click', () => { setMode('iconText'); startLoading(); });
-    document.getElementById('btnArtist').addEventListener('click', () => { setMode('artist'); startLoading(); });
-    document.getElementById('btnSkeleton').addEventListener('click', () => { setMode('skeleton'); startLoading(); });
-    document.getElementById('btnReplay').addEventListener('click', startLoading);
-
-    // Pass mode to article.html via URL param
     document.getElementById('newsLink').addEventListener('click', (e) => {
       e.preventDefault();
-      window.location.href = `article.html?mode=${currentMode}`;
+      window.location.href = 'article.html';
     });
-
-    // Read mode from URL param (coming back or linked)
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('mode')) {
-      setMode(params.get('mode'));
-    }
 
     // Initial load
     startLoading();
