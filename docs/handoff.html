@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flutter 素材引き渡し — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+
+    .download {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-top: 24px; padding: 14px 24px; border-radius: 12px;
+      background: linear-gradient(135deg, #7c8cff 0%, #5c4dff 100%);
+      color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 8px 24px rgba(92,77,255,0.35);
+    }
+    .download:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(92,77,255,0.5); }
+    .download small { font-weight: 500; opacity: 0.8; font-size: 12px; }
+
+    .assets { display: flex; flex-direction: column; gap: 16px; margin-top: 48px; }
+    .asset {
+      display: flex; gap: 24px; align-items: center;
+      padding: 24px; border-radius: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .preview {
+      width: 120px; height: 120px; flex-shrink: 0;
+      border-radius: 14px; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .asset-body { flex: 1; min-width: 0; }
+    .asset-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+    }
+    .asset-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .asset-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .asset-files { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.35); font-family: ui-monospace, monospace; }
+
+    .lottie-btn {
+      width: 72px; height: 72px; border-radius: 999px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .lottie-btn > div { width: 44px; height: 44px; }
+    .hint { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.3); text-align: center; }
+
+    .note {
+      margin-top: 40px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.55);
+    }
+    .note b { color: rgba(255,255,255,0.8); font-weight: 600; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    @media (max-width: 560px) {
+      .asset { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>アニメーション素材 引き渡し</h2>
+      <p>article 画面で使用しているローディングアイコン・ハート・ブックマークの動き付き素材一式です。Dart コード / Lottie JSON / 組み込みサンプル / ドキュメントに加え、<b style="color:rgba(255,255,255,0.8)">記事画面そのものの Flutter 実装指示書（ARTICLE_SCREEN.md）</b>も同梱しています。</p>
+      <a class="download" href="flutter-handoff.zip" download>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        flutter-handoff.zip をダウンロード
+        <small>(Dart + Lottie + README)</small>
+      </a>
+    </div>
+
+    <div class="assets">
+      <!-- Loading icon -->
+      <div class="asset">
+        <div class="preview"><div id="loaderPreview"></div></div>
+        <div class="asset-body">
+          <span class="asset-tag">① Dart / CustomPainter</span>
+          <div class="asset-title">ローディングアイコン</div>
+          <div class="asset-desc">モーフィング図形＋グラデーションブロブのプロシージャル描画。外部依存なし、Dart ファイル 1 枚で動作します。<code>LoadingIcon(size: 100, backgroundColor: Colors.transparent)</code></div>
+          <div class="asset-files">loading_icon/loading_icon.dart</div>
+        </div>
+      </div>
+
+      <!-- Heart -->
+      <div class="asset">
+        <div class="preview" style="flex-direction:column;gap:6px;">
+          <div class="lottie-btn" id="heartBtn"><div id="heartLottie"></div></div>
+          <div class="hint">タップで再生</div>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">② Lottie JSON</span>
+          <div class="asset-title">ハートアイコン（動き付き）</div>
+          <div class="asset-desc">60fps / 全181フレーム。ON: 17→90（枠線→塗り＋バースト）、OFF: 105→181。枠線の白を JSON に焼き込み済み。</div>
+          <div class="asset-files">lottie/heart-like.json ／ lottie/like_button.dart</div>
+        </div>
+      </div>
+
+      <!-- Bookmark -->
+      <div class="asset">
+        <div class="preview" style="flex-direction:column;gap:6px;">
+          <div class="lottie-btn" id="bookmarkBtn"><div id="bookmarkLottie"></div></div>
+          <div class="hint">タップで再生</div>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">③ Lottie JSON</span>
+          <div class="asset-title">ブックマークアイコン（動き付き）</div>
+          <div class="asset-desc">ハートと同じフレーム構成。Flutter では公式 <code>lottie</code> パッケージ + 同梱の <code>LikeButton</code> でそのまま使えます。</div>
+          <div class="asset-files">lottie/bookmark-like.json ／ lottie/like_button.dart</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Flutter 組み込みの要点</b><br>
+      ・Lottie は <code>lottie: ^3.1.2</code> を追加し、<code>AnimationController</code> の長さを <code>composition.duration</code> に合わせます。<br>
+      ・フレーム <code>f</code> への移動は <code>controller.value = f / 181</code>。ON は <code>17→90</code>、OFF は <code>105→181</code> を <code>animateTo</code> で再生します。<br>
+      ・詳細な手順とサンプルコードは ZIP 内の <code>README.md</code> を参照してください。
+    </div>
+  </div>
+
+  <!-- lottie-web -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <script type="module">
+    import { createLoadingIcon } from './article/loading-icon.js';
+
+    // ① ローディングアイコン（ループ表示）
+    createLoadingIcon({
+      container: document.getElementById('loaderPreview'),
+      size: 100,
+      backgroundColor: 'transparent',
+    });
+
+    // ②③ Lottie ボタン（タップでトグル）
+    const LIKE_START = 17, FILLED_FRAME = 90, UNLIKE_START = 105;
+
+    function setupLottie({ url, btnId, containerId, activeBorder }) {
+      fetch(url).then(r => r.json()).then(data => {
+        data.layers[0].shapes[1].c.k = [1, 1, 1, 1];
+        data.layers[2].shapes[1].c.k = [1, 1, 1, 1];
+        const anim = lottie.loadAnimation({
+          container: document.getElementById(containerId),
+          renderer: 'svg', loop: false, autoplay: false, animationData: data,
+        });
+        anim.goToAndStop(0, true);
+        let on = false, animating = false;
+        const btn = document.getElementById(btnId);
+        btn.addEventListener('click', () => {
+          if (animating) return;
+          if (!on) {
+            on = true; animating = true;
+            btn.style.borderColor = activeBorder;
+            anim.goToAndPlay(LIKE_START, true);
+            const onFrame = (e) => {
+              if (e.currentTime >= FILLED_FRAME) {
+                anim.pause(); anim.removeEventListener('enterFrame', onFrame); animating = false;
+              }
+            };
+            anim.addEventListener('enterFrame', onFrame);
+          } else {
+            on = false; animating = true;
+            btn.style.borderColor = '';
+            anim.goToAndPlay(UNLIKE_START, true);
+            anim.addEventListener('complete', () => { anim.goToAndStop(0, true); animating = false; }, { once: true });
+          }
+        });
+      });
+    }
+
+    setupLottie({ url: './article/heart-like.json',    btnId: 'heartBtn',    containerId: 'heartLottie',    activeBorder: 'rgba(255,62,62,0.6)' });
+    setupLottie({ url: './article/bookmark-like.json', btnId: 'bookmarkBtn', containerId: 'bookmarkLottie', activeBorder: 'rgba(255,209,51,0.6)' });
+  </script>
+</body>
+</html>
