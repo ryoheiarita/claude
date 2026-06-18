@@ -9,8 +9,14 @@
 | ③ ブックマークアイコン（動き付き） | Lottie JSON | `lottie/bookmark-like.json` |
 | ②③ の組み込みサンプル | Dart | `lottie/like_button.dart` |
 
-**記事画面そのものの実装指示書**も同梱しています（ヘッダー・戻るボタンを除く本文の構造・タイポgrafi・3 つのアニメーション）:
-👉 [`ARTICLE_SCREEN.md`](ARTICLE_SCREEN.md)（本文の構造・タイポグラフィ・3 つのアニメーション）
+**記事画面そのものの実装指示書**も同梱しています（ヘッダー・戻るボタンを除く本文の構造・タイポグラフィ・3 つのアニメーション）:
+👉 [`ARTICLE_SCREEN.md`](ARTICLE_SCREEN.md)
+
+さらに、**記事画面の動くリファレンス実装（HTML/JS）一式**も同梱しています。Flutter での挙動確認用にローカルで開けます:
+👉 [`reference-html/`](reference-html/)（開き方は `reference-html/README.md` 参照）
+
+> 現状、記事画面**全体**の Flutter コードは未提供です。素材ウィジェット（`LoadingIcon` / `LikeButton`）＋
+> 指示書（`ARTICLE_SCREEN.md`）＋動く HTML リファレンス（`reference-html/`）を元に実装してください。
 
 ---
 
