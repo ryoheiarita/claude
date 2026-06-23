@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>動画詳細 — 挙動イメージ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,8 @@
 
     :root {
       /* ── 動画は 9:16 固定（無段階リサイズはしない） ── */
-      --vid-normal-h: calc(844px - var(--desc-peek)); /* 通常時：概要シートの上の領域いっぱい */
-      --vid-comment-h: 220px;                          /* コメント開時：上部に縮小 */
+      --vid-normal-h: calc(100dvh - var(--desc-peek)); /* 通常時：概要シートの上の領域いっぱい */
+      --vid-comment-h: 220px;                           /* コメント開時：上部に縮小 */
       --vid-comment-top: 56px;
 
       /* ── ボトムシートの高さ ── */
@@ -35,21 +35,15 @@
       height: 100%;
       overflow: hidden;
     }
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    body { width: 100%; }
 
-    /* ── 端末フレーム（390×844 固定。実機では画面幅にフィットさせて OK） ── */
+    /* ── 画面いっぱい（左右 width:100%）。高さは表示領域に追従（100dvh） ── */
     .phone {
       position: relative;
-      width: 390px;
-      height: 844px;
+      width: 100%;
+      height: 100dvh;
       background: var(--c-bg);
       overflow: clip;   /* clip: スクロールコンテナ化を防ぎ、隠したシートのはみ出しで誤スクロールしない */
-      flex-shrink: 0;
-      transform-origin: center center;  /* JS で画面サイズにフィットさせる（スマホ対応） */
     }
 
     /* ════════════ 動画ステージ（3状態でサイズが切替わる） ════════════ */
@@ -112,17 +106,9 @@
       border-radius: 12px;
     }
 
-    /* ════════════ ステータスバー ════════════ */
+    /* ════════════ ステータスバー（非表示：端末の実ステータスバーを使う） ════════════ */
     .status-bar {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 54px;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      z-index: 60;
-      pointer-events: none;
+      display: none;
     }
     .status-time {
       font-size: 17px; font-weight: 600; letter-spacing: .2px;
@@ -133,7 +119,9 @@
     /* ════════════ 戻るボタン ════════════ */
     .back-btn {
       position: absolute;
-      top: 60px; left: 12px;
+      /* ステータスバー非表示のぶん上に詰める。ノッチ等のセーフエリア＋余白 */
+      top: calc(env(safe-area-inset-top, 0px) + 16px);
+      left: calc(env(safe-area-inset-left, 0px) + 16px);
       width: 40px; height: 40px;
       border-radius: 42px;
       background: rgba(0,0,0,0.4);
@@ -150,7 +138,8 @@
     .actions {
       position: absolute;
       right: 16px;
-      top: 372px;            /* 通常時：コントロール上 */
+      /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
+      top: calc(var(--vid-normal-h) - 208px);  /* 208 = 160(3ボタン+gap) + 48(コントロール上の余白) */
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -163,7 +152,7 @@
     }
     /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
     .phone.s-desc .actions {
-      top: 660px;            /* = 844 − 24(下余白) − 160(3ボタン+gap) */
+      top: calc(100dvh - 184px);  /* 184 = 24(下余白) + 160(3ボタン+gap) */
     }
     .fab {
       width: 48px; height: 48px;
@@ -195,13 +184,13 @@
       left: 0;
       bottom: 0;
       width: 100%;
-      height: calc(844px - var(--desc-expanded-top));
+      height: calc(100dvh - var(--desc-expanded-top));
       background: var(--c-desc-bg);
       border-radius: 16px 16px 0 0;
       z-index: 40;
       box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
       /* collapsed: ピーク分だけ見せる */
-      transform: translateY(calc(844px - var(--desc-expanded-top) - var(--desc-peek)));
+      transform: translateY(calc(100dvh - var(--desc-expanded-top) - var(--desc-peek)));
       transition: transform .42s cubic-bezier(.22,.61,.36,1);
       display: flex;
       flex-direction: column;
@@ -460,19 +449,6 @@
   <!-- ハート/ブックマークの Lottie データを同梱（file:// でも fetch 不要で動く） -->
   <script src="./lottie-data.js"></script>
   <script>
-    /* ════════ 端末フレームを画面サイズにフィット（スマホ対応） ════════ */
-    (function () {
-      const el = document.getElementById('phone');
-      function fit() {
-        const vw = (window.visualViewport && window.visualViewport.width)  || window.innerWidth;
-        const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-        el.style.transform = 'scale(' + Math.min(vw / 390, vh / 844, 1) + ')';
-      }
-      fit();
-      window.addEventListener('resize', fit);
-      if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
-    })();
-
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
       ['#ff8a8a','#ff3d77'], ['#8ab4ff','#5d5dff'], ['#9be59b','#2fae6b'],
@@ -580,11 +556,30 @@
     descGrabber.addEventListener('touchmove', onMove, { passive: false });
     descGrabber.addEventListener('touchend', onUp);
 
-    // 概要本文を上端までスクロールしたら（オーバースクロールで）開く / 先頭で下へ引いたら閉じる
+    // 概要本文を上端までスクロールしたら（オーバースクロールで）開く / 先頭で下へ引いたら閉じる（PC: wheel）
     descScroll.addEventListener('wheel', (e) => {
       if (!descSheet.classList.contains('expanded') && e.deltaY > 0) { expandDesc(); }
       else if (descSheet.classList.contains('expanded') && descScroll.scrollTop <= 0 && e.deltaY < 0) { collapseDesc(); }
     }, { passive: true });
+
+    // 同じ挙動をタッチでも（スマホ: 端でのオーバースクロールで開閉）
+    let tdStartY = null, tdStartScroll = 0, tdExpanded = false, tdDone = false;
+    descScroll.addEventListener('touchstart', (e) => {
+      tdStartY = e.touches[0].clientY;
+      tdStartScroll = descScroll.scrollTop;
+      tdExpanded = descSheet.classList.contains('expanded');
+      tdDone = false;
+    }, { passive: true });
+    descScroll.addEventListener('touchmove', (e) => {
+      if (tdStartY === null || tdDone) return;
+      const dy = e.touches[0].clientY - tdStartY;   // >0:下スワイプ / <0:上スワイプ
+      if (!tdExpanded) {
+        if (dy < -24) { expandDesc(); tdDone = true; }            // 折りたたみ→上スワイプで展開
+      } else if (tdStartScroll <= 0 && descScroll.scrollTop <= 0 && dy > 32) {
+        collapseDesc(); tdDone = true;                            // 展開・先頭で下スワイプ→畳む
+      }
+    }, { passive: true });
+    descScroll.addEventListener('touchend', () => { tdStartY = null; }, { passive: true });
 
     /* ════════ シート外クリックで元の大きさに戻す ════════ */
     const actionsEl = document.querySelector('.actions');
