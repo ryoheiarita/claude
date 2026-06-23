@@ -15,9 +15,12 @@
       --vid-normal-h: calc(100dvh - var(--desc-peek)); /* 通常時：概要シートの上の領域いっぱい */
       --vid-comment-h: 220px;                           /* コメント開時：上部に縮小 */
       --vid-comment-top: 56px;
+      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画下端(=276) */
+      --actions-h: 160px;                  /* 3ボタン: 48×3 + gap8×2 */
 
       /* ── ボトムシートの高さ ── */
-      --comment-sheet-h: 568px;            /* コメント欄：568pxまで伸びる（Figma準拠） */
+      /* コメント欄：動画(=3ボタン下端)の 16px 下まで。動画とボタンが必ず全部見える＆操作できる高さ */
+      --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
       --desc-peek: 264px;                  /* 動画概要：通常時に見えている高さ */
       --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
 
@@ -148,7 +151,8 @@
                   right .42s cubic-bezier(.22,.61,.36,1);
     }
     .phone.s-comment .actions {
-      top: 64px;             /* コメント開時：上部へ */
+      /* コメント開時：3ボタンの下端を動画の下端に揃える（→ コメント上端はこの16px下） */
+      top: calc(var(--vid-comment-bottom) - var(--actions-h));
     }
     /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
     .phone.s-desc .actions {
