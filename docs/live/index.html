@@ -15,14 +15,19 @@
       --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
       --actions-h: 160px;                  /* 3ボタン: 48×3 + gap8×2 */
 
-      /* ── 動画は 9:16 固定（無段階リサイズはしない） ── */
-      --vid-normal-h: calc(100dvh - var(--desc-peek)); /* 通常時：概要シートの上の領域いっぱい */
+      /* ── 動画は 9:16 固定。高さ基準で拡大するが、幅(=9)が画面幅に達したら頭打ち ── */
+      --vid-cap-h: calc(100vw * 16 / 9);   /* 幅=画面幅いっぱいになる時の高さ（これ以上は拡大しない） */
+      --vid-normal-h: min(calc(100dvh - var(--desc-peek)), var(--vid-cap-h)); /* 通常時 */
       --vid-comment-top: var(--top-inset);  /* コメント開時：戻るボタンと同じ高さに上揃え */
-      --vid-comment-h: var(--actions-h);    /* コメント開時：3ボタンと同じ高さに縮小 */
+      --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画/ボタン下端 */
 
+      /* 詳細開時：動画は戻るボタン位置から詳細シート上端まで拡大（幅で頭打ち） */
+      --detail-sheet-h: 60dvh;
+      --vid-detail-h: min(calc(100dvh - var(--detail-sheet-h) - var(--top-inset)), var(--vid-cap-h));
+
       /* ── ボトムシートの高さ ── */
-      /* コメント欄：3ボタン(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
+      /* コメント欄：ボタン群(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
       --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
       --desc-peek: 264px;                  /* 動画概要：通常時に見えている高さ */
       --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
@@ -104,12 +109,18 @@
     .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
     .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
 
-    /* コメント開時／詳細開時：9:16 のまま上部中央に縮小 */
-    .phone.s-comment .video-stage,
-    .phone.s-detail .video-stage {
+    /* コメント開時：9:16 のままボタン群と同じ高さに縮小（上揃え） */
+    .phone.s-comment .video-stage {
       height: var(--vid-comment-h);
       width: calc(var(--vid-comment-h) * 9 / 16);
       top: var(--vid-comment-top);
+      border-radius: 12px;
+    }
+    /* 詳細開時：9:16 のまま詳細シート上端まで拡大（戻るボタン位置から） */
+    .phone.s-detail .video-stage {
+      height: var(--vid-detail-h);
+      width: calc(var(--vid-detail-h) * 9 / 16);
+      top: var(--top-inset);
       border-radius: 12px;
     }
 
@@ -156,8 +167,8 @@
     }
     .phone.s-comment .actions,
     .phone.s-detail .actions {
-      /* コメント／詳細開時：ボタン群を上揃え（動画の下端に下端を揃える） */
-      top: calc(var(--vid-comment-bottom) - var(--actions-h));
+      /* コメント／詳細開時：4(3)ボタンを必ず戻るボタンと上揃え */
+      top: var(--top-inset);
     }
     /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
     .phone.s-desc .actions {
@@ -445,7 +456,11 @@
     .phone.mode-b {
       --actions-h: 216px;                                  /* 4ボタン: 48×4 + gap8×3 */
       --bottombar-h: calc(64px + env(safe-area-inset-bottom, 0px));
-      --vid-normal-h: calc(100dvh - var(--bottombar-h));   /* 下部バーの分を残す */
+      /* 下部バーの分を残しつつ、幅(=9)が画面幅に達したら頭打ち */
+      --vid-normal-h: min(calc(100dvh - var(--bottombar-h)), var(--vid-cap-h));
+      /* :root 側は actions-h=160px で解決済みのため、4ボタン(216px)基準で再定義 */
+      --vid-comment-h: var(--actions-h);
+      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
     }
 
     .fab.active-detail { border-color: rgba(255,255,255,0.6); }
@@ -500,7 +515,7 @@
     /* ── 詳細シート（Bモード：画面6割・動画に被さる） ── */
     .detail-sheet {
       position: absolute; left: 0; bottom: 0; width: 100%;
-      height: 60dvh;
+      height: var(--detail-sheet-h);
       background: var(--c-desc-bg);
       border-radius: 16px 16px 0 0;
       z-index: 75;
