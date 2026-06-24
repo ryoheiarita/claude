@@ -662,14 +662,14 @@
     <div class="video-stage" id="videoStage">
       <!-- 縦(9:16)動画。実装時はこの Vimeo ID を本番の縦動画に差し替え。
            9:16 なのでボックスにピッタリ収まり、グレーは出ず Vimeo 標準コントローラーも表示される -->
-      <iframe
+      <iframe id="vimeoFrame"
         src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
         allow="autoplay; fullscreen; picture-in-picture"
         allowfullscreen
         title="Vimeo player"
         onerror="document.getElementById('videoFallback').style.display='flex'"></iframe>
       <!-- 横動画(16:9)モード用：横向きの実動画。縦モードでは非表示 -->
-      <video class="ls-video-el" id="lsVideo" muted loop playsinline preload="metadata"
+      <video class="ls-video-el" id="lsVideo" muted loop playsinline autoplay preload="auto"
         src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"></video>
       <!-- Vimeo が表示できない時のダミー（擬似コントロール） -->
       <div class="video-fallback" id="videoFallback" style="display:none">
@@ -969,17 +969,22 @@
     /* ════════ 縦/横 動画切替トグル（同じ動画を 9:16 / 16:9 で表示） ════════ */
     const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
     const lsVideo = document.getElementById('lsVideo');
+    const vimeoFrame = document.getElementById('vimeoFrame');
+    const VIMEO_SRC = vimeoFrame.src;   // 縦動画(Vimeo)の元URLを保持
     function setOrient(o) {
       phone.classList.toggle('vid-landscape', o === 'landscape');
       phone.classList.toggle('vid-portrait', o === 'portrait');
       orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
       const isB = phone.classList.contains('mode-b');
       if (o === 'landscape') {
-        setLsTab('comment');             // A横・B横とも初期は「コメント一覧」
-        lsVideo.play().catch(() => {});  // 横の実動画を再生（muted自動再生）
+        setLsTab('comment');                 // A横・B横とも初期は「コメント一覧」
+        vimeoFrame.src = 'about:blank';      // 縦動画(Vimeo)を停止（裏で鳴らない）
+        lsVideo.currentTime = 0;
+        lsVideo.play().catch(() => {});      // 横の実動画を再生（muted自動再生）
       } else {
-        lsVideo.pause();
-        setMode(isB ? 'b' : 'a');        // 縦に戻す→モードの初期状態を再適用
+        lsVideo.pause();                     // 横で再生中の動画を停止
+        if (vimeoFrame.src !== VIMEO_SRC) vimeoFrame.src = VIMEO_SRC;  // 縦動画だけ読み込み直す
+        setMode(isB ? 'b' : 'a');            // 縦に戻す→モードの初期状態を再適用
       }
     }
     orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
