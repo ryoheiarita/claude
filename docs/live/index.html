@@ -592,6 +592,8 @@
       font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer;
     }
     .ls-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+    /* タブ順：A＝詳細/コメント（DOM順）, B＝コメント/詳細 */
+    .phone.mode-b #lsTabs .ls-tab[data-ltab="comment"] { order: -1; }
     /* 40px ハート / ブックマーク（✕の代わり） */
     .ls-icons { gap: 8px; align-items: center; }
     .ls-fab {
