@@ -463,7 +463,8 @@
     /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
     .phone.mode-b {
       --actions-h: 216px;                                  /* 4ボタン: 48×4 + gap8×3 */
-      --bottombar-h: calc(64px + env(safe-area-inset-bottom, 0px));
+      /* 下部バー実寸＝内容40 + 上下padding10/10 + セーフエリア。シート下端とピッタリ合わせる */
+      --bottombar-h: calc(60px + env(safe-area-inset-bottom, 0px));
       /* 下部バーの分を残しつつ、幅(=9)が画面幅に達したら頭打ち */
       --vid-normal-h: min(calc(100dvh - var(--bottombar-h)), var(--vid-cap-h));
       /* :root 側は actions-h=160px で解決済みのため、4ボタン(216px)基準で再定義 */
@@ -505,6 +506,7 @@
     /* ── 下部コメントバー（Bモード：常時表示） ── */
     .bottom-bar {
       position: absolute; left: 0; bottom: 0; width: 100%;
+      height: var(--bottombar-h); box-sizing: border-box;  /* シート下端と厳密に一致させ隙間を無くす */
       display: flex; align-items: center; gap: 10px;
       padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
       background: var(--c-comment-bg);
