@@ -104,8 +104,9 @@
     .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
     .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
 
-    /* コメント開時：9:16 のまま上部中央に縮小 */
-    .phone.s-comment .video-stage {
+    /* コメント開時／詳細開時：9:16 のまま上部中央に縮小 */
+    .phone.s-comment .video-stage,
+    .phone.s-detail .video-stage {
       height: var(--vid-comment-h);
       width: calc(var(--vid-comment-h) * 9 / 16);
       top: var(--vid-comment-top);
@@ -145,7 +146,7 @@
       position: absolute;
       right: 16px;
       /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
-      top: calc(var(--vid-normal-h) - 208px);  /* 208 = 160(3ボタン+gap) + 48(コントロール上の余白) */
+      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -153,8 +154,9 @@
       transition: top .42s cubic-bezier(.22,.61,.36,1),
                   right .42s cubic-bezier(.22,.61,.36,1);
     }
-    .phone.s-comment .actions {
-      /* コメント開時：3ボタンの下端を動画の下端に揃える（→ コメント上端はこの16px下） */
+    .phone.s-comment .actions,
+    .phone.s-detail .actions {
+      /* コメント／詳細開時：ボタン群を上揃え（動画の下端に下端を揃える） */
       top: calc(var(--vid-comment-bottom) - var(--actions-h));
     }
     /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
@@ -229,9 +231,10 @@
               mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
       transition: opacity .3s ease;
     }
-    /* コメント欄を開いている時 / 概要展開時はオーバーレイを隠す（パネル側に流れる） */
+    /* コメント欄を開いている時 / 概要・詳細展開時はオーバーレイを隠す（パネル側に流れる） */
     .phone.s-comment .live-comments,
-    .phone.s-desc .live-comments { opacity: 0; pointer-events: none; }
+    .phone.s-desc .live-comments,
+    .phone.s-detail .live-comments { opacity: 0; pointer-events: none; }
 
     /* ════════════ ① 動画概要ボトムシート ════════════ */
     .desc-sheet {
@@ -406,6 +409,112 @@
     }
     .cs-send svg { width: 20px; height: 20px; }
 
+    /* ════════════════════════════════════════════════════════════
+       バージョンB（右上タブで A ⇄ B 切替）
+       ════════════════════════════════════════════════════════════ */
+
+    /* ── A/B 切替タブ（右上・常時表示） ── */
+    .mode-tabs {
+      position: absolute;
+      top: var(--top-inset);
+      right: calc(env(safe-area-inset-right, 0px) + 16px);
+      z-index: 90;
+      display: flex; gap: 2px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 40px; padding: 3px;
+    }
+    .mode-tab {
+      width: 34px; height: 30px; border-radius: 40px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6);
+      cursor: pointer; transition: background .2s, color .2s;
+    }
+    .mode-tab.on { background: #fff; color: #000; }
+
+    /* B専用要素は通常は隠し、Bモードでのみ表示 */
+    .only-b { display: none !important; }
+    .phone.mode-b .only-b { display: flex !important; }
+    .phone.mode-b .only-a { display: none !important; }
+    /* Bモードでは「動画概要シート」と「シート内入力欄」は使わない */
+    .phone.mode-b .desc-sheet { display: none !important; }
+    .phone.mode-b .cs-input  { display: none !important; }
+
+    /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
+    .phone.mode-b {
+      --actions-h: 216px;                                  /* 4ボタン: 48×4 + gap8×3 */
+      --bottombar-h: calc(64px + env(safe-area-inset-bottom, 0px));
+      --vid-normal-h: calc(100dvh - var(--bottombar-h));   /* 下部バーの分を残す */
+    }
+
+    .fab.active-detail { border-color: rgba(255,255,255,0.6); }
+
+    /* ── コメント欄タブ（すべて / アーティスト） ── */
+    .cs-tabs { display: flex; gap: 6px; align-items: center; flex: 1; }
+    .cs-tab {
+      height: 34px; padding: 0 16px; border-radius: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
+      background: transparent; cursor: pointer; white-space: nowrap;
+    }
+    .cs-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+
+    /* Bモード：コメントシートは下部バーの上で止める（＝4ボタンのすぐ下〜バー上） */
+    .phone.mode-b .comment-sheet {
+      bottom: var(--bottombar-h);
+      height: calc(100dvh - var(--vid-comment-bottom) - 16px - var(--bottombar-h));
+    }
+
+    /* アーティストタブ：アーティスト以外を隠す */
+    .cs-list.artist-only .chip:not(.artist) { display: none; }
+
+    /* アーティストのチップ：アイコン＋緑のプロフィール名（Bモードのみ装飾） */
+    .chip.artist { align-items: center; }
+    .chip .cav {
+      width: 20px; height: 20px; border-radius: 50%;
+      flex-shrink: 0; object-fit: cover; margin-right: 2px;
+      display: none;  /* Aモードでは非表示（従来見た目を保つ） */
+    }
+    .phone.mode-b .chip.artist .cav { display: inline-block; }
+    .phone.mode-b .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑 */
+
+    /* ── 下部コメントバー（Bモード：常時表示） ── */
+    .bottom-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: var(--c-comment-bg);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      z-index: 72;
+    }
+    .bottom-bar .avatar { width: 36px; height: 36px; }
+    .bottom-bar .field {
+      flex: 1; height: 40px; border-radius: 20px; background: var(--c-input);
+      display: flex; align-items: center; padding: 0 14px;
+      font-size: 14px; color: rgba(255,255,255,0.4);
+    }
+    /* 詳細展開時は下部バーを隠す（詳細シートが覆う） */
+    .phone.mode-b.s-detail .bottom-bar { display: none !important; }
+
+    /* ── 詳細シート（Bモード：画面6割・動画に被さる） ── */
+    .detail-sheet {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      height: 60dvh;
+      background: var(--c-desc-bg);
+      border-radius: 16px 16px 0 0;
+      z-index: 75;
+      box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+      transform: translateY(100%);
+      transition: transform .42s cubic-bezier(.22,.61,.36,1);
+      flex-direction: column;
+    }
+    .phone.s-detail .detail-sheet { transform: translateY(0); }
+    .detail-scroll { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+    .detail-scroll::-webkit-scrollbar { width: 0; }
+    .detail-body { font-size: 15px; line-height: 26px; color: rgba(255,255,255,0.72); }
+    .detail-body p { margin-bottom: 16px; }
+
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
@@ -453,12 +562,22 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
 
+    <!-- ════ A/B 切替タブ（右上） ════ -->
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab on" data-mode="a">A</div>
+      <div class="mode-tab" data-mode="b">B</div>
+    </div>
+
     <!-- ════ 右側アクションボタン ════ -->
     <div class="actions">
       <div class="fab" id="heartBtn"><div class="lottie-holder" id="heartLottie"></div></div>
       <div class="fab" id="bookmarkBtn"><div class="lottie-holder" id="bookmarkLottie"></div></div>
       <div class="fab" id="commentBtn">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
+      </div>
+      <!-- 詳細ボタン（Bモードのみ） -->
+      <div class="fab only-b" id="detailBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
       </div>
     </div>
 
@@ -492,10 +611,16 @@
     <div class="comment-sheet" id="commentSheet">
       <div class="cs-grabber"></div>
       <div class="cs-header">
-        <div class="ttl">
+        <!-- Aモード：タイトル -->
+        <div class="ttl only-a">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
           <span class="cs-title">コメント</span>
           <span class="cs-count">1,234</span>
+        </div>
+        <!-- Bモード：すべて / アーティスト タブ -->
+        <div class="cs-tabs only-b" id="csTabs">
+          <div class="cs-tab on" data-tab="all">すべて</div>
+          <div class="cs-tab" data-tab="artist">アーティスト</div>
         </div>
         <div class="cs-close" id="commentClose">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
@@ -508,6 +633,32 @@
         <div class="cs-send">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
+      </div>
+    </div>
+
+    <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
+    <div class="detail-sheet only-b" id="detailSheet">
+      <div class="desc-grabber" id="detailGrabber"></div>
+      <div class="detail-scroll">
+        <div class="desc-head">
+          <span class="desc-date">2025.08.16</span>
+          <span class="desc-tag">Information</span>
+        </div>
+        <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
+        <div class="detail-body">
+          <p>BE:FIRSTの新曲「GRIT」のミュージックビデオを公開中。逆境を力に変えるというテーマを、ダンスと映像で表現しています。</p>
+          <p>撮影は都内各所のロケーションで実施。メンバーそれぞれの表現力とグループの一体感をお楽しみください。</p>
+          <p>※ 映像の録画・録音・転載はご遠慮ください。最新情報は公式サイト・公式SNSにて随時お知らせします。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 下部コメントバー（Bモード：常時表示） ════ -->
+    <div class="bottom-bar only-b" id="bottomBar">
+      <img class="avatar" src="" data-avatar="9" alt="">
+      <div class="field">コメントを追加...</div>
+      <div class="cs-send">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
 
@@ -549,13 +700,29 @@
       'やったー！','一緒に歌お','ふぁー！','たまらん','すごすぎ','がんばれ〜'
     ];
     const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // アーティスト（BE:FIRSTメンバー）。アイコン色を固定割り当て
+    const ARTISTS = ['SOTA','SHUNTO','MANATO','RYUHEI','JUNON','RYOKI','LEO'];
+    const ARTIST_MSG = [
+      'みんな来てくれてありがとう！','楽しんでる？🔥','コメント見てるよ〜','次の曲いくよ！',
+      'いつも応援ありがとう❤️','一緒に盛り上がろう！','最後まで見てね😆','感謝🙏'
+    ];
+    const ARTIST_AV = {}; ARTISTS.forEach((n, i) => ARTIST_AV[n] = i);
+
     function makeComment() {
+      // 約3割でアーティストのコメント
+      if (Math.random() < 0.3) {
+        const name = rand(ARTISTS);
+        return { name, text: rand(ARTIST_MSG), artist: true, av: ARTIST_AV[name] };
+      }
       let name = rand(NAME_BASES);
-      // 半数は末尾に数字を足してハンドルっぽく
-      if (Math.random() < 0.45) name += Math.floor(Math.random() * 900 + 10);
+      if (Math.random() < 0.45) name += Math.floor(Math.random() * 900 + 10);  // ハンドルっぽく
       return { name, text: rand(MESSAGES) };
     }
     function chipHTML(c) {
+      if (c.artist) {
+        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="u">${c.name}</span><span class="m">${c.text}</span></div>`;
+      }
       return `<div class="chip"><span class="u">${c.name}</span><span class="m">${c.text}</span></div>`;
     }
 
@@ -569,12 +736,49 @@
     const phone = document.getElementById('phone');
     const commentSheet = document.getElementById('commentSheet');
     const commentFab = document.getElementById('commentBtn');
-    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); collapseDesc(); }
+    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); collapseDesc(); closeDetail(); }
     function closeComment() { phone.classList.remove('s-comment'); commentFab.classList.remove('active-comment'); }
     commentFab.addEventListener('click', () => {
       phone.classList.contains('s-comment') ? closeComment() : openComment();
     });
     document.getElementById('commentClose').addEventListener('click', closeComment);
+
+    /* ════════ 〔Bモード〕詳細シート開閉（4つ目のボタン） ════════ */
+    const detailBtn = document.getElementById('detailBtn');
+    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); collapseDesc(); }
+    function closeDetail() { phone.classList.remove('s-detail'); detailBtn.classList.remove('active-detail'); }
+    detailBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      phone.classList.contains('s-detail') ? closeDetail() : openDetail();
+    });
+
+    /* ════════ 〔Bモード〕コメントタブ（すべて / アーティスト） ════════ */
+    const csTabs = document.querySelectorAll('#csTabs .cs-tab');
+    csTabs.forEach(t => t.addEventListener('click', (e) => {
+      e.stopPropagation();
+      csTabs.forEach(x => x.classList.toggle('on', x === t));
+      csListEl.classList.toggle('artist-only', t.dataset.tab === 'artist');
+      csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
+    }));
+
+    /* ════════ 〔Bモード〕下部コメントバー → タップでコメント欄を開く ════════ */
+    document.getElementById('bottomBar').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!phone.classList.contains('s-comment')) openComment();
+    });
+
+    /* ════════ A / B モード切替（右上タブ） ════════ */
+    const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
+    function setMode(m) {
+      closeComment(); closeDetail(); collapseDesc();   // 状態をリセット
+      phone.classList.toggle('mode-b', m === 'b');
+      phone.classList.toggle('mode-a', m === 'a');
+      modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+    }
+    modeTabs.forEach(t => t.addEventListener('click', (e) => {
+      e.stopPropagation(); setMode(t.dataset.mode);
+    }));
+    phone.classList.add('mode-a');
 
     /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
     const descSheet = document.getElementById('descSheet');
@@ -644,11 +848,17 @@
 
     /* ════════ シート外クリックで元の大きさに戻す ════════ */
     const actionsEl = document.querySelector('.actions');
+    const detailSheet = document.getElementById('detailSheet');
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
       // コメント開時：コメントシート外（動画エリア等）をクリックで閉じて元のサイズへ
       if (phone.classList.contains('s-comment')) {
         if (!commentSheet.contains(e.target) && !inActions) closeComment();
+        return;
+      }
+      // 詳細シート開時：シート外をクリックで閉じる
+      if (phone.classList.contains('s-detail')) {
+        if (!detailSheet.contains(e.target) && !inActions) closeDetail();
         return;
       }
       // 概要シート展開時：シート外をクリックで畳む
@@ -717,8 +927,16 @@
       if (csCountEl) csCountEl.textContent = total.toLocaleString();
     }
 
-    // 初期：何件か流し込んでおく（開いた瞬間から賑わって見える）
-    for (let i = 0; i < OVERLAY_MAX; i++) pushComment(makeComment());
+    // 初期：賑わいを出すため多めに流し込む（アーティストも確実に混ぜてタブを埋める）
+    for (let i = 0; i < 18; i++) {
+      let c = makeComment();
+      // 交互にアーティストを確定で混ぜる（アーティストタブが最初から並ぶように）
+      if (i % 2 === 0 && !c.artist) {
+        const name = rand(ARTISTS);
+        c = { name, text: rand(ARTIST_MSG), artist: true, av: ARTIST_AV[name] };
+      }
+      pushComment(c);
+    }
     csListEl.scrollTop = csListEl.scrollHeight;
 
     // 自然に流れる：0.5〜1.6秒のランダム間隔で次々に追加
