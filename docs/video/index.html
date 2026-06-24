@@ -412,48 +412,17 @@
     .phone.vid-landscape .cs-grabber { display: none !important; }
     .phone.vid-landscape .cs-header { padding: 14px 16px 12px; }
 
-    /* ── 下部バー：ブロック背景なし＝フローティング。中の各グループだけがピル ── */
+    /* ── 下部バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
+       見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
     .ls-bar {
       position: absolute; left: 0; bottom: 0; width: 100%;
-      box-sizing: border-box;
-      display: none; align-items: center; justify-content: space-between;
+      box-sizing: border-box; display: none;
       padding: 0 16px calc(8px + env(safe-area-inset-bottom, 0px));
       z-index: 50;
-      pointer-events: none;   /* 余白はタップを背面（概要）に通す。ピルだけ auto */
     }
     .phone.vid-landscape .ls-bar { display: flex; }
     /* コメント開時は下部バーを隠す（コメントシートが覆う） */
     .phone.vid-landscape.s-comment .ls-bar { display: none; }
-
-    /* コメントボタン（#303030 ピル＋コメント者アバター。Figma 9448-27815） */
-    .ls-comment-btn {
-      pointer-events: auto; cursor: pointer;
-      display: flex; align-items: center; gap: 10px;
-      height: 48px; padding: 0 16px; border-radius: 40px;
-      background: #303030; border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    }
-    .ls-comment-btn .ci { width: 24px; height: 24px; flex-shrink: 0; }
-    .ls-comment-btn .lbl { font-size: 16px; font-weight: 600; }
-    .ls-avs { display: flex; align-items: center; }
-    .ls-avs img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -4px; border: 2px solid #303030; }
-    .ls-avs img:first-child { margin-left: 0; }
-
-    /* ハート/ブックマーク（#303030 ピル＋中央 divider。Figma 9448-27824） */
-    .ls-actions {
-      pointer-events: auto;
-      display: flex; align-items: center;
-      height: 48px; border-radius: 42px;
-      background: #303030; border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    }
-    .ls-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
-    .ls-fab {
-      width: 48px; height: 48px; border-radius: 42px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      position: relative; overflow: visible; background: transparent; border: 0;
-    }
-    .ls-fab .lottie-holder { width: 72px; height: 72px; }
 
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
@@ -578,27 +547,16 @@
       </div>
     </div>
 
-    <!-- ════ 〔横モード〕下部固定バー（コメント＋アバター / ♥🔖）。Figma 9448-27814 ════ -->
-    <div class="ls-bar" id="lsBar">
-      <div class="ls-comment-btn" id="lsCommentBtn">
-        <svg class="ci" viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
-        <span class="lbl">コメント</span>
-        <span class="ls-avs">
-          <img src="" data-avatar="0" alt=""><img src="" data-avatar="2" alt=""><img src="" data-avatar="4" alt="">
-        </span>
-      </div>
-      <div class="ls-actions">
-        <div class="ls-fab" id="lsHeartBtn"><div class="lottie-holder" id="lsHeartLottie"></div></div>
-        <div class="ls-divider"></div>
-        <div class="ls-fab" id="lsBookmarkBtn"><div class="lottie-holder" id="lsBookmarkLottie"></div></div>
-      </div>
-    </div>
+    <!-- ════ 〔横モード〕下部固定バー＝共通コンポーネント <bwu-action-bar>。Figma 9448-27814 ════ -->
+    <bwu-action-bar class="ls-bar" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
 
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <!-- ハート/ブックマークの Lottie データを同梱（file:// でも fetch 不要で動く） -->
   <script src="./lottie-data.js"></script>
+  <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
+  <script src="./bwu-action-bar.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
@@ -665,11 +623,8 @@
       phone.classList.contains('s-comment') ? closeComment() : openComment();
     });
     document.getElementById('commentClose').addEventListener('click', closeComment);
-    // 横モード：下部バーの「コメント」ボタンでコメントシートを立ち上げる
-    document.getElementById('lsCommentBtn').addEventListener('click', (e) => {
-      e.stopPropagation();   // phone の「シート外クリックで閉じる」即時発火を防ぐ
-      openComment();
-    });
+    // 横モード：下部バー（共通コンポーネント）の「コメント」イベントでコメントシートを立ち上げる
+    document.getElementById('lsBar').addEventListener('comment', openComment);
 
     /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
     const descSheet = document.getElementById('descSheet');
@@ -784,9 +739,7 @@
     }
     setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
-    // 横モードの下部バー用ハート/ブックマーク（同じLottie・別インスタンス）
-    setupLottieButton(window.HEART_LOTTIE,    'lsHeartLottie',    'lsHeartBtn',    'rgba(255,62,62,0.6)');
-    setupLottieButton(window.BOOKMARK_LOTTIE, 'lsBookmarkLottie', 'lsBookmarkBtn', 'rgba(255,209,51,0.6)');
+    // ※ 横モード下部バーのハート/ブックマークは <bwu-action-bar> 内で完結（こちらでの設定は不要）
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
     const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16
