@@ -681,6 +681,27 @@
     .load-latest.loading .ic-reload { display: none; }
     .load-latest.loading .spinner   { display: block; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ════════ Ph.2：FV下部のコメント入力バーは無し ════════ */
+    .phone.mode-b .bottom-bar { display: none !important; }
+    /* 入力バーを外したぶん、FV動画は下端の予約を解除（幅基準で頭打ちは従来どおり） */
+    .phone.mode-b { --vid-normal-h: min(100dvh, var(--vid-cap-h)); }
+
+    /* ════════ Ph.2：コメントシートを「概要(詳細)シート」と同じ挙動・同じ高さに ════════ */
+    /* シートは下端0・高さは詳細シートと同一(60dvh)。入力バーぶんの底上げをやめる */
+    .phone.mode-b .comment-sheet { bottom: 0; height: var(--detail-sheet-h); }
+    /* コメント開時の動画：小さいサムネではなく、詳細シート開時と同じく上に詰めて拡大（隙間なし） */
+    .phone.mode-b.s-comment .video-stage {
+      height: var(--vid-detail-h);
+      width: calc(var(--vid-detail-h) * 9 / 16);
+      top: var(--top-inset);
+      border-radius: 12px;
+    }
+
+    /* ════════ Ph.2：縦動画は初期表示から角丸16px（iframeにも適用／横16:9は角丸なしのまま） ════════ */
+    .phone.vid-portrait .video-stage,
+    .phone.vid-portrait .video-stage iframe,
+    .phone.vid-portrait .video-stage .video-fallback { border-radius: 16px; }
   </style>
 </head>
 <body>
