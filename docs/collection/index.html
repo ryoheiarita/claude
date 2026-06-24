@@ -132,26 +132,65 @@
       background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.7);
     }
 
-    /* ════════════ 下部タブバー ════════════ */
-    .tabbar {
-      position: absolute; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 20;
-      height: 64px; padding: 7px 20px; border-radius: 42px;
-      background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      display: flex; align-items: flex-end; gap: 12px;
+    /* ════════════ 下部タブバー（共通コンポーネント components/tabbar） ════════════ */
+    /* ===== BEGIN TABBAR CSS（bwu/components/tabbar/tabbar.html より） ===== */
+    :root{
+      --tabbar-bg:        rgba(0,0,0,0.65);
+      --tabbar-border:    rgba(255,255,255,0.15);
+      --tabbar-blur:      16px;
+      --tabbar-radius:    42px;
+      --tab-inactive:     rgba(255,255,255,0.5);
+      --tab-active:       #ffffff;
+      --tab-center-bg:    #ffffff;                 /* gallery CTA */
+      --tab-center-icon:  #000000;
+      --tab-more-bg:      rgba(255,255,255,0.25);   /* more frosted glass */
+      --tab-more-border:  rgba(255,255,255,0.15);
+      --tab-more-blur:    8px;
+      --tab-more-icon:    #ffffff;
+      --tab-font:         'Figtree',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;
     }
-    .tabbar .tb {
-      width: 48px; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      color: rgba(255,255,255,0.5); font-size: 11px; padding-bottom: 2px;
+    .tabbar{
+      position:absolute; left:50%; bottom:24px; transform:translateX(-50%); z-index:20;
+      height:64px; padding:7px 20px; border-radius:var(--tabbar-radius);
+      display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+      font-family:var(--tab-font);
     }
-    .tabbar .tb.on { color: #fff; }
-    .tabbar .tb.on svg { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
-    .tabbar .tb.center .ic {
-      width: 48px; height: 48px; border-radius: 40px; margin-bottom: 2px;
-      background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    .tabbar::before{
+      content:""; position:absolute; inset:0; z-index:0; border-radius:inherit;
+      background:var(--tabbar-bg); border:1px solid var(--tabbar-border);
+      backdrop-filter:blur(var(--tabbar-blur)); -webkit-backdrop-filter:blur(var(--tabbar-blur));
     }
+    .tabbar__row{ position:relative; z-index:1; display:flex; gap:12px; align-items:flex-end; justify-content:center; }
+    .tab-item{
+      width:48px; padding:4px 0 2px; border:0; background:none; cursor:pointer;
+      display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:flex-end;
+      color:var(--tab-inactive);
+    }
+    .tab-item svg{ width:24px; height:24px; display:block; fill:currentColor; }
+    .tab-item__label{
+      font-size:11px; line-height:15px; letter-spacing:0.11px; text-align:center; white-space:nowrap;
+      color:currentColor; text-shadow:0 0 4px rgba(0,0,0,0.25);
+    }
+    .tab-item.active{ color:var(--tab-active); }
+    .tab-item.is-center{ width:48px; height:75px; gap:2px; padding:0 0 2px; color:var(--tab-active); }
+    .tab-item.is-center .tab-item__icon{
+      width:48px; height:48px; border-radius:40px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .tab-item.is-center .tab-item__icon{ background:var(--tab-center-bg); }
+    .tab-item.is-center .ic-gallery{ width:22px; height:22px; fill:var(--tab-center-icon); }
+    .tab-item.is-center .ic-more{ display:none; }
+    .tab-item.is-center.is-more{ color:var(--tab-inactive); }
+    .tab-item.is-center.is-more .tab-item__icon{
+      background:var(--tab-more-bg); border:1px solid var(--tab-more-border);
+      backdrop-filter:blur(var(--tab-more-blur)); -webkit-backdrop-filter:blur(var(--tab-more-blur));
+    }
+    .tab-item.is-center.is-more .ic-gallery{ display:none; }
+    .tab-item.is-center.is-more .ic-more{
+      display:block; width:20px; height:20px; fill:none;
+      stroke:var(--tab-more-icon); stroke-width:2.33333; stroke-linecap:round; stroke-linejoin:round;
+    }
+    /* ===== END TABBAR CSS ===== */
   </style>
 </head>
 <body>
@@ -189,29 +228,59 @@
       </div>
     </div>
 
-    <!-- ════ 下部タブバー ════ -->
-    <div class="tabbar">
-      <div class="tb on">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20h14V9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Home</span>
+    <!-- ════ 下部タブバー（共通コンポーネント bwu/components/tabbar） ════ -->
+    <nav class="tabbar" id="tabbar">
+      <div class="tabbar__row">
+
+        <button class="tab-item active" data-tab="0">
+          <span class="tab-item__icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.121 9.069L15.536 1.483C14.5972 0.546989 13.3257 0.0213736 12 0.0213736C10.6743 0.0213736 9.40276 0.546989 8.464 1.483L0.879 9.069C0.599426 9.34678 0.37777 9.6773 0.226883 10.0414C0.0759953 10.4055 -0.00112232 10.7959 1.60589e-07 11.19V21.007C1.60589e-07 21.8026 0.316071 22.5657 0.87868 23.1283C1.44129 23.6909 2.20435 24.007 3 24.007H21C21.7957 24.007 22.5587 23.6909 23.1213 23.1283C23.6839 22.5657 24 21.8026 24 21.007V11.19C24.0011 10.7959 23.924 10.4055 23.7731 10.0414C23.6222 9.6773 23.4006 9.34678 23.121 9.069ZM15 22.007H9V18.073C9 17.2774 9.31607 16.5143 9.87868 15.9517C10.4413 15.3891 11.2044 15.073 12 15.073C12.7957 15.073 13.5587 15.3891 14.1213 15.9517C14.6839 16.5143 15 17.2774 15 18.073V22.007ZM22 21.007C22 21.2722 21.8946 21.5266 21.7071 21.7141C21.5196 21.9016 21.2652 22.007 21 22.007H17V18.073C17 16.7469 16.4732 15.4751 15.5355 14.5375C14.5979 13.5998 13.3261 13.073 12 13.073C10.6739 13.073 9.40215 13.5998 8.46447 14.5375C7.52679 15.4751 7 16.7469 7 18.073V22.007H3C2.73478 22.007 2.48043 21.9016 2.29289 21.7141C2.10536 21.5266 2 21.2722 2 21.007V11.19C2.00093 10.925 2.10619 10.671 2.293 10.483L9.878 2.9C10.4417 2.33893 11.2047 2.02394 12 2.02394C12.7953 2.02394 13.5583 2.33893 14.122 2.9L21.707 10.486C21.8931 10.6732 21.9983 10.926 22 11.19V21.007Z"/></svg>
+          </span>
+          <span class="tab-item__label">Home</span>
+        </button>
+
+        <button class="tab-item" data-tab="1">
+          <span class="tab-item__icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.499 11.9996C13.499 12.8276 12.827 13.4996 11.999 13.4996C11.171 13.4996 10.499 12.8276 10.499 11.9996C10.499 11.1716 11.171 10.4996 11.999 10.4996C12.827 10.4996 13.499 11.1716 13.499 11.9996ZM16.999 10.4996C16.171 10.4996 15.499 11.1716 15.499 11.9996C15.499 12.8276 16.171 13.4996 16.999 13.4996C17.827 13.4996 18.499 12.8276 18.499 11.9996C18.499 11.1716 17.827 10.4996 16.999 10.4996ZM6.99904 10.4996C6.17104 10.4996 5.49904 11.1716 5.49904 11.9996C5.49904 12.8276 6.17104 13.4996 6.99904 13.4996C7.82704 13.4996 8.49904 12.8276 8.49904 11.9996C8.49904 11.1716 7.82704 10.4996 6.99904 10.4996ZM23.999 12.3396V18.9996C23.999 21.7566 21.756 23.9996 18.999 23.9996H13.082C6.08104 23.9996 0.469035 19.2076 0.029035 12.8536C-0.211965 9.37761 1.05604 5.97561 3.50804 3.52062C5.96004 1.06562 9.36204 -0.206384 12.835 0.0286163C19.095 0.453616 23.999 5.86062 23.999 12.3396ZM21.999 12.3396C21.999 6.90861 17.915 2.37762 12.7 2.02362C12.471 2.00762 12.242 2.00062 12.014 2.00062C9.35804 2.00062 6.80504 3.04862 4.92304 4.93361C2.87904 6.97961 1.82204 9.81661 2.02404 12.7156C2.39704 18.0956 7.04804 22.0006 13.083 22.0006H19C20.654 22.0006 22 20.6546 22 19.0006V12.3406L21.999 12.3396Z"/></svg>
+          </span>
+          <span class="tab-item__label">Poppin</span>
+        </button>
+
+        <!-- CENTER: holds both icons; "is-more" = frosted More variant -->
+        <button class="tab-item is-center is-more" data-tab="2" id="tabCenter">
+          <span class="tab-item__icon">
+            <svg class="ic-gallery" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg"><path d="M11.0088 7.1225C11.9347 6.19667 13.4472 6.1875 14.3822 7.1225L15.3355 8.07583C15.5463 8.28667 15.9038 8.28667 16.1147 8.07583L21.5688 2.62167C20.8355 1.0725 19.2497 0 17.4255 0H9.16634C6.63634 0 4.58301 2.05333 4.58301 4.58333V10.0833C4.58301 11.0642 4.89467 11.9717 5.41717 12.7142L11.0088 7.1225ZM8.70801 2.75C9.46884 2.75 10.083 3.36417 10.083 4.125C10.083 4.88583 9.46884 5.5 8.70801 5.5C7.94718 5.5 7.33301 4.88583 7.33301 4.125C7.33301 3.36417 7.94718 2.75 8.70801 2.75ZM11.3022 21.835L3.35467 19.6258C0.916341 18.9475 -0.513659 16.4175 0.164674 13.9792L1.64051 8.68083C1.85134 7.92917 2.23634 7.26917 2.74967 6.7375V10.0925C2.74967 13.64 5.61884 16.5092 9.16634 16.5092H17.5447L16.9488 18.6542C16.2705 21.0925 13.7405 22.5225 11.3022 21.8442V21.835ZM21.9997 4.77583V10.0833C21.9997 12.6133 19.9463 14.6667 17.4163 14.6667H9.16634C8.27718 14.6667 7.45218 14.41 6.74634 13.9792L12.3013 8.42417C12.5122 8.21333 12.8697 8.21333 13.0805 8.42417L14.0338 9.3775C14.9322 10.2758 16.4997 10.2758 17.398 9.3775L21.9997 4.77583Z"/></svg>
+            <svg class="ic-more" viewBox="0 0 16.3333 16.3333" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-opacity="0.75" d="M13.1667 14.1667C13.1667 14.719 13.6144 15.1667 14.1667 15.1667C14.719 15.1667 15.1667 14.719 15.1667 14.1667C15.1667 13.6144 14.719 13.1667 14.1667 13.1667C13.6144 13.1667 13.1667 13.6144 13.1667 14.1667Z"/>
+              <path stroke-opacity="0.75" d="M7.16667 14.1667C7.16667 14.719 7.61438 15.1667 8.16667 15.1667C8.71895 15.1667 9.16667 14.719 9.16667 14.1667C9.16667 13.6144 8.71895 13.1667 8.16667 13.1667C7.61438 13.1667 7.16667 13.6144 7.16667 14.1667Z"/>
+              <path stroke-opacity="0.75" d="M1.16667 14.1667C1.16667 14.719 1.61438 15.1667 2.16667 15.1667C2.71895 15.1667 3.16667 14.719 3.16667 14.1667C3.16667 13.6144 2.71895 13.1667 2.16667 13.1667C1.61438 13.1667 1.16667 13.6144 1.16667 14.1667Z"/>
+              <path stroke-opacity="0.75" d="M13.1667 8.16667C13.1667 8.71895 13.6144 9.16667 14.1667 9.16667C14.719 9.16667 15.1667 8.71895 15.1667 8.16667C15.1667 7.61438 14.719 7.16667 14.1667 7.16667C13.6144 7.16667 13.1667 7.61438 13.1667 8.16667Z"/>
+              <path stroke-opacity="0.75" d="M7.16667 8.16667C7.16667 8.71895 7.61438 9.16667 8.16667 9.16667C8.71895 9.16667 9.16667 8.71895 9.16667 8.16667C9.16667 7.61438 8.71895 7.16667 8.16667 7.16667C7.61438 7.16667 7.16667 7.61438 7.16667 8.16667Z"/>
+              <path stroke-opacity="0.75" d="M1.16667 8.16667C1.16667 8.71895 1.61438 9.16667 2.16667 9.16667C2.71895 9.16667 3.16667 8.71895 3.16667 8.16667C3.16667 7.61438 2.71895 7.16667 2.16667 7.16667C1.61438 7.16667 1.16667 7.61438 1.16667 8.16667Z"/>
+              <path stroke-opacity="0.75" d="M13.1667 2.16667C13.1667 2.71895 13.6144 3.16667 14.1667 3.16667C14.719 3.16667 15.1667 2.71895 15.1667 2.16667C15.1667 1.61438 14.719 1.16667 14.1667 1.16667C13.6144 1.16667 13.1667 1.61438 13.1667 2.16667Z"/>
+              <path stroke-opacity="0.75" d="M7.16667 2.16667C7.16667 2.71895 7.61438 3.16667 8.16667 3.16667C8.71895 3.16667 9.16667 2.71895 9.16667 2.16667C9.16667 1.61438 8.71895 1.16667 8.16667 1.16667C7.61438 1.16667 7.16667 1.61438 7.16667 2.16667Z"/>
+              <path stroke-opacity="0.75" d="M1.16667 2.16667C1.16667 2.71895 1.61438 3.16667 2.16667 3.16667C2.71895 3.16667 3.16667 2.71895 3.16667 2.16667C3.16667 1.61438 2.71895 1.16667 2.16667 1.16667C1.61438 1.16667 1.16667 1.61438 1.16667 2.16667Z"/>
+            </svg>
+          </span>
+          <span class="tab-item__label" id="tabCenterLabel">More</span>
+        </button>
+
+        <button class="tab-item" data-tab="3">
+          <span class="tab-item__icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 6H18C18 4.4087 17.3679 2.88258 16.2426 1.75736C15.1174 0.632141 13.5913 0 12 0C10.4087 0 8.88258 0.632141 7.75736 1.75736C6.63214 2.88258 6 4.4087 6 6H3C2.20435 6 1.44129 6.31607 0.87868 6.87868C0.31607 7.44129 0 8.20435 0 9L0 19C0.00158786 20.3256 0.528882 21.5964 1.46622 22.5338C2.40356 23.4711 3.6744 23.9984 5 24H19C20.3256 23.9984 21.5964 23.4711 22.5338 22.5338C23.4711 21.5964 23.9984 20.3256 24 19V9C24 8.20435 23.6839 7.44129 23.1213 6.87868C22.5587 6.31607 21.7956 6 21 6ZM12 2C13.0609 2 14.0783 2.42143 14.8284 3.17157C15.5786 3.92172 16 4.93913 16 6H8C8 4.93913 8.42143 3.92172 9.17157 3.17157C9.92172 2.42143 10.9391 2 12 2ZM22 19C22 19.7956 21.6839 20.5587 21.1213 21.1213C20.5587 21.6839 19.7956 22 19 22H5C4.20435 22 3.44129 21.6839 2.87868 21.1213C2.31607 20.5587 2 19.7956 2 19V9C2 8.73478 2.10536 8.48043 2.29289 8.29289C2.48043 8.10536 2.73478 8 3 8H6V10C6 10.2652 6.10536 10.5196 6.29289 10.7071C6.48043 10.8946 6.73478 11 7 11C7.26522 11 7.51957 10.8946 7.70711 10.7071C7.89464 10.5196 8 10.2652 8 10V8H16V10C16 10.2652 16.1054 10.5196 16.2929 10.7071C16.4804 10.8946 16.7348 11 17 11C17.2652 11 17.5196 10.8946 17.7071 10.7071C17.8946 10.5196 18 10.2652 18 10V8H21C21.2652 8 21.5196 8.10536 21.7071 8.29289C21.8946 8.48043 22 8.73478 22 9V19Z"/></svg>
+          </span>
+          <span class="tab-item__label">Shop</span>
+        </button>
+
+        <button class="tab-item" data-tab="4">
+          <span class="tab-item__icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.383 0 0 5.383 0 12C0 18.617 5.383 24 12 24C18.617 24 24 18.617 24 12C24 5.383 18.617 0 12 0ZM8 21.164V21C8 18.794 9.794 17 12 17C14.206 17 16 18.794 16 21V21.164C14.774 21.701 13.422 22 12 22C10.578 22 9.226 21.701 8 21.164ZM17.925 20.051C17.469 17.192 14.986 15 12 15C9.014 15 6.532 17.192 6.075 20.051C3.605 18.228 2 15.298 2 12C2 6.486 6.486 2 12 2C17.514 2 22 6.486 22 12C22 15.298 20.395 18.228 17.925 20.051ZM12 5C9.794 5 8 6.794 8 9C8 11.206 9.794 13 12 13C14.206 13 16 11.206 16 9C16 6.794 14.206 5 12 5ZM12 11C10.897 11 10 10.103 10 9C10 7.897 10.897 7 12 7C13.103 7 14 7.897 14 9C14 10.103 13.103 11 12 11Z"/></svg>
+          </span>
+          <span class="tab-item__label">Mypage</span>
+        </button>
+
       </div>
-      <div class="tb">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-4 4v-4H4z" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        <span>Poppin</span>
-      </div>
-      <div class="tb center">
-        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="14" y="4" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="4" y="14" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="14" y="14" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/></svg></div>
-        <span>More</span>
-      </div>
-      <div class="tb">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 11a2 2 0 0 1-2 1.8H9A2 2 0 0 1 7 19zM9 8a3 3 0 0 1 6 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Shop</span>
-      </div>
-      <div class="tb">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="3.2" stroke="#fff" stroke-opacity=".5" stroke-width="1.8"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Mypage</span>
-      </div>
-    </div>
+    </nav>
 
   </div>
 
@@ -266,6 +335,27 @@
         </div>
       </a>
     `).join('');
+  </script>
+
+  <!-- ===== 共通タブバー JSコントローラ（bwu/components/tabbar より） ===== -->
+  <script>
+  window.Tabbar = (function(){
+    const root = document.getElementById('tabbar');
+    if(!root) return {};
+    const items = Array.from(root.querySelectorAll('.tab-item'));
+    const center = document.getElementById('tabCenter');
+    const centerLabel = document.getElementById('tabCenterLabel');
+    function setActive(i){
+      items.forEach((el, idx) => el.classList.toggle('active', idx === i || el.classList.contains('is-center')));
+    }
+    function setCenter(type){ // 'gallery' | 'more'
+      const more = type === 'more';
+      if(center) center.classList.toggle('is-more', more);
+      if(centerLabel) centerLabel.textContent = more ? 'More' : 'Gallery';
+    }
+    items.forEach((el, idx) => el.addEventListener('click', () => { if(!el.classList.contains('is-center')) setActive(idx); }));
+    return { setActive, setCenter, items };
+  })();
   </script>
 </body>
 </html>
