@@ -204,7 +204,7 @@
       max-width: 100%;
       width: fit-content;
       display: inline-flex;
-      align-items: baseline;
+      align-items: flex-start;   /* 改行時は上揃え（名前とテキスト1行目を揃える） */
       gap: 6px;
       padding: 6px 12px;
       border-radius: 18px;
@@ -484,8 +484,7 @@
     /* アーティストタブ：アーティスト以外を隠す */
     .cs-list.artist-only .chip:not(.artist) { display: none; }
 
-    /* アーティストのチップ：アイコン＋緑のプロフィール名（A/B 共通） */
-    .chip.artist { align-items: center; }
+    /* アーティストのチップ：アイコン＋緑のプロフィール名（A/B 共通）。上揃えは .chip 既定 */
     .chip .cav {
       width: 20px; height: 20px; border-radius: 50%;
       flex-shrink: 0; object-fit: cover; margin-right: 2px;
@@ -493,6 +492,7 @@
     }
     .chip.artist .cav { display: inline-block; }
     .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑（A/B 共通） */
+    .chip.own .u     { color: #fc5555; }       /* 自分のコメントは「あなた」を赤に */
 
     /* ── 下部コメントバー（Bモード：常時表示） ── */
     .bottom-bar {
@@ -504,11 +504,13 @@
       z-index: 72;
     }
     .bottom-bar .avatar { width: 36px; height: 36px; }
+    /* B：実際に入力できるフィールド */
     .bottom-bar .field {
       flex: 1; height: 40px; border-radius: 20px; background: var(--c-input);
-      display: flex; align-items: center; padding: 0 14px;
-      font-size: 14px; color: rgba(255,255,255,0.4);
+      border: 0; outline: none; padding: 0 14px;
+      font-size: 14px; color: #fff; font-family: inherit;
     }
+    .bottom-bar .field::placeholder { color: rgba(255,255,255,0.4); }
     /* 詳細展開時は下部バーを隠す（詳細シートが覆う） */
     .phone.mode-b.s-detail .bottom-bar { display: none !important; }
 
@@ -668,11 +670,11 @@
       </div>
     </div>
 
-    <!-- ════ 下部コメントバー（Bモード：常時表示） ════ -->
+    <!-- ════ 下部コメントバー（Bモード：常時表示・タップで記入） ════ -->
     <div class="bottom-bar only-b" id="bottomBar">
       <img class="avatar" src="" data-avatar="9" alt="">
-      <div class="field">コメントを追加...</div>
-      <div class="cs-send">
+      <input class="field" id="ownInput" type="text" placeholder="コメントを追加..." autocomplete="off">
+      <div class="cs-send" id="ownSend">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
@@ -734,11 +736,16 @@
       if (Math.random() < 0.45) name += Math.floor(Math.random() * 900 + 10);  // ハンドルっぽく
       return { name, text: rand(MESSAGES) };
     }
+    const esc = (s) => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
     function chipHTML(c) {
-      if (c.artist) {
-        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="u">${c.name}</span><span class="m">${c.text}</span></div>`;
+      const m = esc(c.text);
+      if (c.own) {
+        return `<div class="chip own"><span class="u">あなた</span><span class="m">${m}</span></div>`;
       }
-      return `<div class="chip"><span class="u">${c.name}</span><span class="m">${c.text}</span></div>`;
+      if (c.artist) {
+        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
+      }
+      return `<div class="chip"><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
     }
 
     /* ════════ 戻るボタン ════════ */
@@ -776,11 +783,28 @@
       csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
     }));
 
-    /* ════════ 〔Bモード〕下部コメントバー → タップでコメント欄を開く ════════ */
+    /* ════════ 〔Bモード〕下部コメントバー：タップで記入→送信でコメント欄に反映 ════════ */
+    const ownInput = document.getElementById('ownInput');
+    const ownSend  = document.getElementById('ownSend');
     document.getElementById('bottomBar').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!phone.classList.contains('s-comment')) openComment();
+      e.stopPropagation();   // シート外クリックの誤判定を防ぐ
+      if (e.target !== ownSend && !ownSend.contains(e.target)) ownInput.focus();
     });
+    function sendOwn() {
+      const text = ownInput.value.trim();
+      if (!text) return;
+      // 「すべて」タブに戻して自分のコメントが見えるように
+      const allTab = document.querySelector('#csTabs .cs-tab[data-tab="all"]');
+      const artistTab = document.querySelector('#csTabs .cs-tab[data-tab="artist"]');
+      allTab.classList.add('on'); artistTab.classList.remove('on');
+      csListEl.classList.remove('artist-only');
+      pushComment({ own: true, text });           // オーバーレイ＋コメント欄に反映
+      if (!phone.classList.contains('s-comment')) openComment();  // コメント欄を開いて見せる
+      csListEl.scrollTop = csListEl.scrollHeight;
+      ownInput.value = '';
+    }
+    ownSend.addEventListener('click', (e) => { e.stopPropagation(); sendOwn(); });
+    ownInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOwn(); } });
 
     /* ════════ A / B モード切替（右上タブ） ════════ */
     const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
