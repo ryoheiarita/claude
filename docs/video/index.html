@@ -350,8 +350,82 @@
     }
     .cs-send svg { width: 20px; height: 20px; }
 
+    /* ════════════════════════════════════════════════════════════
+       バージョンB（右上タブで A ⇄ B 切替）
+       A＝現状（3ボタン＋概要シート＋コメントシート）。Bはそれを差し替え。
+       ════════════════════════════════════════════════════════════ */
+
+    /* ── A/B 切替タブ（右上・常時表示） ── */
+    .mode-tabs {
+      position: absolute;
+      top: var(--top-inset);
+      right: calc(env(safe-area-inset-right, 0px) + 16px);
+      z-index: 90;
+      display: flex; gap: 2px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 40px; padding: 3px;
+    }
+    .mode-tab {
+      width: 34px; height: 30px; border-radius: 40px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6);
+      cursor: pointer; transition: background .2s, color .2s;
+    }
+    .mode-tab.on { background: #fff; color: #000; }
+
+    /* B専用要素：通常は隠し、Bモードのみ表示 */
+    .only-b { display: none !important; }
+    .phone.mode-b .only-b { display: flex !important; }
+    /* Bモードでは「動画上の3ボタン」と「独立コメントシート」は使わない */
+    .phone.mode-b .actions { display: none !important; }
+    .phone.mode-b .comment-sheet { display: none !important; }
+    /* Bでは概要シートの下余白を詰める（右下に被るボタンが無いため） */
+    .phone.mode-b .desc-scroll { padding-bottom: 32px; }
+
+    /* ── 詳細/コメント タブ ＋ ハート/ブックマーク（B：シート見出し。Figma 9448-27833） ── */
+    .bt-header {
+      flex-shrink: 0;
+      align-items: center;
+      padding: 2px 12px 10px 16px;
+      gap: 8px;
+    }
+    .bt-tabs { display: flex; gap: 6px; align-items: center; flex: 1; }
+    .bt-tab {
+      height: 34px; padding: 0 16px; border-radius: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.55);
+      cursor: pointer; white-space: nowrap;
+    }
+    .bt-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+    .bt-icons { display: flex; gap: 8px; align-items: center; }
+    .bt-fab {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      position: relative; overflow: visible; border: 1px solid transparent;
+      transition: border-color .2s ease;
+    }
+    .bt-fab .lottie-holder { width: 60px; height: 60px; }   /* 40pxボタンに合わせて縮小 */
+
+    /* ── B：コメントペイン（タブで「詳細(desc-scroll)」と切替） ── */
+    .bt-comment {
+      display: none;            /* 既定は隠し。Bかつコメントタブのみ表示 */
+      flex: 1; min-height: 0;
+      flex-direction: column;
+    }
+    .phone.mode-b .desc-sheet.tab-comment .desc-scroll { display: none; }
+    .phone.mode-b .desc-sheet.tab-comment .bt-comment  { display: flex; }
+    .bt-clist {
+      flex: 1; overflow-y: auto;
+      padding: 0 16px 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
+    .bt-clist::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
   </style>
 </head>
@@ -397,6 +471,12 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
 
+    <!-- ════ A/B 切替タブ（右上） ════ -->
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab on" data-mode="a">A</div>
+      <div class="mode-tab" data-mode="b">B</div>
+    </div>
+
     <!-- ════ 右側アクションボタン ════ -->
     <div class="actions">
       <div class="fab" id="heartBtn"><div class="lottie-holder" id="heartLottie"></div></div>
@@ -406,9 +486,20 @@
       </div>
     </div>
 
-    <!-- ════ ① 動画概要ボトムシート ════ -->
+    <!-- ════ ① 動画概要ボトムシート（A=詳細のみ / B=詳細・コメント タブ） ════ -->
     <div class="desc-sheet" id="descSheet">
       <div class="desc-grabber" id="descGrabber"></div>
+      <!-- B専用：詳細/コメント タブ ＋ ハート/ブックマーク（Figma 9448-27833） -->
+      <div class="bt-header only-b">
+        <div class="bt-tabs" id="btTabs">
+          <div class="bt-tab on" data-tab="detail">詳細</div>
+          <div class="bt-tab" data-tab="comment">コメント</div>
+        </div>
+        <div class="bt-icons">
+          <div class="bt-fab" id="bHeartBtn"><div class="lottie-holder" id="bHeartLottie"></div></div>
+          <div class="bt-fab" id="bBookmarkBtn"><div class="lottie-holder" id="bBookmarkLottie"></div></div>
+        </div>
+      </div>
       <div class="desc-scroll" id="descScroll">
         <div class="desc-head">
           <span class="desc-date">2025.08.16</span>
@@ -425,6 +516,17 @@
           <p>なお、公式が許諾している範囲（指定のハッシュタグキャンペーン、公式が配布する素材を用いた投稿など）については、各企画の注意事項に従ってお楽しみいただけます。最新の情報は公式サイトおよび公式SNSにて随時お知らせいたします。</p>
           <p>今後ともBE:FIRST、ならびにBMSG所属アーティストへの温かいご声援を賜りますよう、何卒よろしくお願い申し上げます。ファンの皆さまお一人おひとりのご理解とご協力が、より良い作品づくりと健全なファンコミュニティの土台となります。</p>
           <p>ご不明な点やお問い合わせにつきましては、公式サイトのサポートページよりご連絡ください。内容を確認のうえ、担当部署より順次ご回答させていただきます。引き続き、最高のエンタテインメントをお届けできるよう努めてまいります。</p>
+        </div>
+      </div>
+      <!-- B専用：コメントタブの中身（この画面のコメントスタイルを使用） -->
+      <div class="bt-comment">
+        <div class="bt-clist" id="csListB"></div>
+        <div class="cs-input">
+          <img class="avatar" src="" data-avatar="9" alt="">
+          <div class="field">コメントを追加...</div>
+          <div class="cs-send">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
         </div>
       </div>
     </div>
@@ -485,8 +587,7 @@
     const checkSVG = `<svg class="c-check" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#2aa7ff"/><path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const moodSVG  = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><circle cx="9" cy="10" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="15" cy="10" r="1" fill="rgba(255,255,255,0.7)"/><path d="M8.5 14c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 
-    const csList = document.getElementById('csList');
-    csList.innerHTML =
+    const commentsHTML =
       `<div class="pinned-label"><svg viewBox="0 0 24 24" fill="none"><path d="M9 4h6l-1 6 3 3v2H7v-2l3-3-1-6z" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 15v5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/></svg>固定されたコメント</div>` +
       COMMENTS.map(c => {
         const reacts = (c.reacts || []).map(r => `<span class="react">${r[0]} ${r[1]}</span>`).join('');
@@ -506,6 +607,9 @@
           </div>
         </div>`;
       }).join('');
+    // A=独立コメントシート / B=詳細シート内のコメントタブ、同じスタイル・同じ中身
+    document.getElementById('csList').innerHTML = commentsHTML;
+    document.getElementById('csListB').innerHTML = commentsHTML;
 
     /* ════════ 戻るボタン ════════ */
     document.getElementById('backBtn').addEventListener('click', () => {
@@ -637,6 +741,30 @@
     }
     setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
+    // B：シート見出しのハート/ブックマーク（同じLottie・別インスタンス）
+    setupLottieButton(window.HEART_LOTTIE,    'bHeartLottie',    'bHeartBtn',    'rgba(255,62,62,0.6)');
+    setupLottieButton(window.BOOKMARK_LOTTIE, 'bBookmarkLottie', 'bBookmarkBtn', 'rgba(255,209,51,0.6)');
+
+    /* ════════ 〔B〕詳細 / コメント タブ切替 ════════ */
+    function setTab(tab) {
+      descSheet.classList.toggle('tab-comment', tab === 'comment');
+      document.querySelectorAll('.bt-tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+    }
+    document.querySelectorAll('.bt-tab').forEach(t =>
+      t.addEventListener('click', (e) => { e.stopPropagation(); setTab(t.dataset.tab); }));
+
+    /* ════════ A / B 切替（右上） ════════ */
+    const modeTabs = document.getElementById('modeTabs');
+    function setMode(m) {
+      phone.classList.toggle('mode-b', m === 'b');
+      modeTabs.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+      // 切替時は開いた状態をリセット
+      closeComment();
+      collapseDesc();
+      if (m === 'b') setTab('detail');
+    }
+    modeTabs.querySelectorAll('.mode-tab').forEach(t =>
+      t.addEventListener('click', () => setMode(t.dataset.mode)));
   </script>
 </body>
 </html>
