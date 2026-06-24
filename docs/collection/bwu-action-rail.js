@@ -46,6 +46,7 @@
   const CSS = `
     :host { display: flex; flex-direction: column; gap: 8px; }
     .fab {
+      box-sizing: border-box;   /* Shadow DOM内は *{box-sizing:border-box} が継承されないため明示。border込みで48px（ライト側の.fabと一致） */
       width: 48px; height: 48px; border-radius: 42px;
       background: rgba(0,0,0,0.55);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
