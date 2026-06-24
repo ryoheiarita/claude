@@ -628,26 +628,40 @@
     .phone.vid-landscape .comment-sheet.lt-detail .cs-list,
     .phone.vid-landscape .comment-sheet.lt-detail .ls-artistonly { display: none !important; }
 
-    /* ════════ 画面横（端末を横向き）：横動画モードのみ Figma のサイドバイサイド配置 ════════ */
+    /* ════════ 画面横（端末を横向き）：縦動画・横動画とも Figma のサイドバイサイド配置 ════════ */
     @media (orientation: landscape) {
-      /* 動画は「画面左〜320pxの手前」まで。iframeなので中で動画は中央配置（上下or左右が当たるまで） */
-      .phone.vid-landscape .video-stage {
+      /* 動画は「画面左〜320pxの手前」を高さいっぱいに。iframe内で動画は中央配置
+         （上下or左右が当たるまで）＝コントローラーは下、動画は中央揃え。縦動画も同仕様 */
+      .phone.vid-landscape .video-stage,
+      .phone.vid-portrait  .video-stage {
         top: 0; left: 0; transform: none; border-radius: 0;
         height: 100dvh; width: calc(100vw - 320px);
       }
-      /* コメント/詳細パネル：横320px固定で画面右端に密着。上下右の余白なし、枠線は左1pxのみ */
-      .phone.vid-landscape .comment-sheet {
+      /* コメントパネル：横320px固定で画面右端に密着。上下右の余白なし、枠線は左1pxのみ */
+      .phone.vid-landscape .comment-sheet,
+      .phone.vid-portrait  .comment-sheet {
         top: 0; bottom: 0; right: 0; left: auto;
         width: 320px; height: auto;
+        transform: none !important;     /* 常時表示（スライド無し） */
         border-radius: 0;
         border-left: 1px solid rgba(255,255,255,0.15);
         background: #101010;
         box-shadow: none;
         backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
       }
+      .phone.vid-landscape .cs-input,
+      .phone.vid-portrait  .cs-input { display: flex !important; }   /* パネルの入力欄は常時表示 */
+      /* 縦動画モードの縦レイアウト用パーツは画面横では隠す */
+      .phone.vid-portrait .live-comments,
+      .phone.vid-portrait .actions,
+      .phone.vid-portrait .desc-sheet,
+      .phone.vid-portrait .detail-sheet,
+      .phone.vid-portrait .bottom-bar,
+      .phone.vid-portrait .cs-grabber,
+      .phone.vid-portrait .cs-close { display: none !important; }
       /* プロトタイプ操作用トグルはパネルに被らないよう左上へ退避 */
-      .phone.vid-landscape #modeTabs   { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
-      .phone.vid-landscape .orient-tabs{ right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 86px); }
+      .phone.vid-landscape #modeTabs, .phone.vid-portrait #modeTabs    { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
+      .phone.vid-landscape .orient-tabs, .phone.vid-portrait .orient-tabs { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 86px); }
     }
 
     /* スクロールバー非表示 */
