@@ -14,6 +14,8 @@
       /* 画面上端の余白（戻るボタンの位置。ノッチ等のセーフエリア＋16px） */
       --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
       --actions-h: 272px;                  /* 5ボタン: 48×5 + gap8×4 */
+      /* Vimeoコントロール(バー≈38px)＋その上の余白(≈16px)＝ボタン下端の位置。コントローラと同じ余白 */
+      --vid-controls-gap: 54px;
 
       /* ── 動画は 9:16 固定。縦は画面フル表示（幅が画面幅に達したら頭打ち） ── */
       --vid-cap-h: calc(100vw * 16 / 9);              /* 幅=画面幅いっぱいになる高さ＝これ以上拡大しない */
@@ -147,8 +149,8 @@
     .actions {
       position: absolute;
       right: 16px;
-      /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
-      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
+      /* 通常時：Vimeoコントロールの上。ボタン下端の余白＝コントローラ下端の余白に合わせる */
+      top: calc(var(--vid-normal-h) - var(--actions-h) - var(--vid-controls-gap));
       display: flex;
       flex-direction: column;
       gap: 8px;

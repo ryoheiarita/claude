@@ -41,7 +41,8 @@
       display: flex; align-items: center; justify-content: center;
       position: relative; cursor: pointer; transition: border-color .2s ease;
     }
-    .fab .ico { width: 24px; height: 24px; }
+    .fab .ico-wrap { display: flex; align-items: center; justify-content: center; }
+    .fab .ico { width: 24px; height: 24px; display: block; }   /* block: インラインSVGのベースライン余白で上にズレるのを防ぐ */
     .fab.lot { overflow: visible; }   /* Lottie のバースト粒子をはみ出させる */
     .lottie { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 72px; height: 72px; pointer-events: none; }
     .fab.on { border-color: rgba(255,255,255,0.6); }
