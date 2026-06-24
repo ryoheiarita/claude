@@ -13,19 +13,20 @@
     :root {
       /* 画面上端の余白（戻るボタンの位置。ノッチ等のセーフエリア＋16px） */
       --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
-      --actions-h: 160px;                  /* 3ボタン: 48×3 + gap8×2 */
+      --actions-h: 216px;                  /* 4ボタン: 48×4 + gap8×3 */
 
-      /* ── 動画は 9:16 固定（無段階リサイズはしない） ── */
-      --vid-normal-h: calc(100dvh - var(--desc-peek)); /* 通常時：概要シートの上の領域いっぱい */
-      --vid-comment-top: var(--top-inset);  /* コメント開時：戻るボタンと同じ高さに上揃え */
-      --vid-comment-h: var(--actions-h);    /* コメント開時：3ボタンと同じ高さに縮小 */
-      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画/ボタン下端 */
+      /* ── 動画は 9:16 固定。縦は画面フル表示（幅が画面幅に達したら頭打ち） ── */
+      --vid-cap-h: calc(100vw * 16 / 9);              /* 幅=画面幅いっぱいになる高さ＝これ以上拡大しない */
+      --vid-normal-h: min(100dvh, var(--vid-cap-h));  /* 通常時：縦動画を画面フル表示 */
+      --vid-comment-top: var(--top-inset);  /* コメント/概要開時：戻るボタンと同じ高さに上揃え */
+      --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
+      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
 
       /* ── ボトムシートの高さ ── */
-      /* コメント欄：3ボタン(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
       --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
-      --desc-peek: 264px;                  /* 動画概要：通常時に見えている高さ */
-      --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
+      --detail-sheet-h: 50dvh;              /* 概要シート：画面半分 */
+      /* 概要開時：動画はシートを避けて上に縮小（幅で頭打ち） */
+      --vid-detail-h: min(calc(100dvh - var(--detail-sheet-h) - var(--top-inset)), var(--vid-cap-h));
 
       --c-bg: #000;
       --c-desc-bg: #141414;
@@ -111,6 +112,13 @@
       top: var(--vid-comment-top);
       border-radius: 12px;
     }
+    /* 概要開時：9:16 のまま概要シート(画面半分)を避けて上に縮小 */
+    .phone.s-detail .video-stage {
+      height: var(--vid-detail-h);
+      width: calc(var(--vid-detail-h) * 9 / 16);
+      top: var(--top-inset);
+      border-radius: 12px;
+    }
 
     /* ════════════ ステータスバー（非表示：端末の実ステータスバーを使う） ════════════ */
     .status-bar {
@@ -145,7 +153,7 @@
       position: absolute;
       right: 16px;
       /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
-      top: calc(var(--vid-normal-h) - 208px);  /* 208 = 160(3ボタン+gap) + 48(コントロール上の余白) */
+      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -153,13 +161,10 @@
       transition: top .42s cubic-bezier(.22,.61,.36,1),
                   right .42s cubic-bezier(.22,.61,.36,1);
     }
-    .phone.s-comment .actions {
-      /* コメント開時：3ボタンの下端を動画の下端に揃える（→ コメント上端はこの16px下） */
-      top: calc(var(--vid-comment-bottom) - var(--actions-h));
-    }
-    /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
-    .phone.s-desc .actions {
-      top: calc(100dvh - 184px);  /* 184 = 24(下余白) + 160(3ボタン+gap) */
+    /* コメント／概要 開時：ボタン群を戻るボタンと同じ高さ（上端）に上揃え */
+    .phone.s-comment .actions,
+    .phone.s-detail .actions {
+      top: var(--top-inset);
     }
     .fab {
       width: 48px; height: 48px;
@@ -183,52 +188,52 @@
       width: 72px; height: 72px;
       pointer-events: none;
     }
-    .fab.active-comment { border-color: rgba(255,255,255,0.6); }
+    .fab.active-comment,
+    .fab.active-detail { border-color: rgba(255,255,255,0.6); }
 
-    /* ════════════ ① 動画概要ボトムシート ════════════ */
+    /* ════════════ ① 動画概要ボトムシート（4つ目のボタンで開く・画面半分） ════════════ */
     .desc-sheet {
       position: absolute;
       left: 0;
       bottom: 0;
       width: 100%;
-      height: calc(100dvh - var(--desc-expanded-top));
+      height: var(--detail-sheet-h);     /* 画面半分 */
       background: var(--c-desc-bg);
       border-radius: 16px 16px 0 0;
       z-index: 40;
       box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
-      /* collapsed: ピーク分だけ見せる */
-      transform: translateY(calc(100dvh - var(--desc-expanded-top) - var(--desc-peek)));
+      transform: translateY(100%);       /* 既定は隠す */
       transition: transform .42s cubic-bezier(.22,.61,.36,1);
       display: flex;
       flex-direction: column;
-      touch-action: none;
     }
-    .desc-sheet.expanded { transform: translateY(0); }
-    /* コメント開時は概要シートを画面外へ隠す */
-    .phone.s-comment .desc-sheet {
-      transform: translateY(100%);
-      pointer-events: none;
-    }
+    .phone.s-detail .desc-sheet { transform: translateY(0); }
 
     .desc-grabber {
       flex-shrink: 0;
       padding: 10px 0 6px;
       display: flex;
       justify-content: center;
-      cursor: grab;
     }
     .desc-grabber::before {
       content: '';
       width: 40px; height: 4px; border-radius: 10px;
       background: rgba(255,255,255,0.28);
     }
+    /* 概要シートの閉じる（✕） */
+    .desc-sheet .ds-close {
+      position: absolute; top: 10px; right: 12px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      z-index: 2;
+    }
+    .desc-sheet .ds-close svg { width: 20px; height: 20px; }
     .desc-scroll {
       flex: 1;
       overflow-y: auto;
-      /* 下余白を広めに：展開時に右下の3ボタンが本文最終行に被らないように */
-      padding: 4px 16px 200px;
+      padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
       -webkit-overflow-scrolling: touch;
-      scroll-padding-bottom: 200px;
     }
     .desc-head {
       display: flex; align-items: center; justify-content: space-between;
@@ -244,7 +249,11 @@
     }
     .desc-title {
       font-size: 22px; font-weight: 600; line-height: 1.35;
-      letter-spacing: -0.3px; margin-bottom: 14px;
+      letter-spacing: -0.3px; margin-bottom: 10px;
+    }
+    /* タグ（Infomation 等）はタイトルの下に。Xボタンと被らない */
+    .desc-tags {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;
     }
     .desc-body {
       font-size: 15px; line-height: 28px; color: rgba(255,255,255,0.7);
@@ -356,7 +365,7 @@
     .orient-tabs {
       position: absolute;
       top: var(--top-inset);
-      right: calc(env(safe-area-inset-right, 0px) + 16px);
+      left: 50%; transform: translateX(-50%);   /* 上部中央：左の戻る・右のボタン群と被らない */
       z-index: 90;
       display: flex; gap: 2px;
       background: rgba(0,0,0,0.4);
@@ -485,17 +494,24 @@
       <div class="fab" id="commentBtn">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
       </div>
+      <!-- 4つ目：概要（詳細） -->
+      <div class="fab" id="detailBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
     </div>
 
-    <!-- ════ ① 動画概要ボトムシート ════ -->
+    <!-- ════ ① 動画概要ボトムシート（概要ボタンで開く・画面半分・✕で閉じる） ════ -->
     <div class="desc-sheet" id="descSheet">
-      <div class="desc-grabber" id="descGrabber"></div>
+      <div class="desc-grabber"></div>
+      <div class="ds-close" id="descClose">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
       <div class="desc-scroll" id="descScroll">
         <div class="desc-head">
           <span class="desc-date">2025.08.16</span>
-          <span class="desc-tag">Infomation</span>
         </div>
         <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
+        <div class="desc-tags"><span class="desc-tag">Infomation</span></div>
         <div class="desc-body">
           <p>日頃よりBE:FIRSTを応援いただき、誠にありがとうございます。ファンの皆さまがBE:FIRSTを応援いただく場合にご留意いただきたい点につき、以下のとおりお知らせさせていただきます。</p>
           <p>「GRIT」は、BE:FIRSTの新たな一面を映し出すミュージックビデオです。撮影は東京近郊のスタジオおよび都内各所のロケーションで行われ、メンバーそれぞれの表現力とグループとしての一体感を、研ぎ澄まされた映像表現で描き出しています。楽曲のテーマである「逆境を力に変える」というメッセージを、ダンスとカメラワークの両面から体感していただける内容です。</p>
@@ -514,9 +530,9 @@
     <div class="ls-detail" id="lsDetail">
       <div class="desc-head">
         <span class="desc-date">2025.08.16</span>
-        <span class="desc-tag">Infomation</span>
       </div>
       <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
+      <div class="desc-tags"><span class="desc-tag">Infomation</span></div>
       <div class="desc-body">
         <p>日頃よりBE:FIRSTを応援いただき、誠にありがとうございます。「GRIT」は、BE:FIRSTの新たな一面を映し出すミュージックビデオです。楽曲のテーマである「逆境を力に変える」というメッセージを、ダンスとカメラワークの両面から体感していただける内容です。</p>
         <p>著作物の取扱いについて。アーティスト写真やロゴ、その他のデザインについては著作権があり、BMSGが管理をしています。私的使用（著作権法30条1項）その他著作権法で認められた範囲に限ってご利用いただけます。</p>
@@ -610,14 +626,15 @@
     /* ════════ 戻るボタン ════════ */
     document.getElementById('backBtn').addEventListener('click', () => {
       // プロトタイプ：実装では Navigator.pop 等
-      if (document.getElementById('phone').classList.contains('s-comment')) closeComment();
+      if (phone.classList.contains('s-comment')) closeComment();
+      else if (phone.classList.contains('s-detail')) closeDetail();
     });
 
     /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
     const phone = document.getElementById('phone');
     const commentSheet = document.getElementById('commentSheet');
     const commentFab = document.getElementById('commentBtn');
-    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); collapseDesc(); }
+    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); closeDetail(); }
     function closeComment() { phone.classList.remove('s-comment'); commentFab.classList.remove('active-comment'); }
     commentFab.addEventListener('click', () => {
       phone.classList.contains('s-comment') ? closeComment() : openComment();
@@ -626,84 +643,25 @@
     // 横モード：下部バー（共通コンポーネント）の「コメント」イベントでコメントシートを立ち上げる
     document.getElementById('lsBar').addEventListener('comment', openComment);
 
-    /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
+    /* ════════ ① 概要シート開閉（4つ目のボタン・画面半分・動画はシートを避けて縮小） ════════ */
     const descSheet = document.getElementById('descSheet');
-    const descGrabber = document.getElementById('descGrabber');
-    const descScroll = document.getElementById('descScroll');
-    function expandDesc()   { descSheet.classList.add('expanded'); phone.classList.add('s-desc'); }
-    function collapseDesc() { descSheet.classList.remove('expanded'); phone.classList.remove('s-desc'); descScroll.scrollTop = 0; }
-
-    // グラバーをタップで開閉トグル
-    descGrabber.addEventListener('click', () => {
-      descSheet.classList.contains('expanded') ? collapseDesc() : expandDesc();
+    const detailBtn = document.getElementById('detailBtn');
+    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); }
+    function closeDetail() { phone.classList.remove('s-detail'); detailBtn.classList.remove('active-detail'); }
+    detailBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      phone.classList.contains('s-detail') ? closeDetail() : openDetail();
     });
+    document.getElementById('descClose').addEventListener('click', closeDetail);
 
-    // ドラッグ（グラバー）でスナップ開閉
-    let dragStartY = null, dragStartExpanded = false;
-    function onDown(e) {
-      dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
-      dragStartExpanded = descSheet.classList.contains('expanded');
-      descSheet.style.transition = 'none';
-    }
-    function onMove(e) {
-      if (dragStartY === null) return;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY);
-      const dy = y - dragStartY;
-      if (Math.abs(dy) > 4) e.preventDefault && e.preventDefault();
-    }
-    function onUp(e) {
-      if (dragStartY === null) return;
-      const y = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
-      const dy = y - dragStartY;
-      descSheet.style.transition = '';
-      if (dy < -30) expandDesc();
-      else if (dy > 30) collapseDesc();
-      dragStartY = null;
-    }
-    descGrabber.addEventListener('mousedown', onDown);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    descGrabber.addEventListener('touchstart', onDown, { passive: true });
-    descGrabber.addEventListener('touchmove', onMove, { passive: false });
-    descGrabber.addEventListener('touchend', onUp);
-
-    // 概要本文を上端までスクロールしたら（オーバースクロールで）開く / 先頭で下へ引いたら閉じる（PC: wheel）
-    descScroll.addEventListener('wheel', (e) => {
-      if (!descSheet.classList.contains('expanded') && e.deltaY > 0) { expandDesc(); }
-      else if (descSheet.classList.contains('expanded') && descScroll.scrollTop <= 0 && e.deltaY < 0) { collapseDesc(); }
-    }, { passive: true });
-
-    // 同じ挙動をタッチでも（スマホ: 端でのオーバースクロールで開閉）
-    let tdStartY = null, tdStartScroll = 0, tdExpanded = false, tdDone = false;
-    descScroll.addEventListener('touchstart', (e) => {
-      tdStartY = e.touches[0].clientY;
-      tdStartScroll = descScroll.scrollTop;
-      tdExpanded = descSheet.classList.contains('expanded');
-      tdDone = false;
-    }, { passive: true });
-    descScroll.addEventListener('touchmove', (e) => {
-      if (tdStartY === null || tdDone) return;
-      const dy = e.touches[0].clientY - tdStartY;   // >0:下スワイプ / <0:上スワイプ
-      if (!tdExpanded) {
-        if (dy < -24) { expandDesc(); tdDone = true; }            // 折りたたみ→上スワイプで展開
-      } else if (tdStartScroll <= 0 && descScroll.scrollTop <= 0 && dy > 32) {
-        collapseDesc(); tdDone = true;                            // 展開・先頭で下スワイプ→畳む
-      }
-    }, { passive: true });
-    descScroll.addEventListener('touchend', () => { tdStartY = null; }, { passive: true });
-
-    /* ════════ シート外クリックで元の大きさに戻す ════════ */
+    /* ════════ シート外クリックで閉じる ════════ */
     const actionsEl = document.querySelector('.actions');
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
-      // コメント開時：コメントシート外（動画エリア等）をクリックで閉じて元のサイズへ
       if (phone.classList.contains('s-comment')) {
         if (!commentSheet.contains(e.target) && !inActions) closeComment();
-        return;
-      }
-      // 概要シート展開時：シート外をクリックで畳む
-      if (descSheet.classList.contains('expanded')) {
-        if (!descSheet.contains(e.target) && !inActions) collapseDesc();
+      } else if (phone.classList.contains('s-detail')) {
+        if (!descSheet.contains(e.target) && !inActions) closeDetail();
       }
     });
 
@@ -748,8 +706,8 @@
     const orientTabs = document.getElementById('orientTabs');
     function setOrient(o) {
       const landscape = (o === 'landscape');
-      // モード切替時は縦側の開いた状態をリセット
-      closeComment(); collapseDesc();
+      // モード切替時は開いた状態をリセット
+      closeComment(); closeDetail();
       phone.classList.toggle('vid-landscape', landscape);
       orientTabs.querySelectorAll('.orient-tab').forEach(t => t.classList.toggle('on', t.dataset.orient === o));
       // 横は16:9、縦は9:16 の動画に差し替え（必要時のみ）
