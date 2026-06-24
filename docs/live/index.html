@@ -607,14 +607,20 @@
     }
     .ls-fab .lottie-holder { width: 60px; height: 60px; }   /* 40pxボタンに合わせて縮小 */
 
-    /* アーティストのみ トグル（リスト右上） */
+    /* アーティストのみ トグル（Figma 9511:32334 準拠：リスト右上にフローティング right16/top12） */
     .ls-artistonly {
-      align-self: flex-end; height: 28px; padding: 0 12px; border-radius: 28px;
-      background: rgba(255,255,255,0.1); font-size: 13px; color: rgba(255,255,255,0.75);
-      display: inline-flex; align-items: center; margin: 0 0 8px auto;
-      flex-shrink: 0; cursor: pointer;
+      position: absolute; right: 16px; top: 74px;   /* ヘッダー(約62px)直下から12px */
+      height: 32px; padding: 0 16px; border-radius: 42px;
+      background: #303030; border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: #fff;
+      letter-spacing: -0.24px; line-height: 1.32;
+      white-space: nowrap; z-index: 5; cursor: pointer;
     }
-    .ls-artistonly.on { background: #fff; color: #000; }
+    .ls-artistonly.on { background: #fff; color: #000; border-color: #fff; }
+    /* 詳細タブのときはコメント入力欄も不要（横モード共通） */
+    .phone.vid-landscape .comment-sheet.lt-detail .cs-input { display: none !important; }
 
     /* 詳細ビュー（横パネル内）。既定は非表示、横＋詳細タブのときだけ表示 */
     .ls-detail { display: none; flex: 1; overflow-y: auto; padding: 4px 16px 16px; flex-direction: column; }
@@ -969,11 +975,11 @@
       orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
       const isB = phone.classList.contains('mode-b');
       if (o === 'landscape') {
-        setLsTab(isB ? 'detail' : 'comment');   // A→コメント / B→詳細 を初期表示
-        lsVideo.play().catch(() => {});          // 横の実動画を再生（muted自動再生）
+        setLsTab('comment');             // A横・B横とも初期は「コメント一覧」
+        lsVideo.play().catch(() => {});  // 横の実動画を再生（muted自動再生）
       } else {
         lsVideo.pause();
-        setMode(isB ? 'b' : 'a');                // 縦に戻す→モードの初期状態を再適用
+        setMode(isB ? 'b' : 'a');        // 縦に戻す→モードの初期状態を再適用
       }
     }
     orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
@@ -1015,8 +1021,8 @@
       modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
       // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
       //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
-      // 横動画モード中はパネルのタブを切替（A→コメント / B→詳細）
-      if (phone.classList.contains('vid-landscape')) setLsTab(m === 'b' ? 'detail' : 'comment');
+      // 横動画モード中はパネルを常に「コメント一覧」初期に
+      if (phone.classList.contains('vid-landscape')) setLsTab('comment');
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
       e.stopPropagation(); setMode(t.dataset.mode);
