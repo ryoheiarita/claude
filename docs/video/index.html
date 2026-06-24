@@ -386,27 +386,48 @@
     .phone.vid-landscape .actions,
     .phone.vid-landscape .desc-sheet { display: none !important; }
 
-    /* ── コメントパネル：16:9 の真下に密着（常設・スライド無し） ── */
+    /* 横の下部固定バーの高さ */
+    .phone.vid-landscape { --ls-bar-h: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+    /* ── 詳細パネル：16:9直下〜下部バーの上（既定で表示） ── */
+    .ls-detail {
+      display: none;
+      position: absolute; left: 0; width: 100%;
+      top: calc(100vw * 9 / 16); bottom: var(--ls-bar-h);
+      overflow-y: auto; padding: 12px 16px 24px;
+      background: var(--c-bg); z-index: 30;
+    }
+    .phone.vid-landscape .ls-detail { display: block; }
+    .ls-detail::-webkit-scrollbar { width: 0; }
+    .ls-detail .desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+
+    /* ── コメントシート：16:9直下まで立ち上がる（詳細と同じ高さ）。✕で閉じる ──
+       transform は base(translateY100%)→.s-comment(translateY0) が制御＝下から立ち上がる */
     .phone.vid-landscape .comment-sheet {
       top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
-      height: auto; transform: none !important;
-      border-radius: 0; box-shadow: none; z-index: 40;
+      height: auto; border-radius: 16px 16px 0 0; z-index: 70;
     }
-    /* 横ヘッダー：縦用タイトル・グラバーは隠す（タブ＋♡🔖＋✕を表示） */
-    .phone.vid-landscape .cs-grabber,
-    .phone.vid-landscape .cs-header .ttl { display: none !important; }
-    .phone.vid-landscape .cs-header { padding: 12px 8px 10px 16px; gap: 8px; }
+    .phone.vid-landscape .cs-grabber { display: none !important; }
+    .phone.vid-landscape .cs-header { padding: 14px 16px 12px; }
 
-    /* 詳細/コメント タブ */
-    .ls-tabs { gap: 6px; align-items: center; flex: 1; }
-    .ls-tab {
-      height: 34px; padding: 0 16px; border-radius: 34px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer;
+    /* ── 下部固定バー（コメントボタン＋アバター / ♥🔖）。シートの上ヘッダーの代わり ── */
+    .ls-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      height: var(--ls-bar-h); box-sizing: border-box;
+      display: none; align-items: center; justify-content: space-between;
+      padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+      background: var(--c-bg); z-index: 50;
     }
-    .ls-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
-    /* 40px ハート / ブックマーク */
-    .ls-icons { gap: 8px; align-items: center; }
+    .phone.vid-landscape .ls-bar { display: flex; }
+    /* コメント開時は下部バーを隠す（コメントシートが覆う） */
+    .phone.vid-landscape.s-comment .ls-bar { display: none; }
+    .ls-comment-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; height: 40px; }
+    .ls-comment-btn .ci { width: 24px; height: 24px; flex-shrink: 0; }
+    .ls-comment-btn .lbl { font-size: 16px; font-weight: 600; }
+    .ls-avs { display: flex; }
+    .ls-avs img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--c-bg); margin-left: -8px; object-fit: cover; }
+    .ls-avs img:first-child { margin-left: 0; }
+    .ls-actions { display: flex; gap: 8px; align-items: center; }
     .ls-fab {
       width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,0.1);
@@ -415,15 +436,6 @@
       transition: border-color .2s ease;
     }
     .ls-fab .lottie-holder { width: 60px; height: 60px; }
-
-    /* 詳細ビュー（横パネル内）。詳細タブのときだけ表示 */
-    .ls-detail { display: none; flex: 1; overflow-y: auto; padding: 4px 16px 24px; flex-direction: column; }
-    .ls-detail::-webkit-scrollbar { width: 0; }
-    .phone.vid-landscape .comment-sheet.lt-detail .ls-detail { display: flex; }
-    /* 詳細タブ時：コメントリスト・入力・✕（閉じる）を隠す */
-    .phone.vid-landscape .comment-sheet.lt-detail .cs-list,
-    .phone.vid-landscape .comment-sheet.lt-detail .cs-input,
-    .phone.vid-landscape .comment-sheet.lt-detail .cs-close { display: none !important; }
 
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
@@ -511,40 +523,31 @@
       </div>
     </div>
 
-    <!-- ════ ② コメント欄ボトムシート（縦=モーダル / 横=16:9直下の常設パネル） ════ -->
+    <!-- ════ 〔横モード〕詳細パネル：16:9直下〜下部バーの上（既定で表示） ════ -->
+    <div class="ls-detail" id="lsDetail">
+      <div class="desc-head">
+        <span class="desc-date">2025.08.16</span>
+        <span class="desc-tag">Infomation</span>
+      </div>
+      <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
+      <div class="desc-body">
+        <p>日頃よりBE:FIRSTを応援いただき、誠にありがとうございます。「GRIT」は、BE:FIRSTの新たな一面を映し出すミュージックビデオです。楽曲のテーマである「逆境を力に変える」というメッセージを、ダンスとカメラワークの両面から体感していただける内容です。</p>
+        <p>著作物の取扱いについて。アーティスト写真やロゴ、その他のデザインについては著作権があり、BMSGが管理をしています。私的使用（著作権法30条1項）その他著作権法で認められた範囲に限ってご利用いただけます。</p>
+        <p>本ミュージックビデオを含む映像コンテンツの録画・録音、スクリーンショットの撮影、SNS等への無断転載・再配布は、権利者の許諾なく行うことはできません。最新情報は公式サイトおよび公式SNSにて随時お知らせいたします。</p>
+      </div>
+    </div>
+
+    <!-- ════ ② コメント欄ボトムシート（縦=モーダル / 横=16:9直下まで立ち上がる） ════ -->
     <div class="comment-sheet" id="commentSheet">
       <div class="cs-grabber"></div>
       <div class="cs-header">
-        <!-- 縦モード用タイトル -->
         <div class="ttl">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
           <span class="cs-title">コメント</span>
           <span class="cs-count">1,234</span>
         </div>
-        <!-- 横モード用：詳細/コメント タブ ＋ ハート/ブックマーク -->
-        <div class="ls-tabs only-landscape" id="lsTabs">
-          <div class="ls-tab on" data-ltab="detail">詳細</div>
-          <div class="ls-tab" data-ltab="comment">コメント</div>
-        </div>
-        <div class="ls-icons only-landscape">
-          <div class="ls-fab" id="lsHeartBtn"><div class="lottie-holder" id="lsHeartLottie"></div></div>
-          <div class="ls-fab" id="lsBookmarkBtn"><div class="lottie-holder" id="lsBookmarkLottie"></div></div>
-        </div>
         <div class="cs-close" id="commentClose">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
-        </div>
-      </div>
-      <!-- 横モード：詳細ビュー（詳細タブのとき表示） -->
-      <div class="ls-detail" id="lsDetail">
-        <div class="desc-head">
-          <span class="desc-date">2025.08.16</span>
-          <span class="desc-tag">Infomation</span>
-        </div>
-        <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
-        <div class="desc-body">
-          <p>日頃よりBE:FIRSTを応援いただき、誠にありがとうございます。「GRIT」は、BE:FIRSTの新たな一面を映し出すミュージックビデオです。楽曲のテーマである「逆境を力に変える」というメッセージを、ダンスとカメラワークの両面から体感していただける内容です。</p>
-          <p>著作物の取扱いについて。アーティスト写真やロゴ、その他のデザインについては著作権があり、BMSGが管理をしています。私的使用（著作権法30条1項）その他著作権法で認められた範囲に限ってご利用いただけます。</p>
-          <p>本ミュージックビデオを含む映像コンテンツの録画・録音、スクリーンショットの撮影、SNS等への無断転載・再配布は、権利者の許諾なく行うことはできません。最新情報は公式サイトおよび公式SNSにて随時お知らせいたします。</p>
         </div>
       </div>
       <div class="cs-list" id="csList"></div>
@@ -554,6 +557,21 @@
         <div class="cs-send">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
+      </div>
+    </div>
+
+    <!-- ════ 〔横モード〕下部固定バー（コメント＋アバター / ♥🔖）。Figma 9448-27814 ════ -->
+    <div class="ls-bar" id="lsBar">
+      <div class="ls-comment-btn" id="lsCommentBtn">
+        <svg class="ci" viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
+        <span class="lbl">コメント</span>
+        <span class="ls-avs">
+          <img src="" data-avatar="0" alt=""><img src="" data-avatar="2" alt=""><img src="" data-avatar="4" alt="">
+        </span>
+      </div>
+      <div class="ls-actions">
+        <div class="ls-fab" id="lsHeartBtn"><div class="lottie-holder" id="lsHeartLottie"></div></div>
+        <div class="ls-fab" id="lsBookmarkBtn"><div class="lottie-holder" id="lsBookmarkLottie"></div></div>
       </div>
     </div>
 
@@ -627,10 +645,11 @@
     commentFab.addEventListener('click', () => {
       phone.classList.contains('s-comment') ? closeComment() : openComment();
     });
-    document.getElementById('commentClose').addEventListener('click', () => {
-      // 横モード：✕でコメントを閉じる＝詳細タブへ戻す。縦モード：従来どおりシートを閉じる
-      if (phone.classList.contains('vid-landscape')) setLsTab('detail');
-      else closeComment();
+    document.getElementById('commentClose').addEventListener('click', closeComment);
+    // 横モード：下部バーの「コメント」ボタンでコメントシートを立ち上げる
+    document.getElementById('lsCommentBtn').addEventListener('click', (e) => {
+      e.stopPropagation();   // phone の「シート外クリックで閉じる」即時発火を防ぐ
+      openComment();
     });
 
     /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
@@ -746,18 +765,9 @@
     }
     setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
-    // 横モードのヘッダー用ハート/ブックマーク（同じLottie・別インスタンス）
+    // 横モードの下部バー用ハート/ブックマーク（同じLottie・別インスタンス）
     setupLottieButton(window.HEART_LOTTIE,    'lsHeartLottie',    'lsHeartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'lsBookmarkLottie', 'lsBookmarkBtn', 'rgba(255,209,51,0.6)');
-
-    /* ════════ 〔横モード〕詳細 / コメント タブ ════════ */
-    // 詳細＝lt-detail（コメントは閉じた状態）/ コメント＝lt-detail解除（16:9直下まで開く）
-    function setLsTab(tab) {
-      commentSheet.classList.toggle('lt-detail', tab === 'detail');
-      document.querySelectorAll('.ls-tab').forEach(t => t.classList.toggle('on', t.dataset.ltab === tab));
-    }
-    document.querySelectorAll('.ls-tab').forEach(t =>
-      t.addEventListener('click', (e) => { e.stopPropagation(); setLsTab(t.dataset.ltab); }));
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
     const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16
@@ -773,8 +783,6 @@
       // 横は16:9、縦は9:16 の動画に差し替え（必要時のみ）
       const src = landscape ? LANDSCAPE_SRC : PORTRAIT_SRC;
       if (videoFrame.getAttribute('src') !== src) videoFrame.setAttribute('src', src);
-      // 横は既定で詳細タブ（コメントは閉じた状態）
-      if (landscape) setLsTab('detail');
     }
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
