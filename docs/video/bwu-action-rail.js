@@ -3,7 +3,8 @@
    ♥ いいね / 🔖 保存 / 💬 コメント / 📄 概要(詳細) / ⛶ 全画面
 
    使い方:
-     <script src="./lottie-data.js"></script>          <!-- 任意：あればLottie -->
+     <script src="./lottie-data.js"></script>          <!-- 任意：あれば♥🔖Lottie -->
+     <script src="./rail-icons.js"></script>           <!-- 任意：あれば💬📄⛶Lottie -->
      <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
      <script src="./bwu-action-rail.js"></script>
      ...
@@ -12,12 +13,15 @@
 
    イベント（bubbles + composed）:
      heart / bookmark … トグル（e.detail.on で on/off）。アニメはコンポーネント内で完結
-     comment / detail / fullscreen … タップ通知（開閉・全画面化は呼び出し側で実装）
+     comment / detail / fullscreen … タップ通知。タップで Lottie を1度だけ再生（開閉・全画面化は呼び出し側で実装）
    メソッド:
      rail.setActive('comment', true)  … コメント/概要シートが開いている時の枠を表示
 
    配置は呼び出し側（position:absolute; right:16px; top:… 等）。
-   依存（任意）: window.lottie + window.HEART_LOTTIE / window.BOOKMARK_LOTTIE → 無ければ静的SVG。
+   依存（任意）: window.lottie +
+     window.HEART_LOTTIE / window.BOOKMARK_LOTTIE          （♥🔖トグル）
+     window.COMMENT_LOTTIE / window.DETAIL_LOTTIE / window.FULLSCREEN_LOTTIE （💬📄⛶ワンショット）
+   無ければ静的SVGにフォールバック。
    ════════════════════════════════════════════════════════════════════════ */
 (function () {
   if (customElements.get('bwu-action-rail')) return;
@@ -29,7 +33,15 @@
     detail:     `<svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>`,
     fullscreen: `<svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   };
-  const TOGGLES = { heart: 'rgba(255,62,62,0.6)', bookmark: 'rgba(255,209,51,0.6)' };
+
+  // mode: 'toggle' = ♥🔖（on/off）, 'once' = 💬📄⛶（タップで1回再生）
+  const CONFIG = {
+    heart:      { global: 'HEART_LOTTIE',      mode: 'toggle', color: 'rgba(255,62,62,0.6)' },
+    bookmark:   { global: 'BOOKMARK_LOTTIE',   mode: 'toggle', color: 'rgba(255,209,51,0.6)' },
+    comment:    { global: 'COMMENT_LOTTIE',    mode: 'once' },
+    detail:     { global: 'DETAIL_LOTTIE',     mode: 'once' },
+    fullscreen: { global: 'FULLSCREEN_LOTTIE', mode: 'once' },
+  };
 
   const CSS = `
     :host { display: flex; flex-direction: column; gap: 8px; }
@@ -43,8 +55,12 @@
     }
     .fab .ico-wrap { display: flex; align-items: center; justify-content: center; }
     .fab .ico { width: 24px; height: 24px; display: block; }   /* block: インラインSVGのベースライン余白で上にズレるのを防ぐ */
-    .fab.lot { overflow: visible; }   /* Lottie のバースト粒子をはみ出させる */
+    .fab.lot { overflow: visible; }   /* Lottie のはみ出し（バースト粒子・回転）を許可 */
+    /* ♥🔖: 大きなキャンバスのバースト用 72px */
     .lottie { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 72px; height: 72px; pointer-events: none; }
+    /* 💬📄⛶: 静的アイコンと同じ 24px */
+    .lottie.sm { width: 24px; height: 24px; }
+    .lottie.sm svg { overflow: visible; }   /* 弾性バウンド・回転で枠外に出る分を表示 */
     .fab.on { border-color: rgba(255,255,255,0.6); }
   `;
 
@@ -55,10 +71,11 @@
         .split(',').map(s => s.trim()).filter(n => ICONS[n]);
       const root = this.attachShadow({ mode: 'open' });
       root.innerHTML = `<style>${CSS}</style>` + list.map(name => {
-        const lot = (name === 'heart' || name === 'bookmark');
-        return `<div class="fab${lot ? ' lot' : ''}" data-act="${name}">`
+        const cfg = CONFIG[name];
+        const small = cfg && cfg.mode === 'once';
+        return `<div class="fab lot" data-act="${name}">`
              + `<span class="ico-wrap">${ICONS[name]}</span>`
-             + (lot ? `<div class="lottie"></div>` : '')
+             + `<div class="lottie${small ? ' sm' : ''}"></div>`
              + `</div>`;
       }).join('');
 
@@ -66,17 +83,16 @@
       root.querySelectorAll('.fab').forEach(btn => {
         const name = btn.dataset.act;
         this._btns[name] = btn;
-        if (TOGGLES[name]) this._setupToggle(btn, name);
-        else btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.dispatchEvent(new CustomEvent(name, { bubbles: true, composed: true }));
-        });
+        const cfg = CONFIG[name] || { mode: 'once' };
+        if (cfg.mode === 'toggle') this._setupToggle(btn, name, cfg);
+        else this._setupOnce(btn, name, cfg);
       });
     }
 
-    _setupToggle(btn, name) {
-      const rawData = name === 'heart' ? window.HEART_LOTTIE : window.BOOKMARK_LOTTIE;
-      const onColor = TOGGLES[name];
+    /* ♥🔖 … on/off トグル（Lottie が無ければ静的SVGの塗り替え） */
+    _setupToggle(btn, name, cfg) {
+      const rawData = window[cfg.global];
+      const onColor = cfg.color;
       const holder = btn.querySelector('.lottie');
       const fallback = btn.querySelector('.ico-wrap');
       let on = false;
@@ -110,6 +126,34 @@
           on = !on; btn.style.borderColor = on ? onColor : '';
           const p = fallback && fallback.querySelector('path');
           if (p) p.setAttribute('fill', on ? (name === 'heart' ? '#ff3e3e' : '#ffd133') : 'none');
+          emit();
+        });
+      }
+    }
+
+    /* 💬📄⛶ … タップで1度だけ再生して通知（Lottie が無ければ静的SVGのまま通知） */
+    _setupOnce(btn, name, cfg) {
+      const rawData = window[cfg.global];
+      const holder = btn.querySelector('.lottie');
+      const fallback = btn.querySelector('.ico-wrap');
+      const emit = () => this.dispatchEvent(new CustomEvent(name, { bubbles: true, composed: true }));
+
+      if (window.lottie && rawData) {
+        if (fallback) fallback.style.display = 'none';
+        const anim = window.lottie.loadAnimation({
+          container: holder, renderer: 'svg', loop: false, autoplay: false,
+          animationData: JSON.parse(JSON.stringify(rawData)),
+        });
+        anim.goToAndStop(0, true);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          anim.goToAndPlay(0, true);   // タップごとに頭から1回
+          emit();
+        });
+      } else {
+        if (holder) holder.style.display = 'none';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           emit();
         });
       }
