@@ -50,7 +50,9 @@
       '.vp-host.vp-ui-hidden .vp-top-scrim,',
       '.vp-host.vp-ui-hidden .vp-seek-scrim,',
       '.vp-host.vp-ui-hidden .vp-seek,',
-      '.vp-host.vp-ui-hidden .vp-live{opacity:0;pointer-events:none;}'
+      '.vp-host.vp-ui-hidden .vp-live{opacity:0;pointer-events:none;}',
+      /* 横モードの外部全画面ボタン（各画面の .ls-fullscreen）を自前UIの上に出す（グラデの裏に埋もれない） */
+      '.vp-host .ls-fullscreen{z-index:31 !important;}'
     ].join('\n');
     var el = document.createElement('style');
     el.id = STYLE_ID;
@@ -151,8 +153,13 @@
     clearTimeout(this.hideTimer);
     this.hideTimer = setTimeout(function () { self.hideUI(); }, HIDE_MS);
   };
-  Controller.prototype.showUI = function () { this.stage.classList.remove('vp-ui-hidden'); this.armHide(); };
-  Controller.prototype.hideUI = function () { clearTimeout(this.hideTimer); this.stage.classList.add('vp-ui-hidden'); };
+  // 横モードの外部全画面ボタン（.ls-fullscreen）も自前UIの表示/非表示に同期
+  Controller.prototype.syncExtras = function (visible) {
+    var fs = this.stage.querySelectorAll('.ls-fullscreen');
+    for (var i = 0; i < fs.length; i++) fs[i].classList.toggle('show', visible);
+  };
+  Controller.prototype.showUI = function () { this.stage.classList.remove('vp-ui-hidden'); this.syncExtras(true); this.armHide(); };
+  Controller.prototype.hideUI = function () { clearTimeout(this.hideTimer); this.stage.classList.add('vp-ui-hidden'); this.syncExtras(false); };
   Controller.prototype.uiHidden = function () { return this.stage.classList.contains('vp-ui-hidden'); };
 
   Controller.prototype.bindUI = function () {
@@ -161,6 +168,12 @@
     this.ov.play.addEventListener('click', function (e) { e.stopPropagation(); self.toggle(); self.showUI(); });
     // 透過レイヤー：表示中→消す／非表示→出す
     this.ov.tap.addEventListener('click', function () { self.uiHidden() ? self.showUI() : self.hideUI(); });
+
+    // 横モードの外部全画面ボタン：操作したら消滅タイマーを延長（UI維持）。表示/非表示は syncExtras が司る
+    var fsBtns = this.stage.querySelectorAll('.ls-fullscreen');
+    for (var i = 0; i < fsBtns.length; i++) fsBtns[i].addEventListener('click', function () { self.showUI(); });
+
+    this.syncExtras(true);   // 初期は表示（2.5秒後に他UIと一括で消える）
     this.armHide();
 
     if (!this.isLive) this.bindSeek();

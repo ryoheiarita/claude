@@ -766,25 +766,7 @@
         else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
       });
 
-      // ── Vimeoコントローラーの表示/非表示にボタンを同期 ──
-      // クロスオリジンiframeの内部は直接読めないため、Vimeoの自動消灯挙動を再現：
-      //   一時停止中は常時表示／再生中は無操作 約2.5秒で消灯／操作・再生状態変化で再表示。
-      if (!player) { fsBtn.classList.add('show'); return; }  // SDK不可時は常時表示
-      const HIDE_DELAY = 2500;
-      let playing = false, timer = null;
-      function reveal() {
-        fsBtn.classList.add('show');
-        clearTimeout(timer);
-        if (playing) timer = setTimeout(() => fsBtn.classList.remove('show'), HIDE_DELAY);
-      }
-      player.on('play',  () => { playing = true;  reveal(); });
-      player.on('pause', () => { playing = false; reveal(); });
-      player.on('ended', () => { playing = false; reveal(); });
-      player.getPaused().then(p => { playing = !p; reveal(); }).catch(reveal);
-      // 動画タップでのコントローラー再表示を間接検知（iframe内タップは親に届かないため、
-      // フォーカス移動=window blur＋activeElementで判定）。ステージ上の操作でも再表示。
-      window.addEventListener('blur', () => { if (document.activeElement === frame) reveal(); });
-      ['pointerdown','touchstart'].forEach(ev => stage.addEventListener(ev, reveal, { passive: true }));
+      // 全画面ボタンの表示/非表示は bwu-vimeo-controls.js（カスタムプレイヤーUI）に同期
     })();
   </script>
   <script src="../bwu-vimeo-controls.js"></script>
