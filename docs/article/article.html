@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <script src="../gate.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Article</title>
@@ -369,104 +370,18 @@
       animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
-    /* ── Floating action buttons ── */
-    .fab-group {
-      position: fixed;
-      bottom: 92px;
-      right: calc(max(0px, (100vw - 390px) / 2) + 16px);
-      display: flex;
-      gap: 8px;
-      z-index: 90;
-    }
-    .fab {
-      width: 48px;
-      height: 48px;
-      border-radius: 42px;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border: 1px solid rgba(255,255,255,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .fab svg { width: 24px; height: 24px; }
-
-    /* ── Heart button Lottie ── */
-    #heartBtn {
-      overflow: visible; /* バースト粒子をはみ出させる */
-      position: relative;
-    }
-    .heart-lottie {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 72px;
-      height: 72px;
-      pointer-events: none;
-    }
-
-    /* ── Bookmark button Lottie ── */
-    #bookmarkBtn {
-      overflow: visible;
-      position: relative;
-    }
-    .bookmark-lottie {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 72px;
-      height: 72px;
-      pointer-events: none;
-    }
-
-    /* ── Comment bar ── */
-    .comment-bar {
+    /* ── 下部固定バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
+       見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
+    .action-bar {
       position: fixed;
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
       width: 390px;
-      height: 80px;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      border-top: 1px solid rgba(255,255,255,0.15);
-      border-radius: 20px 20px 0 0;
-      padding: 8px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 0 16px calc(12px + env(safe-area-inset-bottom, 0px));
       z-index: 100;
-    }
-    .comment-bar-handle {
-      width: 57px;
-      height: 4px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.5);
-      align-self: center;
-    }
-    .comment-bar-content {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .comment-bar-content svg { width: 24px; height: 24px; flex-shrink: 0; }
-    .comment-label {
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 22px;
-      color: #fff;
-    }
-    .comment-count {
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 24px;
-      color: rgba(255,255,255,0.75);
-      margin-left: 8px;
     }
 
     /* ── Skeleton layout ── */
@@ -580,7 +495,7 @@
       </div>
     </div>
     <div class="toolbar">
-      <a class="toolbar-btn" id="backBtn" href="home.html">
+      <a class="toolbar-btn" id="backBtn" href="../collection/">
         <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
     </div>
@@ -667,7 +582,7 @@
           <p>2021年の設立から4年。BMSG（B'z Music and Street Giga）は、日本の音楽シーンに一石を投じ続けている。SKY-HIが自ら立ち上げたこのレーベルは、既存の芸能事務所モデルとは一線を画す思想で運営されており、その動向は業界関係者だけでなく、多くのファンからも強い関心を集めている。</p>
           <p>「アーティストが主体であること」——この一言がBMSGのすべての判断軸になっている。契約のあり方、収益の分配、プロモーションの手法。どれをとっても、従来の「事務所ありき」の構造とは異なるアプローチが貫かれている。</p>
         </div>
-        <img class="article-image reveal-item" data-reveal="3" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BE:FIRST at SUMMER SONIC 2025">
+        <img class="article-image reveal-item" data-reveal="3" src="assets/photo.png" alt="BE:FIRST at SUMMER SONIC 2025">
 
         <!-- H2 -->
         <h2 class="article-h2 reveal-item" data-reveal="4">オーディションから始まった革命</h2>
@@ -686,7 +601,7 @@
         <!-- Inline image 1 — 独立スケルトン -->
         <div class="img-block reveal-item" data-reveal="8">
           <div class="img-block-skeleton"></div>
-          <img class="img-block-actual" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BE:FIRST live performance">
+          <img class="img-block-actual" src="assets/photo.png" alt="BE:FIRST live performance">
         </div>
 
         <!-- Highlight — 単体セクション -->
@@ -704,7 +619,7 @@
         <!-- Inline image 2 — 独立スケルトン -->
         <div class="img-block reveal-item" data-reveal="12">
           <div class="img-block-skeleton"></div>
-          <img class="img-block-actual" src="https://www.figma.com/api/mcp/asset/56dab738-86dd-4a60-b420-cb845ad8df03" alt="BMSG label scene">
+          <img class="img-block-actual" src="assets/photo.png" alt="BMSG label scene">
         </div>
 
         <!-- Bullet list — 単体セクション -->
@@ -728,29 +643,15 @@
     </div>
   </div>
 
-  <!-- Floating Action Buttons -->
-  <div class="fab-group">
-    <div class="fab" id="heartBtn">
-      <!-- Lottie: 全状態をこれで管理 -->
-      <div class="heart-lottie" id="heartLottie"></div>
-    </div>
-    <div class="fab" id="bookmarkBtn">
-      <div class="bookmark-lottie" id="bookmarkLottie"></div>
-    </div>
-  </div>
-
-  <!-- Comment Bar -->
-  <div class="comment-bar">
-    <div class="comment-bar-handle"></div>
-    <div class="comment-bar-content">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.663 3.04094 17.0829 4.73812 18.875L3.28064 21.1875C3.09064 21.4969 3.31939 21.8906 3.67877 21.8594L7.59375 21.5156C8.96627 22.1481 10.4425 22.5 12 22.5" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><circle cx="8" cy="12" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="12" cy="12" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="16" cy="12" r="1" fill="rgba(255,255,255,0.7)"/></svg>
-      <span class="comment-label">コメント</span>
-      <span class="comment-count">1,234</span>
-    </div>
-  </div>
+  <!-- 下部固定バー＝共通コンポーネント <bwu-action-bar>（コメント ＋ ♥🔖） -->
+  <bwu-action-bar class="action-bar" id="actionBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
 
   <!-- lottie-web -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <!-- ハート/ブックマークの Lottie データ（<bwu-action-bar> が参照） -->
+  <script src="../video/lottie-data.js"></script>
+  <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
+  <script src="https://ryoheiarita.github.io/claude/video/bwu-action-bar.js"></script>
 
   <script type="module">
     import { createLoadingIcon } from './loading-icon.js';
@@ -880,125 +781,10 @@
 
     document.getElementById('backBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      window.location.href = 'home.html';
+      window.location.href = '../collection/';
     });
 
-    // --- ハートボタン Lottie ---
-    (async () => {
-      const res  = await fetch('./heart-like.json');
-      const data = await res.json();
-
-      // アウトライン系レイヤーを白に変更
-      // layers[0] = "heart 3"（解除時アウトライン）, layers[2] = "heart"（初期アウトライン）
-      data.layers[0].shapes[1].c.k = [1, 1, 1, 1];
-      data.layers[2].shapes[1].c.k = [1, 1, 1, 1];
-
-      const lottieContainer = document.getElementById('heartLottie');
-      const LIKE_START   = 17;
-      const FILLED_FRAME = 90;
-      const UNLIKE_START = 105;
-
-      const heartAnim = lottie.loadAnimation({
-        container: lottieContainer,
-        renderer: 'svg',
-        loop: false,
-        autoplay: false,
-        animationData: data,
-      });
-      heartAnim.goToAndStop(0, true);
-
-      let isLiked   = false;
-      let animating = false;
-
-      document.getElementById('heartBtn').addEventListener('click', () => {
-        if (animating) return;
-
-        const heartBtn = document.getElementById('heartBtn');
-        if (!isLiked) {
-          isLiked   = true;
-          animating = true;
-          heartBtn.style.borderColor = 'rgba(255,62,62,0.6)';
-          heartAnim.goToAndPlay(LIKE_START, true);
-
-          const onFrame = (e) => {
-            if (e.currentTime >= FILLED_FRAME) {
-              heartAnim.pause();
-              heartAnim.removeEventListener('enterFrame', onFrame);
-              animating = false;
-            }
-          };
-          heartAnim.addEventListener('enterFrame', onFrame);
-        } else {
-          isLiked   = false;
-          animating = true;
-          heartBtn.style.borderColor = '';
-          heartAnim.goToAndPlay(UNLIKE_START, true);
-
-          heartAnim.addEventListener('complete', () => {
-            heartAnim.goToAndStop(0, true);
-            animating = false;
-          }, { once: true });
-        }
-      });
-    })();
-
-    // --- ブックマークボタン Lottie ---
-    (async () => {
-      const res  = await fetch('./bookmark-like.json');
-      const data = await res.json();
-
-      // アウトライン系レイヤーを白に変更
-      data.layers[0].shapes[1].c.k = [1, 1, 1, 1];
-      data.layers[2].shapes[1].c.k = [1, 1, 1, 1];
-
-      const lottieContainer = document.getElementById('bookmarkLottie');
-      const LIKE_START   = 17;
-      const FILLED_FRAME = 90;
-      const UNLIKE_START = 105;
-
-      const bookmarkAnim = lottie.loadAnimation({
-        container: lottieContainer,
-        renderer: 'svg',
-        loop: false,
-        autoplay: false,
-        animationData: data,
-      });
-      bookmarkAnim.goToAndStop(0, true);
-
-      let isBookmarked = false;
-      let animating    = false;
-
-      document.getElementById('bookmarkBtn').addEventListener('click', () => {
-        if (animating) return;
-
-        const bmBtn = document.getElementById('bookmarkBtn');
-        if (!isBookmarked) {
-          isBookmarked = true;
-          animating    = true;
-          bmBtn.style.borderColor = 'rgba(255,209,51,0.6)';
-          bookmarkAnim.goToAndPlay(LIKE_START, true);
-
-          const onFrame = (e) => {
-            if (e.currentTime >= FILLED_FRAME) {
-              bookmarkAnim.pause();
-              bookmarkAnim.removeEventListener('enterFrame', onFrame);
-              animating = false;
-            }
-          };
-          bookmarkAnim.addEventListener('enterFrame', onFrame);
-        } else {
-          isBookmarked = false;
-          animating    = true;
-          bmBtn.style.borderColor = '';
-          bookmarkAnim.goToAndPlay(UNLIKE_START, true);
-
-          bookmarkAnim.addEventListener('complete', () => {
-            bookmarkAnim.goToAndStop(0, true);
-            animating = false;
-          }, { once: true });
-        }
-      });
-    })();
+    // ♥🔖 は下部の共通コンポーネント <bwu-action-bar> 内で完結（ここでの設定は不要）
 
     // --- 初回ロード ---
     document.addEventListener('DOMContentLoaded', startLoading);
