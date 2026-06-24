@@ -604,11 +604,12 @@
 
     /* アーティストのみ トグル（Figma 9511:32334 準拠：リスト右上にフローティング right16/top12） */
     .ls-artistonly {
+      /* 表示/非表示は .only-landscape が制御（縦では非表示）。ここでは display を指定しない */
       position: absolute; right: 16px; top: 74px;   /* ヘッダー(約62px)直下から12px */
       height: 32px; padding: 0 16px; border-radius: 42px;
       background: #303030; border: 1px solid rgba(255,255,255,0.15);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      display: flex; align-items: center; justify-content: center;
+      align-items: center; justify-content: center;
       font-size: 12px; font-weight: 600; color: #fff;
       letter-spacing: -0.24px; line-height: 1.32;
       white-space: nowrap; z-index: 5; cursor: pointer;
