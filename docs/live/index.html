@@ -551,6 +551,7 @@
        横動画モード（16:9）。縦/横トグルで .vid-landscape を付与
        ════════════════════════════════════════════════════════════ */
     .orient-tabs { top: calc(var(--top-inset) + 42px); }  /* A/Bタブの下 */
+    .orient-tabs .mode-tab { width: auto; padding: 0 12px; }  /* 「縦動画/横動画」が収まる幅 */
 
     /* 16:9 動画を画面上部いっぱいに固定 */
     .phone.vid-landscape .video-stage {
@@ -718,8 +719,8 @@
     </div>
     <!-- ════ 縦/横 動画切替トグル（右上・A/Bの下） ════ -->
     <div class="mode-tabs orient-tabs" id="orientTabs">
-      <div class="mode-tab on" data-orient="portrait">縦</div>
-      <div class="mode-tab" data-orient="landscape">横</div>
+      <div class="mode-tab on" data-orient="portrait">縦動画</div>
+      <div class="mode-tab" data-orient="landscape">横動画</div>
     </div>
 
     <!-- ════ 右側アクションボタン ════ -->
