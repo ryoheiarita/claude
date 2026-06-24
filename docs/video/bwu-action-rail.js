@@ -58,8 +58,8 @@
     .fab.lot { overflow: visible; }   /* Lottie のはみ出し（バースト粒子・回転）を許可 */
     /* ♥🔖: 大きなキャンバスのバースト用 72px */
     .lottie { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 72px; height: 72px; pointer-events: none; }
-    /* 💬📄⛶: 静的アイコンと同じ 24px */
-    .lottie.sm { width: 24px; height: 24px; }
+    /* 💬📄⛶: 24px ホルダー。中身は _fitOnce() で 18px・中央に正規化（♥🔖の余白感に合わせる） */
+    .lottie.sm { width: 24px; height: 24px; transform-origin: center; }
     .lottie.sm svg { overflow: visible; }   /* 弾性バウンド・回転で枠外に出る分を表示 */
     .fab.on { border-color: rgba(255,255,255,0.6); }
   `;
@@ -145,6 +145,8 @@
           animationData: JSON.parse(JSON.stringify(rawData)),
         });
         anim.goToAndStop(0, true);
+        // Lottie 各素材で中身のサイズ/中心がバラつくので 18px・中央に正規化（♥🔖の余白感に合わせる）
+        requestAnimationFrame(() => this._fitOnce(holder));
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           anim.goToAndPlay(0, true);   // タップごとに頭から1回
@@ -157,6 +159,23 @@
           emit();
         });
       }
+    }
+
+    /* ワンショットLottie の中身を 18px・ボタン中央に正規化（素材ごとの大きさ/中心ズレを吸収） */
+    _fitOnce(holder) {
+      const TARGET = 18; // ♥🔖と揃う見かけサイズ
+      const svg = holder.querySelector('svg');
+      const g = svg && svg.querySelector('g');
+      if (!g) return;
+      const sr = svg.getBoundingClientRect();
+      const gr = g.getBoundingClientRect();
+      const maxDim = Math.max(gr.width, gr.height);
+      if (!maxDim) return;
+      const s = TARGET / maxDim;
+      const ux = -((gr.x + gr.width / 2) - (sr.x + sr.width / 2));   // 中身の中心 → ホルダー中心
+      const uy = -((gr.y + gr.height / 2) - (sr.y + sr.height / 2));
+      holder.style.transform =
+        `translate(-50%,-50%) scale(${s.toFixed(3)}) translate(${ux.toFixed(2)}px,${uy.toFixed(2)}px)`;
     }
 
     /* コメント/概要シートが開いている時の枠（active）を制御 */
