@@ -603,9 +603,9 @@
       width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,0.1);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
+      position: relative; overflow: visible; border: 1px solid transparent;
     }
-    .ls-fab svg { width: 22px; height: 22px; }
-    .ls-fab.on { background: rgba(255,255,255,0.18); }
+    .ls-fab .lottie-holder { width: 60px; height: 60px; }   /* 40pxボタンに合わせて縮小 */
 
     /* アーティストのみ トグル（リスト右上） */
     .ls-artistonly {
@@ -623,6 +623,26 @@
     /* 詳細タブのときはコメントリスト/アーティストのみトグルを隠す */
     .phone.vid-landscape .comment-sheet.lt-detail .cs-list,
     .phone.vid-landscape .comment-sheet.lt-detail .ls-artistonly { display: none !important; }
+
+    /* ════════ 画面横（端末を横向き）：横動画モードのみ Figma のサイドバイサイド配置 ════════ */
+    @media (orientation: landscape) {
+      .phone.vid-landscape .video-stage {
+        top: 0; left: 0; transform: none; border-radius: 0;
+        height: 100dvh; width: calc(100dvh * 16 / 9);   /* 16:9 を画面高さいっぱい（左寄せ） */
+      }
+      /* コメント/詳細パネルを右側に浮かぶカードとして配置 */
+      .phone.vid-landscape .comment-sheet {
+        top: 12px; bottom: 12px; right: 12px; left: auto;
+        width: min(46vw, 380px); height: auto;
+        border-radius: 16px;
+        background: rgba(18,18,18,0.94);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      }
+      /* プロトタイプ操作用トグルはパネルに被らないよう左上へ退避 */
+      .phone.vid-landscape #modeTabs   { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
+      .phone.vid-landscape .orient-tabs{ right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 86px); }
+    }
 
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
@@ -742,12 +762,8 @@
           <div class="ls-tab" data-ltab="detail">詳細</div>
         </div>
         <div class="ls-icons only-landscape">
-          <div class="ls-fab" id="lsHeart">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 5.5 5.5c1.9 0 3.1 1.1 3.9 2.2.8-1.1 2-2.2 3.9-2.2 3 0 4.5 3 3 6C19 15.65 12 20 12 20z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="ls-fab" id="lsBookmark">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-4-6 4V4z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
-          </div>
+          <div class="ls-fab" id="lsHeart"><div class="lottie-holder" id="lsHeartLottie"></div></div>
+          <div class="ls-fab" id="lsBookmark"><div class="lottie-holder" id="lsBookmarkLottie"></div></div>
         </div>
       </div>
       <!-- 横モード：アーティストのみ トグル（リスト右上） -->
@@ -942,11 +958,7 @@
       csListEl.scrollTop = csListEl.scrollHeight;
     });
 
-    /* 横：40px ハート / ブックマーク（簡易トグル） */
-    ['lsHeart', 'lsBookmark'].forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('click', (e) => { e.stopPropagation(); el.classList.toggle('on'); });
-    });
+    /* 横：ハート / ブックマークは縦と同じ Lottie を使用（セットアップはLottie定義の後で） */
 
     /* ════════ 縦/横 動画切替トグル（同じ動画を 9:16 / 16:9 で表示） ════════ */
     const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
@@ -1001,10 +1013,9 @@
       phone.classList.toggle('mode-b', m === 'b');
       phone.classList.toggle('mode-a', m === 'a');
       modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
-      // 初期表示：A→コメント、B→概要（詳細）を開いた状態にする
-      if (m === 'a') openComment();
-      else           openDetail();
-      // 横動画モード中はパネルのタブも切替（A→コメント / B→詳細）
+      // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
+      //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
+      // 横動画モード中はパネルのタブを切替（A→コメント / B→詳細）
       if (phone.classList.contains('vid-landscape')) setLsTab(m === 'b' ? 'detail' : 'comment');
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
@@ -1132,6 +1143,9 @@
     }
     setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
+    // 横モードのヘッダー用ハート/ブックマーク（縦と同じ Lottie）
+    setupLottieButton(window.HEART_LOTTIE,    'lsHeartLottie',    'lsHeart',    'rgba(255,62,62,0.6)');
+    setupLottieButton(window.BOOKMARK_LOTTIE, 'lsBookmarkLottie', 'lsBookmark', 'rgba(255,209,51,0.6)');
 
     /* ════════ 流れるコメント・エンジン（オーバーレイ＋コメント欄 共通） ════════ */
     const liveComments = document.getElementById('liveComments');
