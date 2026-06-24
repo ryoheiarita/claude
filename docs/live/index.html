@@ -553,106 +553,80 @@
     .orient-tabs { top: calc(var(--top-inset) + 42px); }  /* A/Bタブの下 */
     .orient-tabs .mode-tab { width: auto; padding: 0 12px; }  /* 「縦動画/横動画」が収まる幅 */
 
+    /* ════════════ 横動画(16:9)モード（/video の横と同仕様：詳細パネル＋下部バー） ════════════ */
     /* 16:9 動画を画面上部いっぱいに固定 */
     .phone.vid-landscape .video-stage {
       top: 0; left: 0; transform: none;
       width: 100%; height: calc(100vw * 9 / 16);
       border-radius: 0;
     }
-    /* 横では Vimeo の 16:9 動画をそのまま表示（iframe内で中央配置・レターボックス） */
-    /* 縦モード専用の装飾は隠す */
+    /* 縦モード専用パーツは隠す */
     .phone.vid-landscape .live-comments,
     .phone.vid-landscape .actions,
     .phone.vid-landscape .desc-sheet,
     .phone.vid-landscape .detail-sheet,
     .phone.vid-landscape .bottom-bar { display: none !important; }
 
-    /* コメントシート → 動画直下に密着した常設パネル */
-    .phone.vid-landscape .comment-sheet {
-      top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
-      height: auto; transform: none !important;
-      border-radius: 0; box-shadow: none; z-index: 40;
-    }
-    /* 横ヘッダー：縦用タブ/カウンター/✕は隠す */
-    .phone.vid-landscape .cs-grabber,
-    .phone.vid-landscape #csTabs,
-    .phone.vid-landscape .cs-count,
-    .phone.vid-landscape .cs-close { display: none !important; }
-    .phone.vid-landscape .cs-header { padding: 12px 16px 10px; }
     /* 横でのみ表示する要素 */
     .only-landscape { display: none; }
     .phone.vid-landscape .only-landscape { display: flex; }
-    /* 横では入力欄を常に表示（A/B共通） */
+
+    /* ── 詳細パネル（既定表示・16:9直下〜下部バーの上） ── */
+    .ls-detail {
+      display: none;
+      position: absolute; left: 0; width: 100%;
+      top: calc(100vw * 9 / 16); bottom: 0;
+      overflow-y: auto;
+      padding: 12px 16px calc(80px + env(safe-area-inset-bottom, 0px));
+      background: #101010; z-index: 30;
+    }
+    .phone.vid-landscape .ls-detail { display: block; }
+    .ls-detail .desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+
+    /* ── コメントシート：横では16:9直下まで立ち上がる（✕で閉じる。すべて/アーティストタブ流用） ── */
+    .phone.vid-landscape .comment-sheet {
+      top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
+      height: auto; border-radius: 16px 16px 0 0; z-index: 70;
+    }
+    .phone.vid-landscape .cs-grabber { display: none !important; }
+    .phone.vid-landscape .cs-header { padding: 12px 16px 10px; }
     .phone.vid-landscape .cs-input { display: flex !important; }
 
-    /* コメント / 詳細 タブ */
-    .ls-tabs { gap: 6px; align-items: center; flex: 1; }
-    .ls-tab {
-      height: 34px; padding: 0 14px; border-radius: 34px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer;
+    /* ── 下部バー（共通コンポーネント <bwu-action-bar>）の配置 ── */
+    .ls-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      box-sizing: border-box; display: none;
+      padding: 0 16px calc(8px + env(safe-area-inset-bottom, 0px));
+      z-index: 50;
     }
-    .ls-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
-    /* タブ順：A＝詳細/コメント（DOM順）, B＝コメント/詳細 */
-    .phone.mode-b #lsTabs .ls-tab[data-ltab="comment"] { order: -1; }
-    /* 40px ハート / ブックマーク（✕の代わり） */
-    .ls-icons { gap: 8px; align-items: center; }
-    .ls-fab {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      position: relative; overflow: visible; border: 1px solid transparent;
-    }
-    .ls-fab .lottie-holder { width: 60px; height: 60px; }   /* 40pxボタンに合わせて縮小 */
+    .phone.vid-landscape .ls-bar { display: flex; }
+    .phone.vid-landscape.s-comment .ls-bar { display: none; }   /* コメント開時は隠す */
 
-    /* アーティストのみ トグル（Figma 9511:32334 準拠：リスト右上にフローティング right16/top12） */
-    .ls-artistonly {
-      /* 表示/非表示は .only-landscape が制御（縦では非表示）。ここでは display を指定しない */
-      position: absolute; right: 16px; top: 74px;   /* ヘッダー(約62px)直下から12px */
-      height: 32px; padding: 0 16px; border-radius: 42px;
-      background: #303030; border: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 600; color: #fff;
-      letter-spacing: -0.24px; line-height: 1.32;
-      white-space: nowrap; z-index: 5; cursor: pointer;
-    }
-    .ls-artistonly.on { background: #fff; color: #000; border-color: #fff; }
-    /* 詳細タブのときはコメント入力欄も不要（横モード共通） */
-    .phone.vid-landscape .comment-sheet.lt-detail .cs-input { display: none !important; }
-
-    /* 詳細ビュー（横パネル内）。既定は非表示、横＋詳細タブのときだけ表示 */
-    .ls-detail { display: none; flex: 1; overflow-y: auto; padding: 4px 16px 16px; flex-direction: column; }
-    .ls-detail::-webkit-scrollbar { width: 0; }
-    .phone.vid-landscape .comment-sheet.lt-detail .ls-detail { display: flex; }
-    /* 詳細タブのときはコメントリスト/アーティストのみトグルを隠す */
-    .phone.vid-landscape .comment-sheet.lt-detail .cs-list,
-    .phone.vid-landscape .comment-sheet.lt-detail .ls-artistonly { display: none !important; }
-
-    /* ════════ 画面横（端末を横向き）：縦動画・横動画とも Figma のサイドバイサイド配置 ════════ */
+    /* ════════ 画面横（端末を横向き）：動画左＋右320パネル ════════ */
     @media (orientation: landscape) {
-      /* 動画は「画面左〜320pxの手前」を高さいっぱいに。iframe内で動画は中央配置
-         （上下or左右が当たるまで）＝コントローラーは下、動画は中央揃え。縦動画も同仕様 */
       .phone.vid-landscape .video-stage,
       .phone.vid-portrait  .video-stage {
         top: 0; left: 0; transform: none; border-radius: 0;
         height: 100dvh; width: calc(100vw - 320px);
       }
-      /* コメントパネル：横320px固定で画面右端に密着。上下右の余白なし、枠線は左1pxのみ */
-      .phone.vid-landscape .comment-sheet,
-      .phone.vid-portrait  .comment-sheet {
-        top: 0; bottom: 0; right: 0; left: auto;
-        width: 320px; height: auto;
-        transform: none !important;     /* 常時表示（スライド無し） */
-        border-radius: 0;
+      /* 横動画：右320に 詳細パネル / コメントシート / 下部バー を寄せる */
+      .phone.vid-landscape .ls-detail {
+        left: auto; right: 0; width: 320px; top: 0; bottom: 0;
         border-left: 1px solid rgba(255,255,255,0.15);
-        background: #101010;
-        box-shadow: none;
-        backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
       }
-      .phone.vid-landscape .cs-input,
-      .phone.vid-portrait  .cs-input { display: flex !important; }   /* パネルの入力欄は常時表示 */
-      /* 縦動画モードの縦レイアウト用パーツは画面横では隠す */
+      .phone.vid-landscape .comment-sheet {
+        left: auto; right: 0; width: 320px; top: 0; bottom: 0;
+        border-radius: 0; border-left: 1px solid rgba(255,255,255,0.15);
+      }
+      .phone.vid-landscape .ls-bar { left: auto; right: 0; width: 320px; }
+      /* 縦動画：右320にコメントパネル（すべて/アーティスト）。動画左 */
+      .phone.vid-portrait .comment-sheet {
+        top: 0; bottom: 0; right: 0; left: auto; width: 320px; height: auto;
+        transform: none !important;
+        border-radius: 0; border-left: 1px solid rgba(255,255,255,0.15);
+        background: #101010; box-shadow: none;
+      }
+      .phone.vid-portrait .cs-input { display: flex !important; }
       .phone.vid-portrait .live-comments,
       .phone.vid-portrait .actions,
       .phone.vid-portrait .desc-sheet,
@@ -774,32 +748,8 @@
         <div class="cs-close" id="commentClose">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
-        <!-- ▼ 横動画モード専用：コメント/詳細タブ ＋ ♡/🔖（✕の代わり） -->
-        <div class="ls-tabs only-landscape" id="lsTabs">
-          <div class="ls-tab" data-ltab="detail">詳細</div>
-          <div class="ls-tab on" data-ltab="comment">コメント</div>
-        </div>
-        <div class="ls-icons only-landscape">
-          <div class="ls-fab" id="lsHeart"><div class="lottie-holder" id="lsHeartLottie"></div></div>
-          <div class="ls-fab" id="lsBookmark"><div class="lottie-holder" id="lsBookmarkLottie"></div></div>
-        </div>
       </div>
-      <!-- 横モード：アーティストのみ トグル（リスト右上） -->
-      <div class="ls-artistonly only-landscape" id="lsArtistOnly">アーティストのみ</div>
       <div class="cs-list" id="csList"></div>
-      <!-- 横モード：詳細ビュー -->
-      <div class="ls-detail" id="lsDetail">
-        <div class="desc-head">
-          <span class="desc-date">2025.08.16</span>
-          <span class="desc-tag">LIVE</span>
-        </div>
-        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
-        <div class="detail-body">
-          <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>
-          <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
-          <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
-        </div>
-      </div>
       <div class="cs-input">
         <img class="avatar" src="" data-avatar="9" alt="">
         <div class="field">コメントを追加...</div>
@@ -808,6 +758,23 @@
         </div>
       </div>
     </div>
+
+    <!-- ════ 〔横動画モード〕詳細パネル（既定で表示・16:9直下〜下部バーの上） ════ -->
+    <div class="ls-detail" id="lsDetail">
+      <div class="desc-head">
+        <span class="desc-date">2025.08.16</span>
+        <span class="desc-tag">LIVE</span>
+      </div>
+      <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+      <div class="detail-body">
+        <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>
+        <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
+        <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
+      </div>
+    </div>
+
+    <!-- ════ 〔横動画モード〕下部固定バー＝共通コンポーネント <bwu-action-bar> ════ -->
+    <bwu-action-bar class="ls-bar" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
 
     <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
     <div class="detail-sheet only-b" id="detailSheet">
@@ -840,6 +807,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <!-- ハート/ブックマークの Lottie データを同梱（file:// でも fetch 不要で動く） -->
   <script src="./lottie-data.js"></script>
+  <!-- 横動画モードの下部フローティングバー 共通コンポーネント -->
+  <script src="./bwu-action-bar.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
@@ -959,26 +928,10 @@
       csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
     }));
 
-    /* ════════ 〔横動画モード〕コメント/詳細タブ ════════ */
-    const lsTabEls = document.querySelectorAll('#lsTabs .ls-tab');
-    function setLsTab(which) {
-      commentSheet.classList.toggle('lt-detail', which === 'detail');
-      lsTabEls.forEach(t => t.classList.toggle('on', t.dataset.ltab === which));
-    }
-    lsTabEls.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setLsTab(t.dataset.ltab); }));
+    /* ════════ 〔横動画モード〕下部バー（共通コンポーネント）の「コメント」でコメントシートを立ち上げ ════════ */
+    document.getElementById('lsBar').addEventListener('comment', openComment);
 
-    /* 横：アーティストのみ トグル */
-    const lsArtistOnly = document.getElementById('lsArtistOnly');
-    lsArtistOnly.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const on = lsArtistOnly.classList.toggle('on');
-      csListEl.classList.toggle('artist-only', on);
-      csListEl.scrollTop = csListEl.scrollHeight;
-    });
-
-    /* 横：ハート / ブックマークは縦と同じ Lottie を使用（セットアップはLottie定義の後で） */
-
-    /* ════════ 縦/横 動画切替トグル（同じ動画を 9:16 / 16:9 で表示） ════════ */
+    /* ════════ 縦/横 動画切替トグル（9:16 / 16:9 の Vimeo を読み込み直す） ════════ */
     const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
     const vimeoFrame = document.getElementById('vimeoFrame');
     const VIMEO_PORTRAIT  = vimeoFrame.src;   // 縦動画(9:16 Vimeo)
@@ -989,11 +942,11 @@
       orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
       const isB = phone.classList.contains('mode-b');
       if (o === 'landscape') {
-        setLsTab(isB ? 'comment' : 'detail');     // A横→詳細 / B横→コメント
-        vimeoFrame.src = VIMEO_LANDSCAPE;         // 16:9 Vimeo に読み込み直し
+        closeComment(); closeDetail(); collapseDesc();  // 横は詳細パネルが既定表示（コメント閉）
+        vimeoFrame.src = VIMEO_LANDSCAPE;               // 16:9 Vimeo に読み込み直し
       } else {
-        vimeoFrame.src = VIMEO_PORTRAIT;          // 縦動画(Vimeo)を読み込み直し（横の動画は停止）
-        setMode(isB ? 'b' : 'a');                 // 縦に戻す→モードの初期状態を再適用
+        vimeoFrame.src = VIMEO_PORTRAIT;                // 縦動画(Vimeo)を読み込み直し（横の動画は停止）
+        setMode(isB ? 'b' : 'a');                       // 縦に戻す→モードの初期状態を再適用
       }
     }
     orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
@@ -1035,8 +988,7 @@
       modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
       // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
       //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
-      // 横動画モード中はパネルのタブを切替（A横→詳細 / B横→コメント）
-      if (phone.classList.contains('vid-landscape')) setLsTab(m === 'b' ? 'comment' : 'detail');
+      // 横動画(A横/B横)は共通：詳細パネル既定＋下部バー（A/Bで差は無し）
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
       e.stopPropagation(); setMode(t.dataset.mode);
@@ -1164,8 +1116,7 @@
     setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
     setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
     // 横モードのヘッダー用ハート/ブックマーク（縦と同じ Lottie）
-    setupLottieButton(window.HEART_LOTTIE,    'lsHeartLottie',    'lsHeart',    'rgba(255,62,62,0.6)');
-    setupLottieButton(window.BOOKMARK_LOTTIE, 'lsBookmarkLottie', 'lsBookmark', 'rgba(255,209,51,0.6)');
+    /* 横モードのハート/ブックマークは <bwu-action-bar> 内で完結（ここでの設定は不要） */
 
     /* ════════ 流れるコメント・エンジン（オーバーレイ＋コメント欄 共通） ════════ */
     const liveComments = document.getElementById('liveComments');
