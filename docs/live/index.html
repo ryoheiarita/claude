@@ -839,18 +839,22 @@
       ownSend.classList.toggle('active', ownInput.value.trim().length > 0);
     });
 
-    /* ════════ A / B モード切替（右上タブ） ════════ */
+    /* ════════ A / B モード切替（右上タブ）
+       A＝コメントシートが初期 / B＝概要（詳細）が初期 ════════ */
     const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
     function setMode(m) {
-      closeComment(); closeDetail(); collapseDesc();   // 状態をリセット
+      closeComment(); closeDetail(); collapseDesc();   // 一旦リセット
       phone.classList.toggle('mode-b', m === 'b');
       phone.classList.toggle('mode-a', m === 'a');
       modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+      // 初期表示：A→コメント、B→概要（詳細）を開いた状態にする
+      if (m === 'a') openComment();
+      else           openDetail();
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
       e.stopPropagation(); setMode(t.dataset.mode);
     }));
-    phone.classList.add('mode-a');
+    phone.classList.add('mode-a');   // 初期モードのクラスのみ。開く状態はスクリプト末尾で設定
 
     /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
     const descSheet = document.getElementById('descSheet');
@@ -1016,6 +1020,9 @@
       pushComment(makeComment());
       setTimeout(tick, 500 + Math.random() * 1100);
     })();
+
+    /* ════════ 初期表示：A＝コメント初期 / B＝概要(詳細)初期 ════════ */
+    setMode('a');
   </script>
 </body>
 </html>
