@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>New Contents — 記事一覧（挙動イメージ）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --top-inset: env(safe-area-inset-top, 0px);
+      --c-bg: #101010;
+      --c-text: #fff;
+      --c-sub: rgba(255,255,255,0.5);
+      --c-badge: #FF006A;
+      --nav-h: 96px;                 /* status + toolbar + tabs の合計目安 */
+    }
+
+    html, body {
+      background: var(--c-bg);
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      color: var(--c-text);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .phone {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      background: var(--c-bg);
+      overflow: clip;
+    }
+
+    /* ════════════ 上部ナビ（固定・blur） ════════════ */
+    .nav {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+      padding-top: var(--top-inset);
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+      border-bottom: 0.5px solid rgba(255,255,255,0.15);
+    }
+    .statusbar {
+      height: 44px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; font-size: 15px; font-weight: 600;
+    }
+    .statusbar .levels { display: flex; gap: 6px; align-items: center; opacity: .95; }
+    .statusbar .levels svg { display: block; }
+
+    .toolbar {
+      height: 48px; display: flex; align-items: center; position: relative; padding: 0 12px;
+    }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 42px; flex: none;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .toolbar .title {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      text-align: center; pointer-events: none; width: 200px;
+    }
+    .toolbar .title .t { font-size: 16px; font-weight: 600; line-height: 22px; }
+    .toolbar .title .s { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.75); line-height: 16px; }
+    .toolbar .spacer { flex: 1; }
+
+    .tabs { display: flex; gap: 2px; align-items: center; padding: 4px 8px 10px; }
+    .tab {
+      padding: 4px 12px; border-radius: 16px; font-size: 16px; font-weight: 600;
+      letter-spacing: -0.32px; color: rgba(255,255,255,0.3); white-space: nowrap; cursor: pointer;
+    }
+    .tab.active { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* ════════════ リスト（スクロール領域） ════════════ */
+    .list {
+      position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding-top: calc(var(--top-inset) + 152px);
+      padding-bottom: 140px;
+    }
+    .list-inner { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+
+    .row {
+      display: flex; gap: 12px; align-items: center; text-decoration: none; color: inherit;
+      cursor: pointer;
+    }
+    .row:active { opacity: .7; }
+
+    /* サムネ：背景色 + アイコン */
+    .thumb {
+      width: 146px; height: 82px; border-radius: 8px; flex: none;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .thumb::after { /* 軽い質感グラデ */
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0) 60%);
+      pointer-events: none;
+    }
+    .thumb svg { position: relative; z-index: 1; }
+
+    /* タイプ別 背景色 */
+    .thumb.t-doc   { background: #2b3550; }
+    .thumb.t-vh    { background: #3a2f63; }  /* 横動画 */
+    .thumb.t-vv    { background: #1f5a55; }  /* 縦動画 */
+    .thumb.t-lh    { background: #5a2540; }  /* 横LIVE */
+    .thumb.t-lv    { background: #5a2230; }  /* 縦LIVE */
+
+    /* LIVEバッジ */
+    .live-badge {
+      position: absolute; z-index: 2; top: 8px; left: 8px;
+      background: var(--c-badge); color: #fff;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+      padding: 2px 6px; border-radius: 4px; line-height: 1;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .live-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+
+    .meta { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+    .meta .name {
+      font-size: 14px; font-weight: 600; line-height: 20px; color: #fff;
+      overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .meta .date { font-size: 14px; font-weight: 400; color: var(--c-sub); letter-spacing: -0.28px; }
+    .meta .ph {
+      align-self: flex-start; font-size: 10px; font-weight: 700; letter-spacing: .5px;
+      padding: 1px 6px; border-radius: 4px; line-height: 1.4;
+      background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.7);
+    }
+
+    /* ════════════ 下部タブバー ════════════ */
+    .tabbar {
+      position: absolute; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 20;
+      height: 64px; padding: 7px 20px; border-radius: 42px;
+      background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      display: flex; align-items: flex-end; gap: 12px;
+    }
+    .tabbar .tb {
+      width: 48px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      color: rgba(255,255,255,0.5); font-size: 11px; padding-bottom: 2px;
+    }
+    .tabbar .tb.on { color: #fff; }
+    .tabbar .tb.on svg { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
+    .tabbar .tb.center .ic {
+      width: 48px; height: 48px; border-radius: 40px; margin-bottom: 2px;
+      background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+
+    <!-- ════ スクロールするリスト ════ -->
+    <div class="list">
+      <div class="list-inner" id="rows"><!-- JSで生成 --></div>
+    </div>
+
+    <!-- ════ 上部ナビ（固定） ════ -->
+    <div class="nav">
+      <div class="statusbar">
+        <span>9:18</span>
+        <span class="levels">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#fff"/><rect x="5" y="5" width="3" height="7" rx="1" fill="#fff"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#fff"/><rect x="15" y="1" width="3" height="11" rx="1" fill="#fff"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.2c2.5 0 4.8 1 6.4 2.6l-1.4 1.4A7 7 0 0 0 8.5 4.2 7 7 0 0 0 3.5 6.2L2.1 4.8A9 9 0 0 1 8.5 2.2Z" fill="#fff"/><path d="M8.5 6.4c1.3 0 2.5.5 3.4 1.4l-1.5 1.5a2.7 2.7 0 0 0-3.8 0L5.1 7.8A4.8 4.8 0 0 1 8.5 6.4Z" fill="#fff"/><circle cx="8.5" cy="10.4" r="1.4" fill="#fff"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="3" stroke="#fff" stroke-opacity=".5"/><rect x="3" y="3" width="15" height="6" rx="1.5" fill="#fff"/><rect x="22.5" y="4" width="1.5" height="4" rx=".75" fill="#fff" fill-opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="toolbar">
+        <div class="icon-btn" onclick="history.back()" aria-label="戻る">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="title"><div class="t">Artist</div><div class="s">FC name</div></div>
+        <div class="spacer"></div>
+        <div class="icon-btn" aria-label="検索">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab active">記事スタイルごとのUI</div>
+        <div class="tab">テキスト</div>
+        <div class="tab">テキスト</div>
+      </div>
+    </div>
+
+    <!-- ════ 下部タブバー ════ -->
+    <div class="tabbar">
+      <div class="tb on">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20h14V9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="tb">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-4 4v-4H4z" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Poppin</span>
+      </div>
+      <div class="tb center">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="14" y="4" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="4" y="14" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/><rect x="14" y="14" width="6" height="6" rx="1.5" stroke="#fff" stroke-width="1.8"/></svg></div>
+        <span>More</span>
+      </div>
+      <div class="tb">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 11a2 2 0 0 1-2 1.8H9A2 2 0 0 1 7 19zM9 8a3 3 0 0 1 6 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Shop</span>
+      </div>
+      <div class="tb">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="3.2" stroke="#fff" stroke-opacity=".5" stroke-width="1.8"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Mypage</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ───────── サムネアイコン（SVG） ─────────
+       横型動画アイコン / 縦型動画アイコン / ドキュメントアイコン を背景色つきboxに描画。
+       LIVE は動画アイコン + LIVEバッジ。 */
+    const ICON = {
+      // 横型動画：横長フレーム＋再生
+      videoH: `<svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <rect x="9" y="17" width="38" height="22" rx="3" stroke="#fff" stroke-width="2.2"/>
+        <path d="M25 24.5v9l8-4.5z" fill="#fff"/></svg>`,
+      // 縦型動画：縦長フレーム＋再生
+      videoV: `<svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <rect x="19" y="9" width="18" height="38" rx="3" stroke="#fff" stroke-width="2.2"/>
+        <path d="M25 24v8l7-4z" fill="#fff"/></svg>`,
+      // ドキュメント
+      doc: `<svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <path d="M15 8h15l8 8v28a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M30 8v8h8" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M19 27h14M19 33h14M19 39h9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`
+    };
+    const liveBadge = `<span class="live-badge"><span class="dot"></span>LIVE</span>`;
+
+    /* ───────── データ（Figmaの並び順） ─────────
+       ph2/ph3 を切り分け。現在の video/live は ph3 に配置、ph2 にも一旦同じものを配置。 */
+    const ITEMS = [
+      { name: '通常記事',      date: '2025.08.16', type: 'doc', cls: 't-doc', href: '../article/article.html' },
+
+      { name: 'Ph.2_横動画',  date: '2025.08.16', type: 'videoH', cls: 't-vh', ph: 'PH2', href: 'video-yoko-ph2/' },
+      { name: 'Ph.2_縦動画',  date: '2025.08.16', type: 'videoV', cls: 't-vv', ph: 'PH2', href: 'video-tate-ph2/' },
+      { name: 'Ph.2_横LIVE',  date: '2025.08.16', type: 'videoH', cls: 't-lh', ph: 'PH2', live: true, href: 'live-yoko-ph2/' },
+      { name: 'Ph.2_縦LIVE',  date: '2025.08.16', type: 'videoV', cls: 't-lv', ph: 'PH2', live: true, href: 'live-tate-ph2/' },
+
+      { name: 'Ph.3_横動画',  date: '2025.08.16', type: 'videoH', cls: 't-vh', ph: 'PH3', href: 'video-yoko-ph3/' },
+      { name: 'Ph.3_縦動画',  date: '2025.08.16', type: 'videoV', cls: 't-vv', ph: 'PH3', href: 'video-tate-ph3/' },
+      { name: 'Ph.3_横LIVE',  date: '2025.08.16', type: 'videoH', cls: 't-lh', ph: 'PH3', live: true, href: 'live-yoko-ph3/' },
+      { name: 'Ph.3_縦LIVE',  date: '2025.08.16', type: 'videoV', cls: 't-lv', ph: 'PH3', live: true, href: 'live-tate-ph3/' },
+    ];
+
+    const rows = document.getElementById('rows');
+    rows.innerHTML = ITEMS.map(it => `
+      <a class="row" href="${it.href}">
+        <div class="thumb ${it.cls}">
+          ${it.live ? liveBadge : ''}
+          ${ICON[it.type]}
+        </div>
+        <div class="meta">
+          ${it.ph ? `<span class="ph">${it.ph}</span>` : ''}
+          <div class="name">${it.name}</div>
+          <div class="date">${it.date}</div>
+        </div>
+      </a>
+    `).join('');
+  </script>
+</body>
+</html>

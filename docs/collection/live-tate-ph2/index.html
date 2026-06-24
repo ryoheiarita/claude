@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>縦LIVE Ph.2 — 挙動イメージ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      /* 画面上端の余白（戻るボタンの位置。ノッチ等のセーフエリア＋16px） */
+      --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
+      --actions-h: 160px;                  /* 3ボタン: 48×3 + gap8×2 */
+
+      /* ── 動画は 9:16 固定。高さ基準で拡大するが、幅(=9)が画面幅に達したら頭打ち ── */
+      --vid-cap-h: calc(100vw * 16 / 9);   /* 幅=画面幅いっぱいになる時の高さ（これ以上は拡大しない） */
+      --vid-normal-h: min(calc(100dvh - var(--desc-peek)), var(--vid-cap-h)); /* 通常時 */
+      --vid-comment-top: var(--top-inset);  /* コメント開時：戻るボタンと同じ高さに上揃え */
+      --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
+      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画/ボタン下端 */
+
+      /* 詳細開時：動画は戻るボタン位置から詳細シート上端まで拡大（幅で頭打ち） */
+      --detail-sheet-h: 60dvh;
+      --vid-detail-h: min(calc(100dvh - var(--detail-sheet-h) - var(--top-inset)), var(--vid-cap-h));
+
+      /* ── ボトムシートの高さ ── */
+      /* コメント欄：ボタン群(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
+      --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
+      --desc-peek: 200px;                  /* 動画概要：本文3行目が見えるくらいの高さ（動画はその分拡大） */
+      --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
+
+      --c-bg: #000;
+      --c-desc-bg: #141414;
+      --c-comment-bg: #1a1a1a;
+      --c-chip: #2c2c2e;
+      --c-input: #2a2a2c;
+    }
+
+    html, body {
+      background: #000;
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      color: #fff;
+      height: 100%;
+      overflow: hidden;
+    }
+    body { width: 100%; }
+
+    /* ── 画面いっぱい（左右 width:100%）。高さは表示領域に追従（100dvh） ── */
+    .phone {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      background: var(--c-bg);
+      overflow: clip;   /* clip: スクロールコンテナ化を防ぎ、隠したシートのはみ出しで誤スクロールしない */
+    }
+
+    /* ════════════ 動画ステージ（3状態でサイズが切替わる） ════════════ */
+    .video-stage {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);   /* 左右中央揃え */
+      height: var(--vid-normal-h);
+      width: calc(var(--vid-normal-h) * 9 / 16);  /* 9:16 固定 */
+      background: #000;
+      overflow: hidden;
+      z-index: 10;
+      transition: width .42s cubic-bezier(.22,.61,.36,1),
+                  height .42s cubic-bezier(.22,.61,.36,1),
+                  top .42s cubic-bezier(.22,.61,.36,1),
+                  border-radius .42s cubic-bezier(.22,.61,.36,1);
+    }
+    /* 縦(9:16)動画なので 9:16 ボックスをそのまま埋める（グレーなし・コントローラー表示） */
+    .video-stage iframe,
+    .video-stage .video-fallback {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+    .video-stage .video-fallback { background: #2a2a2a; }
+    /* Vimeo が読めない環境用のダミー（グレー＋擬似コントロール） */
+    .video-fallback {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      background:
+        linear-gradient(135deg, #3a3a3a 0%, #2b2b2b 100%);
+    }
+    .vf-controls {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+    }
+    .vf-play {
+      width: 38px; height: 38px; border-radius: 6px;
+      background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .vf-bar { flex: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,0.25); position: relative; }
+    .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
+    .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
+
+    /* コメント開時：9:16 のままボタン群と同じ高さに縮小（上揃え） */
+    .phone.s-comment .video-stage {
+      height: var(--vid-comment-h);
+      width: calc(var(--vid-comment-h) * 9 / 16);
+      top: var(--vid-comment-top);
+      border-radius: 12px;
+    }
+    /* 詳細開時：9:16 のまま詳細シート上端まで拡大（戻るボタン位置から） */
+    .phone.s-detail .video-stage {
+      height: var(--vid-detail-h);
+      width: calc(var(--vid-detail-h) * 9 / 16);
+      top: var(--top-inset);
+      border-radius: 12px;
+    }
+
+    /* ════════════ ステータスバー（非表示：端末の実ステータスバーを使う） ════════════ */
+    .status-bar {
+      display: none;
+    }
+    .status-time {
+      font-size: 17px; font-weight: 600; letter-spacing: .2px;
+      flex: 1;
+    }
+    .status-icons { display: flex; align-items: center; gap: 7px; }
+
+    /* ════════════ 戻るボタン ════════════ */
+    .back-btn {
+      position: absolute;
+      /* ステータスバー非表示のぶん上に詰める。コメント開時はこの高さに3ボタンが揃う */
+      top: var(--top-inset);
+      left: calc(env(safe-area-inset-left, 0px) + 16px);
+      width: 40px; height: 40px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 60;
+      cursor: pointer;
+    }
+    .back-btn svg { width: 24px; height: 24px; }
+
+    /* ════════════ 右側アクションボタン（ハート / ブックマーク / コメント） ════════════ */
+    .actions {
+      position: absolute;
+      right: 16px;
+      /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
+      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 55;
+      transition: top .42s cubic-bezier(.22,.61,.36,1),
+                  right .42s cubic-bezier(.22,.61,.36,1);
+    }
+    .phone.s-comment .actions,
+    .phone.s-detail .actions {
+      /* コメント／詳細開時：4(3)ボタンを必ず戻るボタンと上揃え */
+      top: var(--top-inset);
+    }
+    /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
+    .phone.s-desc .actions {
+      top: calc(100dvh - 184px);  /* 184 = 24(下余白) + 160(3ボタン+gap) */
+    }
+    .fab {
+      width: 48px; height: 48px;
+      border-radius: 42px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: border-color .2s ease;
+    }
+    .fab svg { width: 24px; height: 24px; }
+    /* Lottie はボタンより大きく置いてバースト粒子をはみ出させる */
+    #heartBtn, #bookmarkBtn { overflow: visible; }
+    .lottie-holder {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px; height: 72px;
+      pointer-events: none;
+    }
+    .fab.active-comment { border-color: rgba(255,255,255,0.6); }
+
+    /* ════════════ コメントチップ（吹き出しピル：オーバーレイ/パネル共通） ════════════ */
+    .chip {
+      align-self: flex-start;
+      max-width: 100%;
+      width: fit-content;
+      display: inline-flex;
+      align-items: flex-start;   /* 改行時は上揃え（名前とテキスト1行目を揃える） */
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 14px; line-height: 20px;
+      /* 出現アニメ（下からスッと） */
+      animation: chipIn .34s cubic-bezier(.22,.61,.36,1);
+    }
+    .chip .u { color: rgba(255,255,255,0.55); font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+    .chip .m { color: #fff; word-break: break-word; }
+    @keyframes chipIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── 動画に重なる「流れるコメント」オーバーレイ（左下・3ボタンと同じ高さ） ── */
+    .live-comments {
+      position: absolute;
+      left: calc(env(safe-area-inset-left, 0px) + 16px);
+      width: min(64vw, 260px);
+      /* 3ボタンと同じ高さ帯：下端を3ボタンの下端に揃え、上に積み上がる */
+      height: 248px;
+      top: calc(var(--vid-normal-h) - 48px - 248px);  /* -48 = actions下端(vid-normal-h-48) - 高さ */
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 6px;
+      overflow: hidden;
+      pointer-events: none;
+      /* 上80%以降を上に向かって opacity:0（下=最新がくっきり、上=古いほど消える） */
+      -webkit-mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
+              mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
+      transition: opacity .3s ease;
+    }
+    /* コメント欄を開いている時 / 概要・詳細展開時はオーバーレイを隠す（パネル側に流れる） */
+    .phone.s-comment .live-comments,
+    .phone.s-desc .live-comments,
+    .phone.s-detail .live-comments { opacity: 0; pointer-events: none; }
+
+    /* ════════════ ① 動画概要ボトムシート ════════════ */
+    .desc-sheet {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: calc(100dvh - var(--desc-expanded-top));
+      background: var(--c-desc-bg);
+      border-radius: 16px 16px 0 0;
+      z-index: 40;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
+      /* collapsed: ピーク分だけ見せる */
+      transform: translateY(calc(100dvh - var(--desc-expanded-top) - var(--desc-peek)));
+      transition: transform .42s cubic-bezier(.22,.61,.36,1);
+      display: flex;
+      flex-direction: column;
+      touch-action: none;
+    }
+    .desc-sheet.expanded { transform: translateY(0); }
+    /* コメント開時は概要シートを画面外へ隠す */
+    .phone.s-comment .desc-sheet {
+      transform: translateY(100%);
+      pointer-events: none;
+    }
+
+    .desc-grabber {
+      flex-shrink: 0;
+      padding: 10px 0 6px;
+      display: flex;
+      justify-content: center;
+      cursor: grab;
+    }
+    .desc-grabber::before {
+      content: '';
+      width: 40px; height: 4px; border-radius: 10px;
+      background: rgba(255,255,255,0.28);
+    }
+    .desc-scroll {
+      flex: 1;
+      overflow-y: auto;
+      /* 下余白を広めに：展開時に右下の3ボタンが本文最終行に被らないように */
+      padding: 4px 16px 200px;
+      -webkit-overflow-scrolling: touch;
+      scroll-padding-bottom: 200px;
+    }
+    /* 折りたたみ（ピーク）時：本文を下に向かって透明にフェード（3行目あたりで消える） */
+    .desc-sheet:not(.expanded) .desc-scroll {
+      overflow-y: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0,
+          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
+              mask-image: linear-gradient(to bottom, #000 0,
+          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
+    }
+    .desc-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .desc-date { font-size: 14px; color: rgba(255,255,255,0.5); }
+    .desc-tag {
+      height: 21px; padding: 0 8px;
+      display: inline-flex; align-items: center;
+      border-radius: 21px;
+      background: rgba(255,255,255,0.15);
+      font-size: 13px; color: #fff;
+    }
+    /* タイトル直下に左揃えで置くLIVEタグ（独立した行に） */
+    .desc-title + .desc-tag { margin-bottom: 16px; }
+    .desc-title {
+      font-size: 22px; font-weight: 600; line-height: 1.35;
+      letter-spacing: -0.3px; margin-bottom: 8px;
+    }
+    .desc-body {
+      font-size: 15px; line-height: 28px; color: rgba(255,255,255,0.7);
+    }
+    .desc-body p { margin-bottom: 22px; }
+
+    /* ════════════ ② コメント欄ボトムシート（568px） ════════════ */
+    .comment-sheet {
+      position: absolute;
+      left: 0; bottom: 0;
+      width: 100%;
+      height: var(--comment-sheet-h);
+      background: var(--c-comment-bg);
+      border-radius: 16px 16px 0 0;
+      z-index: 70;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform .42s cubic-bezier(.22,.61,.36,1);
+      box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+    }
+    .phone.s-comment .comment-sheet { transform: translateY(0); }
+
+    .cs-grabber {
+      flex-shrink: 0; padding: 8px 0 2px; display: flex; justify-content: center;
+    }
+    .cs-grabber::before {
+      content:''; width: 57px; height: 4px; border-radius: 10px; background: rgba(255,255,255,0.5);
+    }
+    .cs-header {
+      flex-shrink: 0;
+      display: flex; align-items: center;
+      padding: 8px 16px 14px;
+    }
+    .cs-header .ttl { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .cs-header .ttl svg { width: 24px; height: 24px; }
+    .cs-title { font-size: 16px; font-weight: 600; }
+    .cs-count { font-size: 14px; color: rgba(255,255,255,0.6); margin-left: 8px; }
+    .cs-close {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      margin-left: auto;   /* 右端へ（タブ＋カウンターは左寄せ） */
+    }
+    .cs-close svg { width: 22px; height: 22px; }
+
+    .cs-list {
+      flex: 1; overflow-y: auto;
+      padding: 0 16px 12px;
+      -webkit-overflow-scrolling: touch;
+      /* チャット：下＝最新。少ない時は下寄せ、多い時はスクロール */
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      /* 上80%以降を上へ向かってフェード（流れてきたコメントが上で消える） */
+      -webkit-mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
+              mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
+    }
+    .cs-list::before { content: ''; margin-top: auto; }  /* 少数時に下寄せ */
+    .pinned-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: rgba(255,255,255,0.5);
+      margin: 4px 0 14px;
+    }
+    .pinned-label svg { width: 14px; height: 14px; }
+
+    .comment {
+      display: flex; gap: 10px; margin-bottom: 20px;
+    }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      flex-shrink: 0; object-fit: cover;
+    }
+    .c-body { flex: 1; min-width: 0; }
+    .c-row1 { display: flex; align-items: center; gap: 6px; }
+    .c-name { font-size: 15px; font-weight: 600; }
+    .c-check { width: 16px; height: 16px; }
+    .c-time { font-size: 13px; color: rgba(255,255,255,0.5); }
+    .c-tag {
+      font-size: 11px; padding: 1px 7px; border-radius: 20px;
+      background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.85);
+    }
+    .c-more { margin-left: auto; color: rgba(255,255,255,0.5); font-size: 18px; line-height: 1; }
+    .c-text { font-size: 15px; line-height: 22px; margin: 5px 0 8px; }
+    .c-reacts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .react {
+      display: inline-flex; align-items: center; gap: 5px;
+      height: 28px; padding: 0 10px; border-radius: 20px;
+      background: var(--c-chip); font-size: 14px;
+    }
+    .react.add { padding: 0 8px; }
+    .react.add svg { width: 16px; height: 16px; opacity: .8; }
+
+    /* ── コメント入力エリア ── */
+    .cs-input {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .cs-input .avatar { width: 36px; height: 36px; }
+    .cs-input .field {
+      flex: 1; height: 40px; border-radius: 20px;
+      background: var(--c-input);
+      display: flex; align-items: center; padding: 0 14px;
+      font-size: 14px; color: rgba(255,255,255,0.4);
+    }
+    .cs-send {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .cs-send svg { width: 20px; height: 20px; }
+
+    /* ════════════════════════════════════════════════════════════
+       バージョンB（右上タブで A ⇄ B 切替）
+       ════════════════════════════════════════════════════════════ */
+
+    /* ── A/B 切替タブ（右上・常時表示） ── */
+    .mode-tabs {
+      position: absolute;
+      top: var(--top-inset);
+      right: calc(env(safe-area-inset-right, 0px) + 16px);
+      z-index: 90;
+      display: flex; gap: 2px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 40px; padding: 3px;
+    }
+    .mode-tab {
+      width: 34px; height: 30px; border-radius: 40px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6);
+      cursor: pointer; transition: background .2s, color .2s;
+    }
+    .mode-tab.on { background: #fff; color: #000; }
+
+    /* B専用要素は通常は隠し、Bモードでのみ表示 */
+    .only-b { display: none !important; }
+    .phone.mode-b .only-b { display: flex !important; }
+    .phone.mode-b .only-a { display: none !important; }
+    /* Bモードでは「動画概要シート」と「シート内入力欄」は使わない */
+    .phone.mode-b .desc-sheet { display: none !important; }
+    .phone.mode-b .cs-input  { display: none !important; }
+
+    /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
+    .phone.mode-b {
+      --actions-h: 216px;                                  /* 4ボタン: 48×4 + gap8×3 */
+      /* 下部バー実寸＝内容40 + 上下padding10/10 + セーフエリア。シート下端とピッタリ合わせる */
+      --bottombar-h: calc(60px + env(safe-area-inset-bottom, 0px));
+      /* 下部バーの分を残しつつ、幅(=9)が画面幅に達したら頭打ち */
+      --vid-normal-h: min(calc(100dvh - var(--bottombar-h)), var(--vid-cap-h));
+      /* :root 側は actions-h=160px で解決済みのため、4ボタン(216px)基準で再定義 */
+      --vid-comment-h: var(--actions-h);
+      --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
+    }
+
+    .fab.active-detail { border-color: rgba(255,255,255,0.6); }
+
+    /* ── コメント欄タブ（すべて / アーティスト） ── */
+    .cs-tabs { display: flex; gap: 6px; align-items: center; }
+    .cs-tab {
+      height: 34px; padding: 0 16px; border-radius: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
+      background: transparent; cursor: pointer; white-space: nowrap;
+    }
+    .cs-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+
+    /* Bモード：コメントシートは下部バーの上で止める（＝4ボタンのすぐ下〜バー上） */
+    .phone.mode-b .comment-sheet {
+      bottom: var(--bottombar-h);
+      height: calc(100dvh - var(--vid-comment-bottom) - 16px - var(--bottombar-h));
+    }
+
+    /* アーティストタブ：アーティスト以外を隠す */
+    .cs-list.artist-only .chip:not(.artist) { display: none; }
+
+    /* アーティストのチップ：アイコン＋緑のプロフィール名（A/B 共通）。上揃えは .chip 既定 */
+    .chip .cav {
+      width: 20px; height: 20px; border-radius: 50%;
+      flex-shrink: 0; object-fit: cover; margin-right: 2px;
+      display: none;  /* 一般ユーザーはアイコン無し */
+    }
+    .chip.artist .cav { display: inline-block; }
+    .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑（A/B 共通） */
+    .chip.own .u     { color: #fc5555; }       /* 自分のコメントは「あなた」を赤に */
+
+    /* ── 下部コメントバー（Bモード：常時表示） ── */
+    .bottom-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      height: var(--bottombar-h); box-sizing: border-box;  /* シート下端と厳密に一致させ隙間を無くす */
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: var(--c-comment-bg);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      z-index: 72;
+    }
+    .bottom-bar .avatar { width: 36px; height: 36px; }
+    /* B：実際に入力できるフィールド */
+    .bottom-bar .field {
+      flex: 1; height: 40px; border-radius: 20px; background: var(--c-input);
+      border: 0; outline: none; padding: 0 14px;
+      font-size: 14px; color: #fff; font-family: inherit;
+    }
+    .bottom-bar .field::placeholder { color: rgba(255,255,255,0.4); }
+    /* 送信ボタン：未入力=inactive（既定）／一文字でも入力=active（白背景・黒アイコン） */
+    .bottom-bar .cs-send { transition: background .15s ease; }
+    .bottom-bar .cs-send.active { background: #fff; }
+    .bottom-bar .cs-send.active svg path { stroke: #000; }
+    /* 詳細展開時は下部バーを隠す（詳細シートが覆う） */
+    .phone.mode-b.s-detail .bottom-bar { display: none !important; }
+
+    /* ── 詳細シート（Bモード：画面6割・動画に被さる） ── */
+    .detail-sheet {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      height: var(--detail-sheet-h);
+      background: var(--c-desc-bg);
+      border-radius: 16px 16px 0 0;
+      z-index: 75;
+      box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+      transform: translateY(100%);
+      transition: transform .42s cubic-bezier(.22,.61,.36,1);
+      flex-direction: column;
+    }
+    .phone.s-detail .detail-sheet { transform: translateY(0); }
+    /* 詳細シート右上の✕（.cs-close の丸ボタンを流用） */
+    .detail-close { position: absolute; top: 14px; right: 16px; z-index: 6; }
+    .detail-scroll { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+    .detail-scroll::-webkit-scrollbar { width: 0; }
+    .detail-body { font-size: 15px; line-height: 26px; color: rgba(255,255,255,0.72); }
+    .detail-body p { margin-bottom: 16px; }
+
+    /* ════════════════════════════════════════════════════════════
+       横動画モード（16:9）。縦/横トグルで .vid-landscape を付与
+       ════════════════════════════════════════════════════════════ */
+    .orient-tabs { top: calc(var(--top-inset) + 42px); }  /* A/Bタブの下 */
+    .orient-tabs .mode-tab { width: auto; padding: 0 12px; }  /* 「縦動画/横動画」が収まる幅 */
+
+    /* ════════════ 横動画(16:9)モード（/video の横と同仕様：詳細パネル＋下部バー） ════════════ */
+    /* 16:9 動画を画面上部いっぱいに固定 */
+    .phone.vid-landscape .video-stage {
+      top: 0; left: 0; transform: none;
+      width: 100%; height: calc(100vw * 9 / 16);
+      border-radius: 0;
+    }
+    /* 縦モード専用パーツは隠す */
+    .phone.vid-landscape .live-comments,
+    .phone.vid-landscape .actions,
+    .phone.vid-landscape .desc-sheet,
+    .phone.vid-landscape .detail-sheet,
+    .phone.vid-landscape .bottom-bar { display: none !important; }
+
+    /* 横でのみ表示する要素 */
+    .only-landscape { display: none; }
+    .phone.vid-landscape .only-landscape { display: flex; }
+
+    /* ── 詳細パネル（既定表示・16:9直下〜下部バーの上） ── */
+    .ls-detail {
+      display: none;
+      position: absolute; left: 0; width: 100%;
+      top: calc(100vw * 9 / 16); bottom: 0;
+      overflow-y: auto;
+      padding: 12px 16px calc(80px + env(safe-area-inset-bottom, 0px));
+      background: #101010; z-index: 30;
+    }
+    .phone.vid-landscape .ls-detail { display: block; }
+    .ls-detail .desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+
+    /* ── コメントシート：横では16:9直下まで立ち上がる（✕で閉じる。すべて/アーティストタブ流用） ── */
+    .phone.vid-landscape .comment-sheet {
+      top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
+      height: auto; border-radius: 16px 16px 0 0; z-index: 70;
+    }
+    .phone.vid-landscape .cs-grabber { display: none !important; }
+    .phone.vid-landscape .cs-header { padding: 12px 16px 10px; }
+    .phone.vid-landscape .cs-input { display: flex !important; }
+
+    /* ── 下部バー（共通コンポーネント <bwu-action-bar>）の配置 ── */
+    .ls-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%;
+      box-sizing: border-box; display: none;
+      padding: 0 16px calc(8px + env(safe-area-inset-bottom, 0px));
+      z-index: 50;
+    }
+    .phone.vid-landscape .ls-bar { display: flex; }
+    .phone.vid-landscape.s-comment .ls-bar { display: none; }   /* コメント開時は隠す */
+
+    /* ════════ 画面横（端末を横向き）：動画左＋右320パネル ════════ */
+    @media (orientation: landscape) {
+      .phone.vid-landscape .video-stage,
+      .phone.vid-portrait  .video-stage {
+        top: 0; left: 0; transform: none; border-radius: 0;
+        height: 100dvh; width: calc(100vw - 320px);
+      }
+      /* 横動画：右320に 詳細パネル / コメントシート / 下部バー を寄せる */
+      .phone.vid-landscape .ls-detail {
+        left: auto; right: 0; width: 320px; top: 0; bottom: 0;
+        border-left: 1px solid rgba(255,255,255,0.15);
+      }
+      .phone.vid-landscape .comment-sheet {
+        left: auto; right: 0; width: 320px; top: 0; bottom: 0;
+        border-radius: 0; border-left: 1px solid rgba(255,255,255,0.15);
+      }
+      .phone.vid-landscape .ls-bar { left: auto; right: 0; width: 320px; }
+      /* 縦動画：右320にコメントパネル（すべて/アーティスト）。動画左 */
+      .phone.vid-portrait .comment-sheet {
+        top: 0; bottom: 0; right: 0; left: auto; width: 320px; height: auto;
+        transform: none !important;
+        border-radius: 0; border-left: 1px solid rgba(255,255,255,0.15);
+        background: #101010; box-shadow: none;
+      }
+      .phone.vid-portrait .cs-input { display: flex !important; }
+      .phone.vid-portrait .live-comments,
+      .phone.vid-portrait .actions,
+      .phone.vid-portrait .desc-sheet,
+      .phone.vid-portrait .detail-sheet,
+      .phone.vid-portrait .bottom-bar,
+      .phone.vid-portrait .cs-grabber,
+      .phone.vid-portrait .cs-close { display: none !important; }
+      /* プロトタイプ操作用トグルはパネルに被らないよう左上へ退避 */
+      .phone.vid-landscape #modeTabs, .phone.vid-portrait #modeTabs    { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
+      .phone.vid-landscape .orient-tabs, .phone.vid-portrait .orient-tabs { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 86px); }
+    }
+
+    /* スクロールバー非表示 */
+    .desc-scroll::-webkit-scrollbar,
+    .cs-list::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+
+    <!-- ════ 動画（縦Vimeo埋め込み） ════ -->
+    <div class="video-stage" id="videoStage">
+      <!-- 縦(9:16)動画。実装時はこの Vimeo ID を本番の縦動画に差し替え。
+           9:16 なのでボックスにピッタリ収まり、グレーは出ず Vimeo 標準コントローラーも表示される -->
+      <iframe id="vimeoFrame"
+        src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowfullscreen
+        title="Vimeo player"
+        onerror="document.getElementById('videoFallback').style.display='flex'"></iframe>
+      <!-- Vimeo が表示できない時のダミー（擬似コントロール） -->
+      <div class="video-fallback" id="videoFallback" style="display:none">
+        <div class="vf-controls">
+          <div class="vf-play">
+            <svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="vf-bar"></div>
+          <div class="vf-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M3 14V10M7 16V8M11 18V6M15 13V11" stroke="#2aa7ff" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="vf-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="#fff" stroke-width="1.6"/><path d="M3 10V4h6M21 14v6h-6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="vf-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ ステータスバー ════ -->
+    <div class="status-bar">
+      <div class="status-time">9:18</div>
+      <div class="status-icons">
+        <svg width="19" height="12" viewBox="0 0 19 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="#fff"/><rect x="4" y="2" width="3" height="10" rx="1" fill="#fff"/><rect x="8" y="1" width="3" height="11" rx="1" fill="#fff"/><rect x="12" y="0" width="3" height="12" rx="1" fill="#fff"/></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.5C10.4 2.5 12.1 3.3 13.3 4.5L14.7 3.1C13.1 1.5 10.9 0.5 8.5 0.5C6.1 0.5 3.9 1.5 2.3 3.1L3.7 4.5C4.9 3.3 6.6 2.5 8.5 2.5ZM8.5 6.5C9.6 6.5 10.6 6.9 11.3 7.6L12.7 6.2C11.6 5.1 10.1 4.5 8.5 4.5C6.9 4.5 5.4 5.1 4.3 6.2L5.7 7.6C6.4 6.9 7.4 6.5 8.5 6.5Z" fill="#fff"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0" y="0.5" width="24" height="12" rx="3" stroke="rgba(255,255,255,0.5)"/><rect x="1.5" y="2" width="21" height="9" rx="2" fill="#fff"/><rect x="25" y="4" width="2" height="5" rx="1" fill="rgba(255,255,255,0.5)"/></svg>
+      </div>
+    </div>
+
+    <!-- ════ 戻るボタン ════ -->
+    <div class="back-btn" id="backBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <!-- ════ A/B 切替タブ（右上） ════ -->
+    <div class="mode-tabs" id="modeTabs">
+      <div class="mode-tab on" data-mode="a">A</div>
+      <div class="mode-tab" data-mode="b">B</div>
+    </div>
+    <!-- ════ 縦/横 動画切替トグル（右上・A/Bの下） ════ -->
+    <div class="mode-tabs orient-tabs" id="orientTabs">
+      <div class="mode-tab on" data-orient="portrait">縦動画</div>
+      <div class="mode-tab" data-orient="landscape">横動画</div>
+    </div>
+
+    <!-- ════ 右側アクションボタン ════ -->
+    <div class="actions">
+      <div class="fab" id="heartBtn"><div class="lottie-holder" id="heartLottie"></div></div>
+      <div class="fab" id="bookmarkBtn"><div class="lottie-holder" id="bookmarkLottie"></div></div>
+      <div class="fab" id="commentBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
+      </div>
+      <!-- 詳細ボタン（Bモードのみ） -->
+      <div class="fab only-b" id="detailBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- ════ 流れるコメント（動画オーバーレイ：左下・3ボタンと同じ高さ・下が最新） ════ -->
+    <div class="live-comments" id="liveComments"></div>
+
+    <!-- ════ ① 動画概要ボトムシート ════ -->
+    <div class="desc-sheet" id="descSheet">
+      <div class="desc-grabber" id="descGrabber"></div>
+      <div class="desc-scroll" id="descScroll">
+        <div class="desc-head">
+          <span class="desc-date">2025.08.16</span>
+        </div>
+        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+        <span class="desc-tag">LIVE</span>
+        <div class="desc-body">
+          <p>本日はMAZZELのスペシャルライブ配信にお越しいただき、誠にありがとうございます！今夜はリアルタイムでMAZZELと一緒に、最高の夜をつくっていきましょう。コメント欄でたくさん応援してくださいね🔥</p>
+          <p>今回の配信では、最新アルバム『PARADE』の収録曲を中心に、デビュー曲「Vivid」や人気曲「Carnival」など、MAZZELの“今”を詰め込んだスペシャルセットリストをお届けします。途中にはメンバーによるトークコーナーや、視聴者の皆さんのコメントへの生レスポンスも予定しています。</p>
+          <p>【セットリスト（予定）】<br>1. Vivid<br>2. Carnival<br>3. FLYING<br>4. Y.M.P<br>5. PARADE</p>
+          <p>みんなで盛り上げよう！ハッシュタグ <strong>#MAZZEL_LIVE</strong> をつけてSNSでも実況・応援大歓迎です。お気に入りのシーンはぜひシェアしてください。アーカイブは配信終了後72時間限定で公開予定です。お見逃しなく！</p>
+          <p>配信のご視聴にあたって。映像・音声の録画／録音、画面録画、ならびにそれらのSNS等への無断転載・再配布は、権利者の許諾なく行うことはできません。誰もが気持ちよく楽しめるよう、思いやりのあるコメントを心がけましょう。誹謗中傷やネタバレにはご配慮をお願いします。</p>
+          <p>オフィシャルグッズやMAZZELの最新音源は、概要欄のリンクからチェックいただけます。今後のライブ・リリース情報は、公式サイトおよび公式SNS（@MAZZEL_official）にて随時お知らせいたします。</p>
+          <p>引き続きMAZZEL、ならびにBMSG所属アーティストへの温かいご声援をよろしくお願いいたします。それでは——最高の夜にしましょう。Let's PARADE！🎉</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ ② コメント欄ボトムシート ════ -->
+    <div class="comment-sheet" id="commentSheet">
+      <div class="cs-grabber"></div>
+      <div class="cs-header">
+        <!-- すべて / アーティスト タブ（A/B 共通） -->
+        <div class="cs-tabs" id="csTabs">
+          <div class="cs-tab on" data-tab="all">すべて</div>
+          <div class="cs-tab" data-tab="artist">アーティスト</div>
+        </div>
+        <!-- タブの右側にコメント数カウンター -->
+        <span class="cs-count" id="csCount">1,234</span>
+        <div class="cs-close" id="commentClose">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="cs-list" id="csList"></div>
+      <div class="cs-input">
+        <img class="avatar" src="" data-avatar="9" alt="">
+        <div class="field">コメントを追加...</div>
+        <div class="cs-send">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 〔横動画モード〕詳細パネル（既定で表示・16:9直下〜下部バーの上） ════ -->
+    <div class="ls-detail" id="lsDetail">
+      <div class="desc-head">
+        <span class="desc-date">2025.08.16</span>
+      </div>
+      <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+      <span class="desc-tag">LIVE</span>
+      <div class="detail-body">
+        <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>
+        <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
+        <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
+      </div>
+    </div>
+
+    <!-- ════ 〔横動画モード〕下部固定バー＝共通コンポーネント <bwu-action-bar> ════ -->
+    <bwu-action-bar class="ls-bar" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+
+    <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
+    <div class="detail-sheet only-b" id="detailSheet">
+      <div class="desc-grabber" id="detailGrabber"></div>
+      <!-- 右上の✕（コメントシートと同じボタン）で閉じる -->
+      <div class="cs-close detail-close" id="detailClose">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="detail-scroll">
+        <div class="desc-head">
+          <span class="desc-date">2025.08.16</span>
+        </div>
+        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+        <span class="desc-tag">LIVE</span>
+        <div class="detail-body">
+          <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>
+          <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
+          <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 下部コメントバー（Bモード：常時表示・タップで記入） ════ -->
+    <div class="bottom-bar only-b" id="bottomBar">
+      <img class="avatar" src="" data-avatar="9" alt="">
+      <input class="field" id="ownInput" type="text" placeholder="コメントを追加..." autocomplete="off">
+      <div class="cs-send" id="ownSend">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <!-- ハート/ブックマークの Lottie データを同梱（file:// でも fetch 不要で動く） -->
+  <script src="../lottie-data.js"></script>
+  <!-- 横動画モードの下部フローティングバー 共通コンポーネント -->
+  <script src="../bwu-action-bar.js"></script>
+  <script>
+    /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
+    const AV_COLORS = [
+      ['#ff8a8a','#ff3d77'], ['#8ab4ff','#5d5dff'], ['#9be59b','#2fae6b'],
+      ['#ffd36e','#ff9f43'], ['#d99bff','#8a5dff'], ['#7fe6e0','#2aa7ff'],
+      ['#ffb3c8','#ff6f91'], ['#b0b0b0','#777'], ['#ffcf8a','#ff6f43'], ['#cdb4ff','#7b5dff']
+    ];
+    function avatarDataURL(i) {
+      const [a, b] = AV_COLORS[i % AV_COLORS.length];
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${a}'/><stop offset='1' stop-color='${b}'/></linearGradient></defs><rect width='80' height='80' fill='url(%23g)'/></svg>`;
+      return 'data:image/svg+xml;utf8,' + svg.replace(/#/g, '%23');
+    }
+    document.querySelectorAll('[data-avatar]').forEach(el => {
+      el.src = avatarDataURL(parseInt(el.dataset.avatar, 10));
+    });
+
+    /* ════════ ランダムなコメント生成（ユーザーネーム＋本文） ════════ */
+    // ユーザーネーム：英数ハンドル＋和名をミックスして自然な見た目に
+    const NAME_BASES = [
+      'Abc123','mazzel_love','MAZZEL推し','mahnyan','ゆい','りこ','PARADE中毒','haru',
+      'みお','けんと','EITO担','momo','たろう','RANくん推し','こはく','rui_07','さくら',
+      'kana','ひなの','TAKUTO担','じゅんき','あおい','zell_fan','まなみ','yuki','るな',
+      'ことね','BMSGっ子','れい','daiki','みなみ','toshi','あすか'
+    ];
+    // 一般ユーザーのコメント（MAZZELのライブ配信を想定）
+    const MESSAGES = [
+      'PARADE最高🔥','Vividまってた！','Carnival踊れる😆','EITOかっこいい！','RANくん天才',
+      'FLYINGきたー！','Y.M.P好き❤️','セトリ神すぎる','生歌やばい','ダンス揃ってる！',
+      'MAZZEL最高','888888','てぇてぇ','かっこよすぎ','今日も配信ありがとう',
+      'リアタイ最高','ハモり鳥肌','アーカイブ何回も見る','尊い','まってた！',
+      '神回すぎる','PARADE中毒です','みんな大好き','うますぎ','声いい〜',
+      '泣いた','かわいい😍','テンション上がる','wwww','一緒に歌お',
+      'ずっと応援してる','最高の夜！','MAZZELありがとう','やったー！'
+    ];
+    const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // アーティスト（MAZZELメンバー）。アイコン色を固定割り当て
+    const ARTISTS = ['EITO','DAIKEN','HAYATO','TAKUTO','RAN','KAIRYU','RYUKI','SEITO'];
+    const ARTIST_MSG = [
+      'みんな来てくれてありがとう！','楽しんでる？🔥','コメント見てるよ〜','次の曲いくよ！',
+      'いつも応援ありがとう❤️','一緒に盛り上がろう！','最後まで見てね😆','感謝🙏'
+    ];
+    const ARTIST_AV = {}; ARTISTS.forEach((n, i) => ARTIST_AV[n] = i);
+
+    function makeComment() {
+      // 約3割でアーティストのコメント
+      if (Math.random() < 0.3) {
+        const name = rand(ARTISTS);
+        return { name, text: rand(ARTIST_MSG), artist: true, av: ARTIST_AV[name] };
+      }
+      let name = rand(NAME_BASES);
+      if (Math.random() < 0.45) name += Math.floor(Math.random() * 900 + 10);  // ハンドルっぽく
+      return { name, text: rand(MESSAGES) };
+    }
+    const esc = (s) => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    function chipHTML(c) {
+      const m = esc(c.text);
+      if (c.own) {
+        return `<div class="chip own"><span class="u">あなた</span><span class="m">${m}</span></div>`;
+      }
+      if (c.artist) {
+        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
+      }
+      return `<div class="chip"><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
+    }
+
+    /* ════════ 戻るボタン ════════ */
+    document.getElementById('backBtn').addEventListener('click', () => {
+      // プロトタイプ：実装では Navigator.pop 等
+      if (document.getElementById('phone').classList.contains('s-comment')) closeComment();
+    });
+
+    /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
+    const phone = document.getElementById('phone');
+    const commentSheet = document.getElementById('commentSheet');
+    const commentFab = document.getElementById('commentBtn');
+    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); collapseDesc(); closeDetail(); }
+    function closeComment() { phone.classList.remove('s-comment'); commentFab.classList.remove('active-comment'); }
+    commentFab.addEventListener('click', () => {
+      phone.classList.contains('s-comment') ? closeComment() : openComment();
+    });
+    document.getElementById('commentClose').addEventListener('click', closeComment);
+
+    /* ════════ 〔Bモード〕詳細シート開閉（4つ目のボタン） ════════ */
+    const detailBtn = document.getElementById('detailBtn');
+    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); collapseDesc(); }
+    function closeDetail() { phone.classList.remove('s-detail'); detailBtn.classList.remove('active-detail'); }
+    detailBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      phone.classList.contains('s-detail') ? closeDetail() : openDetail();
+    });
+
+    /* 詳細シートはスクロール（先頭で下方向）／下スワイプ／グラバーで閉じる */
+    const detailScrollEl = document.querySelector('#detailSheet .detail-scroll');
+    const detailGrabberEl = document.getElementById('detailGrabber');
+    detailGrabberEl.addEventListener('click', () => closeDetail());
+    document.getElementById('detailClose').addEventListener('click', (e) => { e.stopPropagation(); closeDetail(); });
+    // PC: 先頭で下方向ホイール → 閉じる
+    detailScrollEl.addEventListener('wheel', (e) => {
+      if (detailScrollEl.scrollTop <= 0 && e.deltaY < 0) closeDetail();
+    }, { passive: true });
+    // スマホ: 先頭で下スワイプ → 閉じる
+    let dtStartY = null, dtDone = false;
+    detailScrollEl.addEventListener('touchstart', (e) => { dtStartY = e.touches[0].clientY; dtDone = false; }, { passive: true });
+    detailScrollEl.addEventListener('touchmove', (e) => {
+      if (dtStartY === null || dtDone) return;
+      const dy = e.touches[0].clientY - dtStartY;   // >0:下スワイプ
+      if (detailScrollEl.scrollTop <= 0 && dy > 40) { closeDetail(); dtDone = true; }
+    }, { passive: true });
+    detailScrollEl.addEventListener('touchend', () => { dtStartY = null; }, { passive: true });
+
+    /* ════════ 〔Bモード〕コメントタブ（すべて / アーティスト） ════════ */
+    const csTabs = document.querySelectorAll('#csTabs .cs-tab');
+    csTabs.forEach(t => t.addEventListener('click', (e) => {
+      e.stopPropagation();
+      csTabs.forEach(x => x.classList.toggle('on', x === t));
+      csListEl.classList.toggle('artist-only', t.dataset.tab === 'artist');
+      csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
+    }));
+
+    /* ════════ 〔横動画モード〕下部バー（共通コンポーネント）の「コメント」でコメントシートを立ち上げ ════════ */
+    document.getElementById('lsBar').addEventListener('comment', openComment);
+
+    /* ════════ 縦/横 動画切替トグル（9:16 / 16:9 の Vimeo を読み込み直す） ════════ */
+    const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
+    const vimeoFrame = document.getElementById('vimeoFrame');
+    const VIMEO_PORTRAIT  = vimeoFrame.src;   // 縦動画(9:16 Vimeo)
+    const VIMEO_LANDSCAPE = 'https://player.vimeo.com/video/76979871?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 横動画(16:9 Vimeo)
+    function setOrient(o) {
+      phone.classList.toggle('vid-landscape', o === 'landscape');
+      phone.classList.toggle('vid-portrait', o === 'portrait');
+      orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
+      const isB = phone.classList.contains('mode-b');
+      if (o === 'landscape') {
+        closeComment(); closeDetail(); collapseDesc();  // 横は詳細パネルが既定表示（コメント閉）
+        vimeoFrame.src = VIMEO_LANDSCAPE;               // 16:9 Vimeo に読み込み直し
+      } else {
+        vimeoFrame.src = VIMEO_PORTRAIT;                // 縦動画(Vimeo)を読み込み直し（横の動画は停止）
+        setMode(isB ? 'b' : 'a');                       // 縦に戻す→モードの初期状態を再適用
+      }
+    }
+    orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
+
+    /* ════════ 〔Bモード〕下部コメントバー：タップで記入→送信でコメント欄に反映 ════════ */
+    const ownInput = document.getElementById('ownInput');
+    const ownSend  = document.getElementById('ownSend');
+    document.getElementById('bottomBar').addEventListener('click', (e) => {
+      e.stopPropagation();   // シート外クリックの誤判定を防ぐ
+      if (e.target !== ownSend && !ownSend.contains(e.target)) ownInput.focus();
+    });
+    function sendOwn() {
+      const text = ownInput.value.trim();
+      if (!text) return;
+      // 「すべて」タブに戻す（コメント欄を開いている場合に自分のコメントが見えるように）
+      const allTab = document.querySelector('#csTabs .cs-tab[data-tab="all"]');
+      const artistTab = document.querySelector('#csTabs .cs-tab[data-tab="artist"]');
+      allTab.classList.add('on'); artistTab.classList.remove('on');
+      csListEl.classList.remove('artist-only');
+      pushComment({ own: true, text });           // オーバーレイ＋コメント欄に反映（シートは開かない）
+      csListEl.scrollTop = csListEl.scrollHeight;
+      ownInput.value = '';
+      ownSend.classList.remove('active');          // 送信後は inactive に戻す
+    }
+    ownSend.addEventListener('click', (e) => { e.stopPropagation(); sendOwn(); });
+    ownInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOwn(); } });
+    // 一文字でも入力されたら送信ボタンを active（白背景・黒アイコン）に
+    ownInput.addEventListener('input', () => {
+      ownSend.classList.toggle('active', ownInput.value.trim().length > 0);
+    });
+
+    /* ════════ A / B モード切替（右上タブ）
+       A＝コメントシートが初期 / B＝概要（詳細）が初期 ════════ */
+    const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
+    function setMode(m) {
+      closeComment(); closeDetail(); collapseDesc();   // 一旦リセット
+      phone.classList.toggle('mode-b', m === 'b');
+      phone.classList.toggle('mode-a', m === 'a');
+      modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+      // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
+      //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
+      // 横動画(A横/B横)は共通：詳細パネル既定＋下部バー（A/Bで差は無し）
+    }
+    modeTabs.forEach(t => t.addEventListener('click', (e) => {
+      e.stopPropagation(); setMode(t.dataset.mode);
+    }));
+    phone.classList.add('mode-a');
+    phone.classList.add('vid-portrait');   // 初期は縦動画。開く状態はスクリプト末尾で設定
+
+    /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
+    const descSheet = document.getElementById('descSheet');
+    const descGrabber = document.getElementById('descGrabber');
+    const descScroll = document.getElementById('descScroll');
+    function expandDesc()   { descSheet.classList.add('expanded'); phone.classList.add('s-desc'); }
+    function collapseDesc() { descSheet.classList.remove('expanded'); phone.classList.remove('s-desc'); descScroll.scrollTop = 0; }
+
+    // グラバーをタップで開閉トグル
+    descGrabber.addEventListener('click', () => {
+      descSheet.classList.contains('expanded') ? collapseDesc() : expandDesc();
+    });
+
+    // ドラッグ（グラバー）でスナップ開閉
+    let dragStartY = null, dragStartExpanded = false;
+    function onDown(e) {
+      dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+      dragStartExpanded = descSheet.classList.contains('expanded');
+      descSheet.style.transition = 'none';
+    }
+    function onMove(e) {
+      if (dragStartY === null) return;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY);
+      const dy = y - dragStartY;
+      if (Math.abs(dy) > 4) e.preventDefault && e.preventDefault();
+    }
+    function onUp(e) {
+      if (dragStartY === null) return;
+      const y = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
+      const dy = y - dragStartY;
+      descSheet.style.transition = '';
+      if (dy < -30) expandDesc();
+      else if (dy > 30) collapseDesc();
+      dragStartY = null;
+    }
+    descGrabber.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    descGrabber.addEventListener('touchstart', onDown, { passive: true });
+    descGrabber.addEventListener('touchmove', onMove, { passive: false });
+    descGrabber.addEventListener('touchend', onUp);
+
+    // 概要本文を上端までスクロールしたら（オーバースクロールで）開く / 先頭で下へ引いたら閉じる（PC: wheel）
+    descScroll.addEventListener('wheel', (e) => {
+      if (!descSheet.classList.contains('expanded') && e.deltaY > 0) { expandDesc(); }
+      else if (descSheet.classList.contains('expanded') && descScroll.scrollTop <= 0 && e.deltaY < 0) { collapseDesc(); }
+    }, { passive: true });
+
+    // 同じ挙動をタッチでも（スマホ: 端でのオーバースクロールで開閉）
+    let tdStartY = null, tdStartScroll = 0, tdExpanded = false, tdDone = false;
+    descScroll.addEventListener('touchstart', (e) => {
+      tdStartY = e.touches[0].clientY;
+      tdStartScroll = descScroll.scrollTop;
+      tdExpanded = descSheet.classList.contains('expanded');
+      tdDone = false;
+    }, { passive: true });
+    descScroll.addEventListener('touchmove', (e) => {
+      if (tdStartY === null || tdDone) return;
+      const dy = e.touches[0].clientY - tdStartY;   // >0:下スワイプ / <0:上スワイプ
+      if (!tdExpanded) {
+        if (dy < -24) { expandDesc(); tdDone = true; }            // 折りたたみ→上スワイプで展開
+      } else if (tdStartScroll <= 0 && descScroll.scrollTop <= 0 && dy > 32) {
+        collapseDesc(); tdDone = true;                            // 展開・先頭で下スワイプ→畳む
+      }
+    }, { passive: true });
+    descScroll.addEventListener('touchend', () => { tdStartY = null; }, { passive: true });
+
+    /* ════════ シート外クリックで元の大きさに戻す ════════ */
+    const actionsEl = document.querySelector('.actions');
+    const detailSheet = document.getElementById('detailSheet');
+    phone.addEventListener('click', (e) => {
+      const inActions = actionsEl.contains(e.target);
+      // コメント開時：コメントシート外（動画エリア等）をクリックで閉じて元のサイズへ
+      if (phone.classList.contains('s-comment')) {
+        if (!commentSheet.contains(e.target) && !inActions) closeComment();
+        return;
+      }
+      // 詳細シート開時：シート外をクリックで閉じる
+      if (phone.classList.contains('s-detail')) {
+        if (!detailSheet.contains(e.target) && !inActions) closeDetail();
+        return;
+      }
+      // 概要シート展開時：シート外をクリックで畳む
+      if (descSheet.classList.contains('expanded')) {
+        if (!descSheet.contains(e.target) && !inActions) collapseDesc();
+      }
+    });
+
+    /* ════════ ハート / ブックマーク Lottie（article と同一） ════════ */
+    function setupLottieButton(rawData, holderId, btnId, onColor) {
+      if (!rawData) return;
+      // 元データを壊さないようディープコピーしてからアウトライン系レイヤーを白に
+      const data = JSON.parse(JSON.stringify(rawData));
+      try { data.layers[0].shapes[1].c.k = [1,1,1,1]; data.layers[2].shapes[1].c.k = [1,1,1,1]; } catch (e) {}
+      const anim = lottie.loadAnimation({
+        container: document.getElementById(holderId),
+        renderer: 'svg', loop: false, autoplay: false, animationData: data,
+      });
+      anim.goToAndStop(0, true);
+      const LIKE_START = 17, FILLED = 90, UNLIKE_START = 105;
+      let on = false, busy = false;
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('click', () => {
+        if (busy) return;
+        if (!on) {
+          on = true; busy = true;
+          btn.style.borderColor = onColor;
+          anim.goToAndPlay(LIKE_START, true);
+          const f = (e) => { if (e.currentTime >= FILLED) { anim.pause(); anim.removeEventListener('enterFrame', f); busy = false; } };
+          anim.addEventListener('enterFrame', f);
+        } else {
+          on = false; busy = true;
+          btn.style.borderColor = '';
+          anim.goToAndPlay(UNLIKE_START, true);
+          anim.addEventListener('complete', () => { anim.goToAndStop(0, true); busy = false; }, { once: true });
+        }
+      });
+    }
+    setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
+    setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
+    // 横モードのヘッダー用ハート/ブックマーク（縦と同じ Lottie）
+    /* 横モードのハート/ブックマークは <bwu-action-bar> 内で完結（ここでの設定は不要） */
+
+    /* ════════ 流れるコメント・エンジン（オーバーレイ＋コメント欄 共通） ════════ */
+    const liveComments = document.getElementById('liveComments');
+    const csListEl  = document.getElementById('csList');
+    const csCountEl = document.querySelector('.cs-count');
+    const OVERLAY_MAX = 9;     // 動画オーバーレイに残す最大件数（古いものは上で消える）
+    const PANEL_MAX   = 80;    // コメント欄の保持件数
+    let total = 1234;          // 見せかけのコメント総数
+
+    function pushComment(c) {
+      const html = chipHTML(c);
+
+      // ① 動画オーバーレイ（左下）：下＝最新。古いものは上へ押し出され mask で消える
+      const o = document.createElement('div'); o.innerHTML = html;
+      liveComments.appendChild(o.firstElementChild);
+      while (liveComments.children.length > OVERLAY_MAX) liveComments.removeChild(liveComments.firstElementChild);
+
+      // ② コメント欄（パネル）：下＝最新。最下部付近にいる時だけ自動追従
+      const p = document.createElement('div'); p.innerHTML = html;
+      const nearBottom = csListEl.scrollHeight - csListEl.scrollTop - csListEl.clientHeight < 80;
+      csListEl.appendChild(p.firstElementChild);
+      while (csListEl.children.length > PANEL_MAX) csListEl.removeChild(csListEl.firstElementChild);
+      if (nearBottom) csListEl.scrollTop = csListEl.scrollHeight;
+
+      total++;
+      if (csCountEl) csCountEl.textContent = total.toLocaleString();
+    }
+
+    // 初期：賑わいを出すため多めに流し込む（アーティストも確実に混ぜてタブを埋める）
+    for (let i = 0; i < 18; i++) {
+      let c = makeComment();
+      // 交互にアーティストを確定で混ぜる（アーティストタブが最初から並ぶように）
+      if (i % 2 === 0 && !c.artist) {
+        const name = rand(ARTISTS);
+        c = { name, text: rand(ARTIST_MSG), artist: true, av: ARTIST_AV[name] };
+      }
+      pushComment(c);
+    }
+    csListEl.scrollTop = csListEl.scrollHeight;
+
+    // 自然に流れる：0.5〜1.6秒のランダム間隔で次々に追加
+    (function tick() {
+      pushComment(makeComment());
+      setTimeout(tick, 500 + Math.random() * 1100);
+    })();
+
+    /* ════════ 初期表示：A＝コメント初期 / B＝概要(詳細)初期 ════════ */
+    setMode('a');
+  </script>
+</body>
+</html>
