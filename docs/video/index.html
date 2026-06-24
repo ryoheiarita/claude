@@ -23,9 +23,9 @@
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
 
       /* ── ボトムシートの高さ ── */
-      --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
       --detail-sheet-h: 50dvh;              /* 概要シート：画面半分 */
-      /* 概要開時：動画はシートを避けて上に縮小（幅で頭打ち） */
+      --comment-sheet-h: var(--detail-sheet-h);  /* コメントも概要と同じ高さ（画面半分） */
+      /* 概要/コメント開時：動画はシートを避けて上に縮小（幅で頭打ち。シートと余白なし） */
       --vid-detail-h: min(calc(100dvh - var(--detail-sheet-h) - var(--top-inset)), var(--vid-cap-h));
 
       --c-bg: #000;
@@ -105,14 +105,8 @@
     .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
     .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
 
-    /* コメント開時：9:16 のまま上部中央に縮小 */
-    .phone.s-comment .video-stage {
-      height: var(--vid-comment-h);
-      width: calc(var(--vid-comment-h) * 9 / 16);
-      top: var(--vid-comment-top);
-      border-radius: 12px;
-    }
-    /* 概要開時：9:16 のまま概要シート(画面半分)を避けて上に縮小 */
+    /* コメント／概要 開時：9:16 のままシート(画面半分)を避けて上に縮小（余白なし＝同一仕様） */
+    .phone.s-comment .video-stage,
     .phone.s-detail .video-stage {
       height: var(--vid-detail-h);
       width: calc(var(--vid-detail-h) * 9 / 16);
