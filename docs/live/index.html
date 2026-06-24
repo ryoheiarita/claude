@@ -558,12 +558,7 @@
       width: 100%; height: calc(100vw * 9 / 16);
       border-radius: 0;
     }
-    /* 横動画の実体（16:9 MP4）。縦では非表示。横では Vimeo を隠し、グレーの土台の上に重ねる
-       （MP4が読めない環境ではグレーのプレースホルダが見える） */
-    .ls-video-el { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
-    .phone.vid-landscape .ls-video-el { display: block; }
-    .phone.vid-landscape .video-stage iframe { display: none !important; }
-    .phone.vid-landscape .video-fallback { display: flex !important; }
+    /* 横では Vimeo の 16:9 動画をそのまま表示（iframe内で中央配置・レターボックス） */
     /* 縦モード専用の装飾は隠す */
     .phone.vid-landscape .live-comments,
     .phone.vid-landscape .actions,
@@ -632,18 +627,20 @@
 
     /* ════════ 画面横（端末を横向き）：横動画モードのみ Figma のサイドバイサイド配置 ════════ */
     @media (orientation: landscape) {
+      /* 動画は「画面左〜320pxの手前」まで。iframeなので中で動画は中央配置（上下or左右が当たるまで） */
       .phone.vid-landscape .video-stage {
         top: 0; left: 0; transform: none; border-radius: 0;
-        height: 100dvh; width: calc(100dvh * 16 / 9);   /* 16:9 を画面高さいっぱい（左寄せ） */
+        height: 100dvh; width: calc(100vw - 320px);
       }
-      /* コメント/詳細パネルを右側に浮かぶカードとして配置 */
+      /* コメント/詳細パネル：横320px固定で画面右端に密着。上下右の余白なし、枠線は左1pxのみ */
       .phone.vid-landscape .comment-sheet {
-        top: 12px; bottom: 12px; right: 12px; left: auto;
-        width: min(46vw, 380px); height: auto;
-        border-radius: 16px;
-        background: rgba(18,18,18,0.94);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        top: 0; bottom: 0; right: 0; left: auto;
+        width: 320px; height: auto;
+        border-radius: 0;
+        border-left: 1px solid rgba(255,255,255,0.15);
+        background: #101010;
+        box-shadow: none;
+        backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
       }
       /* プロトタイプ操作用トグルはパネルに被らないよう左上へ退避 */
       .phone.vid-landscape #modeTabs   { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
@@ -668,9 +665,6 @@
         allowfullscreen
         title="Vimeo player"
         onerror="document.getElementById('videoFallback').style.display='flex'"></iframe>
-      <!-- 横動画(16:9)モード用：横向きの実動画。縦モードでは非表示 -->
-      <video class="ls-video-el" id="lsVideo" muted loop playsinline autoplay preload="auto"
-        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"></video>
       <!-- Vimeo が表示できない時のダミー（擬似コントロール） -->
       <div class="video-fallback" id="videoFallback" style="display:none">
         <div class="vf-controls">
@@ -764,8 +758,8 @@
         </div>
         <!-- ▼ 横動画モード専用：コメント/詳細タブ ＋ ♡/🔖（✕の代わり） -->
         <div class="ls-tabs only-landscape" id="lsTabs">
-          <div class="ls-tab on" data-ltab="comment">コメント</div>
           <div class="ls-tab" data-ltab="detail">詳細</div>
+          <div class="ls-tab on" data-ltab="comment">コメント</div>
         </div>
         <div class="ls-icons only-landscape">
           <div class="ls-fab" id="lsHeart"><div class="lottie-holder" id="lsHeartLottie"></div></div>
@@ -968,23 +962,20 @@
 
     /* ════════ 縦/横 動画切替トグル（同じ動画を 9:16 / 16:9 で表示） ════════ */
     const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
-    const lsVideo = document.getElementById('lsVideo');
     const vimeoFrame = document.getElementById('vimeoFrame');
-    const VIMEO_SRC = vimeoFrame.src;   // 縦動画(Vimeo)の元URLを保持
+    const VIMEO_PORTRAIT  = vimeoFrame.src;   // 縦動画(9:16 Vimeo)
+    const VIMEO_LANDSCAPE = 'https://player.vimeo.com/video/76979871?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 横動画(16:9 Vimeo)
     function setOrient(o) {
       phone.classList.toggle('vid-landscape', o === 'landscape');
       phone.classList.toggle('vid-portrait', o === 'portrait');
       orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
       const isB = phone.classList.contains('mode-b');
       if (o === 'landscape') {
-        setLsTab('comment');                 // A横・B横とも初期は「コメント一覧」
-        vimeoFrame.src = 'about:blank';      // 縦動画(Vimeo)を停止（裏で鳴らない）
-        lsVideo.currentTime = 0;
-        lsVideo.play().catch(() => {});      // 横の実動画を再生（muted自動再生）
+        setLsTab(isB ? 'comment' : 'detail');     // A横→詳細 / B横→コメント
+        vimeoFrame.src = VIMEO_LANDSCAPE;         // 16:9 Vimeo に読み込み直し
       } else {
-        lsVideo.pause();                     // 横で再生中の動画を停止
-        if (vimeoFrame.src !== VIMEO_SRC) vimeoFrame.src = VIMEO_SRC;  // 縦動画だけ読み込み直す
-        setMode(isB ? 'b' : 'a');            // 縦に戻す→モードの初期状態を再適用
+        vimeoFrame.src = VIMEO_PORTRAIT;          // 縦動画(Vimeo)を読み込み直し（横の動画は停止）
+        setMode(isB ? 'b' : 'a');                 // 縦に戻す→モードの初期状態を再適用
       }
     }
     orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
@@ -1026,8 +1017,8 @@
       modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
       // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
       //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
-      // 横動画モード中はパネルを常に「コメント一覧」初期に
-      if (phone.classList.contains('vid-landscape')) setLsTab('comment');
+      // 横動画モード中はパネルのタブを切替（A横→詳細 / B横→コメント）
+      if (phone.classList.contains('vid-landscape')) setLsTab(m === 'b' ? 'comment' : 'detail');
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
       e.stopPropagation(); setMode(t.dataset.mode);
