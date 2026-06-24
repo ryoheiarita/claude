@@ -572,6 +572,8 @@
   <script src="./lottie-data.js"></script>
   <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
   <script src="./bwu-action-bar.js"></script>
+  <!-- Vimeo Player SDK：全画面をネイティブボタンと同じ挙動で呼ぶため -->
+  <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
@@ -587,6 +589,10 @@
     document.querySelectorAll('[data-avatar]').forEach(el => {
       el.src = avatarDataURL(parseInt(el.dataset.avatar, 10));
     });
+
+    /* ════════ Vimeo Player（全画面をネイティブ全画面ボタンと同じ挙動で呼ぶ） ════════ */
+    const videoFrame = document.getElementById('videoFrame');
+    let vimeoPlayer = (window.Vimeo && window.Vimeo.Player) ? new Vimeo.Player(videoFrame) : null;
 
     /* ════════ コメントデータ（Figma準拠） ════════ */
     const COMMENTS = [
@@ -629,12 +635,17 @@
       else if (phone.classList.contains('s-detail')) closeDetail();
     });
 
-    /* ════════ 全画面ボタン（右側5つ目） ════════ */
-    document.getElementById('fsBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const f = document.getElementById('videoFrame');
+    /* ════════ 全画面ボタン（右側5つ目）＝Vimeoネイティブ全画面と同じ挙動 ════════ */
+    function fallbackFs() {
+      const f = videoFrame;
       const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
       if (req) { try { req.call(f); } catch (err) {} }
+    }
+    document.getElementById('fsBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (vimeoPlayer && vimeoPlayer.requestFullscreen) {
+        vimeoPlayer.requestFullscreen().catch(fallbackFs);   // Vimeo標準の全画面（同じ挙動）
+      } else { fallbackFs(); }
     });
 
     /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
@@ -707,19 +718,23 @@
     // ※ 横モード下部バーのハート/ブックマークは <bwu-action-bar> 内で完結（こちらでの設定は不要）
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
-    const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16
-    const LANDSCAPE_SRC = 'https://player.vimeo.com/video/76979871?title=0&byline=0&portrait=0&dnt=1&playsinline=1';  // 横16:9
-    const videoFrame = document.getElementById('videoFrame');
+    const PORTRAIT_ID  = '179894977';  // 縦9:16
+    const LANDSCAPE_ID = '76979871';   // 横16:9
+    const VIDEO_PARAMS = '?title=0&byline=0&portrait=0&dnt=1&playsinline=1';
     const orientTabs = document.getElementById('orientTabs');
+    let curVideoId = PORTRAIT_ID;
     function setOrient(o) {
       const landscape = (o === 'landscape');
       // モード切替時は開いた状態をリセット
       closeComment(); closeDetail();
       phone.classList.toggle('vid-landscape', landscape);
       orientTabs.querySelectorAll('.orient-tab').forEach(t => t.classList.toggle('on', t.dataset.orient === o));
-      // 横は16:9、縦は9:16 の動画に差し替え（必要時のみ）
-      const src = landscape ? LANDSCAPE_SRC : PORTRAIT_SRC;
-      if (videoFrame.getAttribute('src') !== src) videoFrame.setAttribute('src', src);
+      // 横は16:9、縦は9:16 に切替。同じプレイヤーで loadVideo（全画面挙動を維持）
+      const id = landscape ? LANDSCAPE_ID : PORTRAIT_ID;
+      if (id === curVideoId) return;
+      curVideoId = id;
+      if (vimeoPlayer && vimeoPlayer.loadVideo) vimeoPlayer.loadVideo(Number(id)).catch(() => {});
+      else videoFrame.setAttribute('src', 'https://player.vimeo.com/video/' + id + VIDEO_PARAMS);
     }
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
