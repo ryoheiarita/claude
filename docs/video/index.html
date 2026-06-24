@@ -161,30 +161,7 @@
     .phone.s-detail .actions {
       top: var(--top-inset);
     }
-    .fab {
-      width: 48px; height: 48px;
-      border-radius: 42px;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.15);
-      display: flex; align-items: center; justify-content: center;
-      position: relative;
-      cursor: pointer;
-      transition: border-color .2s ease;
-    }
-    .fab svg { width: 24px; height: 24px; }
-    /* Lottie はボタンより大きく置いてバースト粒子をはみ出させる */
-    #heartBtn, #bookmarkBtn { overflow: visible; }
-    .lottie-holder {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 72px; height: 72px;
-      pointer-events: none;
-    }
-    .fab.active-comment,
-    .fab.active-detail { border-color: rgba(255,255,255,0.6); }
+    /* ボタンの見た目（.fab/Lottie）は bwu-action-rail.js 側（Shadow DOM）に内包 */
 
     /* ════════════ ① 動画概要ボトムシート（4つ目のボタンで開く・画面半分） ════════════ */
     .desc-sheet {
@@ -482,22 +459,8 @@
       <div class="orient-tab" data-orient="landscape">横動画</div>
     </div>
 
-    <!-- ════ 右側アクションボタン ════ -->
-    <div class="actions">
-      <div class="fab" id="heartBtn"><div class="lottie-holder" id="heartLottie"></div></div>
-      <div class="fab" id="bookmarkBtn"><div class="lottie-holder" id="bookmarkLottie"></div></div>
-      <div class="fab" id="commentBtn">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
-      </div>
-      <!-- 4つ目：概要（詳細） -->
-      <div class="fab" id="detailBtn">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </div>
-      <!-- 5つ目：全画面 -->
-      <div class="fab" id="fsBtn">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-    </div>
+    <!-- ════ 右側アクション5ボタン＝共通コンポーネント <bwu-action-rail> ════ -->
+    <bwu-action-rail class="actions" id="actionRail"></bwu-action-rail>
 
     <!-- ════ ① 動画概要ボトムシート（概要ボタンで開く・画面半分・✕で閉じる） ════ -->
     <div class="desc-sheet" id="descSheet">
@@ -572,6 +535,8 @@
   <script src="./lottie-data.js"></script>
   <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
   <script src="./bwu-action-bar.js"></script>
+  <!-- 縦動画 右側アクション5ボタン 共通コンポーネント <bwu-action-rail> -->
+  <script src="./bwu-action-rail.js"></script>
   <!-- Vimeo Player SDK：全画面をネイティブボタンと同じ挙動で呼ぶため -->
   <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
@@ -635,42 +600,35 @@
       else if (phone.classList.contains('s-detail')) closeDetail();
     });
 
-    /* ════════ 全画面ボタン（右側5つ目）＝Vimeoネイティブ全画面と同じ挙動 ════════ */
+    /* ════════ コメント / 概要 開閉 ＋ 右側レール(共通コンポーネント)の配線 ════════ */
+    const phone = document.getElementById('phone');
+    const commentSheet = document.getElementById('commentSheet');
+    const descSheet = document.getElementById('descSheet');
+    const actionRail = document.getElementById('actionRail');
+    function openComment()  { phone.classList.add('s-comment'); actionRail.setActive('comment', true); closeDetail(); }
+    function closeComment() { phone.classList.remove('s-comment'); actionRail.setActive('comment', false); }
+    function openDetail()   { phone.classList.add('s-detail'); actionRail.setActive('detail', true); closeComment(); }
+    function closeDetail()  { phone.classList.remove('s-detail'); actionRail.setActive('detail', false); }
+
+    // 全画面：Vimeoネイティブ全画面と同じ挙動（SDK）。失敗時のみ iframe フォールバック
     function fallbackFs() {
       const f = videoFrame;
       const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
       if (req) { try { req.call(f); } catch (err) {} }
     }
-    document.getElementById('fsBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (vimeoPlayer && vimeoPlayer.requestFullscreen) {
-        vimeoPlayer.requestFullscreen().catch(fallbackFs);   // Vimeo標準の全画面（同じ挙動）
-      } else { fallbackFs(); }
+
+    // 右側レールのイベント（comment / detail / fullscreen ／ heart・bookmark はレール内で完結）
+    actionRail.addEventListener('comment', () => phone.classList.contains('s-comment') ? closeComment() : openComment());
+    actionRail.addEventListener('detail',  () => phone.classList.contains('s-detail')  ? closeDetail()  : openDetail());
+    actionRail.addEventListener('fullscreen', () => {
+      if (vimeoPlayer && vimeoPlayer.requestFullscreen) vimeoPlayer.requestFullscreen().catch(fallbackFs);
+      else fallbackFs();
     });
 
-    /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
-    const phone = document.getElementById('phone');
-    const commentSheet = document.getElementById('commentSheet');
-    const commentFab = document.getElementById('commentBtn');
-    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); closeDetail(); }
-    function closeComment() { phone.classList.remove('s-comment'); commentFab.classList.remove('active-comment'); }
-    commentFab.addEventListener('click', () => {
-      phone.classList.contains('s-comment') ? closeComment() : openComment();
-    });
     document.getElementById('commentClose').addEventListener('click', closeComment);
+    document.getElementById('descClose').addEventListener('click', closeDetail);
     // 横モード：下部バー（共通コンポーネント）の「コメント」イベントでコメントシートを立ち上げる
     document.getElementById('lsBar').addEventListener('comment', openComment);
-
-    /* ════════ ① 概要シート開閉（4つ目のボタン・画面半分・動画はシートを避けて縮小） ════════ */
-    const descSheet = document.getElementById('descSheet');
-    const detailBtn = document.getElementById('detailBtn');
-    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); }
-    function closeDetail() { phone.classList.remove('s-detail'); detailBtn.classList.remove('active-detail'); }
-    detailBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      phone.classList.contains('s-detail') ? closeDetail() : openDetail();
-    });
-    document.getElementById('descClose').addEventListener('click', closeDetail);
 
     /* ════════ シート外クリックで閉じる ════════ */
     const actionsEl = document.querySelector('.actions');
@@ -683,39 +641,8 @@
       }
     });
 
-    /* ════════ ハート / ブックマーク Lottie（article と同一） ════════ */
-    function setupLottieButton(rawData, holderId, btnId, onColor) {
-      if (!rawData) return;
-      // 元データを壊さないようディープコピーしてからアウトライン系レイヤーを白に
-      const data = JSON.parse(JSON.stringify(rawData));
-      try { data.layers[0].shapes[1].c.k = [1,1,1,1]; data.layers[2].shapes[1].c.k = [1,1,1,1]; } catch (e) {}
-      const anim = lottie.loadAnimation({
-        container: document.getElementById(holderId),
-        renderer: 'svg', loop: false, autoplay: false, animationData: data,
-      });
-      anim.goToAndStop(0, true);
-      const LIKE_START = 17, FILLED = 90, UNLIKE_START = 105;
-      let on = false, busy = false;
-      const btn = document.getElementById(btnId);
-      btn.addEventListener('click', () => {
-        if (busy) return;
-        if (!on) {
-          on = true; busy = true;
-          btn.style.borderColor = onColor;
-          anim.goToAndPlay(LIKE_START, true);
-          const f = (e) => { if (e.currentTime >= FILLED) { anim.pause(); anim.removeEventListener('enterFrame', f); busy = false; } };
-          anim.addEventListener('enterFrame', f);
-        } else {
-          on = false; busy = true;
-          btn.style.borderColor = '';
-          anim.goToAndPlay(UNLIKE_START, true);
-          anim.addEventListener('complete', () => { anim.goToAndStop(0, true); busy = false; }, { once: true });
-        }
-      });
-    }
-    setupLottieButton(window.HEART_LOTTIE,    'heartLottie',    'heartBtn',    'rgba(255,62,62,0.6)');
-    setupLottieButton(window.BOOKMARK_LOTTIE, 'bookmarkLottie', 'bookmarkBtn', 'rgba(255,209,51,0.6)');
-    // ※ 横モード下部バーのハート/ブックマークは <bwu-action-bar> 内で完結（こちらでの設定は不要）
+    /* ※ ハート/ブックマークの Lottie は <bwu-action-rail>（右側5ボタン）と
+          <bwu-action-bar>（横モード下部バー）の各コンポーネント内で完結 */
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
     const PORTRAIT_ID  = '179894977';  // 縦9:16
