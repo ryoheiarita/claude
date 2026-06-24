@@ -887,6 +887,7 @@
     document.getElementById('backBtn').addEventListener('click', () => {
       // プロトタイプ：実装では Navigator.pop 等
       if (document.getElementById('phone').classList.contains('s-comment')) closeComment();
+      else location.href = '../';  /* 戻る → 記事一覧(/collection) へ */
     });
 
     /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */

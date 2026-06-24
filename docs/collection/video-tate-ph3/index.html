@@ -622,6 +622,7 @@
       // プロトタイプ：実装では Navigator.pop 等
       if (phone.classList.contains('s-comment')) closeComment();
       else if (phone.classList.contains('s-detail')) closeDetail();
+      else location.href = '../';  /* 戻る → 記事一覧(/collection) へ */
     });
 
     /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
