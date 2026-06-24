@@ -13,7 +13,7 @@
     :root {
       /* 画面上端の余白（戻るボタンの位置。ノッチ等のセーフエリア＋16px） */
       --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
-      --actions-h: 216px;                  /* 4ボタン: 48×4 + gap8×3 */
+      --actions-h: 272px;                  /* 5ボタン: 48×5 + gap8×4 */
 
       /* ── 動画は 9:16 固定。縦は画面フル表示（幅が画面幅に達したら頭打ち） ── */
       --vid-cap-h: calc(100vw * 16 / 9);              /* 幅=画面幅いっぱいになる高さ＝これ以上拡大しない */
@@ -105,15 +105,6 @@
     .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
     .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
 
-    /* 常時表示の全画面ボタン（動画の右下＝コントロールバー右端。Vimeo標準は狭幅で隠れるため必ず出す） */
-    .vid-fs {
-      position: absolute; right: 8px; bottom: 8px; z-index: 6;
-      width: 34px; height: 34px; border-radius: 8px;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-    }
-    .vid-fs svg { width: 20px; height: 20px; }
 
     /* コメント／概要 開時：9:16 のままシート(画面半分)を避けて上に縮小（余白なし＝同一仕様） */
     .phone.s-comment .video-stage,
@@ -468,10 +459,6 @@
           <div class="vf-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
         </div>
       </div>
-      <!-- 常時表示の全画面ボタン（Vimeo標準コントロールは自動で隠れるため、必ず出す） -->
-      <div class="vid-fs" id="vidFs" role="button" aria-label="全画面">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
     </div>
 
     <!-- ════ ステータスバー ════ -->
@@ -505,6 +492,10 @@
       <!-- 4つ目：概要（詳細） -->
       <div class="fab" id="detailBtn">
         <svg viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13h6M9 17h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <!-- 5つ目：全画面 -->
+      <div class="fab" id="fsBtn">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
 
@@ -638,8 +629,8 @@
       else if (phone.classList.contains('s-detail')) closeDetail();
     });
 
-    /* ════════ 常時表示の全画面ボタン ════════ */
-    document.getElementById('vidFs').addEventListener('click', (e) => {
+    /* ════════ 全画面ボタン（右側5つ目） ════════ */
+    document.getElementById('fsBtn').addEventListener('click', (e) => {
       e.stopPropagation();
       const f = document.getElementById('videoFrame');
       const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
