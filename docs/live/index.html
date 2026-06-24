@@ -29,7 +29,7 @@
       /* ── ボトムシートの高さ ── */
       /* コメント欄：ボタン群(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
       --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
-      --desc-peek: 264px;                  /* 動画概要：通常時に見えている高さ */
+      --desc-peek: 200px;                  /* 動画概要：本文3行目が見えるくらいの高さ（動画はその分拡大） */
       --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
 
       --c-bg: #000;
@@ -291,6 +291,14 @@
       padding: 4px 16px 200px;
       -webkit-overflow-scrolling: touch;
       scroll-padding-bottom: 200px;
+    }
+    /* 折りたたみ（ピーク）時：本文を下に向かって透明にフェード（3行目あたりで消える） */
+    .desc-sheet:not(.expanded) .desc-scroll {
+      overflow-y: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0,
+          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
+              mask-image: linear-gradient(to bottom, #000 0,
+          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
     }
     .desc-head {
       display: flex; align-items: center; justify-content: space-between;
