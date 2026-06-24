@@ -658,7 +658,14 @@
     }
     .ls-fullscreen svg{ width:20px; height:20px; }
     .ls-fullscreen:active{ background:rgba(20,20,20,0.75); }
-    .phone.vid-landscape .ls-fullscreen{ display:flex; }
+    /* Vimeoコントローラーの表示/非表示に同期：既定はフェードで隠す */
+    .phone.vid-landscape .ls-fullscreen{
+      display:flex; opacity:0; visibility:hidden; pointer-events:none;
+      transition:opacity .25s ease, visibility .25s ease;
+    }
+    .phone.vid-landscape .ls-fullscreen.show{
+      opacity:1; visibility:visible; pointer-events:auto;
+    }
   </style>
 </head>
 <body>
@@ -1199,23 +1206,48 @@
   <script>
     (function () {
       const fsBtn = document.getElementById('lsFullscreen');
-      const frame = document.querySelector('#videoStage iframe');
+      const stage = document.getElementById('videoStage');
+      const frame = stage && stage.querySelector('iframe');
       if (!fsBtn || !frame) return;
+
+      // ── Vimeo Player（全画面＋再生状態の取得用） ──
       let player = null;
+      if (window.Vimeo && window.Vimeo.Player) {
+        try { player = new window.Vimeo.Player(frame); } catch (_) { player = null; }
+      }
+
+      // ── クリックで全画面（Vimeo全画面と同挙動。SDK不可時はiframe全画面に） ──
       fsBtn.addEventListener('click', (e) => {
         e.stopPropagation();   // 動画外クリックでのシート閉じを抑止
-        if (window.Vimeo && window.Vimeo.Player) {
-          try {
-            player = player || new window.Vimeo.Player(frame);
-            player.requestFullscreen().catch(() => {
-              if (frame.requestFullscreen) frame.requestFullscreen();
-            });
-            return;
-          } catch (_) {}
+        if (player) {
+          player.requestFullscreen().catch(() => {
+            if (frame.requestFullscreen) frame.requestFullscreen();
+          });
+          return;
         }
         if (frame.requestFullscreen) frame.requestFullscreen();
         else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
       });
+
+      // ── Vimeoコントローラーの表示/非表示にボタンを同期 ──
+      // クロスオリジンiframeの内部は直接読めないため、Vimeoの自動消灯挙動を再現：
+      //   一時停止中は常時表示／再生中は無操作 約2.5秒で消灯／操作・再生状態変化で再表示。
+      if (!player) { fsBtn.classList.add('show'); return; }  // SDK不可時は常時表示
+      const HIDE_DELAY = 2500;
+      let playing = false, timer = null;
+      function reveal() {
+        fsBtn.classList.add('show');
+        clearTimeout(timer);
+        if (playing) timer = setTimeout(() => fsBtn.classList.remove('show'), HIDE_DELAY);
+      }
+      player.on('play',  () => { playing = true;  reveal(); });
+      player.on('pause', () => { playing = false; reveal(); });
+      player.on('ended', () => { playing = false; reveal(); });
+      player.getPaused().then(p => { playing = !p; reveal(); }).catch(reveal);
+      // 動画タップでのコントローラー再表示を間接検知（iframe内タップは親に届かないため、
+      // フォーカス移動=window blur＋activeElementで判定）。ステージ上の操作でも再表示。
+      window.addEventListener('blur', () => { if (document.activeElement === frame) reveal(); });
+      ['pointerdown','touchstart'].forEach(ev => stage.addEventListener(ev, reveal, { passive: true }));
     })();
   </script>
 </body>
