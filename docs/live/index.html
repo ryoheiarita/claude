@@ -511,6 +511,10 @@
       font-size: 14px; color: #fff; font-family: inherit;
     }
     .bottom-bar .field::placeholder { color: rgba(255,255,255,0.4); }
+    /* 送信ボタン：未入力=inactive（既定）／一文字でも入力=active（白背景・黒アイコン） */
+    .bottom-bar .cs-send { transition: background .15s ease; }
+    .bottom-bar .cs-send.active { background: #fff; }
+    .bottom-bar .cs-send.active svg path { stroke: #000; }
     /* 詳細展開時は下部バーを隠す（詳細シートが覆う） */
     .phone.mode-b.s-detail .bottom-bar { display: none !important; }
 
@@ -793,18 +797,22 @@
     function sendOwn() {
       const text = ownInput.value.trim();
       if (!text) return;
-      // 「すべて」タブに戻して自分のコメントが見えるように
+      // 「すべて」タブに戻す（コメント欄を開いている場合に自分のコメントが見えるように）
       const allTab = document.querySelector('#csTabs .cs-tab[data-tab="all"]');
       const artistTab = document.querySelector('#csTabs .cs-tab[data-tab="artist"]');
       allTab.classList.add('on'); artistTab.classList.remove('on');
       csListEl.classList.remove('artist-only');
-      pushComment({ own: true, text });           // オーバーレイ＋コメント欄に反映
-      if (!phone.classList.contains('s-comment')) openComment();  // コメント欄を開いて見せる
+      pushComment({ own: true, text });           // オーバーレイ＋コメント欄に反映（シートは開かない）
       csListEl.scrollTop = csListEl.scrollHeight;
       ownInput.value = '';
+      ownSend.classList.remove('active');          // 送信後は inactive に戻す
     }
     ownSend.addEventListener('click', (e) => { e.stopPropagation(); sendOwn(); });
     ownInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); sendOwn(); } });
+    // 一文字でも入力されたら送信ボタンを active（白背景・黒アイコン）に
+    ownInput.addEventListener('input', () => {
+      ownSend.classList.toggle('active', ownInput.value.trim().length > 0);
+    });
 
     /* ════════ A / B モード切替（右上タブ） ════════ */
     const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
