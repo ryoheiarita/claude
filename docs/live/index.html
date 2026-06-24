@@ -547,6 +547,83 @@
     .detail-body { font-size: 15px; line-height: 26px; color: rgba(255,255,255,0.72); }
     .detail-body p { margin-bottom: 16px; }
 
+    /* ════════════════════════════════════════════════════════════
+       横動画モード（16:9）。縦/横トグルで .vid-landscape を付与
+       ════════════════════════════════════════════════════════════ */
+    .orient-tabs { top: calc(var(--top-inset) + 42px); }  /* A/Bタブの下 */
+
+    /* 16:9 動画を画面上部いっぱいに固定 */
+    .phone.vid-landscape .video-stage {
+      top: 0; left: 0; transform: none;
+      width: 100%; height: calc(100vw * 9 / 16);
+      border-radius: 0;
+    }
+    /* 横動画の実体（16:9 MP4）。縦では非表示。横では Vimeo を隠し、グレーの土台の上に重ねる
+       （MP4が読めない環境ではグレーのプレースホルダが見える） */
+    .ls-video-el { display: none; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
+    .phone.vid-landscape .ls-video-el { display: block; }
+    .phone.vid-landscape .video-stage iframe { display: none !important; }
+    .phone.vid-landscape .video-fallback { display: flex !important; }
+    /* 縦モード専用の装飾は隠す */
+    .phone.vid-landscape .live-comments,
+    .phone.vid-landscape .actions,
+    .phone.vid-landscape .desc-sheet,
+    .phone.vid-landscape .detail-sheet,
+    .phone.vid-landscape .bottom-bar { display: none !important; }
+
+    /* コメントシート → 動画直下に密着した常設パネル */
+    .phone.vid-landscape .comment-sheet {
+      top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
+      height: auto; transform: none !important;
+      border-radius: 0; box-shadow: none; z-index: 40;
+    }
+    /* 横ヘッダー：縦用タブ/カウンター/✕は隠す */
+    .phone.vid-landscape .cs-grabber,
+    .phone.vid-landscape #csTabs,
+    .phone.vid-landscape .cs-count,
+    .phone.vid-landscape .cs-close { display: none !important; }
+    .phone.vid-landscape .cs-header { padding: 12px 16px 10px; }
+    /* 横でのみ表示する要素 */
+    .only-landscape { display: none; }
+    .phone.vid-landscape .only-landscape { display: flex; }
+    /* 横では入力欄を常に表示（A/B共通） */
+    .phone.vid-landscape .cs-input { display: flex !important; }
+
+    /* コメント / 詳細 タブ */
+    .ls-tabs { gap: 6px; align-items: center; flex: 1; }
+    .ls-tab {
+      height: 34px; padding: 0 14px; border-radius: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.55); cursor: pointer;
+    }
+    .ls-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+    /* 40px ハート / ブックマーク（✕の代わり） */
+    .ls-icons { gap: 8px; align-items: center; }
+    .ls-fab {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .ls-fab svg { width: 22px; height: 22px; }
+    .ls-fab.on { background: rgba(255,255,255,0.18); }
+
+    /* アーティストのみ トグル（リスト右上） */
+    .ls-artistonly {
+      align-self: flex-end; height: 28px; padding: 0 12px; border-radius: 28px;
+      background: rgba(255,255,255,0.1); font-size: 13px; color: rgba(255,255,255,0.75);
+      display: inline-flex; align-items: center; margin: 0 0 8px auto;
+      flex-shrink: 0; cursor: pointer;
+    }
+    .ls-artistonly.on { background: #fff; color: #000; }
+
+    /* 詳細ビュー（横パネル内）。既定は非表示、横＋詳細タブのときだけ表示 */
+    .ls-detail { display: none; flex: 1; overflow-y: auto; padding: 4px 16px 16px; flex-direction: column; }
+    .ls-detail::-webkit-scrollbar { width: 0; }
+    .phone.vid-landscape .comment-sheet.lt-detail .ls-detail { display: flex; }
+    /* 詳細タブのときはコメントリスト/アーティストのみトグルを隠す */
+    .phone.vid-landscape .comment-sheet.lt-detail .cs-list,
+    .phone.vid-landscape .comment-sheet.lt-detail .ls-artistonly { display: none !important; }
+
     /* スクロールバー非表示 */
     .desc-scroll::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
@@ -565,6 +642,9 @@
         allowfullscreen
         title="Vimeo player"
         onerror="document.getElementById('videoFallback').style.display='flex'"></iframe>
+      <!-- 横動画(16:9)モード用：横向きの実動画。縦モードでは非表示 -->
+      <video class="ls-video-el" id="lsVideo" muted loop playsinline preload="metadata"
+        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"></video>
       <!-- Vimeo が表示できない時のダミー（擬似コントロール） -->
       <div class="video-fallback" id="videoFallback" style="display:none">
         <div class="vf-controls">
@@ -598,6 +678,11 @@
     <div class="mode-tabs" id="modeTabs">
       <div class="mode-tab on" data-mode="a">A</div>
       <div class="mode-tab" data-mode="b">B</div>
+    </div>
+    <!-- ════ 縦/横 動画切替トグル（右上・A/Bの下） ════ -->
+    <div class="mode-tabs orient-tabs" id="orientTabs">
+      <div class="mode-tab on" data-orient="portrait">縦</div>
+      <div class="mode-tab" data-orient="landscape">横</div>
     </div>
 
     <!-- ════ 右側アクションボタン ════ -->
@@ -651,8 +736,36 @@
         <div class="cs-close" id="commentClose">
           <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
+        <!-- ▼ 横動画モード専用：コメント/詳細タブ ＋ ♡/🔖（✕の代わり） -->
+        <div class="ls-tabs only-landscape" id="lsTabs">
+          <div class="ls-tab on" data-ltab="comment">コメント</div>
+          <div class="ls-tab" data-ltab="detail">詳細</div>
+        </div>
+        <div class="ls-icons only-landscape">
+          <div class="ls-fab" id="lsHeart">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5.5 5.5 5.5c1.9 0 3.1 1.1 3.9 2.2.8-1.1 2-2.2 3.9-2.2 3 0 4.5 3 3 6C19 15.65 12 20 12 20z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ls-fab" id="lsBookmark">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 4h12v16l-6-4-6 4V4z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
       </div>
+      <!-- 横モード：アーティストのみ トグル（リスト右上） -->
+      <div class="ls-artistonly only-landscape" id="lsArtistOnly">アーティストのみ</div>
       <div class="cs-list" id="csList"></div>
+      <!-- 横モード：詳細ビュー -->
+      <div class="ls-detail" id="lsDetail">
+        <div class="desc-head">
+          <span class="desc-date">2025.08.16</span>
+          <span class="desc-tag">LIVE</span>
+        </div>
+        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+        <div class="detail-body">
+          <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>
+          <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
+          <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
+        </div>
+      </div>
       <div class="cs-input">
         <img class="avatar" src="" data-avatar="9" alt="">
         <div class="field">コメントを追加...</div>
@@ -812,6 +925,47 @@
       csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
     }));
 
+    /* ════════ 〔横動画モード〕コメント/詳細タブ ════════ */
+    const lsTabEls = document.querySelectorAll('#lsTabs .ls-tab');
+    function setLsTab(which) {
+      commentSheet.classList.toggle('lt-detail', which === 'detail');
+      lsTabEls.forEach(t => t.classList.toggle('on', t.dataset.ltab === which));
+    }
+    lsTabEls.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setLsTab(t.dataset.ltab); }));
+
+    /* 横：アーティストのみ トグル */
+    const lsArtistOnly = document.getElementById('lsArtistOnly');
+    lsArtistOnly.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const on = lsArtistOnly.classList.toggle('on');
+      csListEl.classList.toggle('artist-only', on);
+      csListEl.scrollTop = csListEl.scrollHeight;
+    });
+
+    /* 横：40px ハート / ブックマーク（簡易トグル） */
+    ['lsHeart', 'lsBookmark'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('click', (e) => { e.stopPropagation(); el.classList.toggle('on'); });
+    });
+
+    /* ════════ 縦/横 動画切替トグル（同じ動画を 9:16 / 16:9 で表示） ════════ */
+    const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
+    const lsVideo = document.getElementById('lsVideo');
+    function setOrient(o) {
+      phone.classList.toggle('vid-landscape', o === 'landscape');
+      phone.classList.toggle('vid-portrait', o === 'portrait');
+      orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
+      const isB = phone.classList.contains('mode-b');
+      if (o === 'landscape') {
+        setLsTab(isB ? 'detail' : 'comment');   // A→コメント / B→詳細 を初期表示
+        lsVideo.play().catch(() => {});          // 横の実動画を再生（muted自動再生）
+      } else {
+        lsVideo.pause();
+        setMode(isB ? 'b' : 'a');                // 縦に戻す→モードの初期状態を再適用
+      }
+    }
+    orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
+
     /* ════════ 〔Bモード〕下部コメントバー：タップで記入→送信でコメント欄に反映 ════════ */
     const ownInput = document.getElementById('ownInput');
     const ownSend  = document.getElementById('ownSend');
@@ -850,11 +1004,14 @@
       // 初期表示：A→コメント、B→概要（詳細）を開いた状態にする
       if (m === 'a') openComment();
       else           openDetail();
+      // 横動画モード中はパネルのタブも切替（A→コメント / B→詳細）
+      if (phone.classList.contains('vid-landscape')) setLsTab(m === 'b' ? 'detail' : 'comment');
     }
     modeTabs.forEach(t => t.addEventListener('click', (e) => {
       e.stopPropagation(); setMode(t.dataset.mode);
     }));
-    phone.classList.add('mode-a');   // 初期モードのクラスのみ。開く状態はスクリプト末尾で設定
+    phone.classList.add('mode-a');
+    phone.classList.add('vid-portrait');   // 初期は縦動画。開く状態はスクリプト末尾で設定
 
     /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
     const descSheet = document.getElementById('descSheet');
