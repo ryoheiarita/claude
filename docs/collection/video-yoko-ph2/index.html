@@ -432,6 +432,7 @@
     .ls-detail::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
   </style>
+  <style>/* 遷移先は横動画で固定 */ #orientTabs{display:none !important;}</style>
 </head>
 <body>
   <div class="phone" id="phone">
@@ -711,6 +712,7 @@
     }
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
+    setOrient('landscape');  /* 横動画で固定 */
   </script>
 </body>
 </html>

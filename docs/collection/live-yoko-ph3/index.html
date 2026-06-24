@@ -647,6 +647,7 @@
     .desc-scroll::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
   </style>
+  <style>/* 遷移先はライブB・横で固定 */ #modeTabs,#orientTabs{display:none !important;}</style>
 </head>
 <body>
   <div class="phone" id="phone">
@@ -1174,7 +1175,7 @@
     })();
 
     /* ════════ 初期表示：A＝コメント初期 / B＝概要(詳細)初期 ════════ */
-    setMode('a');
+    setMode('b'); setOrient('landscape');  /* ライブB・横で固定 */
   </script>
 </body>
 </html>
