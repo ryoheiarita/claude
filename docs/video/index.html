@@ -105,6 +105,16 @@
     .vf-bar::before { content:''; position:absolute; inset:0; width:42%; background:#2aa7ff; border-radius:4px; }
     .vf-ico { width: 22px; height: 22px; flex-shrink:0; opacity:.85; display:flex;align-items:center;justify-content:center; }
 
+    /* 常時表示の全画面ボタン（動画の右下＝コントロールバー右端。Vimeo標準は狭幅で隠れるため必ず出す） */
+    .vid-fs {
+      position: absolute; right: 8px; bottom: 8px; z-index: 6;
+      width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .vid-fs svg { width: 20px; height: 20px; }
+
     /* コメント／概要 開時：9:16 のままシート(画面半分)を避けて上に縮小（余白なし＝同一仕様） */
     .phone.s-comment .video-stage,
     .phone.s-detail .video-stage {
@@ -458,6 +468,10 @@
           <div class="vf-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
         </div>
       </div>
+      <!-- 常時表示の全画面ボタン（Vimeo標準コントロールは自動で隠れるため、必ず出す） -->
+      <div class="vid-fs" id="vidFs" role="button" aria-label="全画面">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
     </div>
 
     <!-- ════ ステータスバー ════ -->
@@ -622,6 +636,14 @@
       // プロトタイプ：実装では Navigator.pop 等
       if (phone.classList.contains('s-comment')) closeComment();
       else if (phone.classList.contains('s-detail')) closeDetail();
+    });
+
+    /* ════════ 常時表示の全画面ボタン ════════ */
+    document.getElementById('vidFs').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const f = document.getElementById('videoFrame');
+      const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
+      if (req) { try { req.call(f); } catch (err) {} }
     });
 
     /* ════════ コメント開閉（動画サイズ・概要シートが連動） ════════ */
