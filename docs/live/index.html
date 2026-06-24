@@ -484,15 +484,15 @@
     /* アーティストタブ：アーティスト以外を隠す */
     .cs-list.artist-only .chip:not(.artist) { display: none; }
 
-    /* アーティストのチップ：アイコン＋緑のプロフィール名（Bモードのみ装飾） */
+    /* アーティストのチップ：アイコン＋緑のプロフィール名（A/B 共通） */
     .chip.artist { align-items: center; }
     .chip .cav {
       width: 20px; height: 20px; border-radius: 50%;
       flex-shrink: 0; object-fit: cover; margin-right: 2px;
-      display: none;  /* Aモードでは非表示（従来見た目を保つ） */
+      display: none;  /* 一般ユーザーはアイコン無し */
     }
-    .phone.mode-b .chip.artist .cav { display: inline-block; }
-    .phone.mode-b .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑 */
+    .chip.artist .cav { display: inline-block; }
+    .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑（A/B 共通） */
 
     /* ── 下部コメントバー（Bモード：常時表示） ── */
     .bottom-bar {
