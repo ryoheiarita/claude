@@ -1096,9 +1096,12 @@
     /* ════════ シート外クリックで元の大きさに戻す ════════ */
     const actionsEl = document.querySelector('.actions');
     const detailSheet = document.getElementById('detailSheet');
+    const videoStageEl = document.getElementById('videoStage');
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
-      // コメント開時：コメントシート外（動画エリア等）をクリックで閉じて元のサイズへ
+      // 動画タップではシートを閉じない（再生/一時停止のみ。コメント/概要シートは開いたまま）
+      if (videoStageEl.contains(e.target)) return;
+      // コメント開時：コメントシート外をクリックで閉じて元のサイズへ
       if (phone.classList.contains('s-comment')) {
         if (!commentSheet.contains(e.target) && !inActions) closeComment();
         return;
