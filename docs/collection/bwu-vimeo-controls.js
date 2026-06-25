@@ -140,7 +140,12 @@
   Controller.prototype.toggle = function () {
     var p = this.player;
     if (!p) { this.setPlaying(!this.playing); return; }
-    (this.playing ? p.pause() : p.play()).catch(function () {});
+    if (this.playing) { p.pause().catch(function () {}); return; }
+    // 再生は必ずユーザータップ起点。iframe が pointer-events:none のため、
+    // クロスオリジンの動画にユーザー操作が直接届かず iOS 等で初回がミュート再生になりやすい。
+    // タップのジェスチャ内で明示的にミュート解除してから再生する（音あり再生を保証）。
+    try { var m = p.setMuted(false); if (m && m.catch) m.catch(function () {}); } catch (e) {}
+    p.play().catch(function () {});
   };
   Controller.prototype.renderProgress = function (frac) {
     if (this.isLive) return;
