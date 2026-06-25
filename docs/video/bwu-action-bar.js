@@ -65,6 +65,9 @@
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       position: relative; overflow: visible; background: transparent; border: 0;
     }
+    /* ハートの左・ブックマークの右に余白を 2px 追加 */
+    #h { padding-left: 2px; }
+    #b { padding-right: 2px; }
     .fab .ico { width: 24px; height: 24px; }
     .fab .lottie { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 72px; height: 72px; pointer-events: none; }
   `;
