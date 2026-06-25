@@ -52,7 +52,9 @@
       '.vp-host.vp-ui-hidden .vp-seek,',
       '.vp-host.vp-ui-hidden .vp-live{opacity:0;pointer-events:none;}',
       /* 横モードの外部全画面ボタン（各画面の .ls-fullscreen）を自前UIの上に出す（グラデの裏に埋もれない） */
-      '.vp-host .ls-fullscreen{z-index:31 !important;}'
+      '.vp-host .ls-fullscreen{z-index:31 !important;}',
+      /* LIVE はシークバーが無いので、全画面ボタンをシークバーと同じ高さ（下端＋20px）の右下に置く */
+      '.vp-host.vp-live-host .ls-fullscreen{right:16px !important;bottom:calc(env(safe-area-inset-bottom,0px) + 20px) !important;}'
     ].join('\n');
     var el = document.createElement('style');
     el.id = STYLE_ID;
@@ -261,6 +263,7 @@
 
     injectStyle();
     stage.classList.add('vp-host');
+    if (isLive) stage.classList.add('vp-live-host');
     ensureControls(iframe);
 
     var ov = buildOverlay(stage, isLive);
