@@ -674,5 +674,54 @@
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
   </script>
+
+  <!-- ════ 共通：シートを最上部からさらに下に引っ張ったら閉じる（pull-to-dismiss） ════
+       対象: .comment-sheet / .desc-sheet。少し引っ張る（PULL_CLOSE_PX）と既存の閉じる動作を発火。
+       BWU_SHEET_PULL_DISMISS -->
+  <script>
+  (function () {
+    var PULL_CLOSE_PX = 50;   /* これ以上引っ張ったら閉じる（少し引っ張るくらい） */
+    function wire(sheet) {
+      if (sheet.dataset.pullWired) return; sheet.dataset.pullWired = '1';
+      var scrollEl = sheet.querySelector('.cs-list, .desc-scroll, .ds-body, .comment-list, .sheet-scroll');
+      var closeEl  = sheet.querySelector('.cs-close, .ds-close, [data-sheet-close]');
+      if (!closeEl) return;
+      var startY = 0, dy = 0, dragging = false, pulling = false, baseTx = 0;
+      sheet.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) { dragging = false; return; }
+        startY = e.touches[0].clientY; dy = 0; pulling = false;
+        dragging = (!scrollEl || scrollEl.scrollTop <= 0);   /* 最上部からのみ */
+        try { baseTx = new DOMMatrixReadOnly(getComputedStyle(sheet).transform).m41; } catch (_) { baseTx = 0; }
+      }, { passive: true });
+      sheet.addEventListener('touchmove', function (e) {
+        if (!dragging) return;
+        dy = e.touches[0].clientY - startY;
+        var atTop = !scrollEl || scrollEl.scrollTop <= 0;
+        if (dy > 0 && atTop) {
+          pulling = true;
+          e.preventDefault();                                /* 引っ張り中はスクロールさせない */
+          sheet.style.transition = 'none';
+          sheet.style.transform = 'translate(' + baseTx + 'px,' + dy + 'px)';
+        } else if (pulling) {
+          sheet.style.transform = 'translate(' + baseTx + 'px,0px)';
+        }
+      }, { passive: false });
+      function end() {
+        if (!dragging) return;
+        dragging = false;
+        sheet.style.transition = '';
+        sheet.style.transform = '';                          /* インライン解除→CSSの開閉トランジションに戻す */
+        if (pulling && dy > PULL_CLOSE_PX) closeEl.click();  /* 既存の閉じる動作を再利用 */
+        pulling = false; dy = 0;
+      }
+      sheet.addEventListener('touchend', end);
+      sheet.addEventListener('touchcancel', end);
+    }
+    function init() { document.querySelectorAll('.comment-sheet, .desc-sheet').forEach(wire); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+  </script>
+
 </body>
 </html>
