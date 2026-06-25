@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <script src="../gate.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>New Contents — 記事一覧（挙動イメージ）</title>
@@ -310,13 +311,11 @@
     const ITEMS = [
       { name: '通常記事',      date: '2025.08.16', type: 'doc', cls: 't-doc', href: '../article/article.html' },
 
-      { name: 'Ph.2_横動画',  date: '2025.08.16', type: 'videoH', cls: 't-vh', ph: 'PH2', href: 'video-yoko-ph2/' },
-      { name: 'Ph.2_縦動画',  date: '2025.08.16', type: 'videoV', cls: 't-vv', ph: 'PH2', href: 'video-tate-ph2/' },
+      { name: '横動画',      date: '2025.08.16', type: 'videoH', cls: 't-vh', href: 'video-yoko-ph2/' },
+      { name: '縦動画',      date: '2025.08.16', type: 'videoV', cls: 't-vv', href: 'video-tate-ph2/' },
       { name: 'Ph.2_横LIVE',  date: '2025.08.16', type: 'videoH', cls: 't-lh', ph: 'PH2', live: true, href: 'live-yoko-ph2/' },
       { name: 'Ph.2_縦LIVE',  date: '2025.08.16', type: 'videoV', cls: 't-lv', ph: 'PH2', live: true, href: 'live-tate-ph2/' },
 
-      { name: 'Ph.3_横動画',  date: '2025.08.16', type: 'videoH', cls: 't-vh', ph: 'PH3', href: 'video-yoko-ph3/' },
-      { name: 'Ph.3_縦動画',  date: '2025.08.16', type: 'videoV', cls: 't-vv', ph: 'PH3', href: 'video-tate-ph3/' },
       { name: 'Ph.3_横LIVE',  date: '2025.08.16', type: 'videoH', cls: 't-lh', ph: 'PH3', live: true, href: 'live-yoko-ph3/' },
       { name: 'Ph.3_縦LIVE',  date: '2025.08.16', type: 'videoV', cls: 't-lv', ph: 'PH3', live: true, href: 'live-tate-ph3/' },
     ];
