@@ -137,15 +137,23 @@
     this.playing = on;
     this.ov.play.innerHTML = on ? ICON_PAUSE : ICON_PLAY;
   };
+  // ミュート解除（iOS の自動再生ポリシーによるミュート・フォールバック対策）。
+  // iframe が pointer-events:none のためユーザー操作がクロスオリジン動画に直接届かず、
+  // 縦動画（リロードされない iframe）では初回再生がミュートになりやすい。横動画と同じ
+  // 音あり挙動に揃えるため、再生開始の前後で明示的にミュート解除する。
+  Controller.prototype.unmute = function () {
+    var p = this.player;
+    if (!p) return;
+    try { var m = p.setMuted(false); if (m && m.catch) m.catch(function () {}); } catch (e) {}
+  };
   Controller.prototype.toggle = function () {
     var p = this.player;
     if (!p) { this.setPlaying(!this.playing); return; }
     if (this.playing) { p.pause().catch(function () {}); return; }
-    // 再生は必ずユーザータップ起点。iframe が pointer-events:none のため、
-    // クロスオリジンの動画にユーザー操作が直接届かず iOS 等で初回がミュート再生になりやすい。
-    // タップのジェスチャ内で明示的にミュート解除してから再生する（音あり再生を保証）。
-    try { var m = p.setMuted(false); if (m && m.catch) m.catch(function () {}); } catch (e) {}
-    p.play().catch(function () {});
+    // 再生は必ずユーザータップ起点。ジェスチャ内でミュート解除 →再生→再生開始後にも念押し解除。
+    this.unmute();
+    var self = this;
+    p.play().then(function () { self.unmute(); }).catch(function () {});
   };
   Controller.prototype.renderProgress = function (frac) {
     if (this.isLive) return;
@@ -220,7 +228,7 @@
     var self = this;
     if (!(window.Vimeo && window.Vimeo.Player)) return;
     try { this.player = new window.Vimeo.Player(this.iframe); } catch (e) { this.player = null; return; }
-    this.player.on('play',  function () { self.setPlaying(true); });
+    this.player.on('play',  function () { self.setPlaying(true); self.unmute(); });
     this.player.on('pause', function () { self.setPlaying(false); });
     this.player.on('ended', function () { self.setPlaying(false); });
     if (!this.isLive) {
