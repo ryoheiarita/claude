@@ -221,13 +221,13 @@
       width: 36px; height: 36px; border-radius: 50%;
       background: #303030;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
-      z-index: 2;
+      z-index: 50;  /* Xボタンを最前面に */
     }
     .desc-sheet .ds-close svg { width: 20px; height: 20px; }
     .desc-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+      padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
       -webkit-overflow-scrolling: touch;
     }
     .desc-head {
