@@ -1140,9 +1140,8 @@
     const detailSheet = document.getElementById('detailSheet');
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
-      // コメント開時：コメントシート外（動画エリア等）をクリックで閉じて元のサイズへ
+      // コメント開時：シート外タップでは閉じない（開いたまま動画を操作するため）
       if (phone.classList.contains('s-comment')) {
-        if (!commentSheet.contains(e.target) && !inActions) closeComment();
         return;
       }
       // 詳細シート開時：シート外をクリックで閉じる

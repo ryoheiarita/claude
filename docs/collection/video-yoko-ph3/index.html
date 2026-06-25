@@ -678,7 +678,7 @@
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
       if (phone.classList.contains('s-comment')) {
-        if (!commentSheet.contains(e.target) && !inActions) closeComment();
+        /* コメントシートはシート外タップで閉じない（開いたまま動画を操作するため） */
       } else if (phone.classList.contains('s-detail')) {
         if (!descSheet.contains(e.target) && !inActions) closeDetail();
       }
