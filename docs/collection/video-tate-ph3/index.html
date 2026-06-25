@@ -656,8 +656,11 @@
 
     /* ════════ シート外クリックで閉じる ════════ */
     const actionsEl = document.querySelector('.actions');
+    const videoStageEl = document.getElementById('videoStage');
     phone.addEventListener('click', (e) => {
       const inActions = actionsEl.contains(e.target);
+      // 動画タップではシートを閉じない（再生/一時停止のみ。コメント/概要シートは開いたまま）
+      if (videoStageEl.contains(e.target)) return;
       if (phone.classList.contains('s-comment')) {
         if (!commentSheet.contains(e.target) && !inActions) closeComment();
       } else if (phone.classList.contains('s-detail')) {
