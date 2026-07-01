@@ -926,7 +926,7 @@
       e.stopPropagation();
       csTabs.forEach(x => x.classList.toggle('on', x === t));
       csListEl.classList.toggle('artist-only', t.dataset.tab === 'artist');
-      csListEl.scrollTop = csListEl.scrollHeight;  // 切替後も最新へ
+      csListEl.scrollTop = 0;  // タブ切替時は必ずコメント最上部を表示
     }));
 
     /* ════════ 〔横動画モード〕下部バー（共通コンポーネント）の「コメント」でコメントシートを立ち上げ ════════ */
