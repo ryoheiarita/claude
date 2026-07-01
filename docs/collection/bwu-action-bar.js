@@ -52,13 +52,13 @@
       background: #303030; border: 1px solid rgba(255,255,255,0.15);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
-    .comment { gap: 10px; padding: 0 16px; cursor: pointer; border-radius: 40px; }
-    .comment .ci { width: 24px; height: 24px; flex-shrink: 0; }
+    .comment { gap: 4px; padding: 0 16px; cursor: pointer; border-radius: 40px; }
+    .comment .ci { width: 24px; height: 24px; flex-shrink: 0; margin-right: 6px; }
     .comment .lbl { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
     .avs { display: flex; align-items: center; }
     .avs img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -8px; border: 2px solid #303030; }
     .avs img:first-child { margin-left: 0; }
-    .avs .more { margin-left: 6px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.75); white-space: nowrap; }
+    .avs .more { margin-left: 4px; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.5); white-space: nowrap; }
     .actions { overflow: visible; }       /* バースト粒子をはみ出させる */
     .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
     .fab {
