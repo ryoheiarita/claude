@@ -56,8 +56,9 @@
     .comment .ci { width: 24px; height: 24px; flex-shrink: 0; }
     .comment .lbl { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
     .avs { display: flex; align-items: center; }
-    .avs img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -4px; border: 2px solid #303030; }
+    .avs img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -8px; border: 2px solid #303030; }
     .avs img:first-child { margin-left: 0; }
+    .avs .more { margin-left: 6px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.75); white-space: nowrap; }
     .actions { overflow: visible; }       /* バースト粒子をはみ出させる */
     .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
     .fab {
@@ -78,6 +79,7 @@
       const label = this.getAttribute('label') || 'コメント';
       const avs = (this.getAttribute('avatars') ?? '0,2,4')
         .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+      const more = this.getAttribute('more') ?? '+3';
 
       const root = this.attachShadow({ mode: 'open' });
       root.innerHTML = `
@@ -85,7 +87,7 @@
         <div class="pill comment" part="comment" id="c">
           ${CHAT_SVG}
           <span class="lbl">${label}</span>
-          ${avs.length ? `<span class="avs">${avs.map(i => `<img src="${avatarURL(i)}" alt="">`).join('')}</span>` : ''}
+          ${avs.length ? `<span class="avs">${avs.map(i => `<img src="${avatarURL(i)}" alt="">`).join('')}${more ? `<span class="more">${more}</span>` : ''}</span>` : ''}
         </div>
         <div class="pill actions" part="actions">
           <div class="fab" id="h">${HEART_SVG}<div class="lottie" id="hl"></div></div>
