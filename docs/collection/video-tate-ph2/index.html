@@ -19,6 +19,8 @@
       /* ── 動画は 9:16 固定。縦は画面フル表示（幅が画面幅に達したら頭打ち） ── */
       --vid-cap-h: calc(100vw * 16 / 9);              /* 幅=画面幅いっぱいになる高さ＝これ以上拡大しない */
       --vid-normal-h: min(100dvh, var(--vid-cap-h));  /* 通常時：縦動画を画面フル表示 */
+      --vid-area-h: 100dvh;                           /* 動画を中央寄せする基準領域（下部バー等があれば差し引く） */
+      --vid-normal-top: calc((var(--vid-area-h) - var(--vid-normal-h)) / 2);  /* 通常時：領域内で縦中央 */
       --vid-comment-top: var(--top-inset);  /* コメント/概要開時：戻るボタンと同じ高さに上揃え */
       --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
@@ -57,7 +59,7 @@
     /* ════════════ 動画ステージ（3状態でサイズが切替わる） ════════════ */
     .video-stage {
       position: absolute;
-      top: 0;
+      top: var(--vid-normal-top);
       left: 50%;
       transform: translateX(-50%);   /* 左右中央揃え */
       height: var(--vid-normal-h);
@@ -148,7 +150,7 @@
       position: absolute;
       right: 16px;
       /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
-      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
+      top: calc(var(--vid-normal-top) + var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に（中央寄せに追従） */
       display: flex;
       flex-direction: column;
       gap: 8px;
