@@ -18,6 +18,8 @@
       /* ── 動画は 9:16 固定。高さ基準で拡大するが、幅(=9)が画面幅に達したら頭打ち ── */
       --vid-cap-h: calc(100vw * 16 / 9);   /* 幅=画面幅いっぱいになる時の高さ（これ以上は拡大しない） */
       --vid-normal-h: min(100dvh, var(--vid-cap-h)); /* 通常時（Bモード時は下部バー分を引いて再定義） */
+      --vid-area-h: 100dvh;                          /* 動画を中央寄せする基準領域（下部バーがあれば差し引く／各scopeで再定義） */
+      --vid-normal-top: calc((var(--vid-area-h) - var(--vid-normal-h)) / 2);  /* 通常時：領域内で縦中央 */
       --vid-comment-top: var(--top-inset);  /* コメント開時：戻るボタンと同じ高さに上揃え */
       --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画/ボタン下端 */
@@ -58,7 +60,7 @@
     /* ════════════ 動画ステージ（3状態でサイズが切替わる） ════════════ */
     .video-stage {
       position: absolute;
-      top: 0;
+      top: var(--vid-normal-top);
       left: 50%;
       transform: translateX(-50%);   /* 左右中央揃え */
       height: var(--vid-normal-h);
@@ -155,7 +157,7 @@
       position: absolute;
       right: 16px;
       /* 通常時：動画下端のコントロール上（動画の高さ基準で配置） */
-      top: calc(var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に */
+      top: calc(var(--vid-normal-top) + var(--vid-normal-h) - var(--actions-h) - 48px);  /* ボタン群の下端を動画下端の48px上に（中央寄せに追従） */
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -223,7 +225,7 @@
       width: min(64vw, 260px);
       /* 3ボタンと同じ高さ帯：下端を3ボタンの下端に揃え、上に積み上がる */
       height: 248px;
-      top: calc(var(--vid-normal-h) - 48px - 248px);  /* -48 = actions下端(vid-normal-h-48) - 高さ */
+      top: calc(var(--vid-normal-top) + var(--vid-normal-h) - 48px - 248px);  /* -48 = actions下端(vid-normal-h-48) - 高さ（中央寄せに追従） */
       z-index: 50;
       display: flex;
       flex-direction: column;
@@ -418,6 +420,7 @@
       --bottombar-h: calc(60px + env(safe-area-inset-bottom, 0px));
       /* 下部バーの分を残しつつ、幅(=9)が画面幅に達したら頭打ち */
       --vid-normal-h: min(calc(100dvh - var(--bottombar-h)), var(--vid-cap-h));
+      --vid-area-h: calc(100dvh - var(--bottombar-h));  /* 中央寄せは下部バーを除いた領域内で */
       /* :root 側は actions-h=160px で解決済みのため、4ボタン(216px)基準で再定義 */
       --vid-comment-h: var(--actions-h);
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h));
@@ -603,7 +606,7 @@
     .pull-refresh, .load-older {
       align-self: stretch; flex: none;
       display: flex; align-items: center; justify-content: center; gap: 6px;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.5);
       font-family: inherit; font-size: 13px; font-weight: 600; line-height: 20px;
       white-space: nowrap; user-select: none;
     }
@@ -626,7 +629,7 @@
     /* ════════ Ph.2：FV下部のコメント入力バーは無し ════════ */
     .phone.mode-b .bottom-bar { display: none !important; }
     /* 入力バーを外したぶん、FV動画は下端の予約を解除（幅基準で頭打ちは従来どおり） */
-    .phone.mode-b { --vid-normal-h: min(100dvh, var(--vid-cap-h)); }
+    .phone.mode-b { --vid-normal-h: min(100dvh, var(--vid-cap-h)); --vid-area-h: 100dvh; }
 
     /* ════════ Ph.2：コメントシートを「概要(詳細)シート」と同じ挙動・同じ高さに ════════ */
     /* シートは下端0・高さは詳細シートと同一(60dvh)。入力バーぶんの底上げをやめる */
