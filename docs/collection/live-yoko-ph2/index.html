@@ -324,9 +324,6 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      /* 上80%以降を上へ向かってフェード（流れてきたコメントが上で消える） */
-      -webkit-mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
-              mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
     }
     .cs-list::before { content: ''; margin-top: auto; }  /* 少数時に下寄せ */
     .pinned-label {
