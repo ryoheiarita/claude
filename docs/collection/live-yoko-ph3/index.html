@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <script src="../../gate.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>横LIVE Ph.3 — 挙動イメージ</title>
@@ -18,20 +17,18 @@
 
       /* ── 動画は 9:16 固定。高さ基準で拡大するが、幅(=9)が画面幅に達したら頭打ち ── */
       --vid-cap-h: calc(100vw * 16 / 9);   /* 幅=画面幅いっぱいになる時の高さ（これ以上は拡大しない） */
-      --vid-normal-h: min(calc(100dvh - var(--desc-peek)), var(--vid-cap-h)); /* 通常時 */
+      --vid-normal-h: min(100dvh, var(--vid-cap-h)); /* 通常時（Bモード時は下部バー分を引いて再定義） */
       --vid-comment-top: var(--top-inset);  /* コメント開時：戻るボタンと同じ高さに上揃え */
       --vid-comment-h: var(--actions-h);    /* コメント開時：ボタン群と同じ高さに縮小 */
       --vid-comment-bottom: calc(var(--vid-comment-top) + var(--vid-comment-h)); /* コメント開時の動画/ボタン下端 */
 
       /* 詳細開時：動画は戻るボタン位置から詳細シート上端まで拡大（幅で頭打ち） */
-      --detail-sheet-h: 60dvh;
+      --detail-sheet-h: 50dvh;   /* 横モードはシートが動画(16:9)の真下まで広がる。video-yoko/縦liveと統一 */
       --vid-detail-h: min(calc(100dvh - var(--detail-sheet-h) - var(--top-inset)), var(--vid-cap-h));
 
       /* ── ボトムシートの高さ ── */
       /* コメント欄：ボタン群(=動画)下端の 16px 下まで。動画・ボタンが必ず全部見える＆操作できる高さ */
       --comment-sheet-h: calc(100dvh - var(--vid-comment-bottom) - 16px);
-      --desc-peek: 200px;                  /* 動画概要：本文3行目が見えるくらいの高さ（動画はその分拡大） */
-      --desc-expanded-top: 116px;          /* 動画概要：上までスクロールした時の上端（動画に乗る） */
 
       --c-bg: #000;
       --c-desc-bg: #141414;
@@ -171,10 +168,6 @@
       /* コメント／詳細開時：4(3)ボタンを必ず戻るボタンと上揃え */
       top: var(--top-inset);
     }
-    /* 概要シート展開時：3ボタンを画面右下へ移動（同一ボタンを移動。複製しないので軽い） */
-    .phone.s-desc .actions {
-      top: calc(100dvh - 184px);  /* 184 = 24(下余白) + 160(3ボタン+gap) */
-    }
     .fab {
       width: 48px; height: 48px;
       border-radius: 42px;
@@ -243,36 +236,11 @@
               mask-image: linear-gradient(to top, #000 0%, #000 80%, transparent 100%);
       transition: opacity .3s ease;
     }
-    /* コメント欄を開いている時 / 概要・詳細展開時はオーバーレイを隠す（パネル側に流れる） */
+    /* コメント欄を開いている時 / 詳細展開時はオーバーレイを隠す（パネル側に流れる） */
     .phone.s-comment .live-comments,
-    .phone.s-desc .live-comments,
     .phone.s-detail .live-comments { opacity: 0; pointer-events: none; }
 
-    /* ════════════ ① 動画概要ボトムシート ════════════ */
-    .desc-sheet {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      height: calc(100dvh - var(--desc-expanded-top));
-      background: var(--c-desc-bg);
-      border-radius: 16px 16px 0 0;
-      z-index: 40;
-      box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
-      /* collapsed: ピーク分だけ見せる */
-      transform: translateY(calc(100dvh - var(--desc-expanded-top) - var(--desc-peek)));
-      transition: transform .42s cubic-bezier(.22,.61,.36,1);
-      display: flex;
-      flex-direction: column;
-      touch-action: none;
-    }
-    .desc-sheet.expanded { transform: translateY(0); }
-    /* コメント開時は概要シートを画面外へ隠す */
-    .phone.s-comment .desc-sheet {
-      transform: translateY(100%);
-      pointer-events: none;
-    }
-
+    /* ════════════ 概要/詳細シートの共通パーツ（グラバー・見出し・本文タイポ） ════════════ */
     .desc-grabber {
       flex-shrink: 0;
       padding: 10px 0 6px;
@@ -284,22 +252,6 @@
       content: '';
       width: 40px; height: 4px; border-radius: 10px;
       background: rgba(255,255,255,0.28);
-    }
-    .desc-scroll {
-      flex: 1;
-      overflow-y: auto;
-      /* 下余白を広めに：展開時に右下の3ボタンが本文最終行に被らないように */
-      padding: 4px 16px 200px;
-      -webkit-overflow-scrolling: touch;
-      scroll-padding-bottom: 200px;
-    }
-    /* 折りたたみ（ピーク）時：本文を下に向かって透明にフェード（3行目あたりで消える） */
-    .desc-sheet:not(.expanded) .desc-scroll {
-      overflow-y: hidden;
-      -webkit-mask-image: linear-gradient(to bottom, #000 0,
-          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
-              mask-image: linear-gradient(to bottom, #000 0,
-          #000 calc(var(--desc-peek) - 96px), transparent calc(var(--desc-peek) - 20px));
     }
     .desc-head {
       display: flex; align-items: center; justify-content: space-between;
@@ -456,9 +408,7 @@
     /* B専用要素は通常は隠し、Bモードでのみ表示 */
     .only-b { display: none !important; }
     .phone.mode-b .only-b { display: flex !important; }
-    .phone.mode-b .only-a { display: none !important; }
-    /* Bモードでは「動画概要シート」と「シート内入力欄」は使わない */
-    .phone.mode-b .desc-sheet { display: none !important; }
+    /* Bモードでは「シート内入力欄」は使わない（下部バーで入力） */
     .phone.mode-b .cs-input  { display: none !important; }
 
     /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
@@ -565,7 +515,6 @@
     /* 縦モード専用パーツは隠す */
     .phone.vid-landscape .live-comments,
     .phone.vid-landscape .actions,
-    .phone.vid-landscape .desc-sheet,
     .phone.vid-landscape .detail-sheet,
     .phone.vid-landscape .bottom-bar { display: none !important; }
 
@@ -631,21 +580,18 @@
       .phone.vid-portrait .cs-input { display: flex !important; }
       .phone.vid-portrait .live-comments,
       .phone.vid-portrait .actions,
-      .phone.vid-portrait .desc-sheet,
       .phone.vid-portrait .detail-sheet,
       .phone.vid-portrait .bottom-bar,
       .phone.vid-portrait .cs-grabber,
       .phone.vid-portrait .cs-close { display: none !important; }
       /* プロトタイプ操作用トグルはパネルに被らないよう左上へ退避 */
-      .phone.vid-landscape #modeTabs, .phone.vid-portrait #modeTabs    { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 48px); }
       .phone.vid-landscape .orient-tabs, .phone.vid-portrait .orient-tabs { right: auto; left: calc(env(safe-area-inset-left,0px) + 16px); top: calc(var(--top-inset) + 86px); }
     }
 
     /* スクロールバー非表示 */
-    .desc-scroll::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
   </style>
-  <style>/* 遷移先はライブB・横で固定 */ #modeTabs,#orientTabs{display:none !important;}
+  <style>/* 遷移先はライブB・横で固定 */ #orientTabs{display:none !important;}
     /* 〔横モード〕全画面ボタン（Vimeo「…」ボタン風・下部コントローラー右端のすぐ上） */
     .ls-fullscreen{
       display:none; position:absolute; right:8px; bottom:44px;
@@ -712,12 +658,7 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
 
-    <!-- ════ A/B 切替タブ（右上） ════ -->
-    <div class="mode-tabs" id="modeTabs">
-      <div class="mode-tab on" data-mode="a">A</div>
-      <div class="mode-tab" data-mode="b">B</div>
-    </div>
-    <!-- ════ 縦/横 動画切替トグル（右上・A/Bの下） ════ -->
+    <!-- ════ 縦/横 動画切替トグル（右上・プロトタイプ用・既定で非表示） ════ -->
     <div class="mode-tabs orient-tabs" id="orientTabs">
       <div class="mode-tab on" data-orient="portrait">縦動画</div>
       <div class="mode-tab" data-orient="landscape">横動画</div>
@@ -738,27 +679,6 @@
 
     <!-- ════ 流れるコメント（動画オーバーレイ：左下・3ボタンと同じ高さ・下が最新） ════ -->
     <div class="live-comments" id="liveComments"></div>
-
-    <!-- ════ ① 動画概要ボトムシート ════ -->
-    <div class="desc-sheet" id="descSheet">
-      <div class="desc-grabber" id="descGrabber"></div>
-      <div class="desc-scroll" id="descScroll">
-        <div class="desc-head">
-          <span class="desc-date">2025.08.16</span>
-        </div>
-        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
-        <span class="desc-tag">LIVE</span>
-        <div class="desc-body">
-          <p>本日はMAZZELのスペシャルライブ配信にお越しいただき、誠にありがとうございます！今夜はリアルタイムでMAZZELと一緒に、最高の夜をつくっていきましょう。コメント欄でたくさん応援してくださいね🔥</p>
-          <p>今回の配信では、最新アルバム『PARADE』の収録曲を中心に、デビュー曲「Vivid」や人気曲「Carnival」など、MAZZELの“今”を詰め込んだスペシャルセットリストをお届けします。途中にはメンバーによるトークコーナーや、視聴者の皆さんのコメントへの生レスポンスも予定しています。</p>
-          <p>【セットリスト（予定）】<br>1. Vivid<br>2. Carnival<br>3. FLYING<br>4. Y.M.P<br>5. PARADE</p>
-          <p>みんなで盛り上げよう！ハッシュタグ <strong>#MAZZEL_LIVE</strong> をつけてSNSでも実況・応援大歓迎です。お気に入りのシーンはぜひシェアしてください。アーカイブは配信終了後72時間限定で公開予定です。お見逃しなく！</p>
-          <p>配信のご視聴にあたって。映像・音声の録画／録音、画面録画、ならびにそれらのSNS等への無断転載・再配布は、権利者の許諾なく行うことはできません。誰もが気持ちよく楽しめるよう、思いやりのあるコメントを心がけましょう。誹謗中傷やネタバレにはご配慮をお願いします。</p>
-          <p>オフィシャルグッズやMAZZELの最新音源は、概要欄のリンクからチェックいただけます。今後のライブ・リリース情報は、公式サイトおよび公式SNS（@MAZZEL_official）にて随時お知らせいたします。</p>
-          <p>引き続きMAZZEL、ならびにBMSG所属アーティストへの温かいご声援をよろしくお願いいたします。それでは——最高の夜にしましょう。Let's PARADE！🎉</p>
-        </div>
-      </div>
-    </div>
 
     <!-- ════ ② コメント欄ボトムシート ════ -->
     <div class="comment-sheet" id="commentSheet">
@@ -800,7 +720,7 @@
     </div>
 
     <!-- ════ 〔横動画モード〕下部固定バー＝共通コンポーネント <bwu-action-bar> ════ -->
-    <bwu-action-bar class="ls-bar" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+    <bwu-action-bar class="ls-bar" id="lsBar" label="Comments" avatars="0,2,4"></bwu-action-bar>
 
     <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
     <div class="detail-sheet only-b" id="detailSheet">
@@ -916,7 +836,7 @@
     const phone = document.getElementById('phone');
     const commentSheet = document.getElementById('commentSheet');
     const commentFab = document.getElementById('commentBtn');
-    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); collapseDesc(); closeDetail(); }
+    function openComment()  { phone.classList.add('s-comment'); commentFab.classList.add('active-comment'); closeDetail(); }
     function closeComment() { phone.classList.remove('s-comment'); commentFab.classList.remove('active-comment'); }
     commentFab.addEventListener('click', () => {
       phone.classList.contains('s-comment') ? closeComment() : openComment();
@@ -925,7 +845,7 @@
 
     /* ════════ 〔Bモード〕詳細シート開閉（4つ目のボタン） ════════ */
     const detailBtn = document.getElementById('detailBtn');
-    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); collapseDesc(); }
+    function openDetail()  { phone.classList.add('s-detail'); detailBtn.classList.add('active-detail'); closeComment(); }
     function closeDetail() { phone.classList.remove('s-detail'); detailBtn.classList.remove('active-detail'); }
     detailBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -972,13 +892,12 @@
       phone.classList.toggle('vid-landscape', o === 'landscape');
       phone.classList.toggle('vid-portrait', o === 'portrait');
       orientTabs.forEach(t => t.classList.toggle('on', t.dataset.orient === o));
-      const isB = phone.classList.contains('mode-b');
       if (o === 'landscape') {
-        closeComment(); closeDetail(); collapseDesc();  // 横は詳細パネルが既定表示（コメント閉）
+        closeComment(); closeDetail();                 // 横は詳細パネルが既定表示（コメント閉）
         vimeoFrame.src = VIMEO_LANDSCAPE;               // 16:9 Vimeo に読み込み直し
       } else {
         vimeoFrame.src = VIMEO_PORTRAIT;                // 縦動画(Vimeo)を読み込み直し（横の動画は停止）
-        setMode(isB ? 'b' : 'a');                       // 縦に戻す→モードの初期状態を再適用
+        setMode();                                      // 縦に戻す→Bモードの初期状態を再適用
       }
     }
     orientTabs.forEach(t => t.addEventListener('click', (e) => { e.stopPropagation(); setOrient(t.dataset.orient); }));
@@ -1010,89 +929,12 @@
       ownSend.classList.toggle('active', ownInput.value.trim().length > 0);
     });
 
-    /* ════════ A / B モード切替（右上タブ）
-       A＝コメントシートが初期 / B＝概要（詳細）が初期 ════════ */
-    const modeTabs = document.querySelectorAll('#modeTabs .mode-tab');
-    function setMode(m) {
-      closeComment(); closeDetail(); collapseDesc();   // 一旦リセット
-      phone.classList.toggle('mode-b', m === 'b');
-      phone.classList.toggle('mode-a', m === 'a');
-      modeTabs.forEach(t => t.classList.toggle('on', t.dataset.mode === m));
-      // 初期表示（縦）：A→詳細シートのピークが見えている / B→何も開かず入力バーのみ
-      //   collapseDesc 済みなので A は概要ピーク表示、B は detail-sheet 非表示＋下部バーのみ
-      // 横動画(A横/B横)は共通：詳細パネル既定＋下部バー（A/Bで差は無し）
+    /* ════════ Bモード初期化（ライブはBモード固定。旧Aモード＝概要ピークは廃止） ════════ */
+    function setMode() {
+      closeComment(); closeDetail();
+      phone.classList.add('mode-b');
     }
-    modeTabs.forEach(t => t.addEventListener('click', (e) => {
-      e.stopPropagation(); setMode(t.dataset.mode);
-    }));
-    phone.classList.add('mode-a');
     phone.classList.add('vid-portrait');   // 初期は縦動画。開く状態はスクリプト末尾で設定
-
-    /* ════════ ① 動画概要シート：ドラッグで動画の上に乗る ════════ */
-    const descSheet = document.getElementById('descSheet');
-    const descGrabber = document.getElementById('descGrabber');
-    const descScroll = document.getElementById('descScroll');
-    function expandDesc()   { descSheet.classList.add('expanded'); phone.classList.add('s-desc'); }
-    function collapseDesc() { descSheet.classList.remove('expanded'); phone.classList.remove('s-desc'); descScroll.scrollTop = 0; }
-
-    // グラバーをタップで開閉トグル
-    descGrabber.addEventListener('click', () => {
-      descSheet.classList.contains('expanded') ? collapseDesc() : expandDesc();
-    });
-
-    // ドラッグ（グラバー）でスナップ開閉
-    let dragStartY = null, dragStartExpanded = false;
-    function onDown(e) {
-      dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
-      dragStartExpanded = descSheet.classList.contains('expanded');
-      descSheet.style.transition = 'none';
-    }
-    function onMove(e) {
-      if (dragStartY === null) return;
-      const y = (e.touches ? e.touches[0].clientY : e.clientY);
-      const dy = y - dragStartY;
-      if (Math.abs(dy) > 4) e.preventDefault && e.preventDefault();
-    }
-    function onUp(e) {
-      if (dragStartY === null) return;
-      const y = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
-      const dy = y - dragStartY;
-      descSheet.style.transition = '';
-      if (dy < -30) expandDesc();
-      else if (dy > 30) collapseDesc();
-      dragStartY = null;
-    }
-    descGrabber.addEventListener('mousedown', onDown);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    descGrabber.addEventListener('touchstart', onDown, { passive: true });
-    descGrabber.addEventListener('touchmove', onMove, { passive: false });
-    descGrabber.addEventListener('touchend', onUp);
-
-    // 概要本文を上端までスクロールしたら（オーバースクロールで）開く / 先頭で下へ引いたら閉じる（PC: wheel）
-    descScroll.addEventListener('wheel', (e) => {
-      if (!descSheet.classList.contains('expanded') && e.deltaY > 0) { expandDesc(); }
-      else if (descSheet.classList.contains('expanded') && descScroll.scrollTop <= 0 && e.deltaY < 0) { collapseDesc(); }
-    }, { passive: true });
-
-    // 同じ挙動をタッチでも（スマホ: 端でのオーバースクロールで開閉）
-    let tdStartY = null, tdStartScroll = 0, tdExpanded = false, tdDone = false;
-    descScroll.addEventListener('touchstart', (e) => {
-      tdStartY = e.touches[0].clientY;
-      tdStartScroll = descScroll.scrollTop;
-      tdExpanded = descSheet.classList.contains('expanded');
-      tdDone = false;
-    }, { passive: true });
-    descScroll.addEventListener('touchmove', (e) => {
-      if (tdStartY === null || tdDone) return;
-      const dy = e.touches[0].clientY - tdStartY;   // >0:下スワイプ / <0:上スワイプ
-      if (!tdExpanded) {
-        if (dy < -24) { expandDesc(); tdDone = true; }            // 折りたたみ→上スワイプで展開
-      } else if (tdStartScroll <= 0 && descScroll.scrollTop <= 0 && dy > 32) {
-        collapseDesc(); tdDone = true;                            // 展開・先頭で下スワイプ→畳む
-      }
-    }, { passive: true });
-    descScroll.addEventListener('touchend', () => { tdStartY = null; }, { passive: true });
 
     /* ════════ シート外クリックで元の大きさに戻す ════════ */
     const actionsEl = document.querySelector('.actions');
@@ -1107,10 +949,6 @@
       if (phone.classList.contains('s-detail')) {
         if (!detailSheet.contains(e.target) && !inActions) closeDetail();
         return;
-      }
-      // 概要シート展開時：シート外をクリックで畳む
-      if (descSheet.classList.contains('expanded')) {
-        if (!descSheet.contains(e.target) && !inActions) collapseDesc();
       }
     });
 
@@ -1195,7 +1033,7 @@
     })();
 
     /* ════════ 初期表示：A＝コメント初期 / B＝概要(詳細)初期 ════════ */
-    setMode('b'); setOrient('landscape');  /* ライブB・横で固定 */
+    setMode(); setOrient('landscape');  /* ライブB・横で固定 */
   </script>
 
   <!-- Vimeo Player SDK：横モードの全画面ボタン（Vimeo全画面と同挙動）用 -->

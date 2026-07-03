@@ -197,22 +197,30 @@
     /* ════════════ コメントチップ（吹き出しピル：オーバーレイ/パネル共通） ════════════ */
     .chip {
       align-self: flex-start;
-      max-width: 100%;
+      max-width: min(100%, 280px);
       width: fit-content;
-      display: inline-flex;
-      align-items: flex-start;   /* 改行時は上揃え（名前とテキスト1行目を揃える） */
-      gap: 6px;
+      display: block;               /* 名前＋本文を1つのテキストとして流す（本文は名前の下へ折返す） */
       padding: 6px 12px;
       border-radius: 18px;
       background: rgba(0,0,0,0.4);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       font-size: 14px; line-height: 20px;
+      word-break: break-word;
+      overflow-wrap: anywhere;
       /* 出現アニメ（下からスッと） */
       animation: chipIn .34s cubic-bezier(.22,.61,.36,1);
     }
-    .chip .u { color: rgba(255,255,255,0.55); font-weight: 600; flex-shrink: 0; white-space: nowrap; }
-    .chip .m { color: #fff; word-break: break-word; }
+    .chip .u { color: rgba(255,255,255,0.55); font-weight: 600; }
+    .chip .m { color: #fff; }
+    /* 名前＋本文の折返しブロック：4行を超えたら末尾「…」で省略 */
+    .chip .tx {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      line-clamp: 4;
+      overflow: hidden;
+    }
     @keyframes chipIn {
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -373,15 +381,19 @@
     .cs-input .field {
       flex: 1; height: 40px; border-radius: 20px;
       background: var(--c-input);
-      display: flex; align-items: center; padding: 0 14px;
-      font-size: 14px; color: rgba(255,255,255,0.4);
+      border: 0; outline: none; padding: 0 14px;
+      font-size: 14px; color: #fff; font-family: inherit;
     }
+    .cs-input .field::placeholder { color: rgba(255,255,255,0.4); }
     .cs-send {
       width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,0.16);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background .15s ease;
     }
     .cs-send svg { width: 20px; height: 20px; }
+    .cs-input .cs-send.active { background: #fff; }
+    .cs-input .cs-send.active svg path { stroke: #000; }
 
     /* ════════════════════════════════════════════════════════════
        バージョンB（右上タブで A ⇄ B 切替）
@@ -411,7 +423,7 @@
     .only-b { display: none !important; }
     .phone.mode-b .only-b { display: flex !important; }
     /* Bモードでは「シート内入力欄」は使わない（下部バーで入力） */
-    .phone.mode-b .cs-input  { display: none !important; }
+    /* live: コメント入力欄はシート内に常設（下部バーは廃止） */
 
     /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
     .phone.mode-b {
@@ -428,15 +440,32 @@
 
     .fab.active-detail { border-color: rgba(255,255,255,0.6); }
 
-    /* ── コメント欄タブ（すべて / アーティスト） ── */
-    .cs-tabs { display: flex; gap: 6px; align-items: center; }
-    .cs-tab {
-      height: 34px; padding: 0 16px; border-radius: 34px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
-      background: transparent; cursor: pointer; white-space: nowrap;
+    /* ── コメントシート見出し（チャットアイコン＋Comments） ── */
+    .cs-heading { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .cs-heading-ic { width: 24px; height: 24px; flex-shrink: 0; }
+    .cs-head-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .cs-head-right .cs-close { margin-left: 0; }
+
+    /* ── アーティストのみ絞り込みトグル（アバター＋「アーティスト」ピル） ── */
+    .artist-toggle {
+      /* ✕(40px)と同高。24pxアバター＋上下中央揃えで上下余白8px相当 */
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 40px; padding: 0 12px 0 8px; border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.15); background: transparent;
+      cursor: pointer; user-select: none; white-space: nowrap;
+      transition: background .15s ease, border-color .15s ease;
     }
-    .cs-tab.on { background: rgba(255,255,255,0.16); color: #fff; }
+    .artist-toggle .at-avatars { display: inline-flex; align-items: center; }
+    .artist-toggle .at-av {
+      width: 24px; height: 24px; border-radius: 50%; object-fit: cover;
+      border: 1.5px solid var(--c-comment-bg, #101010); margin-right: -6px;
+    }
+    .artist-toggle .at-av:last-child { margin-right: 0; }
+    .artist-toggle .at-label { font-size: 14px; font-weight: 600; color: #fff; }
+    /* 選択時：白背景・黒文字 */
+    .artist-toggle.on { background: #fff; border-color: #fff; }
+    .artist-toggle.on .at-label { color: #000; }
+    .artist-toggle.on .at-av { border-color: #fff; }
 
     /* Bモード：コメントシートは下部バーの上で止める（＝4ボタンのすぐ下〜バー上） */
     .phone.mode-b .comment-sheet {
@@ -447,13 +476,19 @@
     /* アーティストタブ：アーティスト以外を隠す */
     .cs-list.artist-only .chip:not(.artist) { display: none; }
 
-    /* アーティストのチップ：アイコン＋緑のプロフィール名（A/B 共通）。上揃えは .chip 既定 */
-    .chip .cav {
-      width: 20px; height: 20px; border-radius: 50%;
-      flex-shrink: 0; object-fit: cover; margin-right: 2px;
-      display: none;  /* 一般ユーザーはアイコン無し */
+    /* アーティストのチップ：アイコンを左上に固定し、名前＋本文はその右で折返す */
+    .chip .cav { display: none; }   /* 一般ユーザーはアイコン無し */
+    .chip.artist {
+      display: flex;
+      align-items: flex-start;      /* アイコンは左上揃え */
+      gap: 6px;
     }
-    .chip.artist .cav { display: inline-block; }
+    .chip.artist .cav {
+      display: block;
+      width: 20px; height: 20px; border-radius: 50%;
+      flex-shrink: 0; object-fit: cover;
+    }
+    .chip.artist .tx { min-width: 0; }         /* 名前＋本文の折返しブロック（アイコンの右） */
     .chip.artist .u  { color: #3ad17a; }       /* アーティスト名は緑（A/B 共通） */
     .chip.own .u     { color: #fc5555; }       /* 自分のコメントは「あなた」を赤に */
 
@@ -642,10 +677,7 @@
       border-radius: 12px;
     }
 
-    /* ════════ Ph.2：縦動画は初期表示から角丸16px（iframeにも適用／横16:9は角丸なしのまま） ════════ */
-    .phone.vid-portrait .video-stage,
-    .phone.vid-portrait .video-stage iframe,
-    .phone.vid-portrait .video-stage .video-fallback { border-radius: 16px; }
+    /* ════════ Ph.2：縦動画は角丸なし（フルブリード） ════════ */
   </style>
 </head>
 <body>
@@ -706,15 +738,24 @@
     <div class="comment-sheet" id="commentSheet">
       <div class="cs-grabber"></div>
       <div class="cs-header">
-        <!-- すべて / アーティスト タブ（A/B 共通） -->
-        <div class="cs-tabs" id="csTabs">
-          <div class="cs-tab on" data-tab="all">すべて</div>
-          <div class="cs-tab" data-tab="artist">アーティスト</div>
+        <!-- 見出し：チャットアイコン＋Comments -->
+        <div class="cs-heading">
+          <svg class="cs-heading-ic" viewBox="0 0 24 24" fill="none"><path d="M7.50977 19.8018C8.83126 20.5639 10.3645 21 11.9996 21C16.9702 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.6351 3.43604 15.1684 4.19819 16.4899L4.20114 16.495C4.27448 16.6221 4.31146 16.6863 4.32821 16.7469C4.34401 16.804 4.34842 16.8554 4.34437 16.9146C4.34003 16.9781 4.3186 17.044 4.27468 17.1758L3.50586 19.4823L3.50489 19.4853C3.34268 19.9719 3.26157 20.2152 3.31938 20.3774C3.36979 20.5187 3.48169 20.6303 3.62305 20.6807C3.78482 20.7384 4.02705 20.6577 4.51155 20.4962L4.51758 20.4939L6.82405 19.7251C6.95537 19.6813 7.02214 19.6591 7.08559 19.6548C7.14475 19.6507 7.19578 19.6561 7.25293 19.6719C7.31368 19.6887 7.37783 19.7257 7.50563 19.7994L7.50977 19.8018Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="12" r="1" fill="#fff"/><circle cx="12" cy="12" r="1" fill="#fff"/><circle cx="15.5" cy="12" r="1" fill="#fff"/></svg>
+          <span class="cs-title">Comments</span>
         </div>
-        <!-- タブの右側にコメント数カウンター -->
-        <span class="cs-count" id="csCount">1,234</span>
-        <div class="cs-close" id="commentClose">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <!-- 右：アーティストのみ絞り込みトグル＋✕ -->
+        <div class="cs-head-right">
+          <div class="artist-toggle" id="artistToggle" role="button" aria-pressed="false">
+            <span class="at-avatars">
+              <img class="at-av" data-avatar="0" alt="">
+              <img class="at-av" data-avatar="4" alt="">
+              <img class="at-av" data-avatar="2" alt="">
+            </span>
+            <span class="at-label">アーティスト</span>
+          </div>
+          <div class="cs-close" id="commentClose">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
         </div>
       </div>
       <div class="cs-list" id="csList">
@@ -737,8 +778,8 @@
       </div>
       <div class="cs-input">
         <img class="avatar" src="" data-avatar="9" alt="">
-        <div class="field">コメントを追加...</div>
-        <div class="cs-send">
+        <input class="field" id="ownInput" type="text" placeholder="コメントを追加..." autocomplete="off">
+        <div class="cs-send" id="ownSend">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
@@ -759,7 +800,7 @@
     </div>
 
     <!-- ════ 〔横動画モード〕下部固定バー＝共通コンポーネント <bwu-action-bar> ════ -->
-    <bwu-action-bar class="ls-bar" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+    <bwu-action-bar class="ls-bar" id="lsBar" label="Comments" avatars="0,2,4"></bwu-action-bar>
 
     <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
     <div class="detail-sheet only-b" id="detailSheet">
@@ -779,15 +820,6 @@
           <p>最新アルバム『PARADE』の楽曲を中心に、「Vivid」「Carnival」などをお届け。途中にはトークや、皆さんのコメントへの生レスポンスも。ハッシュタグは #MAZZEL_LIVE。</p>
           <p>※ 配信の録画・録音・無断転載はご遠慮ください。アーカイブは終了後72時間限定公開。最新情報は公式サイト・公式SNS（@MAZZEL_official）にて。</p>
         </div>
-      </div>
-    </div>
-
-    <!-- ════ 下部コメントバー（Bモード：常時表示・タップで記入） ════ -->
-    <div class="bottom-bar only-b" id="bottomBar">
-      <img class="avatar" src="" data-avatar="9" alt="">
-      <input class="field" id="ownInput" type="text" placeholder="コメントを追加..." autocomplete="off">
-      <div class="cs-send" id="ownSend">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
 
@@ -847,7 +879,25 @@
     ];
     const ARTIST_AV = {}; ARTISTS.forEach((n, i) => ARTIST_AV[n] = i);
 
+    // 長いプロフィール名（16文字で「…」）と、4行を超える本文（4行目末尾で「…」）の専用プール
+    const LONG_NAMES = [
+      'ずっと応援してる古参ファンですよろしくね',
+      'MAZZEL_LOVE_forever_official_2025',
+      'デビュー前からずっと見てる箱推しの民です',
+      '毎日配信チェックしてる自称ナンバーワンファン',
+    ];
+    const LONG_BODIES = [
+      '初めてライブ配信を見てるけど演出も歌もダンスも全部かっこよすぎて鳥肌が止まらない、これからもずっとついていきます本当に本当に大好きですみんな最高で幸せな時間をありがとう',
+      'デビューからずっと見てきたからこそ今日この瞬間を一緒に過ごせて本当に嬉しい、ここまで努力してきたメンバーのみんな本当におめでとう、そしていつも元気と勇気をありがとう大好き',
+      'お仕事で疲れてたけどこの配信を見て一気に元気が出た、やっぱり推しは最高の存在だなって改めて実感してる、明日からのわたしもまた頑張れそうです本当にいつもありがとう感謝しかない',
+    ];
+
+    let __seq = 0;
     function makeComment() {
+      // 20回に1回：必ず「長いプロフィール名＋4行超の本文」ユーザーを出す（名前も本文も末尾「…」）
+      if (++__seq % 20 === 0) {
+        return { name: rand(LONG_NAMES), text: rand(LONG_BODIES), long: true };
+      }
       // 約3割でアーティストのコメント
       if (Math.random() < 0.3) {
         const name = rand(ARTISTS);
@@ -858,15 +908,21 @@
       return { name, text: rand(MESSAGES) };
     }
     const esc = (s) => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    /* プロフィール名は16文字で切り詰め「…」。本文は4行を超えたらCSS(.tx)で末尾「…」省略 */
+    const NAME_MAX = 16;
+    const clip = (s, n) => { const a = [...String(s)]; return a.length > n ? a.slice(0, n).join('') + '…' : String(s); };
     function chipHTML(c) {
+      const name = esc(clip(c.name || '', NAME_MAX));
       const m = esc(c.text);
+      // 名前＋本文を1つのテキスト(.tx)として流す。長文は4行までで末尾「…」
       if (c.own) {
-        return `<div class="chip own"><span class="u">あなた</span><span class="m">${m}</span></div>`;
+        return `<div class="chip own"><span class="tx"><span class="u">あなた</span> <span class="m">${m}</span></span></div>`;
       }
+      // アーティスト：アイコンを左上に固定し、名前＋本文はその右で折返す
       if (c.artist) {
-        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
+        return `<div class="chip artist"><img class="cav" src="${avatarDataURL(c.av)}" alt=""><span class="tx"><span class="u">${name}</span> <span class="m">${m}</span></span></div>`;
       }
-      return `<div class="chip"><span class="u">${c.name}</span><span class="m">${m}</span></div>`;
+      return `<div class="chip"><span class="tx"><span class="u">${name}</span> <span class="m">${m}</span></span></div>`;
     }
 
     /* ════════ 戻るボタン ════════ */
@@ -924,13 +980,14 @@
     detailScrollEl.addEventListener('touchend', () => { dtStartY = null; }, { passive: true });
 
     /* ════════ 〔Bモード〕コメントタブ（すべて / アーティスト） ════════ */
-    const csTabs = document.querySelectorAll('#csTabs .cs-tab');
-    csTabs.forEach(t => t.addEventListener('click', (e) => {
+    const artistToggle = document.getElementById('artistToggle');
+    artistToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      csTabs.forEach(x => x.classList.toggle('on', x === t));
-      csListEl.classList.toggle('artist-only', t.dataset.tab === 'artist');
-      csListEl.scrollTop = 0;  // タブ切替時は必ずコメント最上部を表示
-    }));
+      const on = artistToggle.classList.toggle('on');
+      artistToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+      csListEl.classList.toggle('artist-only', on);
+      csListEl.scrollTop = 0;  // 切替時はコメント最上部を表示
+    });
 
     /* ════════ 〔横動画モード〕下部バー（共通コンポーネント）の「コメント」でコメントシートを立ち上げ ════════ */
     document.getElementById('lsBar').addEventListener('comment', openComment);
@@ -957,17 +1014,12 @@
     /* ════════ 〔Bモード〕下部コメントバー：タップで記入→送信でコメント欄に反映 ════════ */
     const ownInput = document.getElementById('ownInput');
     const ownSend  = document.getElementById('ownSend');
-    document.getElementById('bottomBar').addEventListener('click', (e) => {
-      e.stopPropagation();   // シート外クリックの誤判定を防ぐ
-      if (e.target !== ownSend && !ownSend.contains(e.target)) ownInput.focus();
-    });
     function sendOwn() {
       const text = ownInput.value.trim();
       if (!text) return;
-      // 「すべて」タブに戻す（コメント欄を開いている場合に自分のコメントが見えるように）
-      const allTab = document.querySelector('#csTabs .cs-tab[data-tab="all"]');
-      const artistTab = document.querySelector('#csTabs .cs-tab[data-tab="artist"]');
-      allTab.classList.add('on'); artistTab.classList.remove('on');
+      // 送信時は「すべて」表示に戻す（自分のコメントが見えるように）
+      artistToggle.classList.remove('on');
+      artistToggle.setAttribute('aria-pressed', 'false');
       csListEl.classList.remove('artist-only');
       pushComment({ own: true, text });           // オーバーレイ＋コメント欄に反映（シートは開かない）
       csListEl.scrollTop = csListEl.scrollHeight;
@@ -1031,7 +1083,7 @@
     // 1件生成（交互にアーティストを確定で混ぜ、アーティストタブも埋まるように）
     function makeOne(forceArtist) {
       let c = makeComment();
-      if (forceArtist && !c.artist) {
+      if (forceArtist && !c.artist && !c.long) {   // 20回に1回の長文ユーザーはアーティストに置換しない
         const name = rand(ARTISTS);
         c = { name, text: rand(ARTIST_MSG), artist: true, av: ARTIST_AV[name] };
       }
@@ -1125,8 +1177,9 @@
       }, 500);
     });
 
-    /* ════════ 初期表示：A＝コメント初期 / B＝概要(詳細)初期 ════════ */
+    /* ════════ 初期表示：コメントシートを開いた状態で表示（Figma準拠） ════════ */
     setMode();  /* ライブB・縦で固定 */
+    openComment();  /* 初期からコメントシートを開く（右レール💬でも開閉可） */
   </script>
   <script src="../bwu-vimeo-controls.js"></script>
 

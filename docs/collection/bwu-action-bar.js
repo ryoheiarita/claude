@@ -76,7 +76,7 @@
   class BwuActionBar extends HTMLElement {
     connectedCallback() {
       if (this._built) return; this._built = true;
-      const label = this.getAttribute('label') || 'コメント';
+      const label = this.getAttribute('label') || 'Comments';
       const avs = (this.getAttribute('avatars') ?? '0,2,4')
         .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
       const more = this.getAttribute('more') ?? '+3';
