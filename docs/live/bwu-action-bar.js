@@ -58,7 +58,7 @@
     .avs { display: flex; align-items: center; }
     .avs img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-left: -8px; border: 2px solid #303030; }
     .avs img:first-child { margin-left: 0; }
-    .avs .more { margin-left: 6px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.75); white-space: nowrap; }
+    .avs .more { margin-left: 4px; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.5); white-space: nowrap; }
     .actions { overflow: visible; }       /* バースト粒子をはみ出させる */
     .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
     .fab {
@@ -66,6 +66,9 @@
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       position: relative; overflow: visible; background: transparent; border: 0;
     }
+    /* ハートの左・ブックマークの右に余白を 2px 追加 */
+    #h { padding-left: 2px; }
+    #b { padding-right: 2px; }
     .fab .ico { width: 24px; height: 24px; }
     .fab .lottie { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 72px; height: 72px; pointer-events: none; }
   `;
@@ -73,7 +76,7 @@
   class BwuActionBar extends HTMLElement {
     connectedCallback() {
       if (this._built) return; this._built = true;
-      const label = this.getAttribute('label') || 'コメント';
+      const label = this.getAttribute('label') || 'Comments';
       const avs = (this.getAttribute('avatars') ?? '0,2,4')
         .split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
       const more = this.getAttribute('more') ?? '+3';
