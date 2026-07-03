@@ -446,7 +446,7 @@
       display: flex; align-items: center;
       padding: 8px 16px 14px;
     }
-    .cs-header .ttl { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .cs-header .ttl { display: flex; align-items: center; gap: 4px; flex: 1; }
     .cs-header .ttl svg { width: 24px; height: 24px; }
     .cs-title { font-size: 16px; font-weight: 600; }
     .cs-count { font-size: 16px; color: rgba(255,255,255,0.75); }
@@ -793,7 +793,7 @@
     <div class="cs-header">
       <div class="ttl">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 14.7 3.04 17.08 4.74 18.88L3.28 21.19C3.09 21.5 3.32 21.89 3.68 21.86L7.59 21.52C8.97 22.15 10.44 22.5 12 22.5" stroke="#fff" stroke-width="1.6"/><circle cx="8" cy="12" r="1.2" fill="#fff"/><circle cx="12" cy="12" r="1.2" fill="#fff"/><circle cx="16" cy="12" r="1.2" fill="#fff"/></svg>
-        <span class="cs-title">コメント</span>
+        <span class="cs-title">Comments</span>
         <span class="cs-count">1,234</span>
       </div>
       <div class="cs-close" id="commentClose">
@@ -837,7 +837,7 @@
 
       const COMMENTS = [
         { av:0, name:'SOTA', verified:true, time:'12時間前', text:'みんな要チェックだぜ🚩', reacts:[['💖','120'],['👍','32']], add:true },
-        { av:1, name:'SOTA', time:'1時間前', tag:'Wait', text:'みんなライブに来てくれてありがとう！', add:true },
+        { av:1, name:'SOTA', time:'1時間前', text:'みんなライブに来てくれてありがとう！', add:true },
         { av:2, name:'SHUNTO', time:'2時間前', text:'みんなライブに来てくれてありがとう！', reacts:[['💖','120'],['👍','32']], add:true },
         { av:3, name:'ななえ', time:'13時間前', text:'ライブ会場で普通に誕プレ開けるところがいいよね〜 そして本当に嬉しそうでギリギリまで着てて可愛かったー😀', reacts:[['💖','64'],['👍','24']], add:true },
         { av:4, name:'ひろみ', time:'14時間前', text:'本当に素敵なライブでした❤️またいきたいな☺️', reacts:[['💖','32'],['👍','12']], add:true },
