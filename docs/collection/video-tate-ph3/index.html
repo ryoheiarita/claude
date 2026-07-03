@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <script src="../../gate.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>縦動画 Ph.3 — 挙動イメージ</title>
@@ -285,7 +284,7 @@
       display: flex; align-items: center;
       padding: 8px 16px 14px;
     }
-    .cs-header .ttl { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .cs-header .ttl { display: flex; align-items: center; gap: 4px; flex: 1; }
     .cs-header .ttl svg { width: 24px; height: 24px; }
     .cs-title { font-size: 16px; font-weight: 600; }
     .cs-count { font-size: 16px; color: rgba(255,255,255,0.75); }
@@ -581,6 +580,16 @@
     document.querySelectorAll('[data-avatar]').forEach(el => {
       el.src = avatarDataURL(parseInt(el.dataset.avatar, 10));
     });
+
+    /* ════════ 💬コメントボタン：アーティストコメントがある時はアイコンを巡回 ════════
+       コメントアイコン → アーティスト①→②→③ → コメントアイコン … を 1s ごとに「ポワン」と切替（最大3人）。 */
+    (function () {
+      const rail = document.getElementById('actionRail');
+      const artistAvatars = [avatarDataURL(0), avatarDataURL(1), avatarDataURL(2)]; // SOTA / SOTA / SHUNTO
+      const start = () => rail.setCommentArtists && rail.setCommentArtists(artistAvatars);
+      if (rail.setCommentArtists) start();
+      else customElements.whenDefined('bwu-action-rail').then(start);
+    })();
 
     /* ════════ コメントデータ（Figma準拠） ════════ */
     const COMMENTS = [

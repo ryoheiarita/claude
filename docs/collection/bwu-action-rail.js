@@ -63,6 +63,29 @@
     .lottie.sm { width: 24px; height: 24px; transform-origin: center; }
     .lottie.sm svg { overflow: visible; }   /* 弾性バウンド・回転で枠外に出る分を表示 */
     .fab.on { border-color: rgba(255,255,255,0.6); }
+
+    /* 💬 アーティストコメントがある時：コメントアイコン ⇄ アーティストアイコン（最大3人）を
+       1sずつ scale で「ポワン」と切替（背景ボタンはそのまま）。
+       .face を .fab 中央に重ね、show 側だけ scale(1)。入りは overshoot、抜けは素早く縮む＝ポワン。 */
+    .fab .face {
+      position: absolute; top: 50%; left: 50%;
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      transform: translate(-50%,-50%) scale(0);
+      opacity: 0;
+      transition: transform .28s cubic-bezier(.4,0,1,1), opacity .18s ease;   /* 抜け：素早く縮む */
+      pointer-events: none;
+    }
+    .fab .face.show {
+      transform: translate(-50%,-50%) scale(1);
+      opacity: 1;
+      transition: transform .40s cubic-bezier(.34,1.56,.64,1), opacity .26s ease;  /* 入り：弾んで出る＝ポワン */
+    }
+    .fab .avatar-face img {
+      width: 30px; height: 30px; border-radius: 50%;
+      object-fit: cover; display: block;
+      box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85);   /* アーティストと分かる細いリング */
+    }
   `;
 
   class BwuActionRail extends HTMLElement {
@@ -88,6 +111,14 @@
         if (cfg.mode === 'toggle') this._setupToggle(btn, name, cfg);
         else this._setupOnce(btn, name, cfg);
       });
+
+      // 属性 comment-artists="url1,url2,url3" が有れば起動時にアーティスト切替を開始
+      const artists = (this.getAttribute('comment-artists') || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (artists.length) this.setCommentArtists(artists);
+    }
+
+    disconnectedCallback() {
+      if (this._artistTimer) { clearTimeout(this._artistTimer); this._artistTimer = null; }
     }
 
     /* ♥🔖 … on/off トグル（Lottie が無ければ静的SVGの塗り替え） */
@@ -177,6 +208,52 @@
       const uy = -((gr.y + gr.height / 2) - (sr.y + sr.height / 2));
       holder.style.transform =
         `translate(-50%,-50%) scale(${s.toFixed(3)}) translate(${ux.toFixed(2)}px,${uy.toFixed(2)}px)`;
+    }
+
+    /* 💬 アーティストコメントがある時のアイコン切替。
+       urls: アーティストアバターURLの配列（最大3人）。空/未指定で通常のコメントアイコンに戻す。
+       挙動: コメントアイコン → 1 → 2 → 3 → コメントアイコン … を 1s ごとに scale で「ポワン」と巡回。 */
+    setCommentArtists(urls) {
+      const btn = this._btns && this._btns.comment;
+      if (!btn) return;
+      if (this._artistTimer) { clearTimeout(this._artistTimer); this._artistTimer = null; }
+      btn.querySelectorAll('.avatar-face').forEach(el => el.remove());
+
+      // 既存のコメントアイコン一式（.ico-wrap / .lottie）を face(icon-face) に一度だけ内包
+      let iconFace = btn.querySelector('.icon-face');
+      if (!iconFace) {
+        iconFace = document.createElement('div');
+        iconFace.className = 'face icon-face show';
+        Array.from(btn.children)
+          .filter(n => !n.classList.contains('face'))
+          .forEach(n => iconFace.appendChild(n));
+        btn.appendChild(iconFace);
+      }
+
+      const list = (urls || []).filter(Boolean).slice(0, 3);   // 最大3人
+      if (!list.length) { iconFace.classList.add('show'); return; }   // 通常アイコン固定
+
+      list.forEach(u => {
+        const f = document.createElement('div');
+        f.className = 'face avatar-face';
+        const img = document.createElement('img');
+        img.src = u; img.alt = '';
+        f.appendChild(img);
+        btn.appendChild(f);
+      });
+
+      const faces = [iconFace, ...btn.querySelectorAll('.avatar-face')];
+      faces.forEach((f, idx) => f.classList.toggle('show', idx === 0));
+      // 各面の表示時間：アーティストは1s。1周してコメントアイコンに戻ったら5s待機してから次の周へ。
+      const HOLD_AVATAR = 1000, HOLD_ICON = 5000;
+      let i = 0;
+      const step = () => {
+        faces[i].classList.remove('show');
+        i = (i + 1) % faces.length;
+        faces[i].classList.add('show');
+        this._artistTimer = setTimeout(step, i === 0 ? HOLD_ICON : HOLD_AVATAR);
+      };
+      this._artistTimer = setTimeout(step, HOLD_ICON);   // 開始＝アイコンで5s待ってから巡回
     }
 
     /* コメント/概要シートが開いている時の枠（active）を制御 */
