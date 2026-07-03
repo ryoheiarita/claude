@@ -444,7 +444,7 @@
       <!-- 縦(9:16)動画。実装時はこの Vimeo ID を本番の縦動画に差し替え。
            9:16 なのでボックスにピッタリ収まり、グレーは出ず Vimeo 標準コントローラーも表示される -->
       <iframe id="videoFrame"
-        src="https://player.vimeo.com/video/179894977?controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1"
+        src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
         allow="autoplay; fullscreen; picture-in-picture"
         allowfullscreen
         title="Vimeo player"
@@ -682,8 +682,8 @@
     /* ════════ ハート/ブックマーク/コメント/概要/全画面 は <bwu-action-rail> 内で完結 ════════ */
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
-    const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16
-    const LANDSCAPE_SRC = 'https://player.vimeo.com/video/76979871?controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1';  // 横16:9
+    const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16
+    const LANDSCAPE_SRC = 'https://player.vimeo.com/video/76979871?title=0&byline=0&portrait=0&dnt=1&playsinline=1';  // 横16:9
     const videoFrame = document.getElementById('videoFrame');
     const orientTabs = document.getElementById('orientTabs');
     function setOrient(o) {
@@ -699,7 +699,6 @@
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
   </script>
-  <script src="../bwu-vimeo-controls.js"></script>
 
   <!-- ════ 共通：シートを最上部からさらに下に引っ張ったら閉じる（pull-to-dismiss） ════
        対象: .comment-sheet / .desc-sheet。少し引っ張る（PULL_CLOSE_PX）と既存の閉じる動作を発火。

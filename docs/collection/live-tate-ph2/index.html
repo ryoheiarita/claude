@@ -689,7 +689,7 @@
       <!-- 縦(9:16)動画。実装時はこの Vimeo ID を本番の縦動画に差し替え。
            9:16 なのでボックスにピッタリ収まり、グレーは出ず Vimeo 標準コントローラーも表示される -->
       <iframe id="vimeoFrame"
-        src="https://player.vimeo.com/video/179894977?controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1"
+        src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
         allow="autoplay; fullscreen; picture-in-picture"
         allowfullscreen
         title="Vimeo player"
@@ -997,7 +997,7 @@
     const orientTabs = document.querySelectorAll('#orientTabs .mode-tab');
     const vimeoFrame = document.getElementById('vimeoFrame');
     const VIMEO_PORTRAIT  = vimeoFrame.src;   // 縦動画(9:16 Vimeo)
-    const VIMEO_LANDSCAPE = 'https://player.vimeo.com/video/76979871?controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 横動画(16:9 Vimeo)
+    const VIMEO_LANDSCAPE = 'https://player.vimeo.com/video/76979871?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 横動画(16:9 Vimeo)
     function setOrient(o) {
       phone.classList.toggle('vid-landscape', o === 'landscape');
       phone.classList.toggle('vid-portrait', o === 'portrait');
@@ -1182,7 +1182,6 @@
     setMode();  /* ライブB・縦で固定 */
     openComment();  /* 初期からコメントシートを開く（右レール💬でも開閉可） */
   </script>
-  <script src="../bwu-vimeo-controls.js"></script>
 
   <!-- ════ 共通：シートを最上部からさらに下に引っ張ったら閉じる（pull-to-dismiss） ════
        対象: .comment-sheet / .desc-sheet。少し引っ張る（PULL_CLOSE_PX）と既存の閉じる動作を発火。
