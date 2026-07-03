@@ -40,6 +40,7 @@ Scaffold (背景 #101010)
 - スクロール領域の角丸コンテナ: `borderRadius: top 16px`、背景 `Colors.white.withValues(alpha: 0.08)`。
 - 上方向の余白 `paddingTop: 120`（ナビバー分）、下方向 `paddingBottom: 100`（コメントバー/FAB 分）。
 - Column の各ブロック間隔は **16px**、左右 padding **16px**。
+- ただし見出しは margin を加算（2026-07-04 更新）: **H2 は上余白 合計32px**（gap16 + margin-top16）、**H3 は上余白 合計24px / 下余白 合計8px**（gap16 + margin-top8 / gap16 − margin-bottom8）。
 
 ---
 
@@ -71,8 +72,8 @@ Scaffold (背景 #101010)
 | H1 タイトル | 24 | w600 | 1.4 (≈33.6) | -0.4 | white |
 | バッジ | 14 | w400 | — | -0.28 | white |
 | 本文 | 16 | w400 | 28 (height 1.75) | — | white 70%、段落間 24px |
-| H2 | 20 | w700 | 30 (height 1.5) | 0.8 (0.04em) | 下線 + 上下 padding 10px |
-| H3 | 18 | w700 | 30 (height 1.5) | 0.8 (0.04em) | white 90% |
+| H2 | 20 | w700 | 30 (height 1.5) | 0.8 (0.04em) | 下線 + 上下 padding 10px、上余白 合計32px |
+| H3 | 18 | w700 | 30 (height 1.5) | 0.8 (0.04em) | white 90%、上余白 合計24px / 下余白 合計8px |
 | リスト項目 | 16 | w400 | 30 (height 1.875) | — | white 70%、項目間 9px |
 | コメントラベル | 16 | w600 | 22 | — | 「コメント」 |
 | コメント件数 | 16 | w400 | 24 | — | 「1,234」white 75% |

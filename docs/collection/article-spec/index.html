@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>【開発共有用】通常記事仕様+素材 — BWU collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d; --card: #1a1a1a; --card2: #232323;
+      --tx: #f2f2f2; --tx2: rgba(255,255,255,0.62); --tx3: rgba(255,255,255,0.38);
+      --line: rgba(255,255,255,0.12); --acc: #3ad17a; --warn: #ffd133;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--tx);
+      font-family: 'Figtree','Noto Sans JP',sans-serif;
+      line-height: 1.75; -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 120px; }
+
+    /* ── header ── */
+    .back { display: inline-flex; align-items: center; gap: 6px; color: var(--tx2); text-decoration: none; font-size: 14px; margin-bottom: 24px; }
+    .back:hover { color: var(--tx); }
+    .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #000; background: var(--acc); border-radius: 4px; padding: 2px 8px; margin-bottom: 10px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.01em; }
+    .sub { color: var(--tx2); font-size: 14px; margin-top: 6px; }
+
+    /* ── sections ── */
+    h2 { font-size: 18px; font-weight: 700; margin: 44px 0 4px; padding-top: 20px; border-top: 1px solid var(--line); }
+    h2 .no { color: var(--acc); margin-right: 8px; font-family: 'Figtree'; }
+    h3 { font-size: 15px; font-weight: 700; margin: 24px 0 4px; color: var(--tx); }
+    .lead { color: var(--tx2); font-size: 13.5px; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0; }
+    th { text-align: left; color: var(--tx3); font-weight: 600; font-size: 12px; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+    td:first-child { white-space: nowrap; }
+    code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12.5px; background: var(--card2); border-radius: 5px; padding: 1.5px 6px; color: #9fe8bf; }
+    pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font-size: 12.5px; line-height: 1.6; margin: 12px 0; }
+    pre code { background: none; padding: 0; color: #cfe9db; }
+    a { color: #7fd4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .note { background: var(--card); border-left: 3px solid var(--warn); border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: 13.5px; color: var(--tx2); margin: 14px 0; }
+    .note b { color: var(--tx); }
+    ul.plain { list-style: none; }
+    ul.plain li { padding: 4px 0 4px 18px; position: relative; font-size: 13.5px; color: var(--tx2); }
+    ul.plain li::before { content: '—'; position: absolute; left: 0; color: var(--acc); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 12px 0; }
+    .file {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      color: var(--tx); font-size: 13px; text-decoration: none;
+    }
+    .file:hover { background: var(--card2); text-decoration: none; }
+    .file .ic { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .ic.md { background: #2b3550; } .ic.js { background: #4a3a1f; } .ic.lot { background: #1f5a55; } .ic.dart { background: #3a2f63; } .ic.img { background: #5a2540; }
+    .file .nm { font-weight: 600; line-height: 1.3; }
+    .file .ds { color: var(--tx3); font-size: 11.5px; line-height: 1.35; }
+    footer { margin-top: 60px; color: var(--tx3); font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    記事一覧へ戻る
+  </a>
+
+  <div class="tag">開発共有用</div>
+  <h1>通常記事 実装仕様 + 素材</h1>
+  <p class="sub">更新: 2026-07-04 ／ 対象画面: <a href="../article/">通常記事（動作リファレンス）</a> ／ 記事データはサーバー側で用意済み。本画面はフロントエンジニア担当。</p>
+
+  <div class="note">
+    <b>この記事が「通常記事」画面の実装の正（source of truth）です。</b>
+    実装後は必ず <a href="../article/">../article/</a> の実HTMLと突き合わせて挙動を確認してください。
+    共通コンポーネント（<code>&lt;bwu-action-bar&gt;</code> / Lottie ♥🔖）の詳細は
+    <a href="../flutter-handoff/docs/COMPONENTS_HANDOFF.md" download>COMPONENTS_HANDOFF.md</a> を参照。
+  </div>
+
+  <!-- ════ 1. 前提 ════ -->
+  <h2><span class="no">1</span>前提とスコープ</h2>
+  <ul class="plain">
+    <li>記事データ（タイトル・日付・タグ・本文ブロック）は API から供給される。<b>画面はブロック配列を受け取ってレンダリングするデータ駆動構造</b>にすること（§3 のブロックモデル参照）</li>
+    <li>デザイン基準幅は <b>390px</b>。実機では画面幅にフィット（コンテンツ左右 padding 16px は固定）</li>
+    <li>高さは <code>100dvh</code> 基準。固定 844px ではない</li>
+    <li>ダークテーマ固定。画面背景 <code>#101010</code></li>
+    <li>フォント: 欧文・数字は <b>Figtree</b>（400/600/700）、和文はシステム標準（実装側の和文フォント指定があればそれに従う）</li>
+    <li>スコープ: スクロール領域（記事本体）＋ 起動ローディング ＋ 下部 <code>&lt;bwu-action-bar&gt;</code> ＋ コメントシート。上部ステータスバーはOS標準のため対象外（戻るボタンは対象）</li>
+  </ul>
+
+  <!-- ════ 2. 画面構造 ════ -->
+  <h2><span class="no">2</span>画面構造（レイヤー順）</h2>
+  <pre><code>Scaffold（背景 #101010）
+└─ Stack
+   ├─ スクロール領域 .scroll-area        … 記事本体（下記）
+   ├─ ナビバー（上部固定・グラデ）        … z 100
+   ├─ 起動ローディングオーバーレイ        … z 95（1秒後に消える）
+   ├─ &lt;bwu-action-bar&gt;（下部固定）        … z 100
+   ├─ コメントオーバーレイ（黒70%）       … z 110
+   └─ コメントシート（80dvh）             … z 120</code></pre>
+
+  <h3>スクロール領域</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>背景</td><td>white 8% = <code>rgba(255,255,255,0.08)</code>（角丸コンテナ）</td></tr>
+    <tr><td>角丸</td><td>上のみ <code>16px</code>（<code>border-radius: 16px 16px 0 0</code>）</td></tr>
+    <tr><td>padding</td><td>上 <code>120px</code>（ナビバー分）／ 下 <code>100px</code>（action-bar 分）／ 左右 <code>16px</code>（内側 .article-inner）</td></tr>
+    <tr><td>ブロック間隔</td><td>縦一列・<b>gap 16px</b>（Flutter: <code>Column</code> ＋ 各要素間 16px。見出しはこれに margin を加算 → §4）</td></tr>
+  </table>
+
+  <h3>ナビバー（上部固定）</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>背景</td><td><code>linear-gradient(to bottom, rgba(0,0,0,0.58), transparent)</code>、下 padding 8px</td></tr>
+    <tr><td>戻るボタン</td><td><code>40×40</code> 円、背景 <code>rgba(0,0,0,0.3)</code> + blur16、border <code>rgba(255,255,255,0.08)</code>、アイコン 24×24 白シェブロン、左 12px</td></tr>
+  </table>
+
+  <!-- ════ 3. コンテンツブロックモデル ════ -->
+  <h2><span class="no">3</span>コンテンツブロックモデル（データ駆動）</h2>
+  <p class="lead">記事本文は以下のブロック型の配列としてレンダリングする。リファレンス記事の並びは例（ブロック数・順序は記事ごとに可変）。</p>
+  <table>
+    <tr><th>type</th><th>内容</th><th>対応セクション</th></tr>
+    <tr><td><code>header</code></td><td>日付 + H1タイトル（1記事に1つ・先頭固定）</td><td>§4 タイポ</td></tr>
+    <tr><td><code>badges</code></td><td>タグの配列（折り返しあり）</td><td>§5 バッジ</td></tr>
+    <tr><td><code>paragraphs</code></td><td>本文段落の配列。段落内に <code>highlight</code>（インラインマーカー）を含み得る</td><td>§5 本文</td></tr>
+    <tr><td><code>h2</code> / <code>h3</code></td><td>見出しテキスト</td><td>§4 見出し</td></tr>
+    <tr><td><code>image</code></td><td>横長画像（url, alt）。独立スケルトン付きで遅延リビール</td><td>§5 画像・§6-C</td></tr>
+    <tr><td><code>list</code></td><td>箇条書き項目の配列</td><td>§5 リスト</td></tr>
+    <tr><td><code>vimeo</code></td><td>縦型 Vimeo 埋め込み（videoId）</td><td>§5 Vimeo</td></tr>
+  </table>
+  <pre><code>// 例（リファレンス記事の構成）
+[
+  { "type": "header", "date": "2025.06.08", "title": "BMSGが描く…" },
+  { "type": "badges", "items": ["Feature", "BMSG", "BE:FIRST", …] },
+  { "type": "paragraphs", "items": ["2021年の設立から…", "「アーティストが…"] },
+  { "type": "image", "src": "…/photo.png" },
+  { "type": "h2", "text": "オーディションから始まった革命" },
+  { "type": "paragraphs", "items": [ … ] },
+  { "type": "h3", "text": "BE:FIRSTの誕生と世界への視線" },
+  { "type": "paragraphs", "items": [ … ] },
+  { "type": "image", "src": "…" },
+  { "type": "paragraphs", "items": [ { "text": "…", "highlight": "「アーティストが損をしない…」" } ] },
+  { "type": "vimeo", "videoId": "179894977" },
+  { "type": "h2", "text": "…" }, { "type": "paragraphs", … },
+  { "type": "image", … },
+  { "type": "h3", "text": "…" }, { "type": "list", "items": [ … ] },
+  { "type": "h2", "text": "…" }, { "type": "paragraphs", … }
+]</code></pre>
+  <div class="note">各ブロックが §6-B のドミノリビールの<b>1単位</b>（= stagger の1インデックス）になる。ブロック数は可変なので、リビール遅延は「ブロックの index × 80ms」で機械的に決める。</div>
+
+  <!-- ════ 4. タイポグラフィと余白 ════ -->
+  <h2><span class="no">4</span>タイポグラフィと見出し余白</h2>
+  <table>
+    <tr><th>要素</th><th>size</th><th>weight</th><th>line-height</th><th>letterSpacing</th><th>色</th></tr>
+    <tr><td>日付</td><td>14</td><td>400</td><td>20px</td><td>—</td><td>white 50%</td></tr>
+    <tr><td>H1 タイトル</td><td>24</td><td>600</td><td>1.4（≈33.6px）</td><td>-0.4</td><td>white 100%</td></tr>
+    <tr><td>H2 見出し</td><td>20（1.25rem）</td><td>700</td><td>30px（1.875rem）</td><td>0.04em（=0.8）</td><td>white 100%</td></tr>
+    <tr><td>H3 見出し</td><td>18（1.125rem）</td><td>700</td><td>30px（1.875rem）</td><td>0.04em（=0.72）</td><td>white 90%</td></tr>
+    <tr><td>本文</td><td>16（1rem）</td><td>400</td><td>28px（height 1.75）</td><td>—</td><td>white 70%</td></tr>
+    <tr><td>バッジ</td><td>14</td><td>400</td><td>1</td><td>-0.28</td><td>white 100%</td></tr>
+    <tr><td>リスト項目</td><td>16</td><td>400</td><td>30px（1.875rem）</td><td>—</td><td>white 70%</td></tr>
+  </table>
+  <p class="lead">和文見出し（H2/H3）は <code>font-feature-settings: "palt" 1</code>（プロポーショナルメトリクス）。Flutter では <code>fontFeatures: [FontFeature('palt')]</code>。</p>
+
+  <h3>余白ルール（2026-07-04 更新）</h3>
+  <table>
+    <tr><th>要素</th><th>上余白（合計）</th><th>下余白（合計）</th><th>内訳</th></tr>
+    <tr><td><b>H2</b></td><td><b>32px</b></td><td>16px</td><td>基本 gap 16 + <code>margin-top: 16</code>。加えて文字上下に <code>padding: 10px 0</code>、下線 1px <code>rgba(255,255,255,0.12)</code>（幅 100%）</td></tr>
+    <tr><td><b>H3</b></td><td><b>24px</b></td><td><b>8px</b></td><td>基本 gap 16 + <code>margin-top: 8</code> ／ 下は <code>margin-bottom: -8</code> で gap 16 − 8 = 8px</td></tr>
+    <tr><td>その他ブロック間</td><td colspan="2">16px（基本 gap）</td><td>header 内の日付↔タイトルは 4px、タイトル↔バッジは 16px</td></tr>
+    <tr><td>本文の段落間</td><td colspan="2">24px</td><td>段落ごとに下マージン 24px（ブロック最後の段落は 0）</td></tr>
+    <tr><td>リスト項目間</td><td colspan="2">9px</td><td>—</td></tr>
+  </table>
+  <div class="note"><b>Flutter 実装の目安:</b> 一律 16px の <code>SizedBox</code> を挟むのではなく、H2 には <code>margin: EdgeInsets.only(top: 16)</code>、H3 には <code>top: 8, bottom: -8</code> 相当（＝直後ブロックとの間隔を 8px にする）を適用。負マージンが使いにくい場合は「H3 の次のブロックとの間隔だけ 8px にする」と読み替えて良い。</div>
+
+  <!-- ════ 5. 各コンポーネント詳細 ════ -->
+  <h2><span class="no">5</span>各コンポーネント詳細</h2>
+
+  <h3>バッジ（タグ）</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>サイズ</td><td>高さ <code>24px</code>、左右 padding <code>8px</code>、角丸 <code>24px</code>（ピル）</td></tr>
+    <tr><td>背景</td><td>white 15% + <code>backdrop-filter: blur(6px)</code></td></tr>
+    <tr><td>並び</td><td>横並び gap <code>4px</code>、<code>Wrap</code> で折り返し</td></tr>
+  </table>
+
+  <h3>本文・ハイライト</h3>
+  <ul class="plain">
+    <li>本文: 16px / w400 / 行高 28px / white 70%</li>
+    <li>ハイライト（インラインマーカー）: 背景 <code>rgba(255,179,71,0.22)</code> = <code>0x38FFB347</code>、文字 white 85%、<code>padding: 1px 5px</code>、角丸 <code>3px</code>。Flutter は <code>Text.rich</code> の <code>TextSpan + background Paint</code> か <code>WidgetSpan</code> で表現</li>
+  </ul>
+
+  <h3>画像ブロック（メイン / インライン共通）</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>アスペクト比</td><td><code>382 / 240</code>（≈1.592）幅いっぱい</td></tr>
+    <tr><td>角丸</td><td>上 <code>14px</code> / 下 <code>8px</code>（<code>border-radius: 14px 14px 8px 8px</code>）</td></tr>
+    <tr><td>フィット</td><td>cover</td></tr>
+    <tr><td>ローディング</td><td>各画像ブロックが<b>独立したシマースケルトン</b>を持つ（§6-C）。スケルトン中央に BWU ロゴ透かし（<code>loading-14-800.svg</code>、幅 80px、opacity 0.5、grayscale）</td></tr>
+  </table>
+
+  <h3>縦型 Vimeo 埋め込み</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>アスペクト比</td><td><code>9 / 16</code>（縦型）幅いっぱい、背景 <code>#000</code></td></tr>
+    <tr><td>角丸</td><td>画像と同じ <code>14px 14px 8px 8px</code>（overflow hidden でクリップ）</td></tr>
+    <tr><td>プレイヤー</td><td><b>Vimeo 標準コントローラーをそのまま使う</b>（自前オーバーレイなし）。埋め込み URL: <code>https://player.vimeo.com/video/{id}?title=0&amp;byline=0&amp;portrait=0&amp;dnt=1&amp;playsinline=1</code></td></tr>
+    <tr><td>Flutter</td><td>WebView 埋め込み。詳細は <a href="../flutter-handoff/docs/VIMEO_PLAYER_FLUTTER.md" download>VIMEO_PLAYER_FLUTTER.md</a></td></tr>
+  </table>
+
+  <h3>下部固定バー <code>&lt;bwu-action-bar&gt;</code>（共通コンポーネント）</h3>
+  <p class="lead">横動画・横LIVEと共通。<b>新規に作らず共通実装を流用</b>すること。見た目・挙動の正は <a href="../bwu-action-bar.js" download>bwu-action-bar.js</a>。</p>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>配置</td><td>画面下固定、<code>padding: 0 12px calc(12px + safe-area-bottom)</code></td></tr>
+    <tr><td>構成</td><td>左: コメントピル（💬 アイコン + 「Comments」+ アバター3つ）／ 右: ♥ / 🔖 の Lottie トグルボタン（48×48 円）</td></tr>
+    <tr><td>ピル背景</td><td><code>#303030</code> + blur10、border white 15%</td></tr>
+    <tr><td>アイコン↔ラベル gap</td><td><b>4px</b>（Figma 10121-28405）</td></tr>
+    <tr><td>Lottie フレーム</td><td><code>LIKE_START=17 / FILLED=90 / UNLIKE_START=105</code>。アニメ中は連打ガード</td></tr>
+    <tr><td>ON 枠線色</td><td>♥ <code>rgba(255,62,62,0.6)</code> = <code>0x99FF3E3E</code> ／ 🔖 <code>rgba(255,209,51,0.6)</code> = <code>0x99FFD133</code></td></tr>
+    <tr><td>イベント</td><td>コメントピルのタップでコメントシートを開く</td></tr>
+  </table>
+
+  <h3>コメントシート</h3>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>高さ / 形状</td><td><code>80dvh</code>、上角丸 <code>16px</code>、背景 <code>#1a1a1a</code>、影 <code>0 -8px 30px rgba(0,0,0,0.5)</code></td></tr>
+    <tr><td>開閉</td><td>下からスライド。<code>0.42s cubic-bezier(0.22, 0.61, 0.36, 1)</code>（標準モーションカーブ）</td></tr>
+    <tr><td>オーバーレイ</td><td>シート外は黒 <code>70%</code>、フェード 0.42s。タップで閉じる</td></tr>
+    <tr><td>グラバー</td><td><code>57×4px</code>、white 50%、角丸 10px、上 padding 8px</td></tr>
+    <tr><td>ヘッダー</td><td>💬アイコン24 + タイトル「Comments」16/w600 + 件数 16 white75%（gap 4px）／ 右に閉じるボタン 40×40 円・背景 white 10%</td></tr>
+    <tr><td>コメント行</td><td>アバター 40 円 / 名前 15/w600 / 時刻 13 white50% / 本文 15・行高22 / リアクションチップ 高さ28・padding 0 10・角丸20・背景 <code>#2c2c2e</code>・14px。行間 20px。先頭に「固定されたコメント」ラベル（12px white50%）</td></tr>
+    <tr><td>入力欄</td><td>下固定: アバター36 + フィールド（高さ40・角丸20・背景 <code>#2a2a2c</code>・placeholder 14px white40%）+ 送信 40 円 white16%。上 border white 8%、safe-area 対応</td></tr>
+    <tr><td><b>引き下げで閉じる</b></td><td>リスト最上部（scrollTop ≤ 0）から下方向に <b>50px</b> 以上ドラッグしたら閉じる（BWU_SHEET_PULL_DISMISS 共通仕様）。追従中はシートを指に合わせて translateY、離したら通常の閉じアニメへ</td></tr>
+  </table>
+
+  <!-- ════ 6. アニメーション ════ -->
+  <h2><span class="no">6</span>アニメーション仕様（この画面の肝）</h2>
+
+  <h3>A. 起動ローディング（オーバーレイ）</h3>
+  <ul class="plain">
+    <li>起動と同時に全面オーバーレイ（背景 <code>#101010</code>、ナビバーと action-bar より背面 = それらは見えたまま）</li>
+    <li>中央にローディングアイコン <code>size: 100</code>（<a href="../article/loading-icon.js" download>loading-icon.js</a> ／ Flutter は <a href="../flutter-handoff/dart/loading_icon.dart" download>loading_icon.dart</a>・依存ゼロ）</li>
+    <li><b>1000ms</b> 経過 → オーバーレイを <b>0.3s</b> フェードアウト → さらに 300ms 後に B を開始</li>
+  </ul>
+  <pre><code>t=0      ローディングアイコン表示
+t=1000   オーバーレイ フェードアウト開始（300ms）
+t=1300   B 開始（ドミノ・ブラーリビール）</code></pre>
+
+  <h3>B. ドミノ・ブラーリビール（記事本体の出現）</h3>
+  <ul class="plain">
+    <li>各コンテンツブロック（§3 の1ブロック = 1単位）を上から順にずらして出現</li>
+    <li>1要素あたり: duration <b>500ms</b>、curve <b><code>cubic-bezier(0.25, 0.46, 0.45, 0.94)</code></b></li>
+    <li>値の変化: blur <code>12px → 0</code> ／ opacity <code>0 → 1</code> ／ translateY <code>8px → 0</code></li>
+    <li>stagger: i 番目のブロックは <b>i × 80ms</b> 遅れて開始</li>
+    <li>Flutter: 各ブロックを RevealItem（<code>ImageFiltered</code> + <code>Opacity</code> + <code>Transform.translate</code> を1つの <code>AnimationController</code> で駆動）でラップ。フルコードは <a href="../flutter-handoff/docs/ARTICLE_SCREEN.md" download>ARTICLE_SCREEN.md</a> §3 参照</li>
+  </ul>
+
+  <h3>C. インライン画像の独立スケルトン → リビール</h3>
+  <ul class="plain">
+    <li>本文中の画像ブロックは B とは独立に、シマースケルトン＋ロゴ透かしを表示</li>
+    <li>ブロックが<b>ビューポートに 20% 入った瞬間</b>を起点に <b>1000ms</b> 待機（一度発火したら以後無視）</li>
+    <li>その後: スケルトンを 0.35s フェードアウトしつつ、実画像を B と同じ blurReveal（500ms）で出現</li>
+    <li>Flutter: <code>visibility_detector</code>（<code>visibleFraction &gt;= 0.2</code>）が簡単</li>
+  </ul>
+
+  <h3>シマー（スケルトン）共通仕様</h3>
+  <pre><code>LinearGradient: white6% → white12% → white6%（stops 0.25 / 0.5 / 0.75）
+背景位置 -200% → 200% を 1.5s ease-in-out で無限ループ、角丸 4px</code></pre>
+
+  <!-- ════ 7. デザイントークン ════ -->
+  <h2><span class="no">7</span>カラートークン一覧</h2>
+  <table>
+    <tr><th>用途</th><th>値</th><th>Flutter</th></tr>
+    <tr><td>画面背景</td><td><code>#101010</code></td><td><code>Color(0xFF101010)</code></td></tr>
+    <tr><td>スクロール領域 背景</td><td>white 8%</td><td><code>Colors.white.withValues(alpha: 0.08)</code></td></tr>
+    <tr><td>見出し / タイトル</td><td>white 100%</td><td><code>Colors.white</code></td></tr>
+    <tr><td>H3 文字</td><td>white 90%</td><td><code>Colors.white.withValues(alpha: 0.90)</code></td></tr>
+    <tr><td>本文 文字</td><td>white 70%</td><td><code>Colors.white.withValues(alpha: 0.70)</code></td></tr>
+    <tr><td>日付 文字</td><td>white 50%</td><td><code>Colors.white.withValues(alpha: 0.50)</code></td></tr>
+    <tr><td>バッジ 背景</td><td>white 15%</td><td><code>Colors.white.withValues(alpha: 0.15)</code></td></tr>
+    <tr><td>H2 下線</td><td>white 12%</td><td><code>Colors.white.withValues(alpha: 0.12)</code></td></tr>
+    <tr><td>リストのドット</td><td>white 35%・5px 円（indent 18px、行頭上 11px）</td><td><code>Colors.white.withValues(alpha: 0.35)</code></td></tr>
+    <tr><td>ハイライト背景</td><td><code>rgba(255,179,71,0.22)</code></td><td><code>Color(0x38FFB347)</code></td></tr>
+    <tr><td>コメントシート背景</td><td><code>#1a1a1a</code>（chip <code>#2c2c2e</code> / 入力 <code>#2a2a2c</code>）</td><td><code>Color(0xFF1A1A1A)</code> 他</td></tr>
+    <tr><td>シートオーバーレイ</td><td>black 70%</td><td><code>Colors.black.withValues(alpha: 0.70)</code></td></tr>
+  </table>
+
+  <!-- ════ 8. 実装上の注意 ════ -->
+  <h2><span class="no">8</span>実装上の注意（落とし穴）</h2>
+  <ul class="plain">
+    <li>リビール完了後は blur/transform を確実に外す（HTML 版では iOS Safari の GPU レイヤー残留対策として終了後に明示リセットしている）。Flutter でも完了後は <code>ImageFiltered</code> をツリーから外すとスクロール性能が安定する</li>
+    <li>画像スケルトンの発火は<b>1回だけ</b>（フラグ管理）。再ビルドで再発火させない</li>
+    <li>♥🔖 はアニメ中の連打ガード必須。ボタンは1セットのみ生成（Lottie の二重生成禁止）</li>
+    <li>シート開閉中も背景記事のスクロール位置を保持する</li>
+    <li>コメントシートの pull-to-dismiss は「リストが最上部にある時のみ」開始。スクロール操作と競合させない</li>
+    <li>ステータスバー・Dynamic Island まわりは実機の SafeArea を使用（プロトタイプ内の 9:41 表示はダミー）</li>
+  </ul>
+
+  <!-- ════ 9. 素材 ════ -->
+  <h2><span class="no">9</span>素材ダウンロード</h2>
+  <p class="lead">画像プレースホルダ・ロゴ・Lottie・Dart サンプル。Lottie のフレーム定義は §5 の action-bar 表を参照。</p>
+  <div class="grid">
+    <a class="file" href="../article/assets/photo.png" download><span class="ic img">IMG</span><span><span class="nm">photo.png</span><br><span class="ds">記事画像プレースホルダ（382:240）</span></span></a>
+    <a class="file" href="../article/assets/loading-14-800.svg" download><span class="ic img">IMG</span><span><span class="nm">loading-14-800.svg</span><br><span class="ds">BWU ロゴ（画像スケルトン透かし）</span></span></a>
+    <a class="file" href="../article/loading-icon.js" download><span class="ic js">JS</span><span><span class="nm">loading-icon.js</span><br><span class="ds">起動ローディングアイコン（JS原本）</span></span></a>
+    <a class="file" href="../flutter-handoff/dart/loading_icon.dart" download><span class="ic dart">DT</span><span><span class="nm">loading_icon.dart</span><br><span class="ds">同ローディングの Flutter 移植（依存ゼロ）</span></span></a>
+    <a class="file" href="../flutter-handoff/dart/like_button.dart" download><span class="ic dart">DT</span><span><span class="nm">like_button.dart</span><br><span class="ds">♥🔖 Lottie 組込サンプル</span></span></a>
+    <a class="file" href="../flutter-handoff/lottie/heart-like.json" download><span class="ic lot">LT</span><span><span class="nm">heart-like.json</span><br><span class="ds">♥ トグル Lottie</span></span></a>
+    <a class="file" href="../flutter-handoff/lottie/bookmark-like.json" download><span class="ic lot">LT</span><span><span class="nm">bookmark-like.json</span><br><span class="ds">🔖 トグル Lottie</span></span></a>
+    <a class="file" href="../flutter-handoff/lottie/messages-4.json" download><span class="ic lot">LT</span><span><span class="nm">messages-4.json</span><br><span class="ds">💬 コメント（ワンショット）</span></span></a>
+    <a class="file" href="../bwu-action-bar.js" download><span class="ic js">JS</span><span><span class="nm">bwu-action-bar.js</span><br><span class="ds">下部バー共通コンポーネント（挙動の正）</span></span></a>
+    <a class="file" href="../lottie-data.js" download><span class="ic js">JS</span><span><span class="nm">lottie-data.js</span><br><span class="ds">♥🔖 Lottie データ（JS同梱版）</span></span></a>
+  </div>
+
+  <h3>関連ドキュメント</h3>
+  <div class="grid">
+    <a class="file" href="../flutter-handoff/docs/ARTICLE_SCREEN.md" download><span class="ic md">MD</span><span><span class="nm">ARTICLE_SCREEN.md</span><br><span class="ds">通常記事 Flutter 指示書（RevealItem フルコード）</span></span></a>
+    <a class="file" href="../flutter-handoff/docs/COMPONENTS_HANDOFF.md" download><span class="ic md">MD</span><span><span class="nm">COMPONENTS_HANDOFF.md</span><br><span class="ds">共通コンポーネント指示書</span></span></a>
+    <a class="file" href="../flutter-handoff/docs/VIMEO_PLAYER_FLUTTER.md" download><span class="ic md">MD</span><span><span class="nm">VIMEO_PLAYER_FLUTTER.md</span><br><span class="ds">Vimeo WebView 実装ガイド</span></span></a>
+    <a class="file" href="../flutter-handoff/" download><span class="ic md">→</span><span><span class="nm">flutter-handoff/</span><br><span class="ds">全画面まとめ指示書 + ZIP 一括DL</span></span></a>
+  </div>
+
+  <footer>BWU UI prototype — 動作リファレンス: <a href="../article/">collection/article/</a> ／ 公開: <a href="https://ryoheiarita.github.io/claude/collection/">ryoheiarita.github.io/claude/collection/</a></footer>
+</div>
+</body>
+</html>
