@@ -52,7 +52,7 @@
       background: #303030; border: 1px solid rgba(255,255,255,0.15);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
-    .comment { gap: 10px; padding: 0 16px; cursor: pointer; border-radius: 40px; }
+    .comment { gap: 4px; padding: 0 16px; cursor: pointer; border-radius: 40px; }
     .comment .ci { width: 24px; height: 24px; flex-shrink: 0; }
     .comment .lbl { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
     .avs { display: flex; align-items: center; }
