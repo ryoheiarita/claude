@@ -109,6 +109,7 @@
     .thumb.t-vv    { background: #1f5a55; }  /* 縦動画 */
     .thumb.t-lh    { background: #5a2540; }  /* 横LIVE */
     .thumb.t-lv    { background: #5a2230; }  /* 縦LIVE */
+    .thumb.t-dev   { background: #14432c; }  /* 開発共有用（Flutter指示書） */
 
     /* LIVEバッジ */
     .live-badge {
@@ -318,6 +319,9 @@
 
       { name: 'Ph.3_横LIVE',  date: '2025.08.16', type: 'videoH', cls: 't-lh', ph: 'PH3', live: true, href: 'live-yoko-ph3/' },
       { name: 'Ph.3_縦LIVE',  date: '2025.08.16', type: 'videoV', cls: 't-lv', ph: 'PH3', live: true, href: 'live-tate-ph3/' },
+
+      // 開発共有用（一覧の一番下に固定）
+      { name: '【開発共有用】Flutter実装指示書', date: '2026.07.04', type: 'doc', cls: 't-dev', href: 'flutter-handoff/' },
     ];
 
     const rows = document.getElementById('rows');

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>【開発共有用】Flutter実装指示書 — BWU collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d; --card: #1a1a1a; --card2: #232323;
+      --tx: #f2f2f2; --tx2: rgba(255,255,255,0.62); --tx3: rgba(255,255,255,0.38);
+      --line: rgba(255,255,255,0.12); --acc: #3ad17a; --warn: #ffd133;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--tx);
+      font-family: 'Figtree','Noto Sans JP',sans-serif;
+      line-height: 1.75; -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 120px; }
+
+    /* ── header ── */
+    .back { display: inline-flex; align-items: center; gap: 6px; color: var(--tx2); text-decoration: none; font-size: 14px; margin-bottom: 24px; }
+    .back:hover { color: var(--tx); }
+    .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #000; background: var(--acc); border-radius: 4px; padding: 2px 8px; margin-bottom: 10px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.01em; }
+    .sub { color: var(--tx2); font-size: 14px; margin-top: 6px; }
+
+    /* ── download hero ── */
+    .dl-hero {
+      margin: 28px 0 8px; padding: 20px; border: 1px solid var(--line); border-radius: 16px;
+      background: linear-gradient(135deg, #17251c, #101a14);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+    }
+    .dl-hero .info { flex: 1; min-width: 220px; }
+    .dl-hero .t { font-weight: 700; font-size: 16px; }
+    .dl-hero .d { color: var(--tx2); font-size: 13px; margin-top: 2px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--acc); color: #000; font-weight: 700; font-size: 14px;
+      border-radius: 40px; padding: 12px 22px; text-decoration: none; white-space: nowrap;
+    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn.ghost { background: transparent; color: var(--tx); border: 1px solid var(--line); font-weight: 600; }
+
+    /* ── sections ── */
+    h2 { font-size: 18px; font-weight: 700; margin: 44px 0 4px; padding-top: 20px; border-top: 1px solid var(--line); }
+    h2 .no { color: var(--acc); margin-right: 8px; font-family: 'Figtree'; }
+    .lead { color: var(--tx2); font-size: 13.5px; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0; }
+    th { text-align: left; color: var(--tx3); font-weight: 600; font-size: 12px; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+    td:first-child { white-space: nowrap; }
+    code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12.5px; background: var(--card2); border-radius: 5px; padding: 1.5px 6px; color: #9fe8bf; }
+    a { color: #7fd4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .note { background: var(--card); border-left: 3px solid var(--warn); border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: 13.5px; color: var(--tx2); margin: 14px 0; }
+    .note b { color: var(--tx); }
+    ul.plain { list-style: none; }
+    ul.plain li { padding: 4px 0 4px 18px; position: relative; font-size: 13.5px; color: var(--tx2); }
+    ul.plain li::before { content: '—'; position: absolute; left: 0; color: var(--acc); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 12px 0; }
+    .file {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      color: var(--tx); font-size: 13px; text-decoration: none;
+    }
+    .file:hover { background: var(--card2); text-decoration: none; }
+    .file .ic { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .ic.md { background: #2b3550; } .ic.js { background: #4a3a1f; } .ic.lot { background: #1f5a55; } .ic.dart { background: #3a2f63; } .ic.img { background: #5a2540; }
+    .file .nm { font-weight: 600; line-height: 1.3; }
+    .file .ds { color: var(--tx3); font-size: 11.5px; line-height: 1.35; }
+    footer { margin-top: 60px; color: var(--tx3); font-size: 12px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    記事一覧へ戻る
+  </a>
+
+  <div class="tag">開発共有用</div>
+  <h1>Flutter実装指示書 — collection 全画面</h1>
+  <p class="sub">更新: 2026-07-04 ／ 対象: 記事一覧・通常記事・縦/横 動画・縦/横 LIVE (Ph.2/Ph.3) ＋ 共通コンポーネント</p>
+
+  <div class="dl-hero">
+    <div class="info">
+      <div class="t">引き渡しパッケージ（一括）</div>
+      <div class="d">指示書md ×7・Lottie素材 ×5・Dartサンプル ×2・共通コンポーネントJS ×5・動作リファレンスHTML（全画面）・画像アセット</div>
+    </div>
+    <a class="btn" href="flutter-collection-handoff.zip" download>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ZIP ダウンロード
+    </a>
+  </div>
+
+  <!-- ════ 1. 読む順番 ════ -->
+  <h2><span class="no">1</span>読む順番</h2>
+  <p class="lead">まず共通コンポーネント、次に担当画面の指示書、最後に動作リファレンス（実HTML）で挙動確認。</p>
+  <table>
+    <tr><th>順</th><th>ドキュメント</th><th>内容</th></tr>
+    <tr><td>①</td><td><a href="docs/COMPONENTS_HANDOFF.md" download>COMPONENTS_HANDOFF.md</a></td><td><b>共通コンポーネント指示書</b>。rail / bar / vimeo-controls / Lottie♥🔖 / シート引き下げ閉じ。<b>まずこれを読む</b></td></tr>
+    <tr><td>②</td><td><a href="docs/VIMEO_PLAYER_SPEC.md" download>VIMEO_PLAYER_SPEC.md</a></td><td>Vimeoプレイヤー挙動仕様（プラットフォーム非依存）</td></tr>
+    <tr><td>③</td><td><a href="docs/VIMEO_PLAYER_FLUTTER.md" download>VIMEO_PLAYER_FLUTTER.md</a></td><td>Flutter実装ガイド（WebView+Stack フルコード・対応表）</td></tr>
+    <tr><td>④</td><td><a href="docs/VIDEO_SCREEN.md" download>VIDEO_SCREEN.md</a> / <a href="docs/LIVE_UI_HANDOFF.md" download>LIVE_UI_HANDOFF.md</a></td><td>動画/LIVE 画面の状態遷移・レイアウト仕様</td></tr>
+    <tr><td>⑤</td><td><a href="docs/ARTICLE_SCREEN.md" download>ARTICLE_SCREEN.md</a></td><td>通常記事画面（本文構造・タイポ・ローディング/♥🔖アニメ）</td></tr>
+  </table>
+
+  <!-- ════ 2. 画面一覧 ════ -->
+  <h2><span class="no">2</span>画面一覧と動作リファレンス</h2>
+  <p class="lead">各リンクが実装の正（source of truth）。Flutter実装後は必ずこれと突き合わせる。</p>
+  <table>
+    <tr><th>画面</th><th>リファレンス</th><th>主な構成</th></tr>
+    <tr><td>記事一覧</td><td><a href="../">collection/</a></td><td>タイプ別アイコンサムネ、ph2/ph3 分岐、下部タブバー</td></tr>
+    <tr><td>通常記事</td><td><a href="../article/article.html">article/</a></td><td>ローディング演出 → 本文リビール、<code>&lt;bwu-action-bar&gt;</code>、コメントシート、縦型Vimeo埋込</td></tr>
+    <tr><td>縦動画</td><td><a href="../video-tate-ph2/">ph2</a> / <a href="../video-tate-ph3/">ph3</a></td><td>9:16、右 <code>&lt;bwu-action-rail&gt;</code>、アーティストコメント巡回、概要/コメントシート</td></tr>
+    <tr><td>横動画</td><td><a href="../video-yoko-ph2/">ph2</a> / <a href="../video-yoko-ph3/">ph3</a></td><td>16:9、下部 <code>&lt;bwu-action-bar&gt;</code>、コメントシート</td></tr>
+    <tr><td>縦LIVE</td><td><a href="../live-tate-ph2/">ph2</a> / <a href="../live-tate-ph3/">ph3</a></td><td>ライブチャット流し込み、<b>初期はコメントシート閉</b>、Artist絞り込み</td></tr>
+    <tr><td>横LIVE</td><td><a href="../live-yoko-ph2/">ph2</a> / <a href="../live-yoko-ph3/">ph3</a></td><td>16:9 + コメントシート（16:9直下まで）、Artist絞り込み</td></tr>
+  </table>
+
+  <!-- ════ 3. 共通コンポーネント ════ -->
+  <h2><span class="no">3</span>共通コンポーネント（1回作って全画面で流用）</h2>
+  <table>
+    <tr><th>コンポーネント</th><th>種別</th><th>使用画面</th><th>参照JS</th></tr>
+    <tr><td><code>&lt;bwu-action-rail&gt;</code></td><td>縦動画 右側の縦並び5ボタン（♥🔖💬📄⛶）</td><td>縦動画・縦LIVE</td><td><a href="../bwu-action-rail.js" download>bwu-action-rail.js</a></td></tr>
+    <tr><td><code>&lt;bwu-action-bar&gt;</code></td><td>横モード下部の浮遊バー（コメントピル＋♥🔖）</td><td>横動画・横LIVE・<b>通常記事</b></td><td><a href="../bwu-action-bar.js" download>bwu-action-bar.js</a></td></tr>
+    <tr><td>vimeo-controls</td><td>Vimeo標準UIを隠し自前 再生/シーク/全画面</td><td>全Vimeo画面</td><td><a href="../bwu-vimeo-controls.js" download>bwu-vimeo-controls.js</a></td></tr>
+    <tr><td>Lottie ♥/🔖</td><td>記事画面と同一のLottieトグルボタン</td><td>全画面（rail/bar内）</td><td><a href="../lottie-data.js" download>lottie-data.js</a></td></tr>
+    <tr><td>SHEET_PULL_DISMISS</td><td>シート最上部からの引き下げで閉じる（50px閾値）</td><td>コメント/概要シートの全画面</td><td>各画面html末尾のIIFE</td></tr>
+  </table>
+
+  <!-- ════ 4. デザイントークン ════ -->
+  <h2><span class="no">4</span>共通デザイントークン</h2>
+  <table>
+    <tr><th>トークン</th><th>値</th></tr>
+    <tr><td>ボタン円（fab）</td><td><code>48×48</code> / radius 42（実質フル円）</td></tr>
+    <tr><td>rail ボタン背景</td><td><code>rgba(0,0,0,0.55)</code> + blur20 + border <code>rgba(255,255,255,0.15)</code></td></tr>
+    <tr><td>ピル背景（bar）</td><td><code>#303030</code> + blur10 + border <code>rgba(255,255,255,0.15)</code></td></tr>
+    <tr><td>アイコン</td><td><code>24×24</code>、線 white</td></tr>
+    <tr><td><b>コメントボタン アイコン↔ラベル gap</b></td><td><b><code>4px</code></b>（Figma 10121-28405。コメントシートヘッダーの見出しも同じ 4px）</td></tr>
+    <tr><td>標準モーションカーブ</td><td><code>cubic-bezier(0.22, 0.61, 0.36, 1)</code> / 0.42s（シート開閉・動画サイズ遷移）</td></tr>
+    <tr><td>♥ ON ボーダー</td><td><code>rgba(255,62,62,0.6)</code> = <code>0x99FF3E3E</code></td></tr>
+    <tr><td>🔖 ON ボーダー</td><td><code>rgba(255,209,51,0.6)</code> = <code>0x99FFD133</code></td></tr>
+    <tr><td>アクティブ枠（シート開）</td><td>border <code>rgba(255,255,255,0.6)</code>（rail <code>setActive</code>）</td></tr>
+    <tr><td>フォント</td><td>数字・ラベルは <b>Figtree</b></td></tr>
+  </table>
+
+  <!-- ════ 5. 実装上の注意 ════ -->
+  <h2><span class="no">5</span>実装上の注意（落とし穴）</h2>
+  <ul class="plain">
+    <li>状態はクラス駆動（<code>.s-comment</code> / <code>.s-detail</code> / <code>.vid-landscape</code>）。インラインstyle直接操作はトランジションと競合するので不可</li>
+    <li>ルートは <code>overflow: clip</code>（hidden不可。画面外シートでコンテナがスクロールし bottom:0 が崩れる）</li>
+    <li>高さは <code>100dvh</code> 基準（固定844pxではない）</li>
+    <li>ボタンは複製せず1セットを移動（<code>AnimatedPositioned</code> 等）。Lottie二重生成を避ける</li>
+    <li>Lottie ♥🔖 フレーム: <code>LIKE_START=17 / FILLED=90 / UNLIKE_START=105</code>、アニメ中は連打ガード</li>
+    <li>全画面は Vimeo Player SDK の <code>player.requestFullscreen()</code>（iframeのfullscreenは別挙動）</li>
+    <li>iOS 初回muted対策: 再生タップのジェスチャ内で <code>setMuted(false)</code> → 再生後に再アサート</li>
+    <li>横展開時、既存の戻るボタンは削除して Vimeo 側に一本化（縦の rail は維持）</li>
+  </ul>
+  <div class="note"><b>縦LIVE の初期状態はコメントシート「閉」</b>（2026-07-04変更）。💬 タップで開閉。アーティスト絞り込みトグルのラベルは <b>「Artist」</b>。</div>
+
+  <!-- ════ 6. 素材ダウンロード ════ -->
+  <h2><span class="no">6</span>素材ダウンロード（個別）</h2>
+  <p class="lead">Lottie は <code>lottie-data.js</code> 同梱と同一の生JSON。アウトライン白化・フレーム定義は COMPONENTS_HANDOFF.md §2 参照。</p>
+  <div class="grid">
+    <a class="file" href="lottie/heart-like.json" download><span class="ic lot">LT</span><span><span class="nm">heart-like.json</span><br><span class="ds">♥ トグル（記事と共通）</span></span></a>
+    <a class="file" href="lottie/bookmark-like.json" download><span class="ic lot">LT</span><span><span class="nm">bookmark-like.json</span><br><span class="ds">🔖 トグル（記事と共通）</span></span></a>
+    <a class="file" href="lottie/messages-4.json" download><span class="ic lot">LT</span><span><span class="nm">messages-4.json</span><br><span class="ds">💬 コメント（ワンショット）</span></span></a>
+    <a class="file" href="lottie/document-text.json" download><span class="ic lot">LT</span><span><span class="nm">document-text.json</span><br><span class="ds">📄 概要（ワンショット）</span></span></a>
+    <a class="file" href="lottie/maximize-2.json" download><span class="ic lot">LT</span><span><span class="nm">maximize-2.json</span><br><span class="ds">⛶ 全画面（ワンショット）</span></span></a>
+    <a class="file" href="dart/like_button.dart" download><span class="ic dart">DT</span><span><span class="nm">like_button.dart</span><br><span class="ds">♥🔖 Lottie 組込サンプル</span></span></a>
+    <a class="file" href="dart/loading_icon.dart" download><span class="ic dart">DT</span><span><span class="nm">loading_icon.dart</span><br><span class="ds">ローディング（CustomPainter・依存ゼロ）</span></span></a>
+    <a class="file" href="../article/assets/photo.png" download><span class="ic img">IMG</span><span><span class="nm">photo.png</span><br><span class="ds">記事 画像プレースホルダ</span></span></a>
+    <a class="file" href="../article/assets/loading-14-800.svg" download><span class="ic img">IMG</span><span><span class="nm">loading-14-800.svg</span><br><span class="ds">BWU ロゴ（記事ローディング）</span></span></a>
+    <a class="file" href="../rail-icons.js" download><span class="ic js">JS</span><span><span class="nm">rail-icons.js</span><br><span class="ds">rail 用アイコン Lottie データ</span></span></a>
+  </div>
+
+  <!-- ════ 7. ドキュメント一覧 ════ -->
+  <h2><span class="no">7</span>ドキュメント（個別）</h2>
+  <div class="grid">
+    <a class="file" href="docs/README.md" download><span class="ic md">MD</span><span><span class="nm">README.md</span><br><span class="ds">指示書の目次・30秒サマリ</span></span></a>
+    <a class="file" href="docs/COMPONENTS_HANDOFF.md" download><span class="ic md">MD</span><span><span class="nm">COMPONENTS_HANDOFF.md</span><br><span class="ds">共通コンポーネント（まず読む）</span></span></a>
+    <a class="file" href="docs/VIMEO_PLAYER_SPEC.md" download><span class="ic md">MD</span><span><span class="nm">VIMEO_PLAYER_SPEC.md</span><br><span class="ds">プレイヤー挙動仕様</span></span></a>
+    <a class="file" href="docs/VIMEO_PLAYER_FLUTTER.md" download><span class="ic md">MD</span><span><span class="nm">VIMEO_PLAYER_FLUTTER.md</span><br><span class="ds">Flutter実装ガイド</span></span></a>
+    <a class="file" href="docs/VIDEO_SCREEN.md" download><span class="ic md">MD</span><span><span class="nm">VIDEO_SCREEN.md</span><br><span class="ds">動画画面の状態遷移</span></span></a>
+    <a class="file" href="docs/LIVE_UI_HANDOFF.md" download><span class="ic md">MD</span><span><span class="nm">LIVE_UI_HANDOFF.md</span><br><span class="ds">LIVE画面のUI仕様</span></span></a>
+    <a class="file" href="docs/ARTICLE_SCREEN.md" download><span class="ic md">MD</span><span><span class="nm">ARTICLE_SCREEN.md</span><br><span class="ds">通常記事画面</span></span></a>
+  </div>
+
+  <footer>BWU UI prototype — 公開: <a href="https://ryoheiarita.github.io/claude/collection/">ryoheiarita.github.io/claude/collection/</a> ／ この指示書とZIPは docs/collection/flutter-handoff/ で管理（git連携済み）</footer>
+</div>
+</body>
+</html>
