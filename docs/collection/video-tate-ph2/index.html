@@ -14,7 +14,7 @@
     :root {
       /* 画面上端の余白（戻るボタンの位置。ノッチ等のセーフエリア＋16px） */
       --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
-      --actions-h: 272px;                  /* 5ボタン: 48×5 + gap8×4（rail は border-box で実48px） */
+      --actions-h: 216px;                  /* 4ボタン: 48×4 + gap8×3（rail は border-box で実48px） */
 
       /* ── 動画は 9:16 固定。縦は画面フル表示（幅が画面幅に達したら頭打ち） ── */
       --vid-cap-h: calc(100vw * 16 / 9);              /* 幅=画面幅いっぱいになる高さ＝これ以上拡大しない */
@@ -485,8 +485,8 @@
       <div class="orient-tab" data-orient="landscape">横動画</div>
     </div>
 
-    <!-- ════ 右側アクション5ボタン＝共通コンポーネント <bwu-action-rail>（/video と共通） ════ -->
-    <bwu-action-rail class="actions" id="actionRail" buttons="heart,bookmark,comment,detail,fullscreen"></bwu-action-rail>
+    <!-- ════ 右側アクション4ボタン＝共通コンポーネント <bwu-action-rail>（/video と共通） ════ -->
+    <bwu-action-rail class="actions" id="actionRail" buttons="heart,bookmark,comment,detail"></bwu-action-rail>
 
     <!-- ════ ① 動画概要ボトムシート（概要ボタンで開く・画面半分・✕で閉じる） ════ -->
     <div class="desc-sheet" id="descSheet">
@@ -561,11 +561,9 @@
   <script src="../lottie-data.js"></script>
   <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
   <script src="../bwu-action-bar.js"></script>
-  <!-- コメント/概要/全画面アイコンの Lottie（タップで1回再生）＋ 右側5ボタン共通コンポーネント -->
+  <!-- コメント/概要アイコンの Lottie（タップで1回再生）＋ 右側4ボタン共通コンポーネント -->
   <script src="../rail-icons.js"></script>
   <script src="../bwu-action-rail.js"></script>
-  <!-- Vimeo Player SDK：全画面をネイティブ全画面ボタンと同じ挙動で呼ぶため -->
-  <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
@@ -639,28 +637,15 @@
     const commentSheet = document.getElementById('commentSheet');
     const descSheet = document.getElementById('descSheet');
     const actionRail = document.getElementById('actionRail');
-    const vfEl = document.getElementById('videoFrame');
-    // Vimeo Player（全画面をネイティブ全画面ボタンと同じ挙動で呼ぶため）
-    let vimeoPlayer = (window.Vimeo && window.Vimeo.Player) ? new Vimeo.Player(vfEl) : null;
 
     function openComment()  { phone.classList.add('s-comment'); actionRail.setActive('comment', true); closeDetail(); }
     function closeComment() { phone.classList.remove('s-comment'); actionRail.setActive('comment', false); }
     function openDetail()   { phone.classList.add('s-detail'); actionRail.setActive('detail', true); closeComment(); }
     function closeDetail()  { phone.classList.remove('s-detail'); actionRail.setActive('detail', false); }
 
-    // 全画面：Vimeoネイティブ全画面と同じ挙動（SDK）。失敗時のみ iframe フォールバック
-    function fallbackFs() {
-      const f = vfEl;
-      const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
-      if (req) { try { req.call(f); } catch (err) {} }
-    }
-    // 右側レールのイベント（comment / detail / fullscreen ／ heart・bookmark はレール内で完結）
+    // 右側レールのイベント（comment / detail ／ heart・bookmark はレール内で完結）
     actionRail.addEventListener('comment', () => phone.classList.contains('s-comment') ? closeComment() : openComment());
     actionRail.addEventListener('detail',  () => phone.classList.contains('s-detail')  ? closeDetail()  : openDetail());
-    actionRail.addEventListener('fullscreen', () => {
-      if (vimeoPlayer && vimeoPlayer.requestFullscreen) vimeoPlayer.requestFullscreen().catch(fallbackFs);
-      else fallbackFs();
-    });
     document.getElementById('commentClose').addEventListener('click', closeComment);
     document.getElementById('descClose').addEventListener('click', closeDetail);
     // 横モード：下部バー（共通コンポーネント）の「コメント」イベントでコメントシートを立ち上げる
@@ -680,7 +665,7 @@
       }
     });
 
-    /* ════════ ハート/ブックマーク/コメント/概要/全画面 は <bwu-action-rail> 内で完結 ════════ */
+    /* ════════ ハート/ブックマーク/コメント/概要 は <bwu-action-rail> 内で完結 ════════ */
 
     /* ════════ 縦動画 / 横動画 トグル ════════ */
     const PORTRAIT_SRC  = 'https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1'; // 縦9:16

@@ -245,7 +245,8 @@
       const faces = [iconFace, ...btn.querySelectorAll('.avatar-face')];
       faces.forEach((f, idx) => f.classList.toggle('show', idx === 0));
       // 各面の表示時間：アーティストは1s。1周してコメントアイコンに戻ったら5s待機してから次の周へ。
-      const HOLD_AVATAR = 1000, HOLD_ICON = 5000;
+      // 初回だけは記事アクセスから1sで切替を開始する。
+      const HOLD_AVATAR = 1000, HOLD_ICON = 5000, FIRST_DELAY = 1000;
       let i = 0;
       const step = () => {
         faces[i].classList.remove('show');
@@ -253,7 +254,7 @@
         faces[i].classList.add('show');
         this._artistTimer = setTimeout(step, i === 0 ? HOLD_ICON : HOLD_AVATAR);
       };
-      this._artistTimer = setTimeout(step, HOLD_ICON);   // 開始＝アイコンで5s待ってから巡回
+      this._artistTimer = setTimeout(step, FIRST_DELAY);
     }
 
     /* コメント/概要シートが開いている時の枠（active）を制御 */

@@ -428,7 +428,7 @@
 
     /* Bモードの寸法：4ボタン＋常時の下部コメントバー */
     .phone.mode-b {
-      --actions-h: 272px;                                  /* 5ボタン: 48×5 + gap8×4 */
+      --actions-h: 216px;                                  /* 4ボタン: 48×4 + gap8×3 */
       /* 下部バー実寸＝内容40 + 上下padding10/10 + セーフエリア。シート下端とピッタリ合わせる */
       --bottombar-h: calc(60px + env(safe-area-inset-bottom, 0px));
       /* 下部バーの分を残しつつ、幅(=9)が画面幅に達したら頭打ち */
@@ -729,8 +729,8 @@
       <div class="mode-tab" data-orient="landscape">横動画</div>
     </div>
 
-    <!-- ════ 右側アクション5ボタン＝共通コンポーネント <bwu-action-rail>（/video と共通） ════ -->
-    <bwu-action-rail class="actions" id="actionRail" buttons="heart,bookmark,comment,detail,fullscreen"></bwu-action-rail>
+    <!-- ════ 右側アクション4ボタン＝共通コンポーネント <bwu-action-rail>（/video と共通） ════ -->
+    <bwu-action-rail class="actions" id="actionRail" buttons="heart,bookmark,comment,detail"></bwu-action-rail>
 
     <!-- ════ 流れるコメント（動画オーバーレイ：左下・3ボタンと同じ高さ・下が最新） ════ -->
     <div class="live-comments" id="liveComments"></div>
@@ -831,11 +831,9 @@
   <script src="../lottie-data.js"></script>
   <!-- 横動画モードの下部フローティングバー 共通コンポーネント -->
   <script src="../bwu-action-bar.js"></script>
-  <!-- コメント/概要/全画面アイコンの Lottie（タップで1回再生）＋ 右側5ボタン共通コンポーネント -->
+  <!-- コメント/概要アイコンの Lottie（タップで1回再生）＋ 右側4ボタン共通コンポーネント -->
   <script src="../rail-icons.js"></script>
   <script src="../bwu-action-rail.js"></script>
-  <!-- Vimeo Player SDK：全画面をネイティブ全画面ボタンと同じ挙動で呼ぶため -->
-  <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [
@@ -937,28 +935,15 @@
     const phone = document.getElementById('phone');
     const commentSheet = document.getElementById('commentSheet');
     const actionRail = document.getElementById('actionRail');
-    const videoFrame = document.getElementById('vimeoFrame');
-    // Vimeo Player（全画面をネイティブ全画面ボタンと同じ挙動で呼ぶため）
-    let vimeoPlayer = (window.Vimeo && window.Vimeo.Player) ? new Vimeo.Player(videoFrame) : null;
 
     function openComment()  { phone.classList.add('s-comment'); actionRail.setActive('comment', true); closeDetail(); }
     function closeComment() { phone.classList.remove('s-comment'); actionRail.setActive('comment', false); }
     function openDetail()   { phone.classList.add('s-detail'); actionRail.setActive('detail', true); closeComment(); }
     function closeDetail()  { phone.classList.remove('s-detail'); actionRail.setActive('detail', false); }
 
-    // 全画面：Vimeoネイティブ全画面と同じ挙動（SDK）。失敗時のみ iframe フォールバック
-    function fallbackFs() {
-      const f = videoFrame;
-      const req = f.requestFullscreen || f.webkitRequestFullscreen || f.webkitEnterFullscreen || f.mozRequestFullScreen || f.msRequestFullscreen;
-      if (req) { try { req.call(f); } catch (err) {} }
-    }
-    // 右側レールのイベント（comment / detail / fullscreen ／ heart・bookmark はレール内で完結）
+    // 右側レールのイベント（comment / detail ／ heart・bookmark はレール内で完結）
     actionRail.addEventListener('comment', () => phone.classList.contains('s-comment') ? closeComment() : openComment());
     actionRail.addEventListener('detail',  () => phone.classList.contains('s-detail')  ? closeDetail()  : openDetail());
-    actionRail.addEventListener('fullscreen', () => {
-      if (vimeoPlayer && vimeoPlayer.requestFullscreen) vimeoPlayer.requestFullscreen().catch(fallbackFs);
-      else fallbackFs();
-    });
     document.getElementById('commentClose').addEventListener('click', closeComment);
 
     /* 詳細シートはスクロール（先頭で下方向）／下スワイプ／グラバーで閉じる */
@@ -1061,7 +1046,7 @@
       }
     });
 
-    /* ════════ ハート/ブックマーク/コメント/詳細/全画面 は <bwu-action-rail> 内で完結 ════════ */
+    /* ════════ ハート/ブックマーク/コメント/詳細 は <bwu-action-rail> 内で完結 ════════ */
 
     /* ════════ コメントエンジン（Ph.2：流れない／アクセス時20件＋上端スワイプ更新で最新+20件） ════════ */
     const csListEl   = document.getElementById('csList');
