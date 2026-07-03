@@ -370,6 +370,23 @@
       animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
+    /* ── 記事途中の縦型 Vimeo（画像と同じ角丸／標準埋め込み） ── */
+    .vimeo-block {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 14px 14px 8px 8px;
+      overflow: hidden;
+      background: #000;
+    }
+    .vimeo-block iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
     /* ── 下部固定バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
        見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
     .action-bar {
@@ -723,22 +740,31 @@
           <p>SKY-HIはインタビューでこう語っている。<span class="highlight-mark">「アーティストが損をしない仕組みを作ることが、日本の音楽産業全体を底上げすることに繋がる」</span>。この言葉は、単なる理想論ではなく、BMSG自身の契約モデルや収益構造に具体的に落とし込まれている。</p>
         </div>
 
+        <!-- 記事途中の縦型 Vimeo（標準埋め込み・画像と同じ角丸） -->
+        <div class="vimeo-block reveal-item" data-reveal="10">
+          <iframe
+            src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen
+            title="BE:FIRST vertical video"></iframe>
+        </div>
+
         <!-- H2 -->
-        <h2 class="article-h2 reveal-item" data-reveal="10">レーベルとしての設計思想</h2>
-        <div class="article-body reveal-item" data-reveal="11">
+        <h2 class="article-h2 reveal-item" data-reveal="11">レーベルとしての設計思想</h2>
+        <div class="article-body reveal-item" data-reveal="12">
           <p>BMSGが他のレーベルと一線を画すのは、「アーティストの自律」を経営の中心に置いている点だ。所属アーティストは、楽曲のクリエイティブ方向性について強い発言権を持ち、マーケティング戦略においても積極的に意見を出すことが奨励されている。</p>
           <p>また、SNSでの発信についても、事前承認を必要としない範囲が広く設けられており、アーティスト自身がファンと直接コミュニケーションを取りやすい環境が整っている。こうした設計は、長期的な信頼関係の構築に繋がっており、BMSG所属アーティストのファンエンゲージメントの高さとして表れている。</p>
         </div>
 
         <!-- Inline image 2 — 独立スケルトン -->
-        <div class="img-block reveal-item" data-reveal="12">
+        <div class="img-block reveal-item" data-reveal="13">
           <div class="img-block-skeleton"></div>
           <img class="img-block-actual" src="assets/photo.png" alt="BMSG label scene">
         </div>
 
         <!-- Bullet list — 単体セクション -->
-        <h3 class="article-h3 reveal-item" data-reveal="13">BMSGが掲げる主な取り組み</h3>
-        <ul class="article-list reveal-item" data-reveal="14">
+        <h3 class="article-h3 reveal-item" data-reveal="14">BMSGが掲げる主な取り組み</h3>
+        <ul class="article-list reveal-item" data-reveal="15">
           <li>楽曲制作への参加権限をアーティストに開放</li>
           <li>収益分配の透明化と公平な報酬設計</li>
           <li>グローバル市場を見据えたプロモーション戦略</li>
@@ -747,8 +773,8 @@
         </ul>
 
         <!-- H2 -->
-        <h2 class="article-h2 reveal-item" data-reveal="15">これからのBMSGと日本の音楽</h2>
-        <div class="article-body reveal-item" data-reveal="16">
+        <h2 class="article-h2 reveal-item" data-reveal="16">これからのBMSGと日本の音楽</h2>
+        <div class="article-body reveal-item" data-reveal="17">
           <p>2025年現在、BMSGはBE:FIRSTに続く新たなアーティストの育成にも着手している。第二のグループ、ソロアーティスト、そしてプロデューサーやクリエイターとの協業——その範囲はエンタテインメント全体に広がりつつある。</p>
           <p>日本の音楽業界が長年抱えてきた構造的な問題——アーティストの権利の弱さ、透明性の欠如、グローバル展開の遅れ——に対して、BMSGは実験的でありながら誠実なアプローチで向き合っている。すべてが成功しているわけではないかもしれない。だがその試みの誠実さが、ファンだけでなく業界内外から支持を集め続ける理由になっている。</p>
           <p>「まだ途中だ」とSKY-HIは言う。それは謙虚さではなく、現在進行形の意志の表明だ。BMSGの物語は、まだ序章にある。</p>
@@ -931,8 +957,8 @@
         block.appendChild(wrap);
 
         const logo = document.createElement('img');
-        logo.src = 'assets/befirst-logo.svg';
-        logo.style.width = '90px';
+        logo.src = 'assets/loading-14-800.svg'; // BWU ロゴ（アーティストロゴは使わない）
+        logo.style.width = '80px';
         logo.style.height = 'auto';
         wrap.appendChild(logo);
       });
