@@ -534,7 +534,7 @@
     .phone.s-detail .detail-sheet { transform: translateY(0); }
     /* 詳細シート右上の✕（.cs-close の丸ボタンを流用）＝コメントシートの✕（上端22px）を正として同位置 */
     .detail-close { position: absolute; top: 22px; right: 16px; z-index: 6; }
-    .detail-scroll { flex: 1; overflow-y: auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+    .detail-scroll { flex: 1; overflow-y: auto; padding: 28px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }  /* 上=16px+12px */
     .detail-scroll::-webkit-scrollbar { width: 0; }
 
     /* ════ 縦の概要シート＝縦型共通仕様（video-tate と同一）：文字サイズ/余白は記事(article)の markdown ルールに必ず揃える ════ */
