@@ -220,8 +220,8 @@
     /* 概要シートの閉じる（✕）＝右上固定。コメントシートの .cs-close とサイズ・見た目を必ず一致（40px円・アイコン22px） */
     .desc-sheet .ds-close {
       position: absolute; top: 22px; right: 16px;  /* コメントシートの✕（上端22px）を正として同位置 */
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);   /* #FFFFFF 8% */
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       z-index: 50;  /* Xボタンを最前面に */
@@ -230,7 +230,7 @@
     .desc-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 28px 16px calc(24px + env(safe-area-inset-bottom, 0px));  /* 上=16px+12px */
+      padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
       -webkit-overflow-scrolling: touch;
     }
     .desc-head {
@@ -289,6 +289,7 @@
       transform: translateY(100%);
       transition: transform .42s cubic-bezier(.22,.61,.36,1);
       box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+      padding-bottom: 34px;   /* iOSバー分：シート背景を下へ伸ばし、その上にインジケーターを表示 */
     }
     .phone.s-comment .comment-sheet { transform: translateY(0); }
 
@@ -308,8 +309,8 @@
     .cs-title { font-size: 16px; font-weight: 600; }
     .cs-count { font-size: 16px; color: rgba(255,255,255,0.75); }
     .cs-close {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);   /* #FFFFFF 8% */
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
@@ -440,9 +441,9 @@
     /* ── 下部バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
        見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
     .ls-bar {
-      position: absolute; left: 0; bottom: 0; width: 100%;
+      position: absolute; left: 0; bottom: 34px; width: 100%;   /* iOSバーの直上に0gap */
       box-sizing: border-box; display: none;
-      padding: 0 16px calc(8px + env(safe-area-inset-bottom, 0px));
+      padding: 0 16px;
       z-index: 50;
     }
     .phone.vid-landscape .ls-bar { display: flex; }
@@ -453,11 +454,24 @@
     .desc-scroll::-webkit-scrollbar,
     .ls-detail::-webkit-scrollbar,
     .cs-list::-webkit-scrollbar { width: 0; }
+
+    /* ════ iOSホームインジケーター（iPhoneアプリ想定・全画面 下部固定・最前面） ════ */
+    .ios-home-bar {
+      position: absolute; left: 0; bottom: 0; width: 100%; height: 34px;
+      z-index: 300; pointer-events: none;
+    }
+    .ios-home-bar::before {
+      content: '';
+      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+      width: 134px; height: 5px; border-radius: 100px; background: #fff;
+    }
   </style>
   <style>/* 遷移先は縦動画で固定 */ #orientTabs{display:none !important;}</style>
 </head>
 <body>
   <div class="phone" id="phone">
+    <!-- iOSホームインジケーター（全画面共通・最前面） -->
+    <div class="ios-home-bar"></div>
 
     <!-- ════ 動画（縦Vimeo埋め込み） ════ -->
     <div class="video-stage" id="videoStage">
