@@ -60,7 +60,7 @@
     .avs img:first-child { margin-left: 0; }
     .avs .more { margin-left: 4px; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.5); white-space: nowrap; }
     .actions { overflow: visible; }       /* バースト粒子をはみ出させる */
-    .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+    .divider { width: 1px; height: 24px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
     .fab {
       width: 48px; height: 48px; border-radius: 42px;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
