@@ -217,15 +217,15 @@
       width: 40px; height: 4px; border-radius: 10px;
       background: rgba(255,255,255,0.28);
     }
-    /* 概要シートの閉じる（✕） */
+    /* 概要シートの閉じる（✕）＝右上固定。コメントシートの .cs-close とサイズ・見た目を必ず一致（40px円・アイコン22px） */
     .desc-sheet .ds-close {
-      position: absolute; top: 10px; right: 12px;
-      width: 36px; height: 36px; border-radius: 50%;
-      background: #303030;
+      position: absolute; top: 10px; right: 16px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       z-index: 50;  /* Xボタンを最前面に */
     }
-    .desc-sheet .ds-close svg { width: 20px; height: 20px; }
+    .desc-sheet .ds-close svg { width: 22px; height: 22px; }
     .desc-scroll {
       flex: 1;
       overflow-y: auto;
@@ -256,6 +256,23 @@
       font-size: 15px; line-height: 28px; color: rgba(255,255,255,0.7);
     }
     .desc-body p { margin-bottom: 22px; }
+
+    /* ════ 縦の概要シート＝縦型共通仕様：文字サイズ/余白は記事(article)の markdown ルールに必ず揃える ════ */
+    .desc-sheet .desc-head { margin-bottom: 4px; }
+    .desc-sheet .desc-date { font-weight: 400; line-height: 20px; }
+    .desc-sheet .desc-title {
+      font-size: 24px; font-weight: 600; line-height: 1.4;
+      letter-spacing: -0.4px; margin-bottom: 8px;
+    }
+    .desc-sheet .desc-tag {
+      height: 24px; border-radius: 24px;
+      font-size: 14px; font-weight: 400; line-height: 1; letter-spacing: -0.28px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .desc-sheet .desc-tags { margin-bottom: 16px; }
+    .desc-sheet .desc-body { font-size: 1rem; font-weight: 400; line-height: 28px; color: rgba(255,255,255,0.7); }
+    .desc-sheet .desc-body p { margin-bottom: 24px; }
+    .desc-sheet .desc-body p:last-child { margin-bottom: 0; }
 
     /* ════════════ ② コメント欄ボトムシート（568px） ════════════ */
     .comment-sheet {
