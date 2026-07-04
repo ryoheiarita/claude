@@ -455,7 +455,8 @@
     .cs-count { font-size: 16px; color: rgba(255,255,255,0.75); }
     .cs-close {
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .cs-close svg { width: 22px; height: 22px; }

@@ -321,7 +321,8 @@
     .cs-count { display: none; }   /* live はコメント数を表示しない */
     .cs-close {
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       margin-left: auto;   /* 右端へ（タブ＋カウンターは左寄せ） */
     }
@@ -531,8 +532,8 @@
       flex-direction: column;
     }
     .phone.s-detail .detail-sheet { transform: translateY(0); }
-    /* 詳細シート右上の✕（.cs-close の丸ボタンを流用）＝右上固定・video-tate の概要シートと同位置 */
-    .detail-close { position: absolute; top: 10px; right: 16px; z-index: 6; }
+    /* 詳細シート右上の✕（.cs-close の丸ボタンを流用）＝コメントシートの✕（上端22px）を正として同位置 */
+    .detail-close { position: absolute; top: 22px; right: 16px; z-index: 6; }
     .detail-scroll { flex: 1; overflow-y: auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
     .detail-scroll::-webkit-scrollbar { width: 0; }
 
@@ -779,7 +780,7 @@
         <div class="desc-head">
           <span class="desc-date">2025.08.16</span>
         </div>
-        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE- 記念生配信</h1>
         <span class="desc-tag">LIVE</span>
         <div class="detail-body">
           <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>

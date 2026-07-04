@@ -319,7 +319,8 @@
     .cs-count { display: none; }   /* live はコメント数を表示しない */
     .cs-close {
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       margin-left: auto;   /* 右端へ（タブ＋カウンターは左寄せ） */
     }
@@ -528,12 +529,26 @@
       flex-direction: column;
     }
     .phone.s-detail .detail-sheet { transform: translateY(0); }
-    /* 詳細シート右上の✕（.cs-close の丸ボタンを流用） */
-    .detail-close { position: absolute; top: 14px; right: 16px; z-index: 6; }
-    .detail-scroll { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+    /* 詳細シート右上の✕（.cs-close の丸ボタンを流用）＝コメントシートの✕（上端22px）を正として同位置 */
+    .detail-close { position: absolute; top: 22px; right: 16px; z-index: 6; }
+    .detail-scroll { flex: 1; overflow-y: auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
     .detail-scroll::-webkit-scrollbar { width: 0; }
-    .detail-body { font-size: 15px; line-height: 26px; color: rgba(255,255,255,0.72); }
-    .detail-body p { margin-bottom: 16px; }
+
+    /* ════ 縦の概要シート＝縦型共通仕様（video-tate と同一）：文字サイズ/余白は記事(article)の markdown ルールに必ず揃える ════ */
+    .detail-sheet .desc-head { margin-bottom: 4px; }
+    .detail-sheet .desc-date { font-weight: 400; line-height: 20px; }
+    .detail-sheet .desc-title {
+      font-size: 24px; font-weight: 600; line-height: 1.4;
+      letter-spacing: -0.4px; margin-bottom: 8px;
+    }
+    .detail-sheet .desc-tag {
+      height: 24px; border-radius: 24px;
+      font-size: 14px; font-weight: 400; line-height: 1; letter-spacing: -0.28px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .detail-body { font-size: 1rem; font-weight: 400; line-height: 28px; color: rgba(255,255,255,0.7); }
+    .detail-body p { margin-bottom: 24px; }
+    .detail-body p:last-child { margin-bottom: 0; }
 
     /* ════════════════════════════════════════════════════════════
        横動画モード（16:9）。縦/横トグルで .vid-landscape を付与
@@ -820,7 +835,7 @@
         <div class="desc-head">
           <span class="desc-date">2025.08.16</span>
         </div>
-        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE-</h1>
+        <h1 class="desc-title">MAZZEL Special Live Stream 2025 -PARADE- 記念生配信</h1>
         <span class="desc-tag">LIVE</span>
         <div class="detail-body">
           <p>MAZZELのスペシャルライブ配信へようこそ！リアルタイムでメンバーと一緒に盛り上がりましょう🔥 コメントでの応援、お待ちしています！</p>

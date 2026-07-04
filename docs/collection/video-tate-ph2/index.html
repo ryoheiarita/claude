@@ -219,9 +219,10 @@
     }
     /* 概要シートの閉じる（✕）＝右上固定。コメントシートの .cs-close とサイズ・見た目を必ず一致（40px円・アイコン22px） */
     .desc-sheet .ds-close {
-      position: absolute; top: 10px; right: 16px;
+      position: absolute; top: 22px; right: 16px;  /* コメントシートの✕（上端22px）を正として同位置 */
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       z-index: 50;  /* Xボタンを最前面に */
     }
@@ -308,7 +309,8 @@
     .cs-count { font-size: 16px; color: rgba(255,255,255,0.75); }
     .cs-close {
       width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(0,0,0,0.4);   /* 左上の戻るボタンと同じ背景＋blur */
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
     .cs-close svg { width: 22px; height: 22px; }
@@ -515,7 +517,7 @@
         <div class="desc-head">
           <span class="desc-date">2025.08.16</span>
         </div>
-        <h1 class="desc-title">BE:FIRST / GRIT -Music Video-</h1>
+        <h1 class="desc-title">BE:FIRST / GRIT -Music Video- 撮影密着ビハインド映像</h1>
         <div class="desc-tags"><span class="desc-tag">Infomation</span></div>
         <div class="desc-body">
           <p>日頃よりBE:FIRSTを応援いただき、誠にありがとうございます。ファンの皆さまがBE:FIRSTを応援いただく場合にご留意いただきたい点につき、以下のとおりお知らせさせていただきます。</p>
