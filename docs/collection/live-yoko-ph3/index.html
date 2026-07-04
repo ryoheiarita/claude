@@ -643,6 +643,69 @@
     /* スクロールバー非表示 */
     .cs-list::-webkit-scrollbar { width: 0; }
 
+    /* ════ 前画面ローディング＋ドミノ blurReveal（article と同一仕様） ════ */
+    @keyframes blurReveal {
+      0% {
+        -webkit-filter: blur(12px);
+        filter: blur(12px);
+        opacity: 0;
+        -webkit-transform: translateY(8px);
+        transform: translateY(8px);
+      }
+      100% {
+        -webkit-filter: blur(0px);
+        filter: blur(0px);
+        opacity: 1;
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+      }
+    }
+    @-webkit-keyframes blurReveal {
+      0% {
+        -webkit-filter: blur(12px);
+        opacity: 0;
+        -webkit-transform: translateY(8px);
+      }
+      100% {
+        -webkit-filter: blur(0px);
+        opacity: 1;
+        -webkit-transform: translateY(0);
+      }
+    }
+    .reveal-item {
+      opacity: 0;
+      -webkit-filter: blur(12px);
+      filter: blur(12px);
+      -webkit-transform: translateY(8px);
+      transform: translateY(8px);
+      will-change: filter, opacity, transform;
+    }
+    .phone.loaded .reveal-item {
+      -webkit-animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      animation: blurReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: #101010;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* 戻るボタン(60)・iOSバー(300)の下、コンテンツの上 */
+      z-index: 58;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* 表示時はトランジションなしで即時表示 */
+    .loading-overlay.instant-show {
+      transition: none;
+    }
+
     /* ════ iOSホームインジケーター（iPhoneアプリ想定・全画面 下部固定・最前面） ════ */
     .ios-home-bar {
       position: absolute; left: 0; bottom: 0; width: 100%; height: 34px;
@@ -680,8 +743,13 @@
     <!-- iOSホームインジケーター（全画面共通・最前面） -->
     <div class="ios-home-bar"></div>
 
+    <!-- 前画面ローディング（article と同一仕様） -->
+    <div class="loading-overlay hidden" id="loadingIconOverlay">
+      <div id="loadingIconContainer"></div>
+    </div>
+
     <!-- ════ 動画（縦Vimeo埋め込み） ════ -->
-    <div class="video-stage" id="videoStage">
+    <div class="video-stage reveal-item" data-reveal="0" id="videoStage">
       <!-- 縦(9:16)動画。実装時はこの Vimeo ID を本番の縦動画に差し替え。
            9:16 なのでボックスにピッタリ収まり、グレーは出ず Vimeo 標準コントローラーも表示される -->
       <iframe id="vimeoFrame"
@@ -780,7 +848,7 @@
     </div>
 
     <!-- ════ 〔横動画モード〕詳細パネル（既定で表示・16:9直下〜下部バーの上） ════ -->
-    <div class="ls-detail" id="lsDetail">
+    <div class="ls-detail reveal-item" data-reveal="1" id="lsDetail">
       <div class="desc-head">
         <span class="desc-date">2025.08.16</span>
       </div>
@@ -794,7 +862,7 @@
     </div>
 
     <!-- ════ 〔横動画モード〕下部固定バー＝共通コンポーネント <bwu-action-bar> ════ -->
-    <bwu-action-bar class="ls-bar" id="lsBar" label="Comments" avatars="0,2,4"></bwu-action-bar>
+    <bwu-action-bar class="ls-bar reveal-item" data-reveal="2" id="lsBar" label="Comments" avatars="0,2,4"></bwu-action-bar>
 
     <!-- ════ ③ 詳細シート（Bモード：画面6割・動画に被さる） ════ -->
     <div class="detail-sheet only-b" id="detailSheet">
@@ -1153,6 +1221,67 @@
 
       // 全画面ボタンの表示/非表示は bwu-vimeo-controls.js（カスタムプレイヤーUI）に同期
     })();
+  </script>
+
+  <!-- ════ 前画面ローディング → ドミノ blurReveal（article と同一仕様） ════ -->
+  <script type="module">
+    import { createLoadingIcon } from '../article/loading-icon.js';
+
+    const STAGGER_DELAY    = 80;
+    const REVEAL_DURATION  = 500;
+    const LOADING_DURATION = 1000;
+
+    let iconInstance = null;
+
+    const phoneEl = document.getElementById('phone');
+    const items   = document.querySelectorAll('.reveal-item');
+
+    // --- stagger delay を各 reveal-item に事前セット ---
+    items.forEach((el) => {
+      const idx = parseInt(el.dataset.reveal, 10);
+      el.style.animationDelay = `${idx * STAGGER_DELAY}ms`;
+    });
+
+    // --- コンテンツ出現（ドミノ blurReveal） ---
+    function revealContent() {
+      phoneEl.classList.add('loaded');
+
+      // アニメーション終了後は reveal-item を外して通常のCSS制御へ戻す
+      // （iOS Safari の blur 残留対策＋opacity を使う既存UI（.s-detail 等）と干渉させない）
+      items.forEach((el) => {
+        const idx = parseInt(el.dataset.reveal, 10);
+        setTimeout(() => {
+          el.classList.remove('reveal-item');
+          el.style.animationDelay = '';
+        }, idx * STAGGER_DELAY + REVEAL_DURATION + 50);
+      });
+    }
+
+    // --- ローディング開始 ---
+    function startLoading() {
+      const overlay   = document.getElementById('loadingIconOverlay');
+      const container = document.getElementById('loadingIconContainer');
+
+      if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+      container.innerHTML = '';
+
+      overlay.classList.add('instant-show');
+      overlay.classList.remove('hidden');
+      void overlay.offsetWidth;
+      overlay.classList.remove('instant-show');
+
+      iconInstance = createLoadingIcon({ container, size: 100, backgroundColor: 'transparent' });
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        if (iconInstance) { iconInstance.destroy(); iconInstance = null; }
+        setTimeout(revealContent, 300);
+      }, LOADING_DURATION);
+    }
+
+    // --- 初回ロード ---
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startLoading);
+    else startLoading();
   </script>
 
   <!-- ════ 共通：シートを最上部からさらに下に引っ張ったら閉じる（pull-to-dismiss） ════
