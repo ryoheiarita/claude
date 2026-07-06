@@ -26,15 +26,15 @@
          - 利用規約リンク×3 + 同意チェックボックス
          - チェックONで「完了」ボタンが活性化（白背景 + #191919 文字）
       3. ログイン画面（Figma 10301-27337）: 最初からログインシートが出ている状態
-         上部: モーションカラーレイヤーはシート上の残りエリア（min-height 240px、
-               下端はマスクでフェード）
+         上部: モーションカラーレイヤーはシート上の残りエリア（min-height 160px、
+               下端フェードなし。シート背面に 64px 重ねて角丸の隙間からも色を見せる）
                ロゴはシートを除いた残り画面高の縦中央へ移動・縮小
                （幅164→112px、top:(100dvh−シート高)/2、0.5s）
          下部: 固定のログインシート（ドラッグ不可）
                bg #101010（不透明）・上ボーダー white15%・上角R32・pad 32/24/64
                タイトル22/28・説明16/24・入力欄56px(16/24)・ボタン高56px
                フォーム〜ボタン間の余白 48px
-               max-height: 100dvh−240px（超過分は内部スクロール）
+               max-height: 100dvh−160px（超過分は内部スクロール）
                シャドウなし
                メール・パスワード入力 / リンク×2 /
                ログイン（白・黒文字）・新規会員登録（アウトライン）
@@ -116,11 +116,11 @@
       transition: height 0.6s var(--ease);
     }
     #bg-wrap svg { display: block; width: 100%; height: 100%; }
-    /* ログイン画面: モーションカラーはシート上の残りエリアに収める（min 240px） */
+    /* ログイン画面: モーションカラーはシート上の残りエリア（min 160px）+ 64px。
+       シートの背面に 64px 潜り込ませ、角丸の切り欠きからも色が見えるようにする。
+       下端のフェード（黒グラデーション）はなし */
     .phase-login #bg-wrap {
-      height: max(calc(100dvh - var(--sheet-h, 560px)), 240px);
-      mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+      height: calc(max(calc(100dvh - var(--sheet-h, 560px)), 160px) + 64px);
     }
 
     /* ロゴ出現(1.0s完了)の後、カラーレイヤーが 0.3s 間隔でドミノ出現
@@ -303,7 +303,7 @@
       border-radius: 32px 32px 0 0;
       box-shadow: none; /* シート上のシャドウは不要 */
       padding: 32px 24px 64px;
-      max-height: calc(100dvh - 240px); /* 上部モーションエリア min 240px を確保 */
+      max-height: calc(100dvh - 160px); /* 上部モーションエリア min 160px を確保 */
       overflow-y: auto;
       display: flex; flex-direction: column; gap: 24px;
       opacity: 0;
