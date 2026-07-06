@@ -26,12 +26,15 @@
          - 利用規約リンク×3 + 同意チェックボックス
          - チェックONで「完了」ボタンが活性化（白背景 + #191919 文字）
       3. ログイン画面（Figma 10301-27337）: 最初からログインシートが出ている状態
-         上部: モーションカラーレイヤーを上に寄せ（高さ46dvh、下端はマスクでフェード）
+         上部: モーションカラーレイヤーはシート上の残りエリア（min-height 240px、
+               下端はマスクでフェード）
                ロゴはシートを除いた残り画面高の縦中央へ移動・縮小
                （幅164→112px、top:(100dvh−シート高)/2、0.5s）
          下部: 固定のログインシート（ドラッグ不可）
                bg #101010（不透明）・上ボーダー white15%・上角R32・pad 32/24/64
-               フォーム〜ボタン間の余白 64px
+               タイトル22/28・説明16/24・入力欄56px(16/24)・ボタン高56px
+               フォーム〜ボタン間の余白 48px
+               max-height: 100dvh−240px（超過分は内部スクロール）
                シャドウなし
                メール・パスワード入力 / リンク×2 /
                ログイン（白・黒文字）・新規会員登録（アウトライン）
@@ -47,8 +50,6 @@
       - 回転に初期位相オフセットを付与し、出現時のコア位置を四隅に分散:
           オレンジ=左上(45°) / マゼンタ=右上(135°) / 緑=左下(315°) / 青=右下(225°)
       - 各グラデーションの focal point (fx): 1%→5%→1% を 7〜10s で往復
-      - 各グラデーションの focal point (fx): 15%→40%→15% を 7〜10s で往復
-        （コアがオーブ内を横切り、色が鮮やかに出るよう拡大）
       - 各 rect: x/y を 7〜10s で往復 + 4〜6.5s で 360° 回転
       - 緩急（有機感）: 各動きは「前半ゆっくり → 後半速く」
           往復系 (fx/x/y): 前半 2/3 の時間で行き、後半 1/3 で戻る（速度比 1:2）
@@ -115,9 +116,9 @@
       transition: height 0.6s var(--ease);
     }
     #bg-wrap svg { display: block; width: 100%; height: 100%; }
-    /* ログイン画面: モーションカラーを上部に寄せ、下端をフェードで馴染ませる */
+    /* ログイン画面: モーションカラーはシート上の残りエリアに収める（min 240px） */
     .phase-login #bg-wrap {
-      height: 46dvh;
+      height: max(calc(100dvh - var(--sheet-h, 560px)), 240px);
       mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
     }
@@ -302,6 +303,8 @@
       border-radius: 32px 32px 0 0;
       box-shadow: none; /* シート上のシャドウは不要 */
       padding: 32px 24px 64px;
+      max-height: calc(100dvh - 240px); /* 上部モーションエリア min 240px を確保 */
+      overflow-y: auto;
       display: flex; flex-direction: column; gap: 24px;
       opacity: 0;
       transform: translateY(24px);
@@ -311,25 +314,24 @@
     .phase-login .login-sheet { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
     .sheet-head { display: flex; flex-direction: column; gap: 8px; }
-    .sheet-head h1 { font-size: 18px; font-weight: 700; line-height: 24px; color: #fff; }
-    .sheet-head p  { font-size: 14px; line-height: 20px; color: rgba(255,255,255,0.75); }
+    .sheet-head h1 { font-size: 22px; font-weight: 700; line-height: 28px; color: #fff; }
+    .sheet-head p  { font-size: 16px; line-height: 24px; color: rgba(255,255,255,0.75); }
 
     .sheet-form { display: flex; flex-direction: column; gap: 16px; }
     .sheet-field { display: flex; flex-direction: column; gap: 4px; }
     .sheet-field input {
-      height: 48px;
+      height: 56px;
       padding: 0 16px;
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       color: #fff;
       font-family: var(--font);
-      font-size: 14px; line-height: 20px;
+      font-size: 16px; line-height: 24px;
       outline: none;
     }
     .sheet-field input::placeholder { color: rgba(255,255,255,0.5); }
     .sheet-field input:focus { border-color: rgba(255,255,255,0.4); }
-    .sheet-field .helper { font-size: 14px; line-height: 20px; color: rgba(255,255,255,0.5); }
 
     .sheet-links { display: flex; flex-direction: column; gap: 16px; }
     .sheet-links a {
@@ -339,11 +341,13 @@
       width: fit-content;
     }
 
-    /* フォーム〜ボタン間は 64px（シート gap 24 + 40） */
-    .sheet-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 40px; }
+    /* フォーム〜ボタン間は 48px（シート gap 24 + 24） */
+    .sheet-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
     .btn-pill {
       width: 100%;
-      padding: 14px 24px;
+      height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 24px;
       border-radius: 999px;
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       font-family: var(--font);
@@ -489,12 +493,10 @@
         <div class="sheet-field">
           <label class="field-label" for="login-email">メールアドレス</label>
           <input type="email" id="login-email" placeholder="メールアドレスを入力..." autocomplete="email">
-          <div class="helper">テキストが入ります</div>
         </div>
         <div class="sheet-field">
           <label class="field-label" for="login-password">パスワード</label>
           <input type="password" id="login-password" placeholder="パスワードを入力..." autocomplete="current-password">
-          <div class="helper">テキストが入ります</div>
         </div>
         <div class="sheet-links">
           <a href="#" onclick="return false;">パスワードをお忘れの方はこちら</a>
