@@ -25,10 +25,16 @@
          - 言語ドロップダウン（日本語/English/中文/한국어/Español）
          - 利用規約リンク×3 + 同意チェックボックス
          - チェックONで「完了」ボタンが活性化（白背景 + #191919 文字）
-      3. ログイン画面: ブロブ背景 + ロゴ + 下部グラデーション
-         + 新規会員登録（白）/ ログイン（アウトライン）ボタン
-         ロゴはボタン群を除いた残りの画面高に対して縦中央
-         （top: (100dvh - 196px) / 2 へ 0.5s でスライド）
+      3. ログイン画面（Figma 10301-27337）: 最初からログインシートが出ている状態
+         上部: モーションカラーレイヤーを上に寄せ（高さ46dvh、下端はマスクでフェード）
+               ロゴはシートを除いた残り画面高の縦中央へ移動・縮小
+               （幅164→112px、top:(100dvh−シート高)/2、0.5s）
+         下部: 固定のログインシート（ドラッグ不可）
+               bg #101010（不透明）・上ボーダー white15%・上角R32・pad 32/24/64
+               フォーム〜ボタン間の余白 64px
+               シャドウなし
+               メール・パスワード入力 / リンク×2 /
+               ログイン（白・黒文字）・新規会員登録（アウトライン）
 
     背景アニメーション:
       - SVG radialGradient ×4 を回転・平行移動（SMIL）
@@ -102,8 +108,19 @@
     }
 
     /* ════════════ 背景ブロブアニメーション（全画面共通） ════════════ */
-    #bg-wrap { position: absolute; inset: 0; }
+    #bg-wrap {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 100dvh;
+      transition: height 0.6s var(--ease);
+    }
     #bg-wrap svg { display: block; width: 100%; height: 100%; }
+    /* ログイン画面: モーションカラーを上部に寄せ、下端をフェードで馴染ませる */
+    .phase-login #bg-wrap {
+      height: 46dvh;
+      mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    }
 
     /* ロゴ出現(1.0s完了)の後、カラーレイヤーが 0.3s 間隔でドミノ出現
        （DOM順 = 重なり順: オレンジ → マゼンタ → 緑 → 青） */
@@ -127,7 +144,7 @@
          → 表示ロゴ幅 164px にするためコンテナは 164 / (678/960) ≒ 232px */
       width: 232px;
       color: var(--c-logo);
-      transition: top 0.5s var(--ease);
+      transition: top 0.5s var(--ease), width 0.5s var(--ease);
     }
     #logo-lottie { width: 100%; aspect-ratio: 960 / 400; }
     /* Lottie が読めない場合の静的フォールバック */
@@ -138,9 +155,10 @@
       opacity: 0;
       animation: logo-in 0.8s var(--ease) 0.2s forwards;
     }
-    /* ログイン画面: ボタン群（下部 196px = padding 80 + ボタン 50×2 + gap 16）を
-       除いた残りの高さに対して縦中央 */
-    .phase-login .logo { top: calc((100dvh - 196px) / 2); }
+    /* ログイン画面: ロゴはシートを除いた残り画面高の縦中央へ移動して縮小
+       （--sheet-h は JS がシート実高を計測してセット。
+         表示幅 112px = Lottie コンポ比 112/(678/960) ≒ 159px） */
+    .phase-login .logo { top: calc((100dvh - var(--sheet-h, 560px)) / 2); width: 159px; }
     .logo svg { display: block; width: 100%; height: auto; }
     @keyframes logo-in { from { opacity: 0; } to { opacity: 1; } }
 
@@ -275,47 +293,68 @@
     .btn-done.enabled { background: #fff; color: #191919; cursor: pointer; }
     .btn-done.enabled:active { background: rgba(255,255,255,0.85); }
 
-    /* ════════════ ログイン画面 ════════════ */
-    .login {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; justify-content: flex-end;
-      padding: 80px 24px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0) 59.6%, rgba(0,0,0,0.9) 100%);
+    /* ════════════ ログイン画面（固定シート） ════════════ */
+    .login-sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      background: #101010;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      border-radius: 32px 32px 0 0;
+      box-shadow: none; /* シート上のシャドウは不要 */
+      padding: 32px 24px 64px;
+      display: flex; flex-direction: column; gap: 24px;
       opacity: 0;
+      transform: translateY(24px);
       pointer-events: none;
-      transition: opacity 0.5s var(--ease);
+      transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
     }
-    .phase-login .login { opacity: 1; pointer-events: auto; }
+    .phase-login .login-sheet { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-    .login-actions {
-      display: flex; flex-direction: column; gap: 16px;
-      transform: translateY(16px);
-      transition: transform 0.5s var(--ease);
+    .sheet-head { display: flex; flex-direction: column; gap: 8px; }
+    .sheet-head h1 { font-size: 18px; font-weight: 700; line-height: 24px; color: #fff; }
+    .sheet-head p  { font-size: 14px; line-height: 20px; color: rgba(255,255,255,0.75); }
+
+    .sheet-form { display: flex; flex-direction: column; gap: 16px; }
+    .sheet-field { display: flex; flex-direction: column; gap: 4px; }
+    .sheet-field input {
+      height: 48px;
+      padding: 0 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 14px; line-height: 20px;
+      outline: none;
     }
-    .phase-login .login-actions { transform: translateY(0); }
+    .sheet-field input::placeholder { color: rgba(255,255,255,0.5); }
+    .sheet-field input:focus { border-color: rgba(255,255,255,0.4); }
+    .sheet-field .helper { font-size: 14px; line-height: 20px; color: rgba(255,255,255,0.5); }
 
+    .sheet-links { display: flex; flex-direction: column; gap: 16px; }
+    .sheet-links a {
+      color: #fff; font-size: 14px;
+      text-decoration: underline;
+      text-underline-position: from-font;
+      width: fit-content;
+    }
+
+    /* フォーム〜ボタン間は 64px（シート gap 24 + 40） */
+    .sheet-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 40px; }
     .btn-pill {
       width: 100%;
-      padding: 14px 10px;
+      padding: 14px 24px;
       border-radius: 999px;
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      font-family: 'Hiragino Sans', 'Noto Sans JP', var(--font);
-      font-size: 14px; font-weight: 700; line-height: 20px;
+      font-family: var(--font);
+      font-size: 14px; font-weight: 600; line-height: 20px;
       text-align: center;
       cursor: pointer;
     }
-    .btn-signup {
-      background: #fff;
-      border: 1px solid rgba(255,255,255,0.2);
-      color: #191919;
-    }
-    .btn-signup:active { background: rgba(255,255,255,0.85); }
-    .btn-login {
-      background: transparent;
-      border: 1px solid #fff;
-      color: #fff;
-    }
-    .btn-login:active { background: rgba(255,255,255,0.15); }
+    .btn-sheet-login { background: #fff; border: none; color: #000; }
+    .btn-sheet-login:active { background: rgba(255,255,255,0.85); }
+    .btn-sheet-signup { background: transparent; border: 1px solid #fff; color: #fff; }
+    .btn-sheet-signup:active { background: rgba(255,255,255,0.15); }
   </style>
 </head>
 <body>
@@ -440,11 +479,31 @@
       </div>
     </div>
 
-    <!-- ════════════ ログイン画面 ════════════ -->
-    <div class="login">
-      <div class="login-actions">
-        <button class="btn-pill btn-signup">新規会員登録</button>
-        <button class="btn-pill btn-login">ログイン</button>
+    <!-- ════════════ ログイン画面（固定シート・ドラッグ不可） ════════════ -->
+    <div class="login-sheet">
+      <div class="sheet-head">
+        <h1>ログイン</h1>
+        <p>会員コンテンツをご覧になるには<br>会員登録またはログインが必要です</p>
+      </div>
+      <div class="sheet-form">
+        <div class="sheet-field">
+          <label class="field-label" for="login-email">メールアドレス</label>
+          <input type="email" id="login-email" placeholder="メールアドレスを入力..." autocomplete="email">
+          <div class="helper">テキストが入ります</div>
+        </div>
+        <div class="sheet-field">
+          <label class="field-label" for="login-password">パスワード</label>
+          <input type="password" id="login-password" placeholder="パスワードを入力..." autocomplete="current-password">
+          <div class="helper">テキストが入ります</div>
+        </div>
+        <div class="sheet-links">
+          <a href="#" onclick="return false;">パスワードをお忘れの方はこちら</a>
+          <a href="#" onclick="return false;">ログインでお困りの方はこちら</a>
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn-pill btn-sheet-login">ログイン</button>
+        <button class="btn-pill btn-sheet-signup">新規会員登録</button>
       </div>
     </div>
 
@@ -503,6 +562,14 @@
       btnDone.classList.toggle('enabled', agreed);
       btnDone.disabled = !agreed;
     });
+
+    // ── ログインシートの実高を CSS 変数に反映（ロゴの縦中央計算用） ──
+    const loginSheet = document.querySelector('.login-sheet');
+    function updateSheetHeight() {
+      document.documentElement.style.setProperty('--sheet-h', loginSheet.offsetHeight + 'px');
+    }
+    updateSheetHeight();
+    window.addEventListener('resize', updateSheetHeight);
 
     // ── 完了 → ログイン画面
     btnDone.addEventListener('click', () => {
