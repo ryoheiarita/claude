@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スプラッシュ Flutter 素材引き渡し — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .header p b { color: rgba(255,255,255,0.8); }
+
+    .download {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-top: 24px; padding: 14px 24px; border-radius: 12px;
+      background: linear-gradient(135deg, #1F32D9 0%, #1FD738 100%);
+      color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 8px 24px rgba(31,50,217,0.35);
+    }
+    .download:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(31,50,217,0.5); }
+    .download small { font-weight: 500; opacity: 0.8; font-size: 12px; }
+
+    .assets { display: flex; flex-direction: column; gap: 16px; margin-top: 48px; }
+    .asset {
+      display: flex; gap: 24px; align-items: center;
+      padding: 24px; border-radius: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .preview {
+      width: 160px; height: 120px; flex-shrink: 0;
+      border-radius: 14px; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; cursor: pointer;
+      position: relative;
+    }
+    .preview svg { display: block; width: 100%; height: 100%; }
+    .asset-body { flex: 1; min-width: 0; }
+    .asset-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+    }
+    .asset-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .asset-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .asset-desc code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .asset-files { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.35); font-family: ui-monospace, monospace; }
+    .hint { position: absolute; bottom: 6px; left: 0; right: 0; font-size: 10px; color: rgba(255,255,255,0.35); text-align: center; pointer-events: none; }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.55);
+    }
+    .note b { color: rgba(255,255,255,0.8); font-weight: 600; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+
+    table {
+      width: 100%; margin-top: 16px; border-collapse: collapse;
+      font-size: 12.5px; line-height: 1.5;
+    }
+    th, td {
+      padding: 9px 12px; text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      white-space: nowrap;
+    }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; }
+    td { color: rgba(255,255,255,0.7); }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    .table-wrap { overflow-x: auto; }
+    .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+    @media (max-width: 560px) {
+      .asset { flex-direction: column; align-items: flex-start; }
+      .preview { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>スプラッシュ アニメーション素材 引き渡し</h2>
+      <p>スプラッシュ〜ログイン画面で使用している<b>動く BWU ロゴ（Lottie）</b>と<b>背景モーションカラーレイヤー（CustomPainter 移植済み Dart）</b>の一式です。どちらも Flutter 上でのビルド・表示確認済みで、HTML プロトタイプと同時刻の静止フレーム比較でほぼ差分がないことを検証しています。挙動の完成イメージは <a href="./" style="color:#8fa0ff;">スプラッシュ プロトタイプ</a> を参照してください。</p>
+      <a class="download" href="flutter-splash-handoff.zip" download>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        flutter-splash-handoff.zip をダウンロード
+        <small>(Dart + Lottie + README)</small>
+      </a>
+    </div>
+
+    <div class="assets">
+      <!-- ① 動くBWUロゴ -->
+      <div class="asset">
+        <div class="preview" id="logoBtn" style="background:#000;">
+          <div id="logoLottie" style="width:140px;"></div>
+          <div class="hint">タップで再生</div>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">① Lottie JSON</span>
+          <div class="asset-title">動く BWU ロゴ（書き順アニメ）</div>
+          <div class="asset-desc">960×400・60fps・約1.63s。B フェード → W 筆書き → U の順に出現。ベクターのみ・キーフレーム焼き込み済み・エクスプレッションなしで、公式 <code>lottie</code> パッケージでそのまま再生できます。画面表示から <b>0.2s 遅延で1回再生し、最終フレームで静止</b>。コンポ幅 960 のうちロゴ実体は 678（中央）なので、表示ロゴ幅 164px にするにはウィジェット幅を 232 にします。</div>
+          <div class="asset-files">assets/lottie/bwu_splash.json ／ lib/splash_logo.dart</div>
+        </div>
+      </div>
+
+      <!-- ② 背景モーションカラーレイヤー -->
+      <div class="asset">
+        <div class="preview" id="bgPreview">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <radialGradient id="hG1" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+                <animate attributeName="fx" dur="10s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+                <stop offset="0%" stop-color="rgba(245, 51, 88, 0.55)"></stop>
+                <stop offset="100%" stop-color="rgba(245, 51, 88, 0)"></stop>
+              </radialGradient>
+              <radialGradient id="hG2" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+                <animate attributeName="fx" dur="8s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+                <stop offset="0%" stop-color="rgba(236, 94, 22, 0.5)"></stop>
+                <stop offset="100%" stop-color="rgba(236, 94, 22, 0)"></stop>
+              </radialGradient>
+              <radialGradient id="hG3" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+                <animate attributeName="fx" dur="7s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+                <stop offset="0%" stop-color="rgba(31, 215, 56, 0.95)"></stop>
+                <stop offset="100%" stop-color="rgba(31, 215, 56, 0)"></stop>
+              </radialGradient>
+              <radialGradient id="hG4" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+                <animate attributeName="fx" dur="9s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+                <stop offset="0%" stop-color="rgba(31, 50, 217, 1)"></stop>
+                <stop offset="100%" stop-color="rgba(31, 50, 217, 0)"></stop>
+              </radialGradient>
+            </defs>
+            <rect x="-10%" y="10%" width="100%" height="100%" fill="url(#hG2)">
+              <animate attributeName="x" dur="9s" values="-10%;0%;-10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animate attributeName="y" dur="10s" values="10%;30%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animateTransform attributeName="transform" type="rotate" values="45 50 50;117 50 50;405 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6s" repeatCount="indefinite"></animateTransform>
+            </rect>
+            <rect x="10%" y="5%" width="100%" height="100%" fill="url(#hG1)">
+              <animate attributeName="x" dur="8s" values="10%;0%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animate attributeName="y" dur="9s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animateTransform attributeName="transform" type="rotate" values="135 50 50;207 50 50;495 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="4s" repeatCount="indefinite"></animateTransform>
+            </rect>
+            <rect x="5%" y="5%" width="100%" height="100%" fill="url(#hG3)">
+              <animate attributeName="x" dur="10s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animate attributeName="y" dur="7s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animateTransform attributeName="transform" type="rotate" values="675 50 50;603 50 50;315 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="5s" repeatCount="indefinite"></animateTransform>
+            </rect>
+            <rect x="0%" y="-5%" width="100%" height="100%" fill="url(#hG4)">
+              <animate attributeName="x" dur="7s" values="0%;10%;0%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animate attributeName="y" dur="8s" values="-5%;5%;-5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <animateTransform attributeName="transform" type="rotate" values="585 50 50;513 50 50;225 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6.5s" repeatCount="indefinite"></animateTransform>
+            </rect>
+          </svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">② Dart / CustomPainter</span>
+          <div class="asset-title">背景モーションカラーレイヤー</div>
+          <div class="asset-desc">focal 付きラジアルグラデーション4枚が回転・往復するアンビエント背景。<b>CustomPainter への移植済み Dart を同梱</b>しているので、コピーしてそのまま使えます（外部依存なし）。全パラメータは下の実装指示とファイル内コメントに記載。<code>SplashBackground(fixedTime: null)</code> を <code>Positioned.fill</code> で敷くだけ。</div>
+          <div class="asset-files">lib/splash_background.dart</div>
+        </div>
+      </div>
+
+      <!-- ③ 検証デモ -->
+      <div class="asset">
+        <div class="preview" style="cursor:default;">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">③ 検証用デモ</span>
+          <div class="asset-title">動作確認ハーネス</div>
+          <div class="asset-desc"><code>main.dart</code> は背景+ロゴを重ねたデモアプリ。Web 実行時は URL に <code>?t=6.0</code> を付けるとその時刻で静止描画され、HTML プロトタイプと同時刻のフレームを直接比較できます。<code>dartpad_demo.dart</code> は dartpad.dev に貼るだけで動く単一ファイル版（インストール不要）。</div>
+          <div class="asset-files">lib/main.dart ／ dartpad_demo.dart ／ README.md</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 実装指示 ════════ -->
+    <h3 class="section">実装指示</h3>
+
+    <div class="note">
+      <b>スプラッシュのタイムライン（2.5s）</b>
+      <div class="table-wrap"><table>
+        <tr><th>時刻</th><th>イベント</th></tr>
+        <tr><td>0.2s</td><td>ロゴ Lottie 再生開始（約1.63s・1回再生 → 最終フレームで静止）</td></tr>
+        <tr><td>1.0s</td><td><span class="swatch" style="background:#EC5E16"></span>オレンジ レイヤー出現（0.6s フェード）</td></tr>
+        <tr><td>1.3s</td><td><span class="swatch" style="background:#F53358"></span>マゼンタ レイヤー出現</td></tr>
+        <tr><td>1.6s</td><td><span class="swatch" style="background:#1FD738"></span>グリーン レイヤー出現</td></tr>
+        <tr><td>1.9s</td><td><span class="swatch" style="background:#1F32D9"></span>ブルー レイヤー出現</td></tr>
+        <tr><td>2.5s</td><td>利用規約ダイアログへ遷移</td></tr>
+      </table></div>
+    </div>
+
+    <div class="note">
+      <b>カラーレイヤーのパラメータ</b>（描画順 下→上。詳細は <code>splash_background.dart</code> の定数と同一）
+      <div class="table-wrap"><table>
+        <tr><th>レイヤー</th><th>色 / alpha</th><th>x 往復 (dur)</th><th>y 往復 (dur)</th><th>回転 start/dir (dur)</th><th>fx (dur)</th></tr>
+        <tr><td><span class="swatch" style="background:#EC5E16"></span>オレンジ（差し色）</td><td>#EC5E16 / 0.5</td><td>-10→0 (9s)</td><td>10→30 (10s)</td><td>45° +1 (6s)</td><td>8s</td></tr>
+        <tr><td><span class="swatch" style="background:#F53358"></span>マゼンタ（差し色）</td><td>#F53358 / 0.55</td><td>10→0 (8s)</td><td>5→15 (9s)</td><td>135° +1 (4s)</td><td>10s</td></tr>
+        <tr><td><span class="swatch" style="background:#1FD738"></span>グリーン（メイン）</td><td>#1FD738 / 0.95</td><td>5→15 (10s)</td><td>5→15 (7s)</td><td>675° −1 (5s)</td><td>7s</td></tr>
+        <tr><td><span class="swatch" style="background:#1F32D9"></span>ブルー（メイン・最前面）</td><td>#1F32D9 / 1.0</td><td>0→10 (7s)</td><td>-5→5 (8s)</td><td>585° −1 (6.5s)</td><td>9s</td></tr>
+      </table></div>
+      <ul>
+        <li>座標は SVG viewBox <code>0 0 100 100</code> と同じ 100×100 の論理空間。画面へは cover（<code>max(w,h)/100</code> 倍・中央配置・はみ出しクリップ）で貼る</li>
+        <li>グラデーション: <code>ui.Gradient.radial</code> — 中心 = rect 中心、半径 50、focal = rect 左端から fx%（1〜5% を往復）、色は <code>[color, color(alpha:0)]</code></li>
+        <li><b>回転中心は rect 中心ではなく (50,50) 固定</b>。回転の初期角度オフセットで出現位置を四隅（左上/右上/左下/右下）に分散している</li>
+        <li>色の強弱は半径ではなく <b>alpha でのみ</b>調整する（半径を 0.5 未満にすると focal が円の外に出てハードエッジが発生）</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>イージング（有機感の出し方）</b>
+      <ul>
+        <li>往復 (x/y/fx): 前半 2/3 の時間で行き・後半 1/3 で戻る（速度比 1:2）。各セグメント <code>Cubic(0.4, 0, 0.2, 1)</code></li>
+        <li>回転: 前半 60% で 72°（<code>Cubic(0.2, 0.4, 0.8, 0.6)</code>）→ 後半 40% で 288°（<code>Cubic(0.3, 0.1, 0.7, 0.9)</code>）。セグメント境界・ループ境界の角速度が 240°/周期 で一致する C1 連続カーブで、回転が止まらず緩急だけが波打つ</li>
+        <li>ドミノ出現・フェード類: すべて <code>Cubic(0.4, 0, 0.2, 1)</code>（Material standard）</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>ログイン画面での背景・ロゴの振る舞い</b>
+      <ul>
+        <li>背景モーションエリアはログインシートを除いた残り画面高（<b>min 160px</b>）。カラーレイヤーはシート背面に <b>64px 潜り込ませ</b>、シート角丸（R32）の切り欠きからも色が見えるようにする。下端のフェードはなし</li>
+        <li>ロゴは残りエリアの縦中央に配置し、幅 164px → 112px に縮小（0.5s / <code>Cubic(0.4,0,0.2,1)</code>）</li>
+        <li>シートは固定（ドラッグ不可）。<code>max-height = 画面高 − 160px</code> を超える分は内部スクロール</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>実装上の注意</b>
+      <ul>
+        <li><b>flutter_svg は SMIL 非対応</b>のため SVG をそのまま使う移植は不可。同梱の <code>splash_background.dart</code>（CustomPainter）を使うこと</li>
+        <li>ロゴ Lottie は W の筆書きにトラックマット + butt cap ストロークを使用。lottie パッケージのマット描画でインク先端の見え方が 1〜2px 変わる可能性があるため、<b>実機で一度目視確認</b>を推奨</li>
+        <li>検証済み環境: Flutter stable / lottie ^3.1.2 / Web (CanvasKit)。HTML プロトタイプとの静止フレーム比較（t=1.4s / t=6.0s）で差分ほぼなしを確認済み</li>
+        <li>利用規約ダイアログ・ログインシートなど UI 部分のスペック（色・余白・フォント）は <a href="./" style="color:#8fa0ff;">プロトタイプ</a> の HTML ソース冒頭コメントに全て記載</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // ロゴ Lottie プレビュー（自動再生 + タップで再再生）
+    const logoAnim = lottie.loadAnimation({
+      container: document.getElementById('logoLottie'),
+      renderer: 'svg',
+      loop: false,
+      autoplay: true,
+      path: 'logo-anim/bwu-splash-custom@2x.json',
+    });
+    document.getElementById('logoBtn').addEventListener('click', () => {
+      logoAnim.goToAndPlay(0, true);
+    });
+  </script>
+</body>
+</html>
