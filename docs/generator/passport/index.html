@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<script src="../../gate.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BwU チェックインパスポート — ブック開きアニメ ジェネレーター</title>
@@ -88,7 +89,8 @@
     padding:0 20px 0 16px;background:rgba(0,0,0,.65);cursor:pointer;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     border:1px solid rgba(255,255,255,.15);border-left:none;
-    border-radius:0 999px 999px 0;}
+    border-radius:0 999px 999px 0;transition:border-color .3s ease;}
+  #h-passport.pp-open{border-color:#fff;}
   #h-passport .pp-logo{width:28px;height:28px;display:block;}
   #h-passport .pp-txt{display:flex;flex-direction:column;justify-content:center;line-height:1;
     text-align:left;}
@@ -226,8 +228,13 @@
   .stamps{position:absolute;inset:0;}
   .stamp{position:absolute;mix-blend-mode:multiply;opacity:.88;}
   .stamp text{font-family:Georgia,"Times New Roman",serif;}
-  .pagenum{position:absolute;top:10px;right:12px;background:rgba(20,20,22,.75);color:#fff;
-    font-size:11px;padding:4px 12px;border-radius:12px;letter-spacing:.05em;}
+  /* pagenation (Figma 1088:10685): 枠(表紙色)からページ内側に余白を取って配置 */
+  .pagenum{position:absolute;top:20px;right:20px;height:28px;display:flex;align-items:center;
+    justify-content:center;gap:2px;padding:4px 12px;box-sizing:border-box;
+    background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.15);border-radius:99px;
+    backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+    font-family:'Figtree',sans-serif;font-size:14px;font-weight:400;line-height:20px;color:#fff;}
+  .pagenum .dim{color:rgba(255,255,255,.5);}
 
   /* ---- front cover (two faces) ---- */
   .cover{position:absolute;inset:0;transform-style:preserve-3d;
@@ -302,11 +309,18 @@
   .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");}
 
-  .back-btn{position:absolute;left:14px;bottom:20px;z-index:50;background:#fff;color:#111;border:none;
-    border-radius:24px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;
-    box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(14px);
+  /* 戻る (Figma 1088:11236: 20,762 92x48) / ページ送り (2887:17662: 282,762 88x48) */
+  .pp-ctl{position:absolute;bottom:34px;z-index:50;height:48px;display:flex;align-items:center;
+    background:#fff;border:none;border-radius:999px;cursor:pointer;box-sizing:border-box;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transform:translateY(14px);
     transition:opacity .35s ease,transform .35s ease;}
-  .zoom .back-btn{opacity:1;pointer-events:auto;transform:none;}
+  .zoom .pp-ctl{opacity:1;pointer-events:auto;transform:none;}
+  .back-btn{left:20px;gap:4px;padding:0 24px 0 16px;
+    font-family:'Figtree',sans-serif;font-size:14px;font-weight:600;line-height:20px;color:#000;}
+  .back-btn img{width:20px;height:20px;display:block;}
+  .page-nav{right:20px;gap:16px;padding:0 16px;}
+  .page-nav img{width:20px;height:20px;display:block;}
 
   /* ================= control panel ================= */
   h1{font-size:14px;font-weight:700;margin-bottom:2px;}
@@ -419,7 +433,7 @@
       </div>
 
       <!-- passport book overlay -->
-      <div class="passport" id="passport" data-dir="right">
+      <div class="passport" id="passport" data-dir="left">
         <div class="backdrop"></div>
         <div class="book-scene">
           <div class="book-shadow"></div>
@@ -458,7 +472,7 @@
                 </div>
                 <div class="grain"></div>
               </div>
-              <div class="pagenum">1 / 10</div>
+              <div class="pagenum">1<span class="dim">/</span><span class="dim">10</span></div>
               <div class="page-shade"></div>
             </div>
             <div class="cover" id="cover">
@@ -482,7 +496,11 @@
             </div>
           </div>
         </div>
-        <button class="back-btn" id="backBtn">‹ 戻る</button>
+        <button class="pp-ctl back-btn" id="backBtn"><img src="assets/chevron_left_back.svg" alt="">戻る</button>
+        <div class="pp-ctl page-nav">
+          <img src="assets/chevron_left.svg" alt="前へ（無効）">
+          <img src="assets/chevron_right.svg" alt="次へ">
+        </div>
       </div>
     </div>
   </div>
@@ -506,14 +524,6 @@
       <input type="color" id="tapeColor" value="#d0d6dc">
     </div>
     <div class="row"><label>ページの色</label><input type="color" id="pageColor" value="#ebebe8"></div>
-  </fieldset>
-
-  <fieldset>
-    <legend>開き方</legend>
-    <div class="seg" id="dirSeg">
-      <button data-dir="right" class="sel">右開き</button>
-      <button data-dir="left">左開き</button>
-    </div>
   </fieldset>
 
   <fieldset>
@@ -559,7 +569,7 @@
   const cfg = {
     cover: '#16324f', page: '#ebebe8',
     tapeMode: 'auto', tapeCustom: '#d0d6dc',
-    dir: 'right',
+    dir: 'left', // 左開き固定（背表紙=左端）
     radius: 18, spine: 28, frame: 10, closedScale: .62,
     durIn: 420, durOpen: 900, durZoom: 650,
     ease: [.35, 0, .15, 1],
@@ -601,20 +611,24 @@
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
 
+  const chip = document.getElementById('h-passport');
   function play() {
     reset();
     // force reflow so transitions restart cleanly
     void passport.offsetWidth;
     passport.classList.add('show');
+    chip.classList.add('pp-open'); // 開いている間はチップの枠線を白に
     later(() => passport.classList.add('open'), cfg.durIn + 160);
     later(() => passport.classList.add('zoom'), cfg.durIn + 160 + cfg.durOpen * .72);
   }
   function reset() {
     clearTimers();
     passport.classList.remove('show', 'open', 'zoom', 'bye');
+    chip.classList.remove('pp-open');
   }
   function close() {
     clearTimers();
+    chip.classList.remove('pp-open');
     passport.classList.remove('zoom');                              // 1. 閉時サイズへ戻す
     later(() => passport.classList.remove('open'), cfg.durZoom * .55); // 2. 表紙を閉じる
     later(() => passport.classList.add('bye'),                        // 3. 縮小+フェードで退場
@@ -623,7 +637,11 @@
       cfg.durZoom * .55 + cfg.durOpen * .9 + cfg.durIn + 80);
   }
 
-  $('#h-passport').addEventListener('click', play);
+  // パスポートチップ: 閉→開く / 開いている間は「戻る」と同じ挙動で閉じる
+  $('#h-passport').addEventListener('click', () => {
+    const isOpen = passport.classList.contains('show') && !passport.classList.contains('bye');
+    isOpen ? close() : play();
+  });
   $('#playBtn').addEventListener('click', play);
   $('#resetBtn').addEventListener('click', reset);
   $('#backBtn').addEventListener('click', close);
@@ -657,13 +675,6 @@
     apply();
   });
   $('#easing').addEventListener('change', e => { cfg.ease = e.target.value.split(',').map(Number); apply(); });
-
-  $('#dirSeg').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    cfg.dir = b.dataset.dir;
-    document.querySelectorAll('#dirSeg button').forEach(x => x.classList.toggle('sel', x === b));
-    apply();
-  });
 
   // BwU-ish presets: black / navy / bordeaux / green / ivory / pink
   const presets = ['#1a1a1e', '#16324f', '#6d1f2c', '#1e5c43', '#e8e2d5', '#d9376e', '#3f2d7a', '#c0492b'];
@@ -702,7 +713,7 @@ class PassportBookSpec {
   static const spineWidth = ${cfg.spine}.0;
   static const pageFrameInset = ${cfg.frame}.0; // ページを inset して表紙色の枠を見せる
   static const closedScale = ${cfg.closedScale};
-  static const hingeRight = ${cfg.dir === 'right'}; // 右開き: 背表紙=右端, 表紙は右端を軸に開く
+  static const hingeRight = false; // 左開き固定: 背表紙=左端, 表紙は左端を軸に開く
   static const openDuration = Duration(milliseconds: ${cfg.durOpen});
   static const zoomDuration = Duration(milliseconds: ${cfg.durZoom});
   static const entranceDuration = Duration(milliseconds: ${cfg.durIn});

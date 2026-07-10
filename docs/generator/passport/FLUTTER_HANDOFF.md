@@ -21,8 +21,8 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
 
 ## 仕様
 
-1. **右開き**（デフォルト）: 背表紙が右端。表紙は右端を軸に、手前に持ち上がって
-   右へ約176°回転して開く。ジェネレーターで左開きにも切替可能。
+1. **左開き固定**: 背表紙が左端。表紙は左端を軸に、手前に持ち上がって
+   左へ約176°回転して開く（`hingeRight = false`）。
 2. **色の連動**: ブックの表紙色は可変。開いた時にページの外周に見える枠は
    裏表紙そのものなので、**必ず表紙と同色**にする（`coverColor` を共有）。
    開く途中に見える表紙の裏面は表紙色を約28%暗くした色（`insideCoverColor`）。
@@ -45,8 +45,21 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
       奥行きを出し、開き切る頃に戻す（`bodyTiltDeg`、sin カーブ）
    3. ズーム: 開いたページが画面いっぱいへ（`zoomDuration`）。
       最終レイアウトは Figma 1088-9906（ヘッダー下〜画面下端、左右 4px）
-   4. ページ上のスタンプ・「1/10」ピル・「戻る」ボタンをフェードイン
-5. **閉じるシーケンス**（「戻る」→ 突然消さないこと）:
+   4. ページ上のスタンプ・ページカウンター・「戻る」「ページ送り」をフェードイン
+   - **パスポートチップ**: 開いている間はもう一度押すと「戻る」と同じ閉じ挙動。
+     開いている間はチップの枠線カラーを白にする（border rgba(255,255,255,.15) → #FFF）
+5. **ページ内UI**（Figma 1088-9906 準拠、いずれも Figtree）:
+   - ページカウンター（1088:10685）: 高さ28 / padding 4×12 / radius 99 /
+     bg rgba(0,0,0,.65) / border rgba(255,255,255,.15) / blur 32 / 14px Regular。
+     「1」は白、「/」「10」は白50%。**枠（表紙色）からページ内側に余白を取る**:
+     ブック上端から top 20 / 右端から right 20（screen座標: top 138, right 24）
+   - 戻るボタン（1088:11236）: 20,762 / 92×48 / 白 / radius 999 /
+     padding 左16 右24 / gap 4 / Chevron_Left 20px + 「戻る」14px SemiBold 黒
+   - ページ送り（2887:17662）: 282,762 / 88×48 / 白 / radius 999 / padding 16 /
+     gap 16 / Chevron_Left（1ページ目は stroke-opacity 0.3 で無効表現）+ Chevron_Right 20px
+   - アイコンSVG: assets/chevron_left_back.svg（戻る用・黒）,
+     assets/chevron_left.svg（30%）, assets/chevron_right.svg
+6. **閉じるシーケンス**（「戻る」またはパスポートチップ → 突然消さないこと）:
    1. ズームアウト: 閉時サイズへ戻る（`zoomDuration`）
    2. 表紙が閉じる（`openDuration`、開きの逆回転）
    3. **退場**: 出現の逆再生。scale 1→0.18 ＋ チップ方向（上）へ移動しつつ
@@ -79,7 +92,7 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
   "insideCoverColor": "coverColor を -28% shade",
   "tapeColor": "coverColor を +80% 白寄せ（背のクロステープ）",
   "pageColor": "#EBEBE8",
-  "hinge": "right",
+  "hinge": "left",
   "cornerRadius": 18,
   "spineCornerRadius": 4,
   "spineWidth": 28,
