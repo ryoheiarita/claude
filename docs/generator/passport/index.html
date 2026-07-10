@@ -24,12 +24,16 @@
     --frame:        10px;
     --closed-scale: .62;
     --dur-in:       420ms;
-    --dur-open:     900ms;
-    --dur-zoom:     650ms;
+    --dur-open:     600ms;
+    --dur-zoom:     800ms;
     --ease-open:    cubic-bezier(.35,0,.15,1);
-    --open-rot:     176deg;    /* sign flips with direction */
-    --tilt:         -7deg;     /* book body tilt while opening */
+    --open-rot:     -176deg;   /* 左開き */
+    --tilt:         20deg;     /* book body tilt while opening */
     --cover-text:   #ffffff;
+    /* 帯のハイライト（テープ輝度に応じてJSが更新: 暗い帯では白を抑える） */
+    --sp-edge:      rgba(255,255,255,.55);
+    --sp-sheen:     rgba(255,255,255,.30);
+    --sp-glow:      rgba(255,255,255,.10);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%}
@@ -252,6 +256,11 @@
   .face{position:absolute;inset:0;border-radius:var(--radius);backface-visibility:hidden;
     -webkit-backface-visibility:hidden;overflow:hidden;}
   .face.front{background:var(--cover);}
+  /* アップロードされた表紙PNG（全面）。帯・環境光・グレインはこの上に重なる */
+  .cover-img{position:absolute;inset:0;background-size:cover;background-position:center;
+    display:none;}
+  .face.front.has-img .cover-img{display:block;}
+  .face.front.has-img .cover-art,.face.front.has-img .cover-frame{display:none;}
   /* paper-like lighting on the cover */
   .face.front .light{position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 26%),
@@ -262,30 +271,30 @@
   .face.front .spine{position:absolute;top:0;bottom:0;width:calc(var(--spine-w)*1.5);}
   [data-dir="right"] .face.front .spine{right:0;background:
     linear-gradient(270deg,
-      rgba(0,0,0,.22) 0 1.5px,rgba(255,255,255,.55) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      rgba(0,0,0,.22) 0 1.5px,var(--sp-edge) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
       transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
       rgba(0,0,0,.05) 13px 14px,transparent 14px),
     linear-gradient(270deg,
       transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
       rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
-      rgba(255,255,255,.10) calc(var(--spine-w) + 11px),transparent 100%),
+      var(--sp-glow) calc(var(--spine-w) + 11px),transparent 100%),
     linear-gradient(270deg,
       rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
-      rgba(255,255,255,.30) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      var(--sp-sheen) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
       rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
     linear-gradient(270deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
   [data-dir="left"] .face.front .spine{left:0;background:
     linear-gradient(90deg,
-      rgba(0,0,0,.22) 0 1.5px,rgba(255,255,255,.55) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      rgba(0,0,0,.22) 0 1.5px,var(--sp-edge) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
       transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
       rgba(0,0,0,.05) 13px 14px,transparent 14px),
     linear-gradient(90deg,
       transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
       rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
-      rgba(255,255,255,.10) calc(var(--spine-w) + 11px),transparent 100%),
+      var(--sp-glow) calc(var(--spine-w) + 11px),transparent 100%),
     linear-gradient(90deg,
       rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
-      rgba(255,255,255,.30) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      var(--sp-sheen) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
       rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
     linear-gradient(90deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
   /* free-edge shading */
@@ -356,6 +365,8 @@
   .btn.play{background:#7c6cf5;color:#fff;}
   .btn.ghost{background:#26262e;color:#c9c9d2;}
   .btn.copy{background:#26262e;color:#c9c9d2;font-size:12px;padding:9px 0;}
+  .file-btn{text-align:center;cursor:pointer;}
+  .btn:disabled{opacity:.4;cursor:default;}
   .btn.copy.ok{background:#2c6e49;color:#fff;}
   textarea.code{width:100%;height:150px;background:#101015;color:#9fd0a0;border:1px solid #2b2b33;
     border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:10px;padding:10px;
@@ -481,7 +492,8 @@
               <div class="page-shade"></div>
             </div>
             <div class="cover" id="cover">
-              <div class="face front">
+              <div class="face front" id="faceFront">
+                <div class="cover-img" id="coverImg"></div>
                 <div class="light"></div>
                 <div class="cover-frame"></div>
                 <div class="cover-art">
@@ -532,26 +544,13 @@
   </fieldset>
 
   <fieldset>
-    <legend>形状</legend>
-    <div class="row"><label>角丸</label><input type="range" id="radius" min="4" max="36" value="18"><output>18px</output></div>
-    <div class="row"><label>背表紙の幅</label><input type="range" id="spine" min="12" max="48" value="28"><output>28px</output></div>
-    <div class="row"><label>枠（表紙の見え幅）</label><input type="range" id="frame" min="4" max="24" value="10"><output>10px</output></div>
-    <div class="row"><label>閉時サイズ</label><input type="range" id="scale" min="40" max="80" value="62"><output>62%</output></div>
-  </fieldset>
-
-  <fieldset>
-    <legend>タイミング</legend>
-    <div class="row"><label>開く時間</label><input type="range" id="durOpen" min="400" max="2000" step="50" value="900"><output>900ms</output></div>
-    <div class="row"><label>ズーム時間</label><input type="range" id="durZoom" min="300" max="1500" step="50" value="650"><output>650ms</output></div>
-    <div class="row"><label>イージング</label>
-      <select id="easing">
-        <option value=".35,0,.15,1" selected>スムーズ（標準）</option>
-        <option value=".2,.9,.25,1">えぐい減速</option>
-        <option value=".45,0,.2,1.18">オーバーシュート</option>
-        <option value=".6,0,.4,1">じんわり</option>
-      </select>
+    <legend>表紙デザイン</legend>
+    <div class="btns" style="margin-bottom:0">
+      <label class="btn ghost file-btn" for="coverFile">PNG をアップロード</label>
+      <button class="btn ghost" id="coverImgClear" disabled>クリア</button>
     </div>
-    <div class="row"><label>本体チルト</label><input type="range" id="tilt" min="0" max="20" value="7"><output>7°</output></div>
+    <input type="file" id="coverFile" accept="image/png,image/jpeg,image/webp" hidden>
+    <div class="hint">画像は表紙全面に表示。帯・環境光・グレインはその上に重なります。</div>
   </fieldset>
 
   <fieldset>
@@ -576,10 +575,11 @@
     tapeMode: 'auto', tapeCustom: '#d0d6dc',
     dir: 'left', // 左開き固定（背表紙=左端）
     radius: 18, spine: 28, frame: 10, closedScale: .62,
-    durIn: 420, durOpen: 900, durZoom: 650,
+    durIn: 420, durOpen: 600, durZoom: 800,
     ease: [.35, 0, .15, 1],
-    tilt: 7, openAngle: 176,
+    tilt: 20, openAngle: 176,
   };
+  let coverImgSet = false;
 
   /* ---------- color utils ---------- */
   const hex2rgb = h => [1,3,5].map(i => parseInt(h.slice(i, i+2), 16));
@@ -595,6 +595,11 @@
     root.setProperty('--cover-text', lum(cfg.cover) > .62 ? 'rgba(20,20,25,.85)' : '#ffffff');
     root.setProperty('--tape', tapeHex()); // 背のクロステープ（自動 = 表紙色を白寄せ / カスタム）
     if (cfg.tapeMode === 'auto') $('#tapeColor').value = tapeHex();
+    // 帯のハイライト: テープが暗いほど白を抑える（黒帯で影が白浮きしないように）
+    const hf = .2 + .8 * lum(tapeHex());
+    root.setProperty('--sp-edge', `rgba(255,255,255,${(.55 * hf).toFixed(3)})`);
+    root.setProperty('--sp-sheen', `rgba(255,255,255,${(.3 * hf).toFixed(3)})`);
+    root.setProperty('--sp-glow', `rgba(255,255,255,${(.1 * hf).toFixed(3)})`);
     root.setProperty('--page', cfg.page);
     root.setProperty('--dot', shade(cfg.page, -.14));
     root.setProperty('--radius', cfg.radius + 'px');
@@ -652,22 +657,6 @@
   $('#backBtn').addEventListener('click', close);
 
   /* ---------- panel bindings ---------- */
-  const bindRange = (id, key, unit, fmt) => {
-    const el = $(id), out = el.nextElementSibling;
-    el.addEventListener('input', () => {
-      cfg[key] = fmt ? fmt(+el.value) : +el.value;
-      out.textContent = el.value + unit;
-      apply();
-    });
-  };
-  bindRange('#radius', 'radius', 'px');
-  bindRange('#spine', 'spine', 'px');
-  bindRange('#frame', 'frame', 'px');
-  bindRange('#scale', 'closedScale', '%', v => v / 100);
-  bindRange('#durOpen', 'durOpen', 'ms');
-  bindRange('#durZoom', 'durZoom', 'ms');
-  bindRange('#tilt', 'tilt', '°');
-
   $('#coverColor').addEventListener('input', e => { cfg.cover = e.target.value; selSwatch(null); apply(); });
   $('#pageColor').addEventListener('input', e => { cfg.page = e.target.value; apply(); });
   $('#tapeColor').addEventListener('input', e => {
@@ -679,7 +668,28 @@
     if (!e.target.checked) cfg.tapeCustom = $('#tapeColor').value;
     apply();
   });
-  $('#easing').addEventListener('change', e => { cfg.ease = e.target.value.split(',').map(Number); apply(); });
+  /* ---------- cover image upload ---------- */
+  const faceFront = $('#faceFront');
+  $('#coverFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      $('#coverImg').style.backgroundImage = `url(${r.result})`;
+      faceFront.classList.add('has-img');
+      coverImgSet = true;
+      $('#coverImgClear').disabled = false;
+      genCode();
+    };
+    r.readAsDataURL(f);
+  });
+  $('#coverImgClear').addEventListener('click', () => {
+    faceFront.classList.remove('has-img');
+    $('#coverImg').style.backgroundImage = '';
+    $('#coverFile').value = '';
+    coverImgSet = false;
+    $('#coverImgClear').disabled = true;
+    genCode();
+  });
 
   // BwU-ish presets: black / navy / bordeaux / green / ivory / pink
   const presets = ['#1a1a1e', '#16324f', '#6d1f2c', '#1e5c43', '#e8e2d5', '#d9376e', '#3f2d7a', '#c0492b'];
@@ -702,6 +712,9 @@
     const n = v => +(Math.min(v, W) / W).toFixed(3);
     const spineStops = [0, n(1.5), n(1.5), n(3), n(3), n(4), n(4),
       n(S * .6), n(S * .85), n(S - 1), n(S), n(S + 6), n(Math.min(S + 11, W - .5)), 1].join(', ');
+    // 帯ハイライト: テープ輝度連動（暗い帯で白浮きさせない）
+    const hf = .2 + .8 * lum(tapeHex());
+    const aEdge = (.55 * hf).toFixed(3), aSheen = (.3 * hf).toFixed(3), aGlow = (.1 * hf).toFixed(3);
     return `// Generated by BwU checkin-passport book generator
 // 開閉の見え方は同梱の index.html と見比べて調整してください。
 import 'dart:math' as math;
@@ -754,6 +767,8 @@ class PassportBook extends StatelessWidget {
   final double progress;
   final double zoom;
   final Widget pageChild;
+  /// 表紙デザイン。PNG を使う場合は Image.asset/network を全面配置
+  /// （帯・環境光はその上に重なる。_CoverFront の child に渡す）
   final Widget? coverChild;
 
   @override
@@ -865,20 +880,21 @@ class _CoverFront extends StatelessWidget {
                         ? Alignment.centerLeft
                         : Alignment.centerRight,
                     stops: const [${spineStops}],
+                    // 白ハイライトはテープ輝度に連動（暗い帯で白浮きしない値を焼き込み済み）
                     colors: [
                       Colors.black.withValues(alpha: .22), // 外端のエッジ線
                       Colors.black.withValues(alpha: .22),
-                      Colors.white.withValues(alpha: .55), // 紙の切り口ハイライト
-                      Colors.white.withValues(alpha: .55),
+                      Colors.white.withValues(alpha: ${aEdge}), // 紙の切り口ハイライト
+                      Colors.white.withValues(alpha: ${aEdge}),
                       Colors.black.withValues(alpha: .10),
                       Colors.black.withValues(alpha: .10),
                       Colors.transparent,
-                      Colors.white.withValues(alpha: .30), // テープの丸み（シーン）
+                      Colors.white.withValues(alpha: ${aSheen}), // テープの丸み（シーン）
                       Colors.transparent,
                       Colors.black.withValues(alpha: .10),
                       Colors.black.withValues(alpha: .16), // テープ先の折り溝
                       Colors.black.withValues(alpha: .05),
-                      Colors.white.withValues(alpha: .10),
+                      Colors.white.withValues(alpha: ${aGlow}),
                       Colors.transparent,
                     ],
                   ),
@@ -927,6 +943,12 @@ class _CoverFront extends StatelessWidget {
       openDurationMs: cfg.durOpen,
       zoomDurationMs: cfg.durZoom,
       openCurve: { type: 'cubic-bezier', value: cfg.ease },
+      coverImage: coverImgSet,           // 表紙PNG使用の有無（画像自体はアプリ側で供給）
+      spineHighlightAlphas: {            // 帯の白ハイライト（テープ輝度連動）
+        edge: +(.55 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+        sheen: +(.3 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+        glow: +(.1 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+      },
       entranceDurationMs: cfg.durIn,
       exitDurationMs: cfg.durIn,         // 退場は出現の逆再生（scale 1→0.18 + フェード）
       exitCurve: { type: 'cubic-bezier', value: [0.55, 0, 0.85, 0.36] },

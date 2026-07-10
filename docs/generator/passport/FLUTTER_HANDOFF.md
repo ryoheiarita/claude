@@ -27,12 +27,16 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
    裏表紙そのものなので、**必ず表紙と同色**にする（`coverColor` を共有）。
    開く途中に見える表紙の裏面は表紙色を約28%暗くした色（`insideCoverColor`）。
 3. **質感（Paper By WeTransfer「sinta」を再現）**:
+   - 表紙デザインは **PNG 全面配置に対応**（`coverChild`）。帯・環境光・グレインは
+     画像の上に重ねる。画像なしの場合はエンブレム＋PASSPORTタイトル
    - 背表紙側は**クロステープ**（幅 `spineWidth`、色 `tapeColor`。デフォルトは
      表紙色を80%白寄せの自動生成、ジェネレーターで個別指定も可 → JSON の
      `tapeColorMode` 参照）。
      テープの上に ①外端のエッジ線（黒22%→白55%→黒10%の細線）
      ②テープ中央の丸みハイライト（白30%） ③テープ先の折り溝（黒16%→フェード）
-     をグラデーションで重ねる。数値は index.html の `.spine` レイヤーが正
+     をグラデーションで重ねる。数値は index.html の `.spine` レイヤーが正。
+     **白ハイライトはテープ輝度に連動**して抑える（factor = 0.2 + 0.8×輝度。
+     黒帯で白浮きしない。JSON の `spineHighlightAlphas` に実値を出力）
    - **帯（背表紙）側の角丸はほぼ無し**（`spineCornerRadius` = 4）。
      小口側だけ `cornerRadius` で丸める → `PassportBookSpec.coverRadius`
    - 表紙上部にわずかな環境光、下部にわずかな落ち影
@@ -67,7 +71,7 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
       ease-in（`exitCurve` = Cubic(0.55, 0, 0.85, 0.36)）で加速フェードアウト
       （`exitDuration`）。背景の暗幕・シャドウも同時にフェード
    4. 完全に消えてからオーバーレイを非表示にする
-5. **ページ**: オフホワイト（デフォルト #EBEBE8）＋ドットグリッド
+7. **ページ**: オフホワイト（デフォルト #EBEBE8）＋ドットグリッド
    （17px 間隔、ページ色を14%暗くしたドット）。角丸はブック角丸より小さく
    `cornerRadius - pageFrameInset * 0.6`。
 
@@ -100,12 +104,12 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
   "pageFrameInset": 10,
   "closedScale": 0.62,
   "entranceDurationMs": 420,
-  "openDurationMs": 900,
-  "zoomDurationMs": 650,
+  "openDurationMs": 600,
+  "zoomDurationMs": 800,
   "exitDurationMs": 420,
   "openCurve": [0.35, 0, 0.15, 1],
   "exitCurve": [0.55, 0, 0.85, 0.36],
-  "bodyTiltDeg": 7,
+  "bodyTiltDeg": 20,
   "coverOpenDeg": 176
 }
 ```
