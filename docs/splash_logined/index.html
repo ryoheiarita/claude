@@ -27,8 +27,10 @@
                背景（黒+ブロブ）は scale(1.15) の僅かな押し込みのみ。
                画面中央は W のストロークの隙間に当たるため、ズーム後半
                （0.3s〜0.5s）でスプラッシュ層の opacity を 0 にして抜け切る
-      3.4s     [done] スプラッシュ層を破棄。ホーム画像が 1.06→1.0 に
-               0.35s で軽く戻り、着地の余韻を付ける（パララックス演出）
+      3.4s     [done] スプラッシュ層を破棄。ホーム画像は zoom 開始（2.9s）から
+               scale 120%→100% を 1s・ease-out で継続中（3.9s に静止）。
+               窓から見えている時点では 120% で、ズームと同時に
+               引きながら現れて着地する
 
     実装のポイント:
       - 「文字の窓」= スプラッシュ層（黒 rect + ブロブ SVG）に CSS mask を適用。
@@ -43,8 +45,8 @@
         ズーム後半の opacity フェードで消す
       - 次画面はホーム（Figma RBcywS6kYjz8ZCFfZ1Z4MP / 8978-27806）の
         書き出し画像 home_screen.png（390×844 @1x）。実装時は実画面に差し替え
-      - ズーム中、ホーム画像は 1.0→1.06 に僅かに拡大（窓に近づくパララックス）、
-        遷移後 0.35s で 1.0 に戻す
+      - ホーム画像の出現: zoom 開始と同時に scale 120%→100% を 1s・ease-out
+        （窓越しに見えている間は 120% で待機）
 
     Flutter 検証メモ:
       - 文字マスクは ClipPath（ロゴパスの evenodd）+ AnimationController の
@@ -64,6 +66,8 @@
       --ease: cubic-bezier(0.4, 0, 0.2, 1);
       /* グインっと入る用: 強めの加速 → 減速（後半はフェードと重なる） */
       --ease-zoom: cubic-bezier(0.65, 0, 0.35, 1);
+      /* 遷移先画面の出現用 ease-out */
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
       /* マスク用 BWU ロゴ: Figma 最新版 SVG（10283-27162 / bwu_logo_hq.svg と同一パス）。
          白の Lottie ロゴがフェードアウトするタイミングで、窓の形は
          こちらの高品質パスにしれっと置き換わる（ズームで拡大されるのはこの形） */
@@ -89,17 +93,14 @@
       position: absolute;
       inset: 0;
       background: #101010 url('home_screen.png') center / cover no-repeat;
-      transform: scale(1);
+      /* 窓越しに見えている間は 120% で待機 */
+      transform: scale(1.2);
     }
-    /* ズーム中: 窓に近づくにつれ中の景色が僅かに拡大（パララックス） */
+    /* 出現: zoom 開始と同時に scale 120%→100% を 1s・ease-out
+       （ズーム 0.5s が終わった後も引き続け、3.9s に静止） */
     .phase-zoom #next-screen {
-      transform: scale(1.06);
-      transition: transform 0.5s var(--ease-zoom);
-    }
-    /* 着地後: 0.35s で等倍へ戻して余韻を付ける */
-    .phase-done #next-screen {
       transform: scale(1);
-      transition: transform 0.35s cubic-bezier(0.2, 0, 0.2, 1);
+      transition: transform 1s var(--ease-out);
     }
 
     /* ════════════ スプラッシュ層（黒背景 + ブロブ。文字窓でくり抜かれる） ════════════ */
@@ -287,7 +288,7 @@
     //   2.6s  crop: 白ロゴフェードアウト + 文字窓オープン（0.3s クロスフェード）
     //   2.9s  zoom: 中央揃えのまま 0.5s・ease でグインっと拡大
     //         （後半 0.3s〜0.5s でスプラッシュ層が opacity フェードで抜ける）
-    //   3.4s  done: スプラッシュ層破棄、ホーム画像が 1.0 に着地
+    //   3.4s  done: スプラッシュ層破棄（ホーム画像は 3.9s まで 100% へ着地中）
     const T_CROP = 2600, T_ZOOM = T_CROP + 300, T_DONE = T_ZOOM + 500;
 
     function run() {
