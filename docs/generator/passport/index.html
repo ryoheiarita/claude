@@ -26,6 +26,7 @@
     --dur-in:       420ms;
     --dur-open:     600ms;
     --dur-zoom:     800ms;
+    --dur-flip:     620ms;     /* ページめくり */
     --ease-open:    cubic-bezier(.35,0,.15,1);
     --open-rot:     -176deg;   /* 左開き */
     --tilt:         20deg;     /* book body tilt while opening */
@@ -336,7 +337,31 @@
     font-family:'Figtree',sans-serif;font-size:14px;font-weight:600;line-height:20px;color:#000;}
   .back-btn img{width:20px;height:20px;display:block;}
   .page-nav{right:20px;gap:16px;padding:0 16px;}
+  .page-nav .pn{background:none;border:none;padding:0;cursor:pointer;display:flex;
+    transition:opacity .2s ease;}
+  .page-nav .pn:disabled{opacity:.3;cursor:default;}
   .page-nav img{width:20px;height:20px;display:block;}
+
+  /* ---- page flip (ページ送り: 背表紙軸でめくれるリーフ) ---- */
+  .flip-layer{position:absolute;inset:var(--frame);perspective:2000px;pointer-events:none;
+    transform:translateZ(2px);}
+  .leaf{position:absolute;inset:0;transform-style:preserve-3d;}
+  [data-dir="left"] .leaf{transform-origin:0% 50%;}
+  [data-dir="right"] .leaf{transform-origin:100% 50%;}
+  .leaf .lf{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    overflow:hidden;background:var(--page);}
+  [data-dir="left"] .leaf .lf{border-radius:3px var(--r-page) var(--r-page) 3px;
+    box-shadow:inset 2px 0 4px -2px rgba(0,0,0,.25);}
+  [data-dir="right"] .leaf .lf{border-radius:var(--r-page) 3px 3px var(--r-page);
+    box-shadow:inset -2px 0 4px -2px rgba(0,0,0,.25);}
+  .leaf .lf.back{transform:rotateY(180deg);filter:brightness(.96);}
+  .leaf.fwd{transform:rotateY(0deg);}
+  .leaf.fwd.go{transform:rotateY(-178deg);opacity:0;
+    transition:transform var(--dur-flip) cubic-bezier(.45,.05,.35,1),
+               opacity .18s linear calc(var(--dur-flip) - .18s);}
+  .leaf.bwd{transform:rotateY(-178deg);opacity:0;}
+  .leaf.bwd.go{transform:rotateY(0deg);opacity:1;
+    transition:transform var(--dur-flip) cubic-bezier(.45,.05,.35,1),opacity .18s linear;}
 
   /* ================= control panel ================= */
   h1{font-size:14px;font-weight:700;margin-bottom:2px;}
@@ -472,7 +497,7 @@
               <div class="grain"></div>
               <div class="page">
                 <div class="dots"></div>
-                <div class="stamps">
+                <div class="stamps" id="pageStamps">
                   <svg class="stamp" viewBox="0 0 120 120" style="width:150px;left:8%;top:6%;transform:rotate(-8deg);color:#c04a2b">
                     <defs><path id="cp1" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
                     <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="3.5" stroke-dasharray="2 3"/>
@@ -502,7 +527,8 @@
                 </div>
                 <div class="grain"></div>
               </div>
-              <div class="pagenum">1<span class="dim">/</span><span class="dim">10</span></div>
+              <div class="flip-layer" id="flipLayer"></div>
+              <div class="pagenum"><span id="pageNum">1</span><span class="dim">/</span><span class="dim">10</span></div>
               <div class="page-shade"></div>
             </div>
             <div class="cover" id="cover">
@@ -529,8 +555,8 @@
         </div>
         <button class="pp-ctl back-btn" id="backBtn"><img src="assets/chevron_left_back.svg" alt="">戻る</button>
         <div class="pp-ctl page-nav">
-          <img src="assets/chevron_left.svg" alt="前へ（無効）">
-          <img src="assets/chevron_right.svg" alt="次へ">
+          <button class="pn" id="pnPrev" disabled title="前のページ"><img src="assets/chevron_left_back.svg" alt="前へ"></button>
+          <button class="pn" id="pnNext" title="次のページ"><img src="assets/chevron_right.svg" alt="次へ"></button>
         </div>
       </div>
     </div>
@@ -646,6 +672,7 @@
   const chip = document.getElementById('h-passport');
   function play() {
     reset();
+    if (typeof curPage !== 'undefined' && curPage !== 1) { curPage = 1; renderPage(1); updateNav(); }
     // force reflow so transitions restart cleanly
     void passport.offsetWidth;
     passport.classList.add('show');
@@ -681,6 +708,81 @@
   $('#playBtn').addEventListener('click', play);
   $('#resetBtn').addEventListener('click', reset);
   $('#backBtn').addEventListener('click', close);
+
+  /* ---------- page flip (ページ送り) ---------- */
+  const TOTAL_PAGES = 10;
+  let curPage = 1, flipping = false;
+  const stampsBox = $('#pageStamps');
+  // 1ページ目のスタンプ4種をテンプレートとして保持（d: デザイン番号）
+  const STAMP_TPLS = [...stampsBox.children].map(el => el.outerHTML);
+  const STAMP_COLORS = [...stampsBox.children].map(el => el.style.color);
+  // 2ページ目以降のレイアウト（l/t: %位置, r0: 回転, w: 幅px）
+  const PAGE_LAYOUTS = {
+    2: [{d:1,l:8,t:8,r0:-6,w:145},{d:3,l:48,t:40,r0:8,w:150}],
+    3: [{d:2,l:10,t:12,r0:5,w:150},{d:0,l:46,t:58,r0:-8,w:140},{d:3,l:6,t:52,r0:4,w:118}],
+    4: [{d:0,l:40,t:10,r0:7,w:150}],
+    5: [{d:3,l:10,t:10,r0:-5,w:150},{d:1,l:46,t:52,r0:6,w:150}],
+    6: [{d:2,l:34,t:32,r0:-7,w:160}],
+    7: [{d:1,l:8,t:12,r0:6,w:140},{d:0,l:48,t:42,r0:-6,w:150},{d:2,l:12,t:64,r0:3,w:128}],
+    8: [{d:3,l:42,t:12,r0:-8,w:140},{d:2,l:8,t:46,r0:5,w:150}],
+    9: [],
+    10: [{d:0,l:26,t:30,r0:-5,w:170}],
+  };
+  function stampsHTML(page) {
+    if (page === 1) return STAMP_TPLS.join('');
+    return (PAGE_LAYOUTS[page] || []).map(p => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = STAMP_TPLS[p.d];
+      const el = tmp.firstElementChild;
+      el.setAttribute('style',
+        `width:${p.w}px;left:${p.l}%;top:${p.t}%;transform:rotate(${p.r0}deg);color:${STAMP_COLORS[p.d]}`);
+      return el.outerHTML;
+    }).join('');
+  }
+  function renderPage(p) { stampsBox.innerHTML = stampsHTML(p); }
+  function updateNav() {
+    $('#pnPrev').disabled = curPage <= 1;
+    $('#pnNext').disabled = curPage >= TOTAL_PAGES;
+    $('#pageNum').textContent = curPage;
+  }
+  function makeLeaf(contentHTML) {
+    const leaf = document.createElement('div');
+    leaf.innerHTML =
+      `<div class="lf front"><div class="dots"></div><div class="stamps">${contentHTML}</div><div class="grain"></div></div>` +
+      `<div class="lf back"><div class="dots"></div></div>`;
+    leaf.className = 'leaf';
+    return leaf;
+  }
+  function flip(dir) { // +1 次へ / -1 前へ
+    if (flipping) return;
+    const target = curPage + dir;
+    if (target < 1 || target > TOTAL_PAGES) return;
+    flipping = true;
+    let leaf;
+    if (dir > 0) {
+      // 現ページをリーフにして左へめくり、下から次ページが現れる
+      leaf = makeLeaf(stampsHTML(curPage));
+      leaf.classList.add('fwd');
+      renderPage(target);
+    } else {
+      // 前ページのリーフが左（背表紙側）から戻ってくる
+      leaf = makeLeaf(stampsHTML(target));
+      leaf.classList.add('bwd');
+    }
+    $('#flipLayer').appendChild(leaf);
+    curPage = target;
+    updateNav();
+    void leaf.offsetWidth; // 初期transformを確定させてからtransition開始
+    leaf.classList.add('go');
+    setTimeout(() => {
+      if (dir < 0) renderPage(target);
+      leaf.remove();
+      flipping = false;
+    }, 660);
+  }
+  $('#pnNext').addEventListener('click', () => flip(1));
+  $('#pnPrev').addEventListener('click', () => flip(-1));
+  updateNav();
 
   /* ---------- panel bindings ---------- */
   $('#holdCover').addEventListener('change', e => {
@@ -1009,6 +1111,8 @@ class _CoverFront extends StatelessWidget {
       entranceDurationMs: cfg.durIn,
       exitDurationMs: cfg.durIn,         // 退場は出現の逆再生（scale 1→0.18 + フェード）
       exitCurve: { type: 'cubic-bezier', value: [0.55, 0, 0.85, 0.36] },
+      pageFlipDurationMs: 620,           // ページ送り: 背表紙軸のリーフめくり
+      pageFlipCurve: { type: 'cubic-bezier', value: [0.45, 0.05, 0.35, 1] },
       bodyTiltDeg: cfg.tilt,
       coverOpenDeg: cfg.openAngle,
     }, null, 2);

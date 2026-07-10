@@ -278,7 +278,7 @@
         <tr><th>要素</th><th>Figma</th><th>位置 / サイズ</th><th>スタイル</th></tr>
         <tr><td>ページカウンター</td><td><code>1088:10685</code></td><td>ブック右上。<b>枠（表紙色）からページ内側に余白</b>: ブック上端から 20 / 右端から 20（screen: top 138, right 24）。h28</td><td>bg 黒65% / border 白15% / radius 99 / blur 32 / padding 4×12 / 14px Regular。「1」白・「/ 10」白50%</td></tr>
         <tr><td>戻るボタン</td><td><code>1088:11236</code></td><td>x20, y762 / 92×48</td><td>白 / radius 999 / padding 左16 右24 / gap 4 / Chevron_Left 20px ＋「戻る」14px SemiBold 黒</td></tr>
-        <tr><td>ページ送り</td><td><code>2887:17662</code></td><td>x282, y762 / 88×48</td><td>白 / radius 999 / padding 16 / gap 16 / Chevron_Left（1ページ目は 30%）＋ Chevron_Right 20px</td></tr>
+        <tr><td>ページ送り</td><td><code>2887:17662</code></td><td>x282, y762 / 88×48</td><td>白 / radius 999 / padding 16 / gap 16 / Chevron_Left（1ページ目は 30% 無効）＋ Chevron_Right 20px。<b>タップで実際にページがめくれる</b>: リーフを背表紙軸で rotateY 0→−178°（620ms / <code>Cubic(.45, .05, .35, 1)</code>、下に遷移先ページを先描画、終盤180msでフェード。前へは逆再生）。全10ページ、カウンター連動</td></tr>
       </table></div>
     </div>
 

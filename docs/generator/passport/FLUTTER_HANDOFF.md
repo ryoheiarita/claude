@@ -61,7 +61,12 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
    - 戻るボタン（1088:11236）: 20,762 / 92×48 / 白 / radius 999 /
      padding 左16 右24 / gap 4 / Chevron_Left 20px + 「戻る」14px SemiBold 黒
    - ページ送り（2887:17662）: 282,762 / 88×48 / 白 / radius 999 / padding 16 /
-     gap 16 / Chevron_Left（1ページ目は stroke-opacity 0.3 で無効表現）+ Chevron_Right 20px
+     gap 16 / Chevron_Left（1ページ目は opacity 0.3 で無効）+ Chevron_Right 20px
+   - **ページめくり**: ページ送りタップで実際にめくる。リーフ（現ページの複製、
+     裏面はページ色を4%暗く）を背表紙（左端）軸で rotateY 0→−178°、
+     620ms / `Cubic(.45, .05, .35, 1)`。下には遷移先ページを先に描画。
+     終盤 180ms でリーフを fade out。前へは逆再生（−178°→0）。
+     全10ページ、カウンターはめくり開始時に更新。最終/先頭ページで該当ボタン無効
    - アイコンSVG: assets/chevron_left_back.svg（戻る用・黒）,
      assets/chevron_left.svg（30%）, assets/chevron_right.svg
 6. **閉じるシーケンス**（「戻る」またはパスポートチップ → 突然消さないこと）:
