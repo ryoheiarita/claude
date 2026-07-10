@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チェックインパスポート ブック開きアニメ 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .header p b { color: rgba(255,255,255,0.8); }
+    .header p a { color: #8fa0ff; }
+    .header p code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    .assets { display: flex; flex-direction: column; gap: 16px; margin-top: 48px; }
+    .asset {
+      display: flex; gap: 24px; align-items: center;
+      padding: 24px; border-radius: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .preview {
+      width: 160px; height: 120px; flex-shrink: 0;
+      border-radius: 14px; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .asset-body { flex: 1; min-width: 0; }
+    .asset-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+    }
+    .asset-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .asset-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .asset-desc b { color: rgba(255,255,255,0.8); }
+    .asset-desc a { color: #8fa0ff; }
+    .asset-desc code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .asset-files { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.35); font-family: ui-monospace, monospace; }
+    .asset-files a { color: inherit; }
+
+    /* mini book preview */
+    .mini-book { position: relative; width: 72px; height: 104px; }
+    .mini-book .mb-cover {
+      position: absolute; inset: 0; background: #16324f;
+      border-radius: 3px 10px 10px 3px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.6);
+    }
+    .mini-book .mb-tape {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 14px;
+      background: #d0d6dc; border-radius: 3px 0 0 3px;
+      box-shadow: inset -2px 0 3px rgba(0,0,0,.18), inset 1px 0 0 rgba(0,0,0,.22);
+    }
+    .mini-book .mb-emblem {
+      position: absolute; left: 50%; top: 34%; transform: translate(-30%,-50%);
+      width: 22px; height: 22px; border: 1.2px solid rgba(255,255,255,.85); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.85); font-size: 10px;
+    }
+    .mini-book .mb-title {
+      position: absolute; left: 58%; top: 58%; transform: translateX(-50%);
+      color: #fff; font-size: 7.5px; letter-spacing: .18em; font-family: Georgia, serif;
+    }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.55);
+    }
+    .note b { color: rgba(255,255,255,0.8); font-weight: 600; }
+    .note a { color: #8fa0ff; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+
+    table {
+      width: 100%; margin-top: 16px; border-collapse: collapse;
+      font-size: 12.5px; line-height: 1.5;
+    }
+    th, td {
+      padding: 9px 12px; text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    td { color: rgba(255,255,255,0.7); }
+    .table-wrap { overflow-x: auto; }
+
+    @media (max-width: 560px) {
+      .asset { flex-direction: column; align-items: flex-start; }
+      .preview { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>チェックインパスポート ブック開きアニメ 実装指示</h2>
+      <p>チェックイン画面（Figma <code>9044-41658</code>）左上の PASSPORT チップをタップすると、Paper by WeTransfer 風の質感のパスポートブックが出現し、<b>左開きで表紙が開いてスタンプページ（Figma <code>1088-9906</code>）へズーム</b>します。挙動の完成イメージと調整済みパラメータの書き出しは<a href="./">ジェネレーター</a>を参照してください（「Dart をコピー」で <code>PassportBook</code> ウィジェット一式、「JSON をコピー」でパラメータのみを取得できます）。</p>
+    </div>
+
+    <div class="assets">
+      <!-- ① ジェネレーター -->
+      <div class="asset">
+        <div class="preview">
+          <div class="mini-book">
+            <div class="mb-cover"></div>
+            <div class="mb-tape"></div>
+            <div class="mb-emblem">✦</div>
+            <div class="mb-title">PASSPORT</div>
+          </div>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">① 動きの正解 + コード書き出し</span>
+          <div class="asset-title">ジェネレーター（テスト実装）</div>
+          <div class="asset-desc"><a href="./">generator/passport/</a> — チェックイン画面上で実際のシーケンスを再生できます。表紙色・帯色・表紙PNG を変えると、<b>調整済みの値が焼き込まれた Dart / JSON</b> がその場で書き出されます。実装中の見た目・タイミング比較の基準はこのページです。</div>
+          <div class="asset-files">index.html（本ページと同階層） / FLUTTER_HANDOFF.md</div>
+        </div>
+      </div>
+
+      <!-- ② アイコン SVG -->
+      <div class="asset">
+        <div class="preview" style="gap:18px;">
+          <svg width="28" height="28" viewBox="0 0 20 20" fill="none"><path d="M12.5 15.8333L6.66667 10L12.5 4.16667" stroke="#fff" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="28" height="28" viewBox="0 0 20 20" fill="none"><path d="M12.5 15.8333L6.66667 10L12.5 4.16667" stroke="#fff" stroke-opacity="0.3" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="28" height="28" viewBox="0 0 20 20" fill="none"><path d="M7.5 4.16667L13.3333 10L7.5 15.8333" stroke="#fff" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">② アイコン SVG</span>
+          <div class="asset-title">シェブロン（戻る / ページ送り）</div>
+          <div class="asset-desc">Figma コンポーネント <code>Arrow / Chevron_Left・Right</code> から抽出。20×20 / stroke 1.667 / round。ページ送りの左シェブロンは<b>1ページ目の無効表現として stroke-opacity 0.3</b> を焼き込んだものを別ファイルにしています。</div>
+          <div class="asset-files">
+            <a href="assets/chevron_left_back.svg" download>chevron_left_back.svg</a>（戻る用・黒） /
+            <a href="assets/chevron_left.svg" download>chevron_left.svg</a>（30%） /
+            <a href="assets/chevron_right.svg" download>chevron_right.svg</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 仕様書 -->
+      <div class="asset">
+        <div class="preview" style="cursor:default;">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">③ 仕様書（Markdown）</span>
+          <div class="asset-title">FLUTTER_HANDOFF.md</div>
+          <div class="asset-desc">本ページと同内容＋補足の Markdown 版。リポジトリの <code>docs/generator/passport/FLUTTER_HANDOFF.md</code>。</div>
+          <div class="asset-files"><a href="FLUTTER_HANDOFF.md" download>FLUTTER_HANDOFF.md</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 実装指示 ════════ -->
+    <h3 class="section">実装指示</h3>
+
+    <div class="note">
+      <b>レイヤー構成（下 → 上）</b> — 3D は <code>Transform</code> + <code>Matrix4.identity()..setEntry(3, 2, 0.0015)..rotateY(θ)</code>
+      <ul>
+        <li><b>裏表紙</b> — ブック全面の平板。<b>開いた時にページ外周に見える「枠」はこれ</b>なので、色は必ず表紙と同じ <code>coverColor</code>（Figma <code>1088-10532</code> の指定）</li>
+        <li><b>スタンプページ</b> — 裏表紙から <code>pageFrameInset = 10</code> だけ inset。オフホワイト <code>#EBEBE8</code> ＋ドットグリッド（17px 間隔、ページ色を14%暗くした点）</li>
+        <li><b>表紙（2面）</b> — 左端（背表紙側）を軸に回転。90° を境に表面（<code>coverColor</code>＋質感）と裏面（<code>insideCoverColor</code> = coverColor を28%暗くした平板）を差し替える。HTML 版は <code>backface-visibility: hidden</code> の2面構成で同じことをしている</li>
+      </ul>
+      角丸は<b>帯（背表紙）側がほぼ無し</b> <code>spineCornerRadius = 4</code>、小口側のみ <code>cornerRadius = 18</code>（→ <code>PassportBookSpec.coverRadius</code>）。
+    </div>
+
+    <div class="note">
+      <b>開くシーケンス</b>（PASSPORT チップをタップ → 全体約 1.8s）— easing は共通で <code>Cubic(0.35, 0, 0.15, 1)</code>
+      <div class="table-wrap"><table>
+        <tr><th>開始</th><th>フェーズ</th><th>アニメーション</th><th>duration</th></tr>
+        <tr><td>0ms</td><td>入場</td><td>閉じたブックが scale 0.18→0.62・translateY −46%→0・opacity 0→1 で中央へ。背景は暗幕＋blur(10px) が同時にフェードイン</td><td>420ms</td></tr>
+        <tr><td>580ms</td><td>開く</td><td>表紙が rotateY 0→<b>−176°</b>（左開き・手前に持ち上がる方向）。同時に本体を rotateY +20°（<code>bodyTiltDeg</code>）へチルトし、開き切る頃に 0 へ戻す（sin カーブ: <code>sin(progress×π)×20°</code>）。ページ上の表紙の落ち影も 0 へフェード</td><td>600ms</td></tr>
+        <tr><td>1012ms<br>（開き進捗72%）</td><td>ズーム</td><td>ブック全体 scale 0.62→1.0 で画面いっぱいへ。最終レイアウトは Figma <code>1088-9906</code>（ヘッダー下 y=118〜画面下端−14、左右 4px）。チルトも 0 へ</td><td>800ms</td></tr>
+        <tr><td>ズーム完了</td><td>UI</td><td>ページカウンター・戻る・ページ送りが opacity 0→1・translateY 14px→0 でフェードイン</td><td>350ms</td></tr>
+      </table></div>
+      ※ 開くとズームは直列ではなく<b>開き進捗 ~72% でズームを開始</b>すると Paper に近い繋がりになる（<code>durIn + 160ms + durOpen × 0.72</code>）
+    </div>
+
+    <div class="note">
+      <b>閉じるシーケンス</b>（「戻る」または PASSPORT チップ再タップ → 突然消さないこと）
+      <div class="table-wrap"><table>
+        <tr><th>開始</th><th>フェーズ</th><th>アニメーション</th><th>duration / easing</th></tr>
+        <tr><td>0ms</td><td>ズームアウト</td><td>scale 1.0→0.62 で閉時サイズへ</td><td>600ms / <code>Cubic(.35, 0, .15, 1)</code></td></tr>
+        <tr><td>440ms</td><td>表紙閉じ</td><td>rotateY −176°→0（開きの逆回転）</td><td>600ms / 同上</td></tr>
+        <tr><td>980ms</td><td>退場</td><td>出現の逆再生: scale 0.62→0.18・チップ方向（上）へ移動・opacity→0。暗幕・シャドウも同時にフェード。<b>完全に消えてからオーバーレイを破棄</b></td><td>420ms / <code>Cubic(.55, 0, .85, .36)</code>（ease-in で加速）</td></tr>
+      </table></div>
+    </div>
+
+    <div class="note">
+      <b>モーションパラメータ一覧</b>（ジェネレーターの既定値。JSON 書き出しと同値）
+      <div class="table-wrap"><table>
+        <tr><th>パラメータ</th><th>値</th><th>備考</th></tr>
+        <tr><td><code>hinge</code></td><td>left（固定）</td><td>背表紙=左端。逆に見える場合は角度の符号を反転</td></tr>
+        <tr><td><code>coverOpenDeg</code></td><td>176°</td><td>180°にしない（開き切りで僅かに浮かせる）</td></tr>
+        <tr><td><code>bodyTiltDeg</code></td><td>20°</td><td>開いている間だけ。<code>sin(progress×π)</code> で往復</td></tr>
+        <tr><td><code>entranceDuration</code></td><td>420ms</td><td>入場・退場共通</td></tr>
+        <tr><td><code>openDuration</code></td><td>600ms</td><td>表紙の回転</td></tr>
+        <tr><td><code>zoomDuration</code></td><td>800ms</td><td>ページ全画面化</td></tr>
+        <tr><td><code>openCurve</code></td><td><code>Cubic(0.35, 0, 0.15, 1)</code></td><td>CSS cubic-bezier と互換</td></tr>
+        <tr><td><code>exitCurve</code></td><td><code>Cubic(0.55, 0, 0.85, 0.36)</code></td><td>退場のみ（加速して消える）</td></tr>
+        <tr><td><code>closedScale</code></td><td>0.62</td><td>閉時のブックサイズ（全画面比）</td></tr>
+        <tr><td><code>cornerRadius / spineCornerRadius</code></td><td>18 / 4</td><td>小口側 / 帯側</td></tr>
+        <tr><td><code>spineWidth</code></td><td>28</td><td>帯（クロステープ）幅</td></tr>
+        <tr><td><code>pageFrameInset</code></td><td>10</td><td>枠（表紙色）の見え幅</td></tr>
+        <tr><td>perspective</td><td><code>setEntry(3, 2, 0.0015)</code></td><td>HTML 版 perspective 1600px 相当</td></tr>
+      </table></div>
+    </div>
+
+    <div class="note">
+      <b>色の連動ルール</b>（表紙色はユーザー変更可 — すべて表紙色から導出）
+      <div class="table-wrap"><table>
+        <tr><th>対象</th><th>値</th></tr>
+        <tr><td>開いた時の外枠（裏表紙）</td><td><b>= coverColor（仕様で固定）</b></td></tr>
+        <tr><td>表紙の裏面 <code>insideCoverColor</code></td><td>coverColor を 28% 黒寄せ</td></tr>
+        <tr><td>帯 <code>tapeColor</code>（自動時）</td><td>coverColor を 80% 白寄せ。個別指定も可（JSON <code>tapeColorMode</code>）</td></tr>
+        <tr><td>帯の白ハイライト</td><td>基準アルファ（エッジ .55 / シーン .30 / 照り返し .10）× <code>(0.2 + 0.8 × 帯の輝度)</code> — <b>黒帯で白浮きさせない</b>。計算済み値は JSON <code>spineHighlightAlphas</code></td></tr>
+        <tr><td>ページのドット</td><td>pageColor を 14% 黒寄せ</td></tr>
+        <tr><td>表紙テキスト（画像なし時）</td><td>表紙輝度 &gt; 0.62 なら黒、それ以外は白</td></tr>
+      </table></div>
+      表紙は <b>PNG 全面配置に対応</b>: <code>Image</code>（<code>BoxFit.cover</code>）を最下層に置き、サイズ調整は <code>Transform.scale(scale: coverImageScale)</code>（中央基準・0.5〜2.0）。<b>帯・環境光・グレインは画像の上に重ねる</b>。
+    </div>
+
+    <div class="note">
+      <b>質感（Paper「sinta」の再現）</b> — 数値の正はジェネレーターの <code>.spine</code> レイヤー / Dart 書き出し
+      <ul>
+        <li><b>帯（クロステープ）</b>: 地色 <code>tapeColor</code> の上にグラデーション3層 — ①外端のエッジ線（黒22% → 白ハイライト → 黒10% の細線）②テープ中央の丸みシーン（白系）③テープ先の折り溝（黒16% → フェード、その先に僅かな照り返し）</li>
+        <li><b>環境光</b>: 表紙上部に白10%→透明（26%位置まで）、下部に黒14%→透明の落ち影</li>
+        <li><b>グレイン</b>: 微細ノイズ opacity 3〜6%（<code>feTurbulence</code> 相当。Flutter ではノイズ画像の <code>Image</code> 重ねか省略可）</li>
+        <li><b>閉時のドロップシャドウ</b>: 大きく柔らかい影（blur 34px 相当・下方向）。ズーム完了で消す</li>
+        <li><b>開く途中の落ち影</b>: ページの背表紙側に黒28%→透明45% のグラデーション。開き進捗と共に opacity 1→0</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>ページ内 UI</b>（Figma <code>1088-9906</code>、いずれも Figtree。ズーム完了後にフェードイン）
+      <div class="table-wrap"><table>
+        <tr><th>要素</th><th>Figma</th><th>位置 / サイズ</th><th>スタイル</th></tr>
+        <tr><td>ページカウンター</td><td><code>1088:10685</code></td><td>ブック右上。<b>枠（表紙色）からページ内側に余白</b>: ブック上端から 20 / 右端から 20（screen: top 138, right 24）。h28</td><td>bg 黒65% / border 白15% / radius 99 / blur 32 / padding 4×12 / 14px Regular。「1」白・「/ 10」白50%</td></tr>
+        <tr><td>戻るボタン</td><td><code>1088:11236</code></td><td>x20, y762 / 92×48</td><td>白 / radius 999 / padding 左16 右24 / gap 4 / Chevron_Left 20px ＋「戻る」14px SemiBold 黒</td></tr>
+        <tr><td>ページ送り</td><td><code>2887:17662</code></td><td>x282, y762 / 88×48</td><td>白 / radius 999 / padding 16 / gap 16 / Chevron_Left（1ページ目は 30%）＋ Chevron_Right 20px</td></tr>
+      </table></div>
+    </div>
+
+    <div class="note">
+      <b>PASSPORT チップの状態</b>（Figma <code>9044-41898</code>）
+      <ul>
+        <li>チップはパスポートの<b>開閉トグル</b>: 閉→タップで開く、開いている間→タップで「戻る」と同じ閉じシーケンス</li>
+        <li>開いている間（選択中）は <b>dark/light を反転</b>: bg <code>rgba(0,0,0,.65)</code>→<code>rgba(255,255,255,.85)</code>、border 白15%→黒15%、文字 白→黒（0.3s ease）。<b>ブックアイコンはそのまま</b></li>
+        <li>パスポート表示中もヘッダー（チップ・カウンター・ヘルプ）は暗幕の上に残す</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>Web プロトタイプとの対応（参考）</b>
+      <ul>
+        <li>回転は CSS <code>transform-origin: 0% 50%; rotateY(−176deg)</code> ＋ <code>backface-visibility: hidden</code> の2面。Flutter の <code>rotateY</code> は座標系の解釈で逆に見える場合があるため、<a href="./">ジェネレーター</a>と見比べて「手前に持ち上がって開く」ことを確認し、逆なら符号を反転してください</li>
+        <li>イージングは CSS <code>cubic-bezier(a,b,c,d)</code> = Flutter <code>Cubic(a,b,c,d)</code> でそのまま互換</li>
+        <li>タイミング・色・質感の数値はすべてジェネレーターの「Dart をコピー」出力が正（表紙色などの調整値が焼き込まれます）</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
