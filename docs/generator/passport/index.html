@@ -89,13 +89,18 @@
     padding:0 20px 0 16px;background:rgba(0,0,0,.65);cursor:pointer;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     border:1px solid rgba(255,255,255,.15);border-left:none;
-    border-radius:0 999px 999px 0;transition:border-color .3s ease;}
-  #h-passport.pp-open{border-color:#fff;}
+    border-radius:0 999px 999px 0;
+    transition:background-color .3s ease,border-color .3s ease;}
   #h-passport .pp-logo{width:28px;height:28px;display:block;}
   #h-passport .pp-txt{display:flex;flex-direction:column;justify-content:center;line-height:1;
     text-align:left;}
-  #h-passport .pp-1{font-size:11px;line-height:15px;color:rgba(255,255,255,.75);}
-  #h-passport .pp-2{font-size:14px;font-weight:600;color:#fff;}
+  #h-passport .pp-1{font-size:11px;line-height:15px;color:rgba(255,255,255,.75);
+    transition:color .3s ease;}
+  #h-passport .pp-2{font-size:14px;font-weight:600;color:#fff;transition:color .3s ease;}
+  /* 選択中（パスポートを開いている間）は dark/light 反転。アイコンはそのまま */
+  #h-passport.pp-open{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.15);}
+  #h-passport.pp-open .pp-1{color:rgba(0,0,0,.6);}
+  #h-passport.pp-open .pp-2{color:#111;}
   #h-counter{left:155px;top:66px;display:flex;flex-direction:column;
     align-items:flex-start;letter-spacing:-.24px;white-space:nowrap;}
   #h-counter .cnt-row{display:flex;align-items:baseline;gap:4px;color:#fff;}
