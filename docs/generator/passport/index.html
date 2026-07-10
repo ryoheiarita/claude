@@ -367,6 +367,18 @@
   .btn.copy{background:#26262e;color:#c9c9d2;font-size:12px;padding:9px 0;}
   .file-btn{text-align:center;cursor:pointer;}
   .btn:disabled{opacity:.4;cursor:default;}
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:-8px 0 20px;cursor:pointer;}
+  .switch-row>span:first-child{font-size:12px;color:#c9c9d2;}
+  .switch-row small{display:block;font-size:10px;color:#6d6d78;margin-top:2px;}
+  .sw-toggle{position:relative;width:40px;height:24px;flex-shrink:0;}
+  .sw-toggle input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;}
+  .sw-toggle i{position:absolute;inset:0;background:#33333d;border-radius:12px;
+    transition:background .2s ease;pointer-events:none;}
+  .sw-toggle i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;
+    border-radius:50%;background:#fff;transition:transform .2s ease;}
+  .sw-toggle input:checked + i{background:#7c6cf5;}
+  .sw-toggle input:checked + i::after{transform:translateX(16px);}
   .btn.copy.ok{background:#2c6e49;color:#fff;}
   textarea.code{width:100%;height:150px;background:#101015;color:#9fd0a0;border:1px solid #2b2b33;
     border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:10px;padding:10px;
@@ -531,6 +543,10 @@
     <button class="btn play" id="playBtn">▶ 再生</button>
     <button class="btn ghost" id="resetBtn">リセット</button>
   </div>
+  <label class="switch-row">
+    <span>表紙で停止<small>入場後、開かずに表紙を表示したまま止める</small></span>
+    <span class="sw-toggle"><input type="checkbox" id="holdCover"><i></i></span>
+  </label>
 
   <fieldset>
     <legend>カラー</legend>
@@ -580,6 +596,7 @@
     durIn: 420, durOpen: 600, durZoom: 800,
     ease: [.35, 0, .15, 1],
     tilt: 20, openAngle: 176,
+    holdCover: false, // 表紙で停止（入場後、開かない）
   };
   let coverImgSet = false;
   let coverImgScale = 1;
@@ -630,7 +647,8 @@
     // force reflow so transitions restart cleanly
     void passport.offsetWidth;
     passport.classList.add('show');
-    chip.classList.add('pp-open'); // 開いている間はチップの枠線を白に
+    chip.classList.add('pp-open'); // 開いている間はチップを反転
+    if (cfg.holdCover) return; // 表紙で停止: 入場のみで止める
     later(() => passport.classList.add('open'), cfg.durIn + 160);
     later(() => passport.classList.add('zoom'), cfg.durIn + 160 + cfg.durOpen * .72);
   }
@@ -642,12 +660,15 @@
   function close() {
     clearTimers();
     chip.classList.remove('pp-open');
-    passport.classList.remove('zoom');                              // 1. 閉時サイズへ戻す
-    later(() => passport.classList.remove('open'), cfg.durZoom * .55); // 2. 表紙を閉じる
-    later(() => passport.classList.add('bye'),                        // 3. 縮小+フェードで退場
-      cfg.durZoom * .55 + cfg.durOpen * .9);
-    later(() => passport.classList.remove('show', 'bye'),             // 4. 完全に消えてから非表示
-      cfg.durZoom * .55 + cfg.durOpen * .9 + cfg.durIn + 80);
+    // 表紙で停止中など、既に閉じているフェーズはスキップして退場する
+    const wasZoom = passport.classList.contains('zoom');
+    const wasOpen = passport.classList.contains('open');
+    passport.classList.remove('zoom');                               // 1. 閉時サイズへ戻す
+    const t1 = wasZoom ? cfg.durZoom * .55 : 0;
+    later(() => passport.classList.remove('open'), t1);              // 2. 表紙を閉じる
+    const t2 = t1 + (wasOpen ? cfg.durOpen * .9 : 0);
+    later(() => passport.classList.add('bye'), t2);                  // 3. 縮小+フェードで退場
+    later(() => passport.classList.remove('show', 'bye'), t2 + cfg.durIn + 80); // 4. 完全に消えてから非表示
   }
 
   // パスポートチップ: 閉→開く / 開いている間は「戻る」と同じ挙動で閉じる
@@ -660,6 +681,23 @@
   $('#backBtn').addEventListener('click', close);
 
   /* ---------- panel bindings ---------- */
+  $('#holdCover').addEventListener('change', e => {
+    cfg.holdCover = e.target.checked;
+    const st = passport.classList;
+    if (!st.contains('show') || st.contains('bye')) return;
+    clearTimers();
+    if (cfg.holdCover) {
+      // 開いていたら表紙まで巻き戻して停止
+      const wasZoom = st.contains('zoom');
+      st.remove('zoom');
+      later(() => st.remove('open'), wasZoom ? cfg.durZoom * .55 : 0);
+    } else {
+      // 停止解除: 続きから開く
+      later(() => st.add('open'), 160);
+      later(() => st.add('zoom'), 160 + cfg.durOpen * .72);
+    }
+  });
+
   $('#coverColor').addEventListener('input', e => { cfg.cover = e.target.value; selSwatch(null); apply(); });
   $('#pageColor').addEventListener('input', e => { cfg.page = e.target.value; apply(); });
   $('#tapeColor').addEventListener('input', e => {
