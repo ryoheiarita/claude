@@ -162,7 +162,7 @@
     <h3 class="section">実装指示</h3>
 
     <div class="note">
-      <b>タイムライン（全体 約3.4s）</b> — 2.5s まではログインなし版スプラッシュと完全に同一
+      <b>タイムライン（全体 約4.4s。3.4s で操作可能、ホームの着地は 4.4s まで）</b> — 2.5s まではログインなし版スプラッシュと完全に同一
       <div class="table-wrap"><table>
         <tr><th>時刻</th><th>フェーズ</th><th>イベント</th></tr>
         <tr><td>0.2s</td><td>splash</td><td>ロゴ Lottie 再生開始（約1.63s・1回再生 → 最終フレームで静止）</td></tr>
@@ -172,6 +172,21 @@
         <tr><td>2.9s〜4.4s</td><td>zoom〜done</td><td><b>ホーム画面の出現: scale 120%→100% を 1.5s・ease-out</b>（<code>Cubic(0.22, 1, 0.36, 1)</code>）。窓越しに見えている間は 120% で待機しておき、zoom 開始と同時に引きながら現れて着地する</td></tr>
         <tr><td>3.4s</td><td>done</td><td>スプラッシュ層を破棄（ホームの着地は 4.4s まで継続）</td></tr>
       </table></div>
+    </div>
+
+    <div class="note">
+      <b>モーションパラメータ一覧</b> — 遷移パート（2.6s 以降）の全アニメーション
+      <div class="table-wrap"><table>
+        <tr><th>対象</th><th>プロパティ</th><th>値</th><th>開始</th><th>duration</th><th>easing</th></tr>
+        <tr><td>白ロゴ（Lottie）</td><td>opacity</td><td>1 → 0</td><td>2.6s</td><td>0.3s</td><td><code>Cubic(0.4, 0, 0.2, 1)</code></td></tr>
+        <tr><td>白ロゴ（Lottie）</td><td>scale</td><td>100% → 90%</td><td>2.6s</td><td>0.3s</td><td><code>Cubic(0.33, 1, 0.68, 1)</code></td></tr>
+        <tr><td>文字窓（くり抜きパス）</td><td>scale（溜め）</td><td>100% → 90%</td><td>2.6s</td><td>0.3s</td><td><code>Cubic(0.33, 1, 0.68, 1)</code></td></tr>
+        <tr><td>文字窓（くり抜きパス）</td><td>scale（ズーム）</td><td>90% → 3600%</td><td>2.9s</td><td>0.5s</td><td><code>Cubic(0.65, 0, 0.35, 1)</code></td></tr>
+        <tr><td>スプラッシュ層 背景</td><td>scale</td><td>100% → 115%</td><td>2.9s</td><td>0.5s</td><td><code>Cubic(0.65, 0, 0.35, 1)</code></td></tr>
+        <tr><td>スプラッシュ層 全体</td><td>opacity</td><td>1 → 0</td><td>3.2s</td><td>0.2s</td><td>linear</td></tr>
+        <tr><td>ホーム画面</td><td>scale（出現）</td><td>120% → 100%</td><td>2.9s</td><td>1.5s</td><td><code>Cubic(0.22, 1, 0.36, 1)</code></td></tr>
+      </table></div>
+      ※ scale はすべて画面中央基準。文字窓の % は初期表示サイズ（幅 164px）比
     </div>
 
     <div class="note">
@@ -187,7 +202,7 @@
     <div class="note">
       <b>ズームの実装（重要: 品質）</b>
       <ul>
-        <li>拡大するのは<b>くり抜きパスのみ</b>: ロゴ Path に「画面中央を基準に 1→36 倍」の行列を掛けて<b>毎フレーム clip Path を作り直す</b>。ベクターなのでエッジは常にシャープ</li>
+        <li>拡大するのは<b>くり抜きパスのみ</b>: ロゴ Path に「画面中央を基準に 0.9 → 36 倍（初期サイズ比）」の行列を掛けて<b>毎フレーム clip Path を作り直す</b>。ベクターなのでエッジは常にシャープ。溜め（1→0.9）も同じ仕組みで駆動する</li>
         <li><b>レイヤーを Transform.scale で拡大するのは不可</b>（Web プロトタイプで検証済み: ラスタライズ済みレイヤーの引き伸ばしになり文字エッジがぼやける。Flutter でも RepaintBoundary 越しの scale は同じ問題が出る）</li>
         <li>スプラッシュ層の背景（黒+カラーレイヤー）には <code>Transform.scale 1.0→1.15</code> の僅かな押し込みだけ掛ける（ソフトなグラデーションなので拡大しても劣化が見えない）</li>
         <li>ホーム画面は<b>窓越しに見えている間 scale 120% で待機</b>し、zoom 開始（2.9s）と同時に <code>120%→100%</code> を 1.5s・ease-out（<code>Cubic(0.22, 1, 0.36, 1)</code>）。ズームより長く 4.4s まで引き続けることで、窓を抜けた後の「着地」の余韻になる</li>
@@ -208,7 +223,7 @@
     <div class="note">
       <b>Web プロトタイプとの対応（参考）</b>
       <ul>
-        <li>プロトタイプ実装: くり抜きは CSS mask 2 レイヤー（ロゴ SVG + 全面白）の <code>mask-composite: exclude</code>、ズームは <code>mask-size 164px→5904px</code> のアニメーション。<a href="./">index.html</a> ソース冒頭コメントに全パラメータを記載</li>
+        <li>プロトタイプ実装: くり抜きは CSS mask 2 レイヤー（ロゴ SVG + 全面白）の <code>mask-composite: exclude</code>、ズームは <code>mask-size 164px →（溜め）147.6px → 5904px</code> のアニメーション。<a href="./">index.html</a> ソース冒頭コメントに全パラメータを記載</li>
         <li>タイミング・イージング値は本ページの表が正。プロトタイプと数値は完全に一致しています</li>
       </ul>
     </div>
