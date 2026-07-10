@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Splash（ログイン済み）→ ホーム遷移 — BwithU（挙動イメージ）</title>
+  <!--
+    ═══════════════════════════════════════════════════════════════
+    スプラッシュ（ログイン済みユーザー）プロトタイプ（Flutter 実装向けリファレンス）
+
+    ログイン済みの場合、利用規約・ログイン画面は出さず、
+    スプラッシュ → 「BWU の文字が窓になる」ズーム遷移 → ホーム画面。
+
+    タイムライン:
+      0.2s〜   ロゴ出現: Lottie 書き順アニメ再生開始
+               （bwu-splash-custom@2x.json、960×400・約1.6s）
+      1.0s〜   カラーレイヤーが 0.3s 間隔でドミノ出現
+               （オレンジ→マゼンタ→緑→青、各 0.6s フェード。index.html と同一）
+      2.6s     [crop] BWU の白文字がフェードアウト(0.3s)し、
+               同じ位置・同じ形の「文字型の窓」から次画面（ホーム）が覗く
+      2.9s     [zoom] 文字窓を中央揃えのまま 0.5s・ease で 36 倍に拡大し、
+               BWU が画面外へ消えるまでグインっとアップ。
+               拡大は要素 transform ではなく mask-size のアニメーション
+               （transform: scale() はラスタの引き伸ばしでエッジがぼやける。
+                 mask-size ならベクターが毎フレーム再描画され常にシャープ）。
+               背景（黒+ブロブ）は scale(1.15) の僅かな押し込みのみ。
+               画面中央は W のストロークの隙間に当たるため、ズーム後半
+               （0.3s〜0.5s）でスプラッシュ層の opacity を 0 にして抜け切る
+      3.4s     [done] スプラッシュ層を破棄。ホーム画像が 1.06→1.0 に
+               0.35s で軽く戻り、着地の余韻を付ける（パララックス演出）
+
+    実装のポイント:
+      - 「文字の窓」= スプラッシュ層（黒 rect + ブロブ SVG）に CSS mask を適用。
+        mask-image を 2 レイヤー（BWU ロゴ SVG + 全面白）にし、
+        mask-composite: exclude（WebKit 旧構文は -webkit-mask-composite: xor）で
+        文字部分だけをくり抜く。マスクは要素 transform と一緒にスケールされる
+      - 白ロゴ（Lottie）はスプラッシュ層の「外」の兄弟要素。
+        マスク適用と同時に opacity フェードすることで
+        「白文字 → 窓（次画面が透ける文字）」のクロスフェードになる
+      - ズームは中央揃えのまま mask-size 164px→5904px（36倍）固定。
+        文字は四方へ飛び去り、中央に残る W のインク・隙間は
+        ズーム後半の opacity フェードで消す
+      - 次画面はホーム（Figma RBcywS6kYjz8ZCFfZ1Z4MP / 8978-27806）の
+        書き出し画像 home_screen.png（390×844 @1x）。実装時は実画面に差し替え
+      - ズーム中、ホーム画像は 1.0→1.06 に僅かに拡大（窓に近づくパララックス）、
+        遷移後 0.35s で 1.0 に戻す
+
+    Flutter 検証メモ:
+      - 文字マスクは ClipPath（ロゴパスの evenodd）+ AnimationController の
+        Transform.scale で同等表現が可能。ブロブは index.html と同じく
+        WebView か CustomPainter
+
+    デバッグ: ?at=crop / ?at=zoom / ?at=done で各フェーズへジャンプ。
+    終了後は画面タップでリプレイ。
+    ═══════════════════════════════════════════════════════════════
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --c-bg: #000000;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      /* グインっと入る用: 強めの加速 → 減速（後半はフェードと重なる） */
+      --ease-zoom: cubic-bezier(0.65, 0, 0.35, 1);
+      /* マスク用 BWU ロゴ: Figma 最新版 SVG（10283-27162 / bwu_logo_hq.svg と同一パス）。
+         白の Lottie ロゴがフェードアウトするタイミングで、窓の形は
+         こちらの高品質パスにしれっと置き換わる（ズームで拡大されるのはこの形） */
+      --m-logo: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 339 100'><path d='M291.001 0.290039V60.364C291.001 61.5195 290.055 62.4561 288.889 62.4561H288.754C287.587 62.4561 286.642 61.5195 286.642 60.364V0.290039H250.434C254.596 3.76871 256.916 9.32729 256.425 15.7859C255.64 26.076 248.359 39.1393 238.634 51.6552C238.733 78.2196 260.489 99.712 287.329 99.712H290.301C317.19 99.712 338.996 78.1101 338.996 51.4727V0.290039H290.988H291.001Z'/><path d='M73.0428 48.5293C86.4874 48.5293 97.3904 37.7283 97.3904 24.4096C97.3904 11.091 86.4874 0.290039 73.0428 0.290039H0V96.7685H73.0428C86.4874 96.7685 97.3904 85.9676 97.3904 72.6489C97.3904 59.3302 86.4874 48.5293 73.0428 48.5293ZM55.8902 74.7409H34.2192V70.5446H55.8902C57.0566 70.5446 58.002 71.4812 58.002 72.6367C58.002 73.7922 57.0566 74.7288 55.8902 74.7288V74.7409ZM55.8902 26.5017H34.2192V22.3054H55.8902C57.0566 22.3054 58.002 23.242 58.002 24.3975C58.002 25.553 57.0566 26.4896 55.8902 26.4896V26.5017Z'/><path d='M240.592 0.141907C228.781 -0.746006 221.316 6.95329 218.172 20.7585C215.422 32.1189 212.966 53.4045 205.44 69.9708C200.173 81.5501 185.292 96.3284 172.24 95.3432C166.641 94.9175 164.345 92.2781 164.787 86.5249C165.61 75.8456 183.548 61.9188 189.884 55.375C199.129 46.1553 212.303 28.6646 213.347 15.1148C213.973 6.90464 208.178 0.896025 200.099 0.287866C190.178 -0.356783 179.852 6.72219 168.286 24.444C164.738 29.9539 161.067 37.118 157.788 44.5011C141.606 73.4251 128.603 93.5066 115.343 92.5092C111.819 92.2416 109.241 90.5996 109.646 85.2721C111.045 67.003 157.96 44.9268 159.937 19.0678C161.03 4.89772 147.045 0.348682 137.64 0.0202755C121.741 -0.540968 111.811 10.61 102.046 25.9528C101.264 27.1813 100.801 28.5797 100.508 30.006C100.393 30.5635 100.263 31.1148 100.118 31.6567C109.818 16.0635 120.082 2.6232 131.341 3.47462C133.416 3.63274 134.386 4.53282 134.251 6.38162C133.318 18.63 106.736 33.2623 95.1575 55.5939C98.8778 60.301 101.088 66.2367 101.088 72.6589C101.088 79.081 99.0374 84.5545 95.575 89.1765C99.1602 92.7403 104.256 94.9905 110.346 95.4527C127.388 96.7298 142.613 78.8864 160.293 44.5984C155.787 54.3776 149.378 67.4165 148.653 76.8673C147.634 90.2103 153.442 98.7002 163.805 99.4787C177.176 100.488 196.452 88.8237 213.642 73.2427L214.599 72.3304C234.662 53.9154 251.63 30.3674 252.76 15.5405C253.386 7.33035 248.475 0.76223 240.605 0.178397L240.592 0.141907Z'/></svg>");
+    }
+
+    html, body {
+      background: var(--c-bg);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .phone {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      background: var(--c-bg);
+      overflow: clip;
+    }
+
+    /* ════════════ 次画面（ホーム）: 最下層に常時配置 ════════════ */
+    #next-screen {
+      position: absolute;
+      inset: 0;
+      background: #101010 url('home_screen.png') center / cover no-repeat;
+      transform: scale(1);
+    }
+    /* ズーム中: 窓に近づくにつれ中の景色が僅かに拡大（パララックス） */
+    .phase-zoom #next-screen {
+      transform: scale(1.06);
+      transition: transform 0.5s var(--ease-zoom);
+    }
+    /* 着地後: 0.35s で等倍へ戻して余韻を付ける */
+    .phase-done #next-screen {
+      transform: scale(1);
+      transition: transform 0.35s cubic-bezier(0.2, 0, 0.2, 1);
+    }
+
+    /* ════════════ スプラッシュ層（黒背景 + ブロブ。文字窓でくり抜かれる） ════════════ */
+    #splash-unit {
+      position: absolute;
+      inset: 0;
+      background: var(--c-bg);
+      /* ロゴは画面中央にあるため、中央揃えのまま拡大する */
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+    /* [crop] BWU 文字型にくり抜き: ロゴ形 + 全面白 の 2 レイヤーを exclude 合成
+       （ロゴ SVG は viewBox 339×100 → 表示 164px × 48.38px） */
+    .phase-crop #splash-unit {
+      -webkit-mask-image: var(--m-logo), linear-gradient(#fff 0 0);
+      -webkit-mask-size: 164px 48.38px, 100% 100%;
+      -webkit-mask-position: center, 0 0;
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-composite: xor;
+      mask-image: var(--m-logo), linear-gradient(#fff 0 0);
+      mask-size: 164px 48.38px, 100% 100%;
+      mask-position: center, 0 0;
+      mask-repeat: no-repeat;
+      mask-composite: exclude;
+    }
+    /* [zoom] 窓を中央揃えのまま 0.5s でグインっと拡大（36倍）。
+       要素の transform: scale() だとレイヤーのラスタが引き伸ばされて
+       文字エッジがぼやけるため、mask-size 自体をアニメーションさせる
+       （マスクはベクター SVG なので毎フレーム再描画され常にシャープ）。
+       背景（黒+ブロブ）はごく僅かな scale で奥行きだけ足す。
+       文字は四方へ飛び去り、中央に残るインクは後半 0.3s〜0.5s の
+       opacity フェードで消えて「窓の中」= ホームが全画面になる */
+    .phase-zoom #splash-unit {
+      -webkit-mask-size: 5904px 1741.7px, 100% 100%;
+      mask-size: 5904px 1741.7px, 100% 100%;
+      transform: scale(1.15);
+      opacity: 0;
+      transition: -webkit-mask-size 0.5s var(--ease-zoom),
+                  mask-size 0.5s var(--ease-zoom),
+                  transform 0.5s var(--ease-zoom),
+                  opacity 0.2s linear 0.3s;
+    }
+    .phase-done #splash-unit { display: none; }
+
+    /* ════════════ 背景ブロブアニメーション（index.html と同一） ════════════ */
+    #bg-wrap { position: absolute; inset: 0; }
+    #bg-wrap svg { display: block; width: 100%; height: 100%; }
+
+    /* ロゴ出現(1.0s完了)の後、カラーレイヤーが 0.3s 間隔でドミノ出現 */
+    #bg-wrap rect {
+      opacity: 0;
+      animation: layer-in 0.6s var(--ease) forwards;
+    }
+    #bg-wrap rect:nth-of-type(1) { animation-delay: 1.0s; }
+    #bg-wrap rect:nth-of-type(2) { animation-delay: 1.3s; }
+    #bg-wrap rect:nth-of-type(3) { animation-delay: 1.6s; }
+    #bg-wrap rect:nth-of-type(4) { animation-delay: 1.9s; }
+    @keyframes layer-in { to { opacity: 1; } }
+
+    /* ════════════ 中央ロゴ（白）: スプラッシュ層の外の兄弟要素 ════════════
+       [crop] でフェードアウトし、真下の同形の「窓」とクロスフェードする */
+    .logo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* Lottie コンポ 960×400 のうちロゴ実体は 678px（中央）
+         → 表示ロゴ幅 164px にするためコンテナは 164 / (678/960) ≒ 232px */
+      width: 232px;
+      color: #fff;
+      transition: opacity 0.3s var(--ease);
+    }
+    .phase-crop .logo { opacity: 0; }
+    #logo-lottie { width: 100%; aspect-ratio: 960 / 400; }
+    /* Lottie が読めない場合の静的フォールバック */
+    .logo .logo-static { display: none; width: 164px; margin: 0 auto; }
+    .logo.fallback #logo-lottie { display: none; }
+    .logo.fallback .logo-static {
+      display: block;
+      opacity: 0;
+      animation: logo-in 0.8s var(--ease) 0.2s forwards;
+    }
+    .logo svg { display: block; width: 100%; height: auto; }
+    @keyframes logo-in { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+
+    <!-- 次画面（ホーム）: 常に最下層。スプラッシュ層に隠れている -->
+    <div id="next-screen"></div>
+
+    <!-- スプラッシュ層: 黒背景 + ブロブ。[crop] で BWU 型にくり抜かれ [zoom] で拡大 -->
+    <div id="splash-unit">
+      <div id="bg-wrap">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <!-- マゼンタ #F53358（差し色・暖色） -->
+            <radialGradient id="Gradient1" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="10s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(245, 51, 88, 0.55)"></stop>
+              <stop offset="100%" stop-color="rgba(245, 51, 88, 0)"></stop>
+            </radialGradient>
+            <!-- オレンジ #EC5E16（差し色・暖色） -->
+            <radialGradient id="Gradient2" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="8s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(236, 94, 22, 0.5)"></stop>
+              <stop offset="100%" stop-color="rgba(236, 94, 22, 0)"></stop>
+            </radialGradient>
+            <!-- グリーン #1FD738（メイン） -->
+            <radialGradient id="Gradient3" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="7s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(31, 215, 56, 0.95)"></stop>
+              <stop offset="100%" stop-color="rgba(31, 215, 56, 0)"></stop>
+            </radialGradient>
+            <!-- ブルー #1F32D9（メインカラー・最前面） -->
+            <radialGradient id="Gradient4" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="9s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(31, 50, 217, 1)"></stop>
+              <stop offset="100%" stop-color="rgba(31, 50, 217, 0)"></stop>
+            </radialGradient>
+          </defs>
+
+          <!-- オレンジ -->
+          <rect x="-10%" y="10%" width="100%" height="100%" fill="url(#Gradient2)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="9s" values="-10%;0%;-10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="10s" values="10%;30%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="45 50 50;117 50 50;405 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- マゼンタ -->
+          <rect x="10%" y="5%" width="100%" height="100%" fill="url(#Gradient1)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="8s" values="10%;0%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="9s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="135 50 50;207 50 50;495 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="4s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- グリーン -->
+          <rect x="5%" y="5%" width="100%" height="100%" fill="url(#Gradient3)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="10s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="7s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="675 50 50;603 50 50;315 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="5s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- ブルー -->
+          <rect x="0%" y="-5%" width="100%" height="100%" fill="url(#Gradient4)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="7s" values="0%;10%;0%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="8s" values="-5%;5%;-5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="585 50 50;513 50 50;225 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6.5s" repeatCount="indefinite"></animateTransform>
+          </rect>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 中央ロゴ（BWU / 表示幅164px）: Lottie 書き順アニメで出現。
+         スプラッシュ層の外に置き、[crop] で真下の窓とクロスフェード -->
+    <div class="logo" id="logo">
+      <div id="logo-lottie"></div>
+      <svg class="logo-static" viewBox="0 0 164 49.3524" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M140.779 0.143555V29.8771C140.779 30.4491 140.322 30.9126 139.757 30.9126H139.692C139.128 30.9126 138.67 30.4491 138.67 29.8771V0.143555H121.154C123.167 1.86532 124.29 4.61654 124.052 7.81324C123.672 12.9063 120.15 19.372 115.445 25.5667C115.493 38.7148 126.018 49.3524 139.003 49.3524H140.44C153.449 49.3524 163.998 38.6606 163.998 25.4764V0.143555H140.773H140.779Z" fill="currentColor"/>
+        <path d="M35.3363 24.0195C41.8405 24.0195 47.1151 18.6736 47.1151 12.0815C47.1151 5.48946 41.8405 0.143555 35.3363 0.143555H0V47.8955H35.3363C41.8405 47.8955 47.1151 42.5496 47.1151 35.9575C47.1151 29.3654 41.8405 24.0195 35.3363 24.0195ZM27.0383 36.993H16.5544V34.916H27.0383C27.6026 34.916 28.06 35.3796 28.06 35.9515C28.06 36.5234 27.6026 36.987 27.0383 36.987V36.993ZM27.0383 13.117H16.5544V11.0401H27.0383C27.6026 11.0401 28.06 11.5036 28.06 12.0755C28.06 12.6474 27.6026 13.111 27.0383 13.111V13.117Z" fill="currentColor"/>
+        <path d="M116.393 0.070237C110.679 -0.369235 107.067 3.44153 105.547 10.2744C104.216 15.8972 103.028 26.4325 99.3869 34.632C96.8387 40.3632 89.6395 47.6777 83.3255 47.1901C80.6169 46.9794 79.5061 45.673 79.72 42.8254C80.1179 37.5397 88.7961 30.6467 91.8611 27.4078C96.3338 22.8445 102.707 14.1875 103.212 7.48106C103.515 3.41745 100.711 0.443487 96.803 0.142479C92.0036 -0.17659 87.0082 3.32715 81.4128 12.0985C79.6962 14.8257 77.9202 18.3715 76.3342 22.0258C68.5055 36.3417 62.2151 46.281 55.8001 45.7874C54.0953 45.6549 52.848 44.8422 53.044 42.2054C53.7211 33.1631 76.4174 22.2365 77.3737 9.43761C77.9023 2.42412 71.1368 0.17258 66.5869 0.0100353C58.5859 -0.278933 53.7092 5.70511 48.797 13.7721C48.7197 14.4163 48.595 15.0544 48.4346 15.6685C53.1271 7.95063 58.0929 1.29835 63.5397 1.71976C64.5436 1.79802 65.0128 2.24352 64.9475 3.15858C64.496 9.22089 51.6362 16.4631 46.0349 27.5162C47.8347 29.846 48.9039 32.7838 48.9039 35.9625C48.9039 39.1411 47.9119 41.8502 46.2369 44.1378C47.9713 45.9017 50.4364 47.0155 53.3825 47.2442C61.6271 47.8764 68.9925 39.0448 77.546 22.0739C75.366 26.9141 72.2654 33.3678 71.915 38.0454C71.4219 44.6496 74.2315 48.8516 79.2448 49.2369C85.7133 49.7366 95.0389 43.9633 103.355 36.2514L103.818 35.7999C113.524 26.6854 121.733 15.0303 122.279 7.69177C122.582 3.62815 120.206 0.377265 116.399 0.0882975L116.393 0.070237Z" fill="currentColor"/>
+      </svg>
+    </div>
+
+  </div>
+
+  <script>
+    const phone = document.getElementById('phone');
+
+    // ── ロゴ出現: Lottie 書き順アニメーション（0.2s 遅延で再生開始） ──
+    const logoEl = document.getElementById('logo');
+    if (window.lottie) {
+      const logoAnim = lottie.loadAnimation({
+        container: document.getElementById('logo-lottie'),
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        path: 'bwu-splash-custom@2x.json',
+      });
+      window.logoAnim = logoAnim; // デバッグ用
+      setTimeout(() => logoAnim.play(), 200);
+    } else {
+      logoEl.classList.add('fallback'); // CDN 不達時は静的ロゴをフェードイン
+    }
+
+    // ── タイムライン ──────────────────────────────
+    //   2.6s  crop: 白ロゴフェードアウト + 文字窓オープン（0.3s クロスフェード）
+    //   2.9s  zoom: 中央揃えのまま 0.5s・ease でグインっと拡大
+    //         （後半 0.3s〜0.5s でスプラッシュ層が opacity フェードで抜ける）
+    //   3.4s  done: スプラッシュ層破棄、ホーム画像が 1.0 に着地
+    const T_CROP = 2600, T_ZOOM = T_CROP + 300, T_DONE = T_ZOOM + 500;
+
+    function run() {
+      const timers = [
+        setTimeout(() => phone.classList.add('phase-crop'), T_CROP),
+        setTimeout(() => phone.classList.add('phase-zoom'), T_ZOOM),
+        setTimeout(() => phone.classList.add('phase-done'), T_DONE),
+      ];
+      return timers;
+    }
+
+    // デバッグ用: ?at=crop / ?at=zoom / ?at=done で各フェーズへジャンプ
+    const at = new URLSearchParams(location.search).get('at');
+    if (at === 'crop') {
+      phone.classList.add('phase-crop');
+    } else if (at === 'zoom') {
+      phone.classList.add('phase-crop');
+      requestAnimationFrame(() => requestAnimationFrame(() => phone.classList.add('phase-zoom')));
+    } else if (at === 'done') {
+      phone.classList.add('phase-crop', 'phase-zoom', 'phase-done');
+    } else {
+      run();
+    }
+
+    // ── 遷移完了後は画面タップでリプレイ ──
+    phone.addEventListener('click', () => {
+      if (phone.classList.contains('phase-done')) location.reload();
+    });
+  </script>
+</body>
+</html>

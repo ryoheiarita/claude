@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スプラッシュ（ログイン済み）遷移 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .header p b { color: rgba(255,255,255,0.8); }
+    .header p a { color: #8fa0ff; }
+
+    .assets { display: flex; flex-direction: column; gap: 16px; margin-top: 48px; }
+    .asset {
+      display: flex; gap: 24px; align-items: center;
+      padding: 24px; border-radius: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .preview {
+      width: 160px; height: 120px; flex-shrink: 0;
+      border-radius: 14px; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .asset-body { flex: 1; min-width: 0; }
+    .asset-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+      margin-bottom: 10px;
+    }
+    .asset-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .asset-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.5); }
+    .asset-desc b { color: rgba(255,255,255,0.8); }
+    .asset-desc a { color: #8fa0ff; }
+    .asset-desc code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .asset-files { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.35); font-family: ui-monospace, monospace; }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.55);
+    }
+    .note b { color: rgba(255,255,255,0.8); font-weight: 600; }
+    .note a { color: #8fa0ff; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+
+    table {
+      width: 100%; margin-top: 16px; border-collapse: collapse;
+      font-size: 12.5px; line-height: 1.5;
+    }
+    th, td {
+      padding: 9px 12px; text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    td { color: rgba(255,255,255,0.7); }
+    .table-wrap { overflow-x: auto; }
+
+    @media (max-width: 560px) {
+      .asset { flex-direction: column; align-items: flex-start; }
+      .preview { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>スプラッシュ（ログイン済み）→ ホーム遷移 実装指示</h2>
+      <p>ログイン済みユーザーのスプラッシュ後の画面遷移です。利用規約・ログインは出さず、<b>BWU の文字が「窓」になって次画面（ホーム）をクロップし、0.5s のズームで窓の中に入って</b>ホームが全画面になります。挙動の完成イメージは <a href="./">スプラッシュ（ログイン済み）プロトタイプ</a> を参照してください（遷移完了後は画面タップでリプレイ、<code>?at=crop / zoom / done</code> で各フェーズへジャンプ可）。ロゴ Lottie・背景カラーレイヤーの素材と実装は<a href="../splash/handoff.html">既存のスプラッシュ素材引き渡し</a>と共通です。</p>
+    </div>
+
+    <div class="assets">
+      <!-- ① マスク用ロゴ SVG -->
+      <div class="asset">
+        <div class="preview">
+          <svg viewBox="0 0 339 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:auto;">
+            <path d="M291.001 0.290039V60.364C291.001 61.5195 290.055 62.4561 288.889 62.4561H288.754C287.587 62.4561 286.642 61.5195 286.642 60.364V0.290039H250.434C254.596 3.76871 256.916 9.32729 256.425 15.7859C255.64 26.076 248.359 39.1393 238.634 51.6552C238.733 78.2196 260.489 99.712 287.329 99.712H290.301C317.19 99.712 338.996 78.1101 338.996 51.4727V0.290039H290.988H291.001Z" fill="#fff"/>
+            <path d="M73.0428 48.5293C86.4874 48.5293 97.3904 37.7283 97.3904 24.4096C97.3904 11.091 86.4874 0.290039 73.0428 0.290039H0V96.7685H73.0428C86.4874 96.7685 97.3904 85.9676 97.3904 72.6489C97.3904 59.3302 86.4874 48.5293 73.0428 48.5293ZM55.8902 74.7409H34.2192V70.5446H55.8902C57.0566 70.5446 58.002 71.4812 58.002 72.6367C58.002 73.7922 57.0566 74.7288 55.8902 74.7288V74.7409ZM55.8902 26.5017H34.2192V22.3054H55.8902C57.0566 22.3054 58.002 23.242 58.002 24.3975C58.002 25.553 57.0566 26.4896 55.8902 26.4896V26.5017Z" fill="#fff"/>
+            <path d="M240.592 0.141907C228.781 -0.746006 221.316 6.95329 218.172 20.7585C215.422 32.1189 212.966 53.4045 205.44 69.9708C200.173 81.5501 185.292 96.3284 172.24 95.3432C166.641 94.9175 164.345 92.2781 164.787 86.5249C165.61 75.8456 183.548 61.9188 189.884 55.375C199.129 46.1553 212.303 28.6646 213.347 15.1148C213.973 6.90464 208.178 0.896025 200.099 0.287866C190.178 -0.356783 179.852 6.72219 168.286 24.444C164.738 29.9539 161.067 37.118 157.788 44.5011C141.606 73.4251 128.603 93.5066 115.343 92.5092C111.819 92.2416 109.241 90.5996 109.646 85.2721C111.045 67.003 157.96 44.9268 159.937 19.0678C161.03 4.89772 147.045 0.348682 137.64 0.0202755C121.741 -0.540968 111.811 10.61 102.046 25.9528C101.264 27.1813 100.801 28.5797 100.508 30.006C100.393 30.5635 100.263 31.1148 100.118 31.6567C109.818 16.0635 120.082 2.6232 131.341 3.47462C133.416 3.63274 134.386 4.53282 134.251 6.38162C133.318 18.63 106.736 33.2623 95.1575 55.5939C98.8778 60.301 101.088 66.2367 101.088 72.6589C101.088 79.081 99.0374 84.5545 95.575 89.1765C99.1602 92.7403 104.256 94.9905 110.346 95.4527C127.388 96.7298 142.613 78.8864 160.293 44.5984C155.787 54.3776 149.378 67.4165 148.653 76.8673C147.634 90.2103 153.442 98.7002 163.805 99.4787C177.176 100.488 196.452 88.8237 213.642 73.2427L214.599 72.3304C234.662 53.9154 251.63 30.3674 252.76 15.5405C253.386 7.33035 248.475 0.76223 240.605 0.178397L240.592 0.141907Z" fill="#fff"/>
+          </svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">① マスク用ロゴ SVG</span>
+          <div class="asset-title">BWU ロゴ最新版（文字窓の形状）</div>
+          <div class="asset-desc">Figma 最新版（node <code>10283-27162</code>）から抽出したパス3本。viewBox <code>0 0 339 100</code>、表示幅 164px（→ 高さ 48.38px）で画面中央に配置。<b>「窓」のくり抜き・ズームで拡大されるのはこの形状</b>です（Lottie ロゴのパスではありません）。背景要素と極小の断片パスは除去済み。</div>
+          <div class="asset-files"><a href="bwu_logo_hq.svg" download style="color:inherit;">bwu_logo_hq.svg</a></div>
+        </div>
+      </div>
+
+      <!-- ② 遷移先ホーム -->
+      <div class="asset">
+        <div class="preview">
+          <img src="home_screen.png" alt="ホーム画面">
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">② 遷移先画面</span>
+          <div class="asset-title">ホーム画面（プロトタイプでは画像）</div>
+          <div class="asset-desc">Figma <code>8978-27806</code> の書き出し（390×844 @1x）。プロトタイプでは静止画像ですが、<b>実装では実際のホーム画面ウィジェット</b>を下層に置いてください。遷移開始時点でホームのレイアウト・データが描画済みであることが前提です（スプラッシュ中にプリロード）。</div>
+          <div class="asset-files">home_screen.png（参考画像）</div>
+        </div>
+      </div>
+
+      <!-- ③ 共通素材 -->
+      <div class="asset">
+        <div class="preview" style="cursor:default;">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="asset-body">
+          <span class="asset-tag">③ 共通素材</span>
+          <div class="asset-title">ロゴ Lottie・背景カラーレイヤー</div>
+          <div class="asset-desc">スプラッシュ本体（白ロゴの書き順 Lottie、背景モーションカラーの CustomPainter 移植 Dart）は<a href="../splash/handoff.html">既存のスプラッシュ素材引き渡しページ</a>の ZIP と完全に共通です。本ページは遷移部分の追加指示のみ。</div>
+          <div class="asset-files">flutter-splash-handoff.zip（既存ページより）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ 実装指示 ════════ -->
+    <h3 class="section">実装指示</h3>
+
+    <div class="note">
+      <b>タイムライン（全体 約3.4s）</b> — 2.5s まではログインなし版スプラッシュと完全に同一
+      <div class="table-wrap"><table>
+        <tr><th>時刻</th><th>フェーズ</th><th>イベント</th></tr>
+        <tr><td>0.2s</td><td>splash</td><td>ロゴ Lottie 再生開始（約1.63s・1回再生 → 最終フレームで静止）</td></tr>
+        <tr><td>1.0s〜1.9s</td><td>splash</td><td>カラーレイヤーが 0.3s 間隔でドミノ出現（オレンジ→マゼンタ→緑→青、各 0.6s フェード）</td></tr>
+        <tr><td>2.6s</td><td>crop</td><td>白ロゴが 0.3s でフェードアウト。同位置・同サイズの<b>文字型の窓</b>が開き、下のホーム画面が文字の中に透ける（クロスフェード）</td></tr>
+        <tr><td>2.9s</td><td>zoom</td><td>窓を中央基準のまま <b>0.5s で 36 倍</b>に拡大（<code>Cubic(0.65, 0, 0.35, 1)</code>）。後半 0.3s〜0.5s でスプラッシュ層の opacity を 1→0（linear）</td></tr>
+        <tr><td>3.4s</td><td>done</td><td>スプラッシュ層を破棄。ホームが 1.06→1.0 に 0.35s で着地（<code>Cubic(0.2, 0, 0.2, 1)</code>）</td></tr>
+      </table></div>
+    </div>
+
+    <div class="note">
+      <b>レイヤー構成（下 → 上）</b>
+      <ul>
+        <li><b>ホーム画面</b> — 遷移開始前から下層に描画しておく（スプラッシュ層に隠れている）</li>
+        <li><b>スプラッシュ層</b> — 黒背景 + 背景カラーレイヤー（CustomPainter）。crop 以降、BWU 文字型に<b>くり抜かれる</b></li>
+        <li><b>白ロゴ（Lottie）</b> — スプラッシュ層の外（上）に重ねる。crop で opacity 0 にフェード</li>
+      </ul>
+      くり抜きは <code>Path.combine(PathOperation.difference, 全画面Rect, ロゴPath)</code> を <code>CustomClipper&lt;Path&gt;</code> で毎フレーム生成（または <code>PathFillType.evenOdd</code> で全画面 Rect + ロゴパスを1つの Path に）。ロゴ Path は <code>bwu_logo_hq.svg</code> の3パスを <code>path_drawing</code> 等でパースし、<code>339×100 → 幅164px</code> にスケールして画面中央へ配置します。
+    </div>
+
+    <div class="note">
+      <b>ズームの実装（重要: 品質）</b>
+      <ul>
+        <li>拡大するのは<b>くり抜きパスのみ</b>: ロゴ Path に「画面中央を基準に 1→36 倍」の行列を掛けて<b>毎フレーム clip Path を作り直す</b>。ベクターなのでエッジは常にシャープ</li>
+        <li><b>レイヤーを Transform.scale で拡大するのは不可</b>（Web プロトタイプで検証済み: ラスタライズ済みレイヤーの引き伸ばしになり文字エッジがぼやける。Flutter でも RepaintBoundary 越しの scale は同じ問題が出る）</li>
+        <li>スプラッシュ層の背景（黒+カラーレイヤー）には <code>Transform.scale 1.0→1.15</code> の僅かな押し込みだけ掛ける（ソフトなグラデーションなので拡大しても劣化が見えない）</li>
+        <li>ホーム画面には <code>scale 1.0→1.06</code> のパララックス（窓に近づく感じ）→ done で 1.06→1.0 に戻す</li>
+        <li>画面中央は W のストロークの<b>隙間</b>に当たるため、拡大だけでは黒が中央に残る。ズーム後半（0.3s〜0.5s）の <b>opacity フェードが必須</b></li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>クロスフェード（crop）の注意</b>
+      <ul>
+        <li>白ロゴのフェードアウト（0.3s）と窓のオープンは<b>同時</b>。白い文字が「そのまま窓に変わる」ように見えるのが正解</li>
+        <li>窓の形状は Lottie のパスではなく <b>bwu_logo_hq.svg</b>（最新版・高品質）。Lottie ロゴとは縦横比が僅かに違う（幅164px時 高さ 49.35 vs 48.38px）が、0.3s のクロスフェード中なので視認されない</li>
+        <li>白ロゴ・窓とも位置は「画面中央」「表示幅 164px」で一致させること（Lottie コンポ 960×400 のロゴ実体は中央 678px → ウィジェット幅 232px で表示ロゴ幅 164px）</li>
+      </ul>
+    </div>
+
+    <div class="note">
+      <b>Web プロトタイプとの対応（参考）</b>
+      <ul>
+        <li>プロトタイプ実装: くり抜きは CSS mask 2 レイヤー（ロゴ SVG + 全面白）の <code>mask-composite: exclude</code>、ズームは <code>mask-size 164px→5904px</code> のアニメーション。<a href="./">index.html</a> ソース冒頭コメントに全パラメータを記載</li>
+        <li>タイミング・イージング値は本ページの表が正。プロトタイプと数値は完全に一致しています</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
