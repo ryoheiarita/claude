@@ -28,7 +28,7 @@
                画面中央は W のストロークの隙間に当たるため、ズーム後半
                （0.3s〜0.5s）でスプラッシュ層の opacity を 0 にして抜け切る
       3.4s     [done] スプラッシュ層を破棄。ホーム画像は zoom 開始（2.9s）から
-               scale 120%→100% を 1s・ease-out で継続中（3.9s に静止）。
+               scale 120%→100% を 1.5s・ease-out で継続中（4.4s に静止）。
                窓から見えている時点では 120% で、ズームと同時に
                引きながら現れて着地する
 
@@ -45,7 +45,7 @@
         ズーム後半の opacity フェードで消す
       - 次画面はホーム（Figma RBcywS6kYjz8ZCFfZ1Z4MP / 8978-27806）の
         書き出し画像 home_screen.png（390×844 @1x）。実装時は実画面に差し替え
-      - ホーム画像の出現: zoom 開始と同時に scale 120%→100% を 1s・ease-out
+      - ホーム画像の出現: zoom 開始と同時に scale 120%→100% を 1.5s・ease-out
         （窓越しに見えている間は 120% で待機）
 
     Flutter 検証メモ:
@@ -96,11 +96,11 @@
       /* 窓越しに見えている間は 120% で待機 */
       transform: scale(1.2);
     }
-    /* 出現: zoom 開始と同時に scale 120%→100% を 1s・ease-out
-       （ズーム 0.5s が終わった後も引き続け、3.9s に静止） */
+    /* 出現: zoom 開始と同時に scale 120%→100% を 1.5s・ease-out
+       （ズーム 0.5s が終わった後も引き続け、4.4s に静止） */
     .phase-zoom #next-screen {
       transform: scale(1);
-      transition: transform 1s var(--ease-out);
+      transition: transform 1.5s var(--ease-out);
     }
 
     /* ════════════ スプラッシュ層（黒背景 + ブロブ。文字窓でくり抜かれる） ════════════ */
@@ -288,7 +288,7 @@
     //   2.6s  crop: 白ロゴフェードアウト + 文字窓オープン（0.3s クロスフェード）
     //   2.9s  zoom: 中央揃えのまま 0.5s・ease でグインっと拡大
     //         （後半 0.3s〜0.5s でスプラッシュ層が opacity フェードで抜ける）
-    //   3.4s  done: スプラッシュ層破棄（ホーム画像は 3.9s まで 100% へ着地中）
+    //   3.4s  done: スプラッシュ層破棄（ホーム画像は 4.4s まで 100% へ着地中）
     const T_CROP = 2600, T_ZOOM = T_CROP + 300, T_DONE = T_ZOOM + 500;
 
     function run() {
