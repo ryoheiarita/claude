@@ -18,8 +18,11 @@
       1.0s〜   カラーレイヤーが 0.3s 間隔でドミノ出現
                （オレンジ→マゼンタ→緑→青、各 0.6s フェード。index.html と同一）
       2.6s     [crop] BWU の白文字がフェードアウト(0.3s)し、
-               同じ位置・同じ形の「文字型の窓」から次画面（ホーム）が覗く
-      2.9s     [zoom] 文字窓を中央揃えのまま 0.5s・ease で 36 倍に拡大し、
+               同じ位置・同じ形の「文字型の窓」から次画面（ホーム）が覗く。
+               同時に [windup] 窓と白文字が一緒に scale 100%→90% へ
+               0.3s・ease-out で縮む（拡大前の「溜め」。息を吸う動き）
+      2.9s     [zoom] 文字窓を中央揃えのまま 90% の溜めから 0.5s・ease で
+               36 倍（初期 164px 比）に拡大し、
                BWU が画面外へ消えるまでグインっとアップ。
                拡大は要素 transform ではなく mask-size のアニメーション
                （transform: scale() はラスタの引き伸ばしでエッジがぼやける。
@@ -68,6 +71,8 @@
       --ease-zoom: cubic-bezier(0.65, 0, 0.35, 1);
       /* 遷移先画面の出現用 ease-out */
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      /* 溜め（90% への縮み）用: ゆっくり 90% に着地する ease-out */
+      --ease-windup: cubic-bezier(0.33, 1, 0.68, 1);
       /* マスク用 BWU ロゴ: Figma 最新版 SVG（10283-27162 / bwu_logo_hq.svg と同一パス）。
          白の Lottie ロゴがフェードアウトするタイミングで、窓の形は
          こちらの高品質パスにしれっと置き換わる（ズームで拡大されるのはこの形） */
@@ -126,6 +131,14 @@
       mask-repeat: no-repeat;
       mask-composite: exclude;
     }
+    /* [windup] 拡大前の溜め: 窓が 100%→90%（164px→147.6px）へ 0.3s で縮む
+       （crop の次フレームで付与。白ロゴの縮みと同期） */
+    .phase-windup #splash-unit {
+      -webkit-mask-size: 147.6px 43.54px, 100% 100%;
+      mask-size: 147.6px 43.54px, 100% 100%;
+      transition: -webkit-mask-size 0.3s var(--ease-windup),
+                  mask-size 0.3s var(--ease-windup);
+    }
     /* [zoom] 窓を中央揃えのまま 0.5s でグインっと拡大（36倍）。
        要素の transform: scale() だとレイヤーのラスタが引き伸ばされて
        文字エッジがぼやけるため、mask-size 自体をアニメーションさせる
@@ -171,9 +184,10 @@
          → 表示ロゴ幅 164px にするためコンテナは 164 / (678/960) ≒ 232px */
       width: 232px;
       color: #fff;
-      transition: opacity 0.3s var(--ease);
+      transition: opacity 0.3s var(--ease), transform 0.3s var(--ease-windup);
     }
-    .phase-crop .logo { opacity: 0; }
+    /* crop: フェードアウトしつつ、窓と一緒に 90% へ縮む（溜め） */
+    .phase-crop .logo { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
     #logo-lottie { width: 100%; aspect-ratio: 960 / 400; }
     /* Lottie が読めない場合の静的フォールバック */
     .logo .logo-static { display: none; width: 164px; margin: 0 auto; }
@@ -286,14 +300,22 @@
 
     // ── タイムライン ──────────────────────────────
     //   2.6s  crop: 白ロゴフェードアウト + 文字窓オープン（0.3s クロスフェード）
-    //   2.9s  zoom: 中央揃えのまま 0.5s・ease でグインっと拡大
+    //         + windup: 窓と白ロゴが一緒に 90% へ縮む（0.3s・溜め）
+    //   2.9s  zoom: 90% の溜めから 0.5s・ease でグインっと拡大
     //         （後半 0.3s〜0.5s でスプラッシュ層が opacity フェードで抜ける）
     //   3.4s  done: スプラッシュ層破棄（ホーム画像は 4.4s まで 100% へ着地中）
     const T_CROP = 2600, T_ZOOM = T_CROP + 300, T_DONE = T_ZOOM + 500;
 
+    // crop 適用 → 次フレームで windup（マスクが 164px で一度描画されてから
+    // 縮みのトランジションを開始させるため 2 フレーム待つ）
+    function crop() {
+      phone.classList.add('phase-crop');
+      requestAnimationFrame(() => requestAnimationFrame(() => phone.classList.add('phase-windup')));
+    }
+
     function run() {
       const timers = [
-        setTimeout(() => phone.classList.add('phase-crop'), T_CROP),
+        setTimeout(crop, T_CROP),
         setTimeout(() => phone.classList.add('phase-zoom'), T_ZOOM),
         setTimeout(() => phone.classList.add('phase-done'), T_DONE),
       ];
@@ -303,12 +325,12 @@
     // デバッグ用: ?at=crop / ?at=zoom / ?at=done で各フェーズへジャンプ
     const at = new URLSearchParams(location.search).get('at');
     if (at === 'crop') {
-      phone.classList.add('phase-crop');
+      crop(); // 溜め（90%）まで進んだ状態で静止
     } else if (at === 'zoom') {
-      phone.classList.add('phase-crop');
+      phone.classList.add('phase-crop', 'phase-windup');
       requestAnimationFrame(() => requestAnimationFrame(() => phone.classList.add('phase-zoom')));
     } else if (at === 'done') {
-      phone.classList.add('phase-crop', 'phase-zoom', 'phase-done');
+      phone.classList.add('phase-crop', 'phase-windup', 'phase-zoom', 'phase-done');
     } else {
       run();
     }
