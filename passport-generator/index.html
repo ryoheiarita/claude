@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BwU チェックインパスポート — ブック開きアニメ ジェネレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ===== generator-driven vars ===== */
+    --cover:        #16324f;
+    --cover-dark:   #0e2137;   /* spine / inside face (JS-computed) */
+    --cover-light:  #2a4a6b;   /* highlight (JS-computed) */
+    --page:         #ebebe8;
+    --dot:          #c9c9c4;
+    --radius:       18px;
+    --r-spine:      4px;       /* 帯（背表紙）側の角丸はほぼ無し */
+    --r-page:       calc(var(--radius) - var(--frame)*.6);
+    --spine-w:      28px;
+    --tape:         #f2f4f6;   /* 背のクロステープ色 (JS-computed: coverを80%白寄せ) */
+    --frame:        10px;
+    --closed-scale: .62;
+    --dur-in:       420ms;
+    --dur-open:     900ms;
+    --dur-zoom:     650ms;
+    --ease-open:    cubic-bezier(.35,0,.15,1);
+    --open-rot:     176deg;    /* sign flips with direction */
+    --tilt:         -7deg;     /* book body tilt while opening */
+    --cover-text:   #ffffff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    background:#101014;color:#e8e8ec;display:flex;overflow:hidden;
+  }
+
+  /* ================= layout ================= */
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;
+    background:radial-gradient(1200px 800px at 50% 30%,#1a1a22 0%,#101014 70%);}
+  .panel{width:320px;flex-shrink:0;background:#17171c;border-left:1px solid #26262e;
+    overflow-y:auto;padding:20px 18px 40px;}
+
+  /* ================= phone ================= */
+  .phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+    box-shadow:0 0 0 10px #232329,0 30px 80px rgba(0,0,0,.6);
+    transform:scale(var(--phone-scale,1));flex-shrink:0;}
+  .screen{position:absolute;inset:0;background:#0c0c0e;overflow:hidden;}
+
+  /* --- check-in screen (Figma 9044-41658 準拠, ベース: ui_video/checkin) --- */
+  .screen{font-family:'Figtree',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;}
+  #map{position:absolute;left:-27px;top:-26px;width:451px;height:898px;object-fit:cover;
+    pointer-events:none;}
+  #nav-grad{position:absolute;left:0;top:0;width:390px;height:163px;z-index:1;
+    background:linear-gradient(180deg,rgba(0,0,0,.65) 50%,rgba(0,0,0,0) 100%);}
+  #bottom-rect{position:absolute;left:0;bottom:0;width:390px;height:215px;z-index:1;
+    background:linear-gradient(0deg,rgba(0,0,0,.94) 0%,rgba(0,0,0,.72) 40%,rgba(0,0,0,0) 100%);}
+  #tab-grad{position:absolute;left:0;bottom:0;width:390px;height:268px;z-index:3;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 52.4%,rgba(0,0,0,.6) 100%);}
+
+  .pin{position:absolute;left:171px;top:276px;width:48px;height:48px;z-index:2;}
+  .pin img{position:absolute;left:5.72px;top:0;width:36.56px;height:48px;
+    filter:drop-shadow(0 6px 7px rgba(0,0,0,.45));}
+
+  #pill{position:absolute;left:168px;top:459px;width:55px;height:28px;z-index:2;
+    display:flex;align-items:center;justify-content:center;gap:2px;
+    background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.14);border-radius:999px;
+    font-size:13px;font-weight:600;letter-spacing:-.2px;color:#fff;}
+  #pill .sl{opacity:.55;margin:0 1px;}
+
+  /* ---- status bar ---- */
+  .statusbar{position:absolute;top:0;left:0;width:390px;height:54px;z-index:40;
+    display:flex;align-items:center;justify-content:space-between;padding:0 28px 0 27px;}
+  .sb-time{font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
+    font-size:17px;font-weight:600;color:#fff;padding-top:2px;letter-spacing:.2px;}
+  .sb-icons{display:flex;align-items:center;gap:7px;padding-top:1px;}
+  .sb-icons img{display:block;}
+  .ic-cell{width:19.2px;height:12.23px;}
+  .ic-wifi{width:17.14px;height:12.33px;}
+  .ic-batt{width:27.33px;height:13px;}
+
+  /* ---- header chrome ---- */
+  .hdr{position:absolute;z-index:40;}
+  #h-passport{left:-1px;top:64px;height:48px;display:flex;align-items:center;gap:8px;
+    padding:0 20px 0 16px;background:rgba(0,0,0,.65);cursor:pointer;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.15);border-left:none;
+    border-radius:0 999px 999px 0;}
+  #h-passport .pp-logo{width:28px;height:28px;display:block;}
+  #h-passport .pp-txt{display:flex;flex-direction:column;justify-content:center;line-height:1;
+    text-align:left;}
+  #h-passport .pp-1{font-size:11px;line-height:15px;color:rgba(255,255,255,.75);}
+  #h-passport .pp-2{font-size:14px;font-weight:600;color:#fff;}
+  #h-counter{left:155px;top:66px;display:flex;flex-direction:column;
+    align-items:flex-start;letter-spacing:-.24px;white-space:nowrap;}
+  #h-counter .cnt-row{display:flex;align-items:baseline;gap:4px;color:#fff;}
+  #h-counter .cnt-num{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;}
+  #h-counter .cnt-times{font-size:14px;font-weight:700;}
+  #h-counter .cnt-sub{font-size:11px;font-weight:500;color:#9f9f9f;}
+  #h-help{right:16px;top:64px;width:48px;height:48px;display:flex;
+    align-items:center;justify-content:center;background:rgba(0,0,0,.65);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15);border-radius:999px;overflow:hidden;}
+  #h-help img{width:24px;height:24px;display:block;}
+
+  /* ---- tickets (Figma 9044-41747: 斜めストライプの新デザイン) ---- */
+  #tickets{position:absolute;left:0;top:495px;width:390px;height:222px;z-index:2;
+    filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));}
+  .ticket{position:absolute;top:0;width:278px;height:222px;}
+  .tk-top{position:relative;width:278px;height:62px;}
+  .tk-top .tk-shape{position:absolute;inset:0;width:100%;height:100%;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    -webkit-mask:url(assets/ticket_top_rot.svg) 0 0/100% 100%;
+    mask:url(assets/ticket_top_rot.svg) 0 0/100% 100%;
+    background:
+      repeating-linear-gradient(139deg,rgba(0,0,0,.05) 0 7.27px,rgba(0,0,0,0) 7.27px 14.71px),
+      linear-gradient(315deg,rgba(255,255,255,.9),rgba(255,255,255,.8));}
+  .tk-top-row{position:absolute;left:24px;top:21.5px;width:230px;height:20px;
+    display:flex;align-items:center;justify-content:space-between;}
+  .tk-logo{width:68px;height:17px;display:block;mix-blend-mode:darken;object-fit:cover;}
+  .tk-date{font-size:16px;line-height:20px;color:#393939;letter-spacing:-.8px;text-align:right;}
+  .tk-body{position:relative;width:278px;height:161px;margin-top:-1px;}
+  .tk-body .tk-shape{position:absolute;inset:0;width:100%;height:100%;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    -webkit-mask:url(assets/ticket_body_shape.svg) 0 0/100% 100%;
+    mask:url(assets/ticket_body_shape.svg) 0 0/100% 100%;
+    background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.75));}
+  .tk-content{position:absolute;left:24px;top:20px;width:230px;}
+  .tk-event{font-size:12px;line-height:15px;color:#838383;letter-spacing:-.6px;margin-bottom:4px;}
+  .tk-name{font-size:20px;font-weight:700;color:#191919;line-height:1.3;letter-spacing:-1px;}
+  .tk-stamp{position:absolute;right:1px;top:35px;width:126px;height:126px;opacity:.5;
+    object-fit:cover;pointer-events:none;}
+
+  /* ---- tabbar (Figma component: Tabbar_set) ---- */
+  #tabbar{position:absolute;left:0;right:0;bottom:24px;z-index:30;
+    display:flex;justify-content:center;}
+  .tb-pill{display:flex;align-items:flex-end;justify-content:center;gap:12px;
+    height:64px;padding:7px 20px;background:rgba(0,0,0,.65);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15);border-radius:42px;}
+  .tb-item{position:relative;width:48px;display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-end;gap:4px;padding:4px 0 2px;}
+  .tb-item img{width:24px;height:24px;display:block;}
+  .tb-badge{position:absolute;left:28px;top:5px;width:12px;height:12px;border-radius:50%;
+    background:#FF006A;}
+  .tb-label{font-size:11px;line-height:15px;letter-spacing:.11px;
+    color:rgba(255,255,255,.5);text-align:center;
+    text-shadow:0 0 4px rgba(0,0,0,.25);}
+  .tb-center{width:48px;height:75px;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;gap:2px;padding-bottom:2px;background:none;border:none;}
+  .tb-center .tb-label{color:#fff;}
+  .tb-circle{width:48px;height:48px;border-radius:40px;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  .tb-circle img{width:22px;height:22px;display:block;}
+
+  /* ================= passport overlay ================= */
+  .passport{position:absolute;inset:0;z-index:35;visibility:hidden;}
+  .passport.show{visibility:visible;}
+  .backdrop{position:absolute;inset:0;background:rgba(8,8,10,0);backdrop-filter:blur(0px);
+    transition:background var(--dur-in) ease,backdrop-filter var(--dur-in) ease;}
+  .show .backdrop{background:rgba(8,8,10,.72);backdrop-filter:blur(10px);}
+  .zoom .backdrop{background:rgba(8,8,10,.95);}
+
+  /* book final rect = full-bleed page area (Figma: 382x677, below header) */
+  .book-scene{position:absolute;left:4px;right:4px;top:118px;bottom:14px;
+    perspective:1600px;perspective-origin:50% 42%;}
+  .book{position:absolute;inset:0;transform-style:preserve-3d;
+    transform:scale(var(--closed-scale));
+    transition:transform var(--dur-open) var(--ease-open);}
+  /* entrance */
+  .passport:not(.show) .book{transform:scale(.18) translateY(-46%);opacity:0;}
+  .book{transition:transform var(--dur-open) var(--ease-open),opacity var(--dur-in) ease;opacity:1;}
+  .show .book{transition-duration:var(--dur-in);}
+  .open .book{transform:scale(var(--closed-scale)) rotateY(var(--tilt));
+    transition-duration:var(--dur-open);}
+  .zoom .book{transform:scale(1) rotateY(0deg);transition-duration:var(--dur-zoom);}
+
+  .book-shadow{position:absolute;left:6%;right:6%;top:8%;bottom:-2%;border-radius:40px;
+    background:rgba(0,0,0,.55);filter:blur(34px);transform:scale(var(--closed-scale)) translateY(4%);
+    transition:opacity var(--dur-zoom) ease,transform var(--dur-open) var(--ease-open);}
+  .zoom .book-shadow{opacity:0;}
+
+  /* ---- exit: 出現の逆再生（縮小しながらチップ方向へ、ease-in で加速して消える）---- */
+  .bye .book{transform:scale(.18) translateY(-46%);opacity:0;
+    transition:transform var(--dur-in) cubic-bezier(.55,0,.85,.36),
+               opacity calc(var(--dur-in)*.85) cubic-bezier(.6,.05,.9,.4);}
+  .bye .backdrop{background:rgba(8,8,10,0);backdrop-filter:blur(0px);
+    transition:background var(--dur-in) ease,backdrop-filter var(--dur-in) ease;}
+  .bye .book-shadow{opacity:0;transition:opacity calc(var(--dur-in)*.7) ease;}
+
+  /* spine-side corners are nearly square, free-edge corners rounded (Paper) */
+  [data-dir="right"] .cover-back,[data-dir="right"] .face{
+    border-radius:var(--radius) var(--r-spine) var(--r-spine) var(--radius);}
+  [data-dir="left"] .cover-back,[data-dir="left"] .face{
+    border-radius:var(--r-spine) var(--radius) var(--radius) var(--r-spine);}
+  [data-dir="right"] .page,[data-dir="right"] .page-shade{
+    border-radius:var(--r-page) 3px 3px var(--r-page);}
+  [data-dir="left"] .page,[data-dir="left"] .page-shade{
+    border-radius:3px var(--r-page) var(--r-page) 3px;}
+
+  /* ---- back cover: the base. Its color IS the frame color around the page ---- */
+  .cover-back{position:absolute;inset:0;border-radius:var(--radius);background:var(--cover);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 2px 6px rgba(255,255,255,.05),
+      inset 0 -3px 10px rgba(0,0,0,.25);
+    transform:translateZ(-2px);}
+  .cover-back .grain{border-radius:var(--radius);}
+
+  /* stamp page inset inside back cover -> cover-colored frame */
+  .page{position:absolute;inset:var(--frame);border-radius:var(--r-page);
+    background:var(--page);overflow:hidden;transform:translateZ(0.5px);
+    box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .page .dots{position:absolute;inset:0;
+    background-image:radial-gradient(var(--dot) 1.1px,transparent 1.1px);
+    background-size:17px 17px;background-position:8px 8px;}
+  .page-shade{position:absolute;inset:var(--frame);border-radius:var(--r-page);
+    pointer-events:none;transform:translateZ(1px);opacity:1;
+    transition:opacity calc(var(--dur-open)*.9) var(--ease-open);}
+  [data-dir="right"] .page-shade{background:linear-gradient(270deg,rgba(0,0,0,.28),transparent 45%);}
+  [data-dir="left"]  .page-shade{background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 45%);}
+  .open .page-shade,.zoom .page-shade{opacity:0;}
+
+  .stamps{position:absolute;inset:0;}
+  .stamp{position:absolute;mix-blend-mode:multiply;opacity:.88;}
+  .stamp text{font-family:Georgia,"Times New Roman",serif;}
+  .pagenum{position:absolute;top:10px;right:12px;background:rgba(20,20,22,.75);color:#fff;
+    font-size:11px;padding:4px 12px;border-radius:12px;letter-spacing:.05em;}
+
+  /* ---- front cover (two faces) ---- */
+  .cover{position:absolute;inset:0;transform-style:preserve-3d;
+    transition:transform var(--dur-open) var(--ease-open);z-index:2;}
+  [data-dir="right"] .cover{transform-origin:100% 50%;}
+  [data-dir="left"]  .cover{transform-origin:0% 50%;}
+  .open .cover,.zoom .cover{transform:rotateY(var(--open-rot));}
+  .zoom .cover{transition:transform var(--dur-zoom) var(--ease-open);}
+
+  .face{position:absolute;inset:0;border-radius:var(--radius);backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;overflow:hidden;}
+  .face.front{background:var(--cover);}
+  /* paper-like lighting on the cover */
+  .face.front .light{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 26%),
+               linear-gradient(0deg,rgba(0,0,0,.14),rgba(0,0,0,0) 22%);}
+  /* spine band + crease highlight, mirrored by direction */
+  /* Paper "sinta" 再現: 背のクロステープ + 細いエッジライン + 折り溝
+     layers(上→下): ①エッジの細線 ②テープ先の溝 ③テープの丸み陰影 ④テープ地色 */
+  .face.front .spine{position:absolute;top:0;bottom:0;width:calc(var(--spine-w)*1.5);}
+  [data-dir="right"] .face.front .spine{right:0;background:
+    linear-gradient(270deg,
+      rgba(0,0,0,.22) 0 1.5px,rgba(255,255,255,.55) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
+      rgba(0,0,0,.05) 13px 14px,transparent 14px),
+    linear-gradient(270deg,
+      transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
+      rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
+      rgba(255,255,255,.10) calc(var(--spine-w) + 11px),transparent 100%),
+    linear-gradient(270deg,
+      rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
+      rgba(255,255,255,.30) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
+    linear-gradient(270deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
+  [data-dir="left"] .face.front .spine{left:0;background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.22) 0 1.5px,rgba(255,255,255,.55) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
+      rgba(0,0,0,.05) 13px 14px,transparent 14px),
+    linear-gradient(90deg,
+      transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
+      rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
+      rgba(255,255,255,.10) calc(var(--spine-w) + 11px),transparent 100%),
+    linear-gradient(90deg,
+      rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
+      rgba(255,255,255,.30) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
+    linear-gradient(90deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
+  /* free-edge shading */
+  [data-dir="right"] .face.front{box-shadow:inset 3px 0 6px -2px rgba(255,255,255,.14),inset -1px 0 0 rgba(0,0,0,.2);}
+  [data-dir="left"]  .face.front{box-shadow:inset -3px 0 6px -2px rgba(255,255,255,.14),inset 1px 0 0 rgba(0,0,0,.2);}
+
+  .cover-art{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:18px;color:var(--cover-text);}
+  .cover-art .ring{width:74px;height:74px;border-radius:50%;border:2px solid currentColor;opacity:.85;
+    display:flex;align-items:center;justify-content:center;font-size:30px;}
+  .cover-art .t1{font-size:11px;letter-spacing:.42em;font-weight:600;opacity:.8;margin-right:-.42em;}
+  .cover-art .t2{font-family:Georgia,serif;font-size:26px;letter-spacing:.24em;font-weight:600;margin-right:-.24em;}
+  .cover-frame{position:absolute;inset:16px;border:1.5px solid currentColor;opacity:.35;
+    border-radius:calc(var(--radius) - 8px);color:var(--cover-text);}
+  [data-dir="right"] .cover-frame{right:calc(var(--spine-w) + 14px);}
+  [data-dir="left"]  .cover-frame{left:calc(var(--spine-w) + 14px);}
+  [data-dir="right"] .cover-art{padding-right:var(--spine-w);}
+  [data-dir="left"]  .cover-art{padding-left:var(--spine-w);}
+
+  .face.back{background:var(--cover-dark);transform:rotateY(180deg);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
+  .face.back .light{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),transparent 30%),
+               radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.18) 100%);}
+
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+  .back-btn{position:absolute;left:14px;bottom:20px;z-index:50;background:#fff;color:#111;border:none;
+    border-radius:24px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translateY(14px);
+    transition:opacity .35s ease,transform .35s ease;}
+  .zoom .back-btn{opacity:1;pointer-events:auto;transform:none;}
+
+  /* ================= control panel ================= */
+  h1{font-size:14px;font-weight:700;margin-bottom:2px;}
+  .sub{font-size:11px;color:#8a8a95;margin-bottom:18px;}
+  fieldset{border:none;margin-bottom:20px;}
+  legend{font-size:11px;font-weight:700;color:#a0a0ac;letter-spacing:.08em;margin-bottom:10px;
+    text-transform:uppercase;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .row label{font-size:12px;color:#c9c9d2;flex-shrink:0;}
+  .row output{font-size:11px;color:#8a8a95;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;}
+  input[type="range"]{flex:1;accent-color:#7c6cf5;min-width:0;}
+  input[type="color"]{width:40px;height:28px;border:none;background:none;cursor:pointer;padding:0;}
+  select{background:#222229;color:#e8e8ec;border:1px solid #333;border-radius:8px;padding:5px 8px;
+    font-size:12px;max-width:170px;}
+  .auto-chk{display:flex;align-items:center;gap:5px;font-size:11px;color:#8a8a95;
+    margin-left:auto;cursor:pointer;}
+  .auto-chk input{accent-color:#7c6cf5;}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .sw{width:30px;height:30px;border-radius:9px;cursor:pointer;border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
+  .sw.sel{border-color:#7c6cf5;}
+  .seg{display:flex;background:#222229;border-radius:9px;padding:3px;gap:3px;}
+  .seg button{flex:1;border:none;background:none;color:#8a8a95;font-size:12px;padding:6px 0;
+    border-radius:7px;cursor:pointer;font-weight:600;}
+  .seg button.sel{background:#7c6cf5;color:#fff;}
+  .btns{display:flex;gap:8px;margin-bottom:20px;}
+  .btn{flex:1;border:none;border-radius:10px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn.play{background:#7c6cf5;color:#fff;}
+  .btn.ghost{background:#26262e;color:#c9c9d2;}
+  .btn.copy{background:#26262e;color:#c9c9d2;font-size:12px;padding:9px 0;}
+  .btn.copy.ok{background:#2c6e49;color:#fff;}
+  textarea.code{width:100%;height:150px;background:#101015;color:#9fd0a0;border:1px solid #2b2b33;
+    border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:10px;padding:10px;
+    resize:vertical;white-space:pre;margin-bottom:8px;}
+  .hint{font-size:10px;color:#6d6d78;line-height:1.5;margin-top:6px;}
+
+  @media (max-height:900px){ .phone{--phone-scale:min(1,calc((100vh - 40px)/844));} }
+</style>
+</head>
+<body>
+
+<main class="stage">
+  <div class="phone">
+    <div class="screen">
+      <!-- check-in screen (Figma 9044-41658) -->
+      <img id="map" src="assets/map.png" alt="">
+      <div id="nav-grad"></div>
+      <div id="bottom-rect"></div>
+
+      <div class="pin"><img src="assets/pin_pink.svg" alt=""></div>
+      <div id="pill">1<span class="sl">/</span>10</div>
+
+      <!-- tickets -->
+      <div id="tickets">
+        <div class="ticket" style="left:-238px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+        </div>
+        <div class="ticket" style="left:56px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+        </div>
+        <div class="ticket" style="left:350px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+        </div>
+      </div>
+
+      <div id="tab-grad"></div>
+
+      <!-- status bar -->
+      <div class="statusbar">
+        <div class="sb-time">9:18</div>
+        <div class="sb-icons">
+          <img class="ic-cell" src="assets/sb_cellular.svg">
+          <img class="ic-wifi" src="assets/sb_wifi.svg">
+          <img class="ic-batt" src="assets/sb_battery.svg">
+        </div>
+      </div>
+
+      <!-- header -->
+      <button id="h-passport" class="hdr" title="チェックインパスポートを開く">
+        <img class="pp-logo" src="assets/logo_passport.svg">
+        <span class="pp-txt"><span class="pp-1">Artist_name</span><span class="pp-2">PASSPORT</span></span>
+      </button>
+      <div id="h-counter" class="hdr">
+        <div class="cnt-row"><span class="cnt-num">1</span><span class="cnt-times">Times!</span></div>
+        <div class="cnt-sub">Thanks for checking in</div>
+      </div>
+      <div id="h-help" class="hdr"><img src="assets/help.svg"></div>
+
+      <!-- tabbar (component: Tabbar_set) -->
+      <div id="tabbar">
+        <div class="tb-pill">
+          <a class="tb-item"><img src="assets/tab_home.svg"><span class="tb-label">Home</span></a>
+          <a class="tb-item"><img src="assets/tab_poppin.svg"><span class="tb-badge"></span><span class="tb-label">Poppin’</span></a>
+          <button class="tb-center"><span class="tb-circle"><img src="assets/tab_checkin.svg"></span><span class="tb-label">Check In</span></button>
+          <a class="tb-item"><img src="assets/tab_shop.svg"><span class="tb-label">Shop</span></a>
+          <a class="tb-item"><img src="assets/tab_mypage.svg"><span class="tb-label">Mypage</span></a>
+        </div>
+      </div>
+
+      <!-- passport book overlay -->
+      <div class="passport" id="passport" data-dir="right">
+        <div class="backdrop"></div>
+        <div class="book-scene">
+          <div class="book-shadow"></div>
+          <div class="book" id="book">
+            <div class="cover-back">
+              <div class="grain"></div>
+              <div class="page">
+                <div class="dots"></div>
+                <div class="stamps">
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:150px;left:8%;top:6%;transform:rotate(-8deg);color:#c04a2b">
+                    <defs><path id="cp1" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="3.5" stroke-dasharray="2 3"/>
+                    <circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                    <text fill="currentColor" font-size="13" font-weight="bold" letter-spacing="3"><textPath href="#cp1">PARIS ★ FRANCE ★</textPath></text>
+                    <text fill="currentColor" x="60" y="65" text-anchor="middle" font-size="11" font-weight="bold">DEC 4 1965</text>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:145px;right:6%;top:16%;transform:rotate(6deg);color:#6b7029">
+                    <defs><path id="cp2" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="2.5"/>
+                    <circle cx="60" cy="60" r="48" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text fill="currentColor" font-size="14" font-weight="bold" letter-spacing="4"><textPath href="#cp2">CAIRO ✳ EGYPT ✳</textPath></text>
+                    <path d="M60 40 L78 74 L42 74 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:160px;left:14%;top:44%;transform:rotate(-4deg);color:#b8273d">
+                    <defs><path id="cp3" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="3"/>
+                    <text fill="currentColor" font-size="12" font-weight="bold" letter-spacing="3"><textPath href="#cp3">HUNGARY · 12/03 1954</textPath></text>
+                    <text fill="currentColor" x="60" y="66" text-anchor="middle" font-size="15" font-weight="bold" letter-spacing="1">BUDAPEST</text>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:140px;right:10%;bottom:8%;transform:rotate(9deg);color:#8a7a1e">
+                    <defs><path id="cp4" d="M60,60 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0"/></defs>
+                    <path d="M60 8 l10 14 17-6-2 18 17 6-13 12 8 16-18 1-5 17-14-11-14 11-5-17-18-1 8-16-13-12 17-6-2-18 17 6z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <text fill="currentColor" font-size="12" font-weight="bold" letter-spacing="2"><textPath href="#cp4" startOffset="14">DUBLIN · IRELAND</textPath></text>
+                    <text fill="currentColor" x="60" y="70" text-anchor="middle" font-size="20" font-weight="bold">1923</text>
+                  </svg>
+                </div>
+                <div class="grain"></div>
+              </div>
+              <div class="pagenum">1 / 10</div>
+              <div class="page-shade"></div>
+            </div>
+            <div class="cover" id="cover">
+              <div class="face front">
+                <div class="light"></div>
+                <div class="cover-frame"></div>
+                <div class="cover-art">
+                  <div class="ring">✦</div>
+                  <div>
+                    <div class="t1" style="text-align:center">ARTIST_NAME</div>
+                    <div class="t2">PASSPORT</div>
+                  </div>
+                </div>
+                <div class="spine"></div>
+                <div class="grain"></div>
+              </div>
+              <div class="face back">
+                <div class="light"></div>
+                <div class="grain"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="back-btn" id="backBtn">‹ 戻る</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="panel">
+  <h1>ブック開きアニメ ジェネレーター</h1>
+  <div class="sub">BwU チェックインパスポート / Paper風質感</div>
+
+  <div class="btns">
+    <button class="btn play" id="playBtn">▶ 再生</button>
+    <button class="btn ghost" id="resetBtn">リセット</button>
+  </div>
+
+  <fieldset>
+    <legend>カラー</legend>
+    <div class="row"><label>表紙の色（= 枠の色）</label><input type="color" id="coverColor" value="#16324f"></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="row" style="margin-top:12px"><label>帯（背）の色</label>
+      <label class="auto-chk"><input type="checkbox" id="tapeAuto" checked>自動</label>
+      <input type="color" id="tapeColor" value="#d0d6dc">
+    </div>
+    <div class="row"><label>ページの色</label><input type="color" id="pageColor" value="#ebebe8"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>開き方</legend>
+    <div class="seg" id="dirSeg">
+      <button data-dir="right" class="sel">右開き</button>
+      <button data-dir="left">左開き</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>形状</legend>
+    <div class="row"><label>角丸</label><input type="range" id="radius" min="4" max="36" value="18"><output>18px</output></div>
+    <div class="row"><label>背表紙の幅</label><input type="range" id="spine" min="12" max="48" value="28"><output>28px</output></div>
+    <div class="row"><label>枠（表紙の見え幅）</label><input type="range" id="frame" min="4" max="24" value="10"><output>10px</output></div>
+    <div class="row"><label>閉時サイズ</label><input type="range" id="scale" min="40" max="80" value="62"><output>62%</output></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>タイミング</legend>
+    <div class="row"><label>開く時間</label><input type="range" id="durOpen" min="400" max="2000" step="50" value="900"><output>900ms</output></div>
+    <div class="row"><label>ズーム時間</label><input type="range" id="durZoom" min="300" max="1500" step="50" value="650"><output>650ms</output></div>
+    <div class="row"><label>イージング</label>
+      <select id="easing">
+        <option value=".35,0,.15,1" selected>スムーズ（標準）</option>
+        <option value=".2,.9,.25,1">えぐい減速</option>
+        <option value=".45,0,.2,1.18">オーバーシュート</option>
+        <option value=".6,0,.4,1">じんわり</option>
+      </select>
+    </div>
+    <div class="row"><label>本体チルト</label><input type="range" id="tilt" min="0" max="20" value="7"><output>7°</output></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Flutter エクスポート</legend>
+    <div class="btns" style="margin-bottom:8px">
+      <button class="btn copy" id="copyDart">Dart をコピー</button>
+      <button class="btn copy" id="copyJson">JSON をコピー</button>
+    </div>
+    <textarea class="code" id="codeOut" readonly></textarea>
+    <div class="hint">Transform + Matrix4（perspective 0.0015, alignment: 背表紙側）で実装。イージングは Cubic(x1,y1,x2,y2) にそのまま対応します。回転方向が逆に見える場合は角度の符号を反転してください。</div>
+  </fieldset>
+</aside>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const root = document.documentElement.style;
+  const passport = $('#passport');
+
+  const cfg = {
+    cover: '#16324f', page: '#ebebe8',
+    tapeMode: 'auto', tapeCustom: '#d0d6dc',
+    dir: 'right',
+    radius: 18, spine: 28, frame: 10, closedScale: .62,
+    durIn: 420, durOpen: 900, durZoom: 650,
+    ease: [.35, 0, .15, 1],
+    tilt: 7, openAngle: 176,
+  };
+
+  /* ---------- color utils ---------- */
+  const hex2rgb = h => [1,3,5].map(i => parseInt(h.slice(i, i+2), 16));
+  const rgb2hex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2,'0')).join('');
+  const shade = (h, f) => rgb2hex(hex2rgb(h).map(v => f < 0 ? v * (1+f) : v + (255-v)*f));
+  const lum = h => { const [r,g,b] = hex2rgb(h); return (r*.299 + g*.587 + b*.114) / 255; };
+  const tapeHex = () => cfg.tapeMode === 'auto' ? shade(cfg.cover, .8) : cfg.tapeCustom;
+
+  function apply() {
+    root.setProperty('--cover', cfg.cover);
+    root.setProperty('--cover-dark', shade(cfg.cover, -.28));
+    root.setProperty('--cover-light', shade(cfg.cover, .2));
+    root.setProperty('--cover-text', lum(cfg.cover) > .62 ? 'rgba(20,20,25,.85)' : '#ffffff');
+    root.setProperty('--tape', tapeHex()); // 背のクロステープ（自動 = 表紙色を白寄せ / カスタム）
+    if (cfg.tapeMode === 'auto') $('#tapeColor').value = tapeHex();
+    root.setProperty('--page', cfg.page);
+    root.setProperty('--dot', shade(cfg.page, -.14));
+    root.setProperty('--radius', cfg.radius + 'px');
+    root.setProperty('--spine-w', cfg.spine + 'px');
+    root.setProperty('--frame', cfg.frame + 'px');
+    root.setProperty('--closed-scale', cfg.closedScale);
+    root.setProperty('--dur-in', cfg.durIn + 'ms');
+    root.setProperty('--dur-open', cfg.durOpen + 'ms');
+    root.setProperty('--dur-zoom', cfg.durZoom + 'ms');
+    root.setProperty('--ease-open', `cubic-bezier(${cfg.ease.join(',')})`);
+    root.setProperty('--open-rot', (cfg.dir === 'right' ? 1 : -1) * cfg.openAngle + 'deg');
+    root.setProperty('--tilt', (cfg.dir === 'right' ? -1 : 1) * cfg.tilt + 'deg');
+    passport.dataset.dir = cfg.dir;
+    genCode();
+  }
+
+  /* ---------- animation sequence ---------- */
+  let timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+  function play() {
+    reset();
+    // force reflow so transitions restart cleanly
+    void passport.offsetWidth;
+    passport.classList.add('show');
+    later(() => passport.classList.add('open'), cfg.durIn + 160);
+    later(() => passport.classList.add('zoom'), cfg.durIn + 160 + cfg.durOpen * .72);
+  }
+  function reset() {
+    clearTimers();
+    passport.classList.remove('show', 'open', 'zoom', 'bye');
+  }
+  function close() {
+    clearTimers();
+    passport.classList.remove('zoom');                              // 1. 閉時サイズへ戻す
+    later(() => passport.classList.remove('open'), cfg.durZoom * .55); // 2. 表紙を閉じる
+    later(() => passport.classList.add('bye'),                        // 3. 縮小+フェードで退場
+      cfg.durZoom * .55 + cfg.durOpen * .9);
+    later(() => passport.classList.remove('show', 'bye'),             // 4. 完全に消えてから非表示
+      cfg.durZoom * .55 + cfg.durOpen * .9 + cfg.durIn + 80);
+  }
+
+  $('#h-passport').addEventListener('click', play);
+  $('#playBtn').addEventListener('click', play);
+  $('#resetBtn').addEventListener('click', reset);
+  $('#backBtn').addEventListener('click', close);
+
+  /* ---------- panel bindings ---------- */
+  const bindRange = (id, key, unit, fmt) => {
+    const el = $(id), out = el.nextElementSibling;
+    el.addEventListener('input', () => {
+      cfg[key] = fmt ? fmt(+el.value) : +el.value;
+      out.textContent = el.value + unit;
+      apply();
+    });
+  };
+  bindRange('#radius', 'radius', 'px');
+  bindRange('#spine', 'spine', 'px');
+  bindRange('#frame', 'frame', 'px');
+  bindRange('#scale', 'closedScale', '%', v => v / 100);
+  bindRange('#durOpen', 'durOpen', 'ms');
+  bindRange('#durZoom', 'durZoom', 'ms');
+  bindRange('#tilt', 'tilt', '°');
+
+  $('#coverColor').addEventListener('input', e => { cfg.cover = e.target.value; selSwatch(null); apply(); });
+  $('#pageColor').addEventListener('input', e => { cfg.page = e.target.value; apply(); });
+  $('#tapeColor').addEventListener('input', e => {
+    cfg.tapeCustom = e.target.value; cfg.tapeMode = 'custom';
+    $('#tapeAuto').checked = false; apply();
+  });
+  $('#tapeAuto').addEventListener('change', e => {
+    cfg.tapeMode = e.target.checked ? 'auto' : 'custom';
+    if (!e.target.checked) cfg.tapeCustom = $('#tapeColor').value;
+    apply();
+  });
+  $('#easing').addEventListener('change', e => { cfg.ease = e.target.value.split(',').map(Number); apply(); });
+
+  $('#dirSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    cfg.dir = b.dataset.dir;
+    document.querySelectorAll('#dirSeg button').forEach(x => x.classList.toggle('sel', x === b));
+    apply();
+  });
+
+  // BwU-ish presets: black / navy / bordeaux / green / ivory / pink
+  const presets = ['#1a1a1e', '#16324f', '#6d1f2c', '#1e5c43', '#e8e2d5', '#d9376e', '#3f2d7a', '#c0492b'];
+  const swBox = $('#swatches');
+  presets.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'sw'; d.style.background = c; d.dataset.c = c;
+    d.addEventListener('click', () => { cfg.cover = c; $('#coverColor').value = c; selSwatch(d); apply(); });
+    swBox.appendChild(d);
+  });
+  const selSwatch = el => document.querySelectorAll('.sw').forEach(x => x.classList.toggle('sel', x === el));
+  selSwatch(swBox.children[1]);
+
+  /* ---------- flutter export ---------- */
+  function genDart() {
+    const e = cfg.ease;
+    const hex = c => '0xFF' + c.slice(1).toUpperCase();
+    // テープのグラデ stop を実寸(px)から 0..1 に正規化して焼き込む
+    const S = cfg.spine, W = S * 1.5;
+    const n = v => +(Math.min(v, W) / W).toFixed(3);
+    const spineStops = [0, n(1.5), n(1.5), n(3), n(3), n(4), n(4),
+      n(S * .6), n(S * .85), n(S - 1), n(S), n(S + 6), n(Math.min(S + 11, W - .5)), 1].join(', ');
+    return `// Generated by BwU checkin-passport book generator
+// 開閉の見え方は同梱の index.html と見比べて調整してください。
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+class PassportBookSpec {
+  static const coverColor = Color(${hex(cfg.cover)});
+  // 開いた時にページの外周に見える「枠」= 表紙(裏表紙)そのもの。coverColor と必ず同色。
+  static const insideCoverColor = Color(${hex(shade(cfg.cover, -.28))}); // 表紙裏面（開く途中に見える面）
+  static const pageColor = Color(${hex(cfg.page)});
+  static const tapeColor = Color(${hex(tapeHex())}); // 背のクロステープ（${cfg.tapeMode === 'auto' ? '自動: 表紙色を80%白寄せ' : 'カスタム指定'}）
+  static const cornerRadius = ${cfg.radius}.0;
+  static const spineCornerRadius = 4.0; // 帯（背表紙）側の角丸はほぼ無し
+  static const spineWidth = ${cfg.spine}.0;
+  static const pageFrameInset = ${cfg.frame}.0; // ページを inset して表紙色の枠を見せる
+  static const closedScale = ${cfg.closedScale};
+  static const hingeRight = ${cfg.dir === 'right'}; // 右開き: 背表紙=右端, 表紙は右端を軸に開く
+  static const openDuration = Duration(milliseconds: ${cfg.durOpen});
+  static const zoomDuration = Duration(milliseconds: ${cfg.durZoom});
+  static const entranceDuration = Duration(milliseconds: ${cfg.durIn});
+  static const exitDuration = Duration(milliseconds: ${cfg.durIn});
+  static const openCurve = Cubic(${e[0]}, ${e[1]}, ${e[2]}, ${e[3]});
+  // 退場: 出現の逆再生。縮小(scale 1→0.18)+上方向へ移動しつつ ease-in で加速フェード
+  static const exitCurve = Cubic(0.55, 0, 0.85, 0.36);
+
+  // 背表紙側の角丸だけ小さくする（Paper の帯の見た目）
+  static BorderRadius get coverRadius => hingeRight
+      ? const BorderRadius.horizontal(
+          left: Radius.circular(cornerRadius),
+          right: Radius.circular(spineCornerRadius))
+      : const BorderRadius.horizontal(
+          left: Radius.circular(spineCornerRadius),
+          right: Radius.circular(cornerRadius));
+  static const bodyTiltDeg = ${cfg.tilt}.0; // 開いてる間の本体の傾き（奥行き表現）
+  static const coverOpenDeg = ${cfg.openAngle}.0;
+}
+
+/// 表紙が開くパスポートブック。
+/// [progress] 0.0=閉 → 1.0=全開。AnimationController + openCurve で駆動する。
+/// [zoom] 0.0=閉時サイズ → 1.0=画面いっぱい（ページビュー）。
+class PassportBook extends StatelessWidget {
+  const PassportBook({
+    super.key,
+    required this.progress,
+    required this.zoom,
+    required this.pageChild,
+    this.coverChild,
+  });
+
+  final double progress;
+  final double zoom;
+  final Widget pageChild;
+  final Widget? coverChild;
+
+  @override
+  Widget build(BuildContext context) {
+    const s = PassportBookSpec;
+    final hinge = PassportBookSpec.hingeRight;
+    final coverAngle =
+        progress * PassportBookSpec.coverOpenDeg * math.pi / 180 * (hinge ? 1 : -1);
+    // 開いてる最中だけ本体を少し傾け、開き切ったら戻す
+    final tilt = math.sin(progress * math.pi) *
+        PassportBookSpec.bodyTiltDeg * math.pi / 180 * (hinge ? -1 : 1);
+    final scale = PassportBookSpec.closedScale +
+        (1 - PassportBookSpec.closedScale) * zoom;
+
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.0015)
+        ..scale(scale)
+        ..rotateY(tilt),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ---- 裏表紙 = 開いた時の外枠。表紙と同色 ----
+          Container(
+            decoration: BoxDecoration(
+              color: PassportBookSpec.coverColor,
+              borderRadius: PassportBookSpec.coverRadius,
+            ),
+          ),
+          // ---- スタンプページ（inset して枠を見せる）----
+          Padding(
+            padding: const EdgeInsets.all(PassportBookSpec.pageFrameInset),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                  PassportBookSpec.cornerRadius -
+                      PassportBookSpec.pageFrameInset * .6),
+              child: ColoredBox(
+                color: PassportBookSpec.pageColor,
+                child: pageChild,
+              ),
+            ),
+          ),
+          // ---- 表紙（背表紙側の端を軸に回転）----
+          Transform(
+            alignment:
+                hinge ? Alignment.centerRight : Alignment.centerLeft,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0015)
+              ..rotateY(coverAngle),
+            child: coverAngle.abs() < math.pi / 2
+                ? _CoverFront(child: coverChild) // 表面
+                : Transform( // 90°越えたら裏面（少し暗い表紙色）
+                    alignment: Alignment.center,
+                    transform: Matrix4.rotationY(math.pi),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: PassportBookSpec.insideCoverColor,
+                        borderRadius: PassportBookSpec.coverRadius,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoverFront extends StatelessWidget {
+  const _CoverFront({this.child});
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final hinge = PassportBookSpec.hingeRight;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: PassportBookSpec.coverColor,
+        borderRadius: PassportBookSpec.coverRadius,
+      ),
+      child: Stack(fit: StackFit.expand, children: [
+        // 背のクロステープ（Paper "sinta" 風）:
+        // 地色(tapeColor) + 丸み陰影/折り溝/エッジの細線をグラデーションで近似。
+        // 見た目の正解は index.html の .spine レイヤーと見比べること。
+        Align(
+          alignment:
+              hinge ? Alignment.centerRight : Alignment.centerLeft,
+          child: SizedBox(
+            width: PassportBookSpec.spineWidth * 1.5,
+            child: Stack(fit: StackFit.expand, children: [
+              Align(
+                alignment: hinge
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  width: PassportBookSpec.spineWidth,
+                  color: PassportBookSpec.tapeColor,
+                ),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: hinge
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    end: hinge
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    stops: const [${spineStops}],
+                    colors: [
+                      Colors.black.withValues(alpha: .22), // 外端のエッジ線
+                      Colors.black.withValues(alpha: .22),
+                      Colors.white.withValues(alpha: .55), // 紙の切り口ハイライト
+                      Colors.white.withValues(alpha: .55),
+                      Colors.black.withValues(alpha: .10),
+                      Colors.black.withValues(alpha: .10),
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: .30), // テープの丸み（シーン）
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: .10),
+                      Colors.black.withValues(alpha: .16), // テープ先の折り溝
+                      Colors.black.withValues(alpha: .05),
+                      Colors.white.withValues(alpha: .10),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
+        // 上からの環境光
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0, .26, .78, 1],
+              colors: [
+                Colors.white.withValues(alpha: .10),
+                Colors.transparent,
+                Colors.transparent,
+                Colors.black.withValues(alpha: .14),
+              ],
+            ),
+          ),
+        ),
+        if (child != null) child!,
+      ]),
+    );
+  }
+}`;
+  }
+
+  function genJson() {
+    return JSON.stringify({
+      coverColor: cfg.cover,
+      frameColor: cfg.cover,            // 開いた時の外枠 = 表紙と同色（仕様）
+      insideCoverColor: shade(cfg.cover, -.28),
+      tapeColor: tapeHex(),
+      tapeColorMode: cfg.tapeMode,       // "auto" = 表紙色を80%白寄せ / "custom" = 個別指定
+      pageColor: cfg.page,
+      hinge: cfg.dir,                    // "right" = 右開き
+      cornerRadius: cfg.radius,
+      spineCornerRadius: 4,              // 帯側の角丸はほぼ無し
+      spineWidth: cfg.spine,
+      pageFrameInset: cfg.frame,
+      closedScale: cfg.closedScale,
+      openDurationMs: cfg.durOpen,
+      zoomDurationMs: cfg.durZoom,
+      openCurve: { type: 'cubic-bezier', value: cfg.ease },
+      entranceDurationMs: cfg.durIn,
+      exitDurationMs: cfg.durIn,         // 退場は出現の逆再生（scale 1→0.18 + フェード）
+      exitCurve: { type: 'cubic-bezier', value: [0.55, 0, 0.85, 0.36] },
+      bodyTiltDeg: cfg.tilt,
+      coverOpenDeg: cfg.openAngle,
+    }, null, 2);
+  }
+
+  function genCode() { $('#codeOut').value = genDart(); }
+
+  const copy = (btn, text) => navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('ok'); const t = btn.textContent;
+    btn.textContent = '✓ コピーしました';
+    setTimeout(() => { btn.classList.remove('ok'); btn.textContent = t; }, 1400);
+  });
+  $('#copyDart').addEventListener('click', e => copy(e.target, genDart()));
+  $('#copyJson').addEventListener('click', e => copy(e.target, genJson()));
+
+  apply();
+})();
+</script>
+</body>
+</html>
