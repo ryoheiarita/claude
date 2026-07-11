@@ -260,8 +260,9 @@
     -webkit-backface-visibility:hidden;overflow:hidden;}
   .face.front{background:var(--cover);}
   /* アップロードされた表紙PNG（全面）。帯・環境光・グレインはこの上に重なる */
+  /* 表紙PNG: background-size を元画像実寸から計算（縮小時も元データを切り捨てない） */
   .cover-img{position:absolute;inset:0;background-size:cover;background-position:center;
-    display:none;transform:scale(var(--img-scale,1));transform-origin:center;}
+    background-repeat:no-repeat;display:none;}
   .face.front.has-img .cover-img{display:block;}
   .face.front.has-img .cover-art,.face.front.has-img .cover-frame{display:none;}
   /* paper-like lighting on the cover */
@@ -815,16 +816,34 @@
   });
   /* ---------- cover image upload ---------- */
   const faceFront = $('#faceFront');
+  let coverImgNatural = null; // 元画像の実寸（切り抜き前のデータを保持）
+  // cover フィット基準サイズ × scale を background-size に反映。
+  // scale < 1 では元画像のより広い範囲が現れる（切り抜いた結果を縮めない）
+  function applyImgSize() {
+    const el = $('#coverImg');
+    if (!coverImgNatural) { el.style.backgroundSize = ''; return; }
+    const fw = el.clientWidth || 382, fh = el.clientHeight || 712;
+    const s0 = Math.max(fw / coverImgNatural.w, fh / coverImgNatural.h);
+    el.style.backgroundSize =
+      `${(coverImgNatural.w * s0 * coverImgScale).toFixed(1)}px ` +
+      `${(coverImgNatural.h * s0 * coverImgScale).toFixed(1)}px`;
+  }
   $('#coverFile').addEventListener('change', e => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
     r.onload = () => {
-      $('#coverImg').style.backgroundImage = `url(${r.result})`;
-      faceFront.classList.add('has-img');
-      coverImgSet = true;
-      $('#coverImgClear').disabled = false;
-      $('#imgScale').disabled = false;
-      genCode();
+      const im = new Image();
+      im.onload = () => {
+        coverImgNatural = { w: im.naturalWidth, h: im.naturalHeight };
+        $('#coverImg').style.backgroundImage = `url(${r.result})`;
+        applyImgSize();
+        faceFront.classList.add('has-img');
+        coverImgSet = true;
+        $('#coverImgClear').disabled = false;
+        $('#imgScale').disabled = false;
+        genCode();
+      };
+      im.src = r.result;
     };
     r.readAsDataURL(f);
   });
@@ -833,17 +852,18 @@
     $('#coverImg').style.backgroundImage = '';
     $('#coverFile').value = '';
     coverImgSet = false;
+    coverImgNatural = null;
     $('#coverImgClear').disabled = true;
     const sc = $('#imgScale');
     sc.disabled = true; sc.value = 100; sc.nextElementSibling.textContent = '100%';
     coverImgScale = 1;
-    root.setProperty('--img-scale', 1);
+    applyImgSize();
     genCode();
   });
   $('#imgScale').addEventListener('input', e => {
     coverImgScale = +e.target.value / 100;
     e.target.nextElementSibling.textContent = e.target.value + '%';
-    root.setProperty('--img-scale', coverImgScale);
+    applyImgSize();
     genCode();
   });
 
@@ -924,9 +944,14 @@ class PassportBook extends StatelessWidget {
   final double progress;
   final double zoom;
   final Widget pageChild;
-  /// 表紙デザイン。PNG を使う場合は Image.asset/network（fit: BoxFit.cover）を
-  /// 全面配置し、サイズ調整は Transform.scale(scale: coverImageScale) で行う
-  /// （帯・環境光はその上に重なる。_CoverFront の child に渡す）
+  /// 表紙デザイン(PNG)。元画像を切り捨てず coverImageScale で拡縮する:
+  ///   base = 表紙を覆う cover fill サイズ（= max(coverW/imgW, coverH/imgH) × 元実寸）
+  ///   描画サイズ = base × coverImageScale を中央配置し、表紙矩形で clip、背後は coverColor
+  /// scale >= 1 は溢れて crop、scale < 1 は元画像全体が見えて余白に表紙色。
+  /// 実装は FittedBox(fit: cover) を SizedBox(base × scale) に入れて Stack 中央寄せ、
+  /// もしくは Image を width/height 指定 + Alignment.center（Transform.scale は不可:
+  /// cover で切り抜いた結果を縮めると初期 crop のまま残る）。
+  /// 帯・環境光はその上に重なる。_CoverFront の child に渡す。
   final Widget? coverChild;
 
   @override
