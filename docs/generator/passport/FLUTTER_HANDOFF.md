@@ -27,8 +27,12 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
    裏表紙そのものなので、**必ず表紙と同色**にする（`coverColor` を共有）。
    開く途中に見える表紙の裏面は表紙色を約28%暗くした色（`insideCoverColor`）。
 3. **質感（Paper By WeTransfer「sinta」を再現）**:
-   - 表紙デザインは **PNG 対応**（`coverChild`）。帯・環境光・グレインは
-     画像の上に重ねる。画像なしの場合はエンブレム＋PASSPORTタイトル
+   - **アーティストロゴ**（Figma Design_System_V2 `521:583`, 12組）を表紙**中央**に配置。
+     `assets/artists/<id>_<light|dark>.svg`。**light=白ロゴ（濃い表紙向き）/ dark=黒ロゴ
+     （淡い表紙向き）を手動切替**。サイズは表紙幅比 `logoSizeFraction`（0.20〜0.80）で可変。
+     JSON: `artist` / `logoColorMode` / `logoSizeFraction`
+   - 表紙デザインは **PNG 対応**（`coverChild`）。**PNGはアーティストロゴより優先**。
+     帯・環境光・グレインは画像/ロゴの上に重ねる。どちらも無い場合はエンブレム＋PASSPORTタイトル
    - **サイズ調整 `coverImageScale`（0.5〜2.0）は元画像を切り捨てない**:
      base = 表紙を覆う cover fill サイズ、描画サイズ = base × scale を中央配置し
      表紙矩形で clip・背後は `coverColor`。scale<1 で元画像全体が見えて余白に表紙色。

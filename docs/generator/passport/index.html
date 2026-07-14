@@ -265,6 +265,12 @@
     background-repeat:no-repeat;display:none;}
   .face.front.has-img .cover-img{display:block;}
   .face.front.has-img .cover-art,.face.front.has-img .cover-frame{display:none;}
+  /* アーティストロゴ（中央揃え・サイズ可変）。PNGアップロード時は非表示 */
+  .cover-logo{position:absolute;inset:0;display:none;background-repeat:no-repeat;
+    background-position:center;background-size:var(--logo-size,44%) auto;}
+  .face.front.has-logo .cover-logo{display:block;}
+  .face.front.has-logo .cover-art,.face.front.has-logo .cover-frame{display:none;}
+  .face.front.has-img .cover-logo{display:none;}
   /* paper-like lighting on the cover */
   .face.front .light{position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 26%),
@@ -535,6 +541,7 @@
             <div class="cover" id="cover">
               <div class="face front" id="faceFront">
                 <div class="cover-img" id="coverImg"></div>
+                <div class="cover-logo" id="coverLogo"></div>
                 <div class="light"></div>
                 <div class="cover-frame"></div>
                 <div class="cover-art">
@@ -589,7 +596,25 @@
   </fieldset>
 
   <fieldset>
-    <legend>表紙デザイン</legend>
+    <legend>アーティスト</legend>
+    <div class="row"><label>アーティスト</label>
+      <select id="artistSel">
+        <option value="">なし（デフォルト）</option>
+      </select>
+    </div>
+    <div class="row"><label>ロゴの色</label>
+      <div class="seg" id="logoModeSeg">
+        <button data-mode="light" class="sel">Light（白）</button>
+        <button data-mode="dark">Dark（黒）</button>
+      </div>
+    </div>
+    <div class="row"><label>ロゴサイズ</label>
+      <input type="range" id="logoSize" min="20" max="80" value="44" disabled><output>44%</output></div>
+    <div class="hint">ロゴは表紙中央に配置。Light=白ロゴ（濃い表紙向き）/ Dark=黒ロゴ（淡い表紙向き）。</div>
+  </fieldset>
+
+  <fieldset>
+    <legend>表紙デザイン（画像）</legend>
     <div class="btns" style="margin-bottom:0">
       <label class="btn ghost file-btn" for="coverFile">PNG をアップロード</label>
       <button class="btn ghost" id="coverImgClear" disabled>クリア</button>
@@ -597,7 +622,7 @@
     <input type="file" id="coverFile" accept="image/png,image/jpeg,image/webp" hidden>
     <div class="row" style="margin-top:12px"><label>サイズ</label>
       <input type="range" id="imgScale" min="50" max="200" value="100" disabled><output>100%</output></div>
-    <div class="hint">画像は表紙全面に表示。帯・環境光・グレインはその上に重なります。</div>
+    <div class="hint">画像をアップすると表紙全面に表示（アーティストロゴより優先）。帯・環境光・グレインはその上に重なります。</div>
   </fieldset>
 
   <fieldset>
@@ -629,6 +654,23 @@
   };
   let coverImgSet = false;
   let coverImgScale = 1;
+
+  // アーティスト（Figma Design_System_V2 521:583）。Light=白ロゴ / Dark=黒ロゴ
+  const ARTISTS = [
+    { id:'skyhi',     name:'SKY-HI' },
+    { id:'befirst',   name:'BE:FIRST' },
+    { id:'novelcore', name:'Novel Core' },
+    { id:'mazzel',    name:'MAZZEL' },
+    { id:'aile',      name:'Aile The Shota' },
+    { id:'edhiiiboi', name:'edhiii boi' },
+    { id:'reiko',     name:'Reiko' },
+    { id:'hana',      name:'HANA' },
+    { id:'starglow',  name:'STARGLOW' },
+    { id:'fumino',    name:'Fumino' },
+    { id:'ayumu',     name:'Ayumu Imazu' },
+    { id:'btown',     name:'B-town' },
+  ];
+  let artist = '', logoMode = 'light', logoSize = 44;
 
   /* ---------- color utils ---------- */
   const hex2rgb = h => [1,3,5].map(i => parseInt(h.slice(i, i+2), 16));
@@ -814,8 +856,39 @@
     if (!e.target.checked) cfg.tapeCustom = $('#tapeColor').value;
     apply();
   });
-  /* ---------- cover image upload ---------- */
+  /* ---------- artist logo ---------- */
   const faceFront = $('#faceFront');
+  const artistSel = $('#artistSel');
+  ARTISTS.forEach(a => {
+    const o = document.createElement('option'); o.value = a.id; o.textContent = a.name;
+    artistSel.appendChild(o);
+  });
+  function applyArtist() {
+    const el = $('#coverLogo');
+    if (artist) {
+      el.style.backgroundImage = `url(assets/artists/${artist}_${logoMode}.svg)`;
+      faceFront.classList.add('has-logo');
+    } else {
+      el.style.backgroundImage = '';
+      faceFront.classList.remove('has-logo');
+    }
+    root.setProperty('--logo-size', logoSize + '%');
+    $('#logoSize').disabled = !artist;
+    genCode();
+  }
+  artistSel.addEventListener('change', e => { artist = e.target.value; applyArtist(); });
+  $('#logoModeSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    logoMode = b.dataset.mode;
+    document.querySelectorAll('#logoModeSeg button').forEach(x => x.classList.toggle('sel', x === b));
+    applyArtist();
+  });
+  $('#logoSize').addEventListener('input', e => {
+    logoSize = +e.target.value; e.target.nextElementSibling.textContent = logoSize + '%';
+    root.setProperty('--logo-size', logoSize + '%'); genCode();
+  });
+
+  /* ---------- cover image upload ---------- */
   let coverImgNatural = null; // 元画像の実寸（切り抜き前のデータを保持）
   // cover フィット基準サイズ × scale を background-size に反映。
   // scale < 1 では元画像のより広い範囲が現れる（切り抜いた結果を縮めない）
@@ -905,6 +978,9 @@ class PassportBookSpec {
   static const cornerRadius = ${cfg.radius}.0;
   static const spineCornerRadius = 4.0; // 帯（背表紙）側の角丸はほぼ無し
   static const coverImageScale = ${coverImgScale}; // 表紙PNGの拡大率（1.0 = cover fill）
+  static const artist = ${artist ? `'${artist}'` : 'null'}; // アーティストID（ロゴを表紙中央に配置）
+  static const logoColorMode = '${logoMode}'; // 'light'=白ロゴ / 'dark'=黒ロゴ
+  static const logoSizeFraction = ${(logoSize/100).toFixed(2)}; // 表紙幅に対するロゴ幅の比率
   static const spineWidth = ${cfg.spine}.0;
   static const pageFrameInset = ${cfg.frame}.0; // ページを inset して表紙色の枠を見せる
   static const closedScale = ${cfg.closedScale};
@@ -1128,6 +1204,9 @@ class _CoverFront extends StatelessWidget {
       openCurve: { type: 'cubic-bezier', value: cfg.ease },
       coverImage: coverImgSet,           // 表紙PNG使用の有無（画像自体はアプリ側で供給）
       coverImageScale: coverImgScale,    // 表紙PNGの拡大率（cover fill 基準、中央原点）
+      artist: artist || null,            // アーティストID（ロゴを表紙中央に配置）
+      logoColorMode: logoMode,           // "light"=白ロゴ / "dark"=黒ロゴ
+      logoSizeFraction: +(logoSize/100).toFixed(2), // 表紙幅に対するロゴ幅の比率
       spineHighlightAlphas: {            // 帯の白ハイライト（テープ輝度連動）
         edge: +(.55 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
         sheen: +(.3 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
