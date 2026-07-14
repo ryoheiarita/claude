@@ -30,7 +30,8 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
    - **アーティストロゴ**（Figma Design_System_V2 `521:583`, 12組）を表紙**中央**に配置。
      `assets/artists/<id>_<light|dark>.svg`。**light=白ロゴ（濃い表紙向き）/ dark=黒ロゴ
      （淡い表紙向き）を手動切替**。サイズは表紙幅比 `logoSizeFraction`（0.20〜0.80）で可変。
-     JSON: `artist` / `logoColorMode` / `logoSizeFraction`
+     **配置は帯(`spineWidth`)を除いた面積の中央から `logoOffsetY = -4`px（4px上）**。
+     JSON: `artist` / `logoColorMode` / `logoSizeFraction` / `logoAlign` / `logoOffsetY`
    - 表紙デザインは **PNG 対応**（`coverChild`）。**PNGはアーティストロゴより優先**。
      帯・環境光・グレインは画像/ロゴの上に重ねる。どちらも無い場合はエンブレム＋PASSPORTタイトル
    - **サイズ調整 `coverImageScale`（0.5〜2.0）は元画像を切り捨てない**:

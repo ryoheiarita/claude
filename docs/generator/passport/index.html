@@ -265,9 +265,11 @@
     background-repeat:no-repeat;display:none;}
   .face.front.has-img .cover-img{display:block;}
   .face.front.has-img .cover-art,.face.front.has-img .cover-frame{display:none;}
-  /* アーティストロゴ（中央揃え・サイズ可変）。PNGアップロード時は非表示 */
-  .cover-logo{position:absolute;inset:0;display:none;background-repeat:no-repeat;
-    background-position:center;background-size:var(--logo-size,44%) auto;}
+  /* アーティストロゴ: 帯(テープ)を除いた面積の中央から4px上に配置・サイズ可変 */
+  .cover-logo{position:absolute;top:0;bottom:0;display:none;background-repeat:no-repeat;
+    background-position:center calc(50% - 4px);background-size:var(--logo-size,44%) auto;}
+  [data-dir="left"]  .cover-logo{left:var(--spine-w);right:0;}
+  [data-dir="right"] .cover-logo{left:0;right:var(--spine-w);}
   .face.front.has-logo .cover-logo{display:block;}
   .face.front.has-logo .cover-art,.face.front.has-logo .cover-frame{display:none;}
   .face.front.has-img .cover-logo{display:none;}
@@ -981,6 +983,8 @@ class PassportBookSpec {
   static const artist = ${artist ? `'${artist}'` : 'null'}; // アーティストID（ロゴを表紙中央に配置）
   static const logoColorMode = '${logoMode}'; // 'light'=白ロゴ / 'dark'=黒ロゴ
   static const logoSizeFraction = ${(logoSize/100).toFixed(2)}; // 表紙幅に対するロゴ幅の比率
+  // ロゴ配置: 帯(spineWidth)を除いた面積の中央から 4px 上（背表紙側を除外して中央寄せ）
+  static const logoOffsetY = -4.0;
   static const spineWidth = ${cfg.spine}.0;
   static const pageFrameInset = ${cfg.frame}.0; // ページを inset して表紙色の枠を見せる
   static const closedScale = ${cfg.closedScale};
@@ -1207,6 +1211,8 @@ class _CoverFront extends StatelessWidget {
       artist: artist || null,            // アーティストID（ロゴを表紙中央に配置）
       logoColorMode: logoMode,           // "light"=白ロゴ / "dark"=黒ロゴ
       logoSizeFraction: +(logoSize/100).toFixed(2), // 表紙幅に対するロゴ幅の比率
+      logoAlign: 'center-minus-spine', // 帯を除いた面積の中央
+      logoOffsetY: -4,                 // px, 中央から上方向
       spineHighlightAlphas: {            // 帯の白ハイライト（テープ輝度連動）
         edge: +(.55 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
         sheen: +(.3 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
