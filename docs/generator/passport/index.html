@@ -180,15 +180,16 @@
   .zoom .backdrop{background:rgba(8,8,10,.95);}
 
   /* book final rect = full-bleed page area (Figma: 382x677, below header) */
+  /* 出現/退場は book-scene をチップ(左上のブックアイコン)基点でスケールさせ、
+     チップから湧き出す→定位置へ広がる。ブック自体の開き/ズーム回転は中央基準のまま。 */
   .book-scene{position:absolute;left:4px;right:4px;top:118px;bottom:14px;
-    perspective:1600px;perspective-origin:50% 42%;}
+    perspective:1600px;perspective-origin:50% 42%;
+    transform-origin:26px -30px; /* = チップのブックアイコン中心(screen 30,88) */
+    transition:transform var(--dur-in) cubic-bezier(.22,1,.36,1),opacity var(--dur-in) ease;}
+  .passport:not(.show) .book-scene{transform:scale(.03);opacity:0;} /* チップの中に畳まれた状態 */
   .book{position:absolute;inset:0;transform-style:preserve-3d;
     transform:scale(var(--closed-scale));
     transition:transform var(--dur-open) var(--ease-open);}
-  /* entrance */
-  .passport:not(.show) .book{transform:scale(.18) translateY(-46%);opacity:0;}
-  .book{transition:transform var(--dur-open) var(--ease-open),opacity var(--dur-in) ease;opacity:1;}
-  .show .book{transition-duration:var(--dur-in);}
   .open .book{transform:scale(var(--closed-scale)) rotateY(var(--tilt));
     transition-duration:var(--dur-open);}
   .zoom .book{transform:scale(1) rotateY(0deg);transition-duration:var(--dur-zoom);}
@@ -198,13 +199,12 @@
     transition:opacity var(--dur-zoom) ease,transform var(--dur-open) var(--ease-open);}
   .zoom .book-shadow{opacity:0;}
 
-  /* ---- exit: 出現の逆再生（縮小しながらチップ方向へ、ease-in で加速して消える）---- */
-  .bye .book{transform:scale(.18) translateY(-46%);opacity:0;
+  /* ---- exit: 出現の逆再生（チップの中へ畳まれて消える）---- */
+  .bye .book-scene{transform:scale(.03);opacity:0;
     transition:transform var(--dur-in) cubic-bezier(.55,0,.85,.36),
                opacity calc(var(--dur-in)*.85) cubic-bezier(.6,.05,.9,.4);}
   .bye .backdrop{background:rgba(8,8,10,0);backdrop-filter:blur(0px);
     transition:background var(--dur-in) ease,backdrop-filter var(--dur-in) ease;}
-  .bye .book-shadow{opacity:0;transition:opacity calc(var(--dur-in)*.7) ease;}
 
   /* spine-side corners are nearly square, free-edge corners rounded (Paper) */
   [data-dir="right"] .cover-back,[data-dir="right"] .face{
@@ -628,6 +628,21 @@
   </fieldset>
 
   <fieldset>
+    <legend>閉じたブックを書き出し</legend>
+    <div class="btns" style="margin-bottom:8px">
+      <button class="btn copy" id="exportBookPng">ブックPNG（透過）を保存</button>
+    </div>
+    <div class="row"><label>解像度</label>
+      <select id="bookPngScale">
+        <option value="2">2x</option>
+        <option value="3" selected>3x</option>
+        <option value="4">4x</option>
+      </select>
+    </div>
+    <div class="hint">閉じた状態のブック部分のみを透過PNGで書き出します（背景・端末なし）。現在の表紙色・帯・ロゴ／画像を反映。BWUのブック素材として使用可。</div>
+  </fieldset>
+
+  <fieldset>
     <legend>Flutter エクスポート</legend>
     <div class="btns" style="margin-bottom:8px">
       <button class="btn copy" id="copyDart">Dart をコピー</button>
@@ -659,6 +674,7 @@
 
   // アーティスト（Figma Design_System_V2 521:583）。Light=白ロゴ / Dark=黒ロゴ
   const ARTISTS = [
+    { id:'bwu',       name:'BWU（ロゴ）' },
     { id:'skyhi',     name:'SKY-HI' },
     { id:'befirst',   name:'BE:FIRST' },
     { id:'novelcore', name:'Novel Core' },
@@ -892,6 +908,7 @@
 
   /* ---------- cover image upload ---------- */
   let coverImgNatural = null; // 元画像の実寸（切り抜き前のデータを保持）
+  let coverImgEl = null;      // canvas書き出し用に保持する Image
   // cover フィット基準サイズ × scale を background-size に反映。
   // scale < 1 では元画像のより広い範囲が現れる（切り抜いた結果を縮めない）
   function applyImgSize() {
@@ -910,6 +927,7 @@
       const im = new Image();
       im.onload = () => {
         coverImgNatural = { w: im.naturalWidth, h: im.naturalHeight };
+        coverImgEl = im;
         $('#coverImg').style.backgroundImage = `url(${r.result})`;
         applyImgSize();
         faceFront.classList.add('has-img');
@@ -953,6 +971,98 @@
   });
   const selSwatch = el => document.querySelectorAll('.sw').forEach(x => x.classList.toggle('sel', x === el));
   selSwatch(swBox.children[1]);
+
+  /* ---------- 閉じたブックの PNG 書き出し（透過・端末なし） ---------- */
+  // book-scene と同じ寸法比（382×712）で描画。CSSの表紙/帯/ロゴを canvas で再現。
+  function roundRectPath(ctx, x, y, w, h, r) {
+    // r = [tl, tr, br, bl]
+    const [tl, tr, br, bl] = r;
+    ctx.beginPath();
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + tr, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - bl, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + tl, y, tl);
+    ctx.closePath();
+  }
+  function loadImg(src) {
+    return new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src;
+    });
+  }
+  async function renderClosedBook(scale) {
+    const W = 382, H = 712;              // book-scene 論理サイズ
+    const S = scale;
+    const cv = document.createElement('canvas'); cv.width = W * S; cv.height = H * S;
+    const ctx = cv.getContext('2d'); ctx.scale(S, S);
+    const rad = cfg.radius, rsp = 4, spW = cfg.spine; // 左開き: 背表紙=左端
+    const rTL = rsp, rTR = rad, rBR = rad, rBL = rsp;
+    // 影（下）
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 34; ctx.shadowOffsetY = 20;
+    roundRectPath(ctx, 0, 0, W, H, [rTL, rTR, rBR, rBL]);
+    ctx.fillStyle = cfg.cover; ctx.fill();
+    ctx.restore();
+    // clip to cover
+    roundRectPath(ctx, 0, 0, W, H, [rTL, rTR, rBR, rBL]);
+    ctx.save(); ctx.clip();
+    // ベース表紙色
+    ctx.fillStyle = cfg.cover; ctx.fillRect(0, 0, W, H);
+    // 表紙デザイン: 画像優先、なければアーティストロゴ
+    if (coverImgSet && coverImgEl) {
+      const s0 = Math.max(W / coverImgNatural.w, H / coverImgNatural.h) * coverImgScale;
+      const dw = coverImgNatural.w * s0, dh = coverImgNatural.h * s0;
+      ctx.drawImage(coverImgEl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    } else if (artist) {
+      const logo = await loadImg(`assets/artists/${artist}_${logoMode}.svg`);
+      const lw = W * (logoSize / 100), lh = lw * (logo.naturalHeight / logo.naturalWidth);
+      // 帯を除いた面積の中央から4px上（左開き=左に帯）
+      const cx = spW + (W - spW) / 2, cy = H / 2 - 4;
+      ctx.drawImage(logo, cx - lw / 2, cy - lh / 2, lw, lh);
+    }
+    // クロステープ（帯）: 地色 + エッジ/シーン/折り溝
+    const tape = tapeHex();
+    ctx.fillStyle = tape; ctx.fillRect(0, 0, spW, H);
+    const hf = .2 + .8 * lum(tape);
+    const tg = ctx.createLinearGradient(0, 0, spW * 1.5, 0);
+    tg.addColorStop(0, `rgba(0,0,0,.13)`);
+    tg.addColorStop(spW * .6 / (spW * 1.5), `rgba(255,255,255,${.30 * hf})`);
+    tg.addColorStop((spW - 1) / (spW * 1.5), `rgba(0,0,0,.10)`);
+    tg.addColorStop(spW / (spW * 1.5), `rgba(0,0,0,0)`);
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, spW * 1.5, H);
+    // テープ外端のエッジ線
+    ctx.fillStyle = `rgba(255,255,255,${.55 * hf})`; ctx.fillRect(spW - 2.5, 0, 1.5, H);
+    ctx.fillStyle = `rgba(0,0,0,.16)`; ctx.fillRect(spW, 0, 1, H);
+    // 環境光（上）＋ 落ち影（下）
+    const lg = ctx.createLinearGradient(0, 0, 0, H);
+    lg.addColorStop(0, 'rgba(255,255,255,.10)');
+    lg.addColorStop(.26, 'rgba(255,255,255,0)');
+    lg.addColorStop(.80, 'rgba(0,0,0,0)');
+    lg.addColorStop(1, 'rgba(0,0,0,.14)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    return cv;
+  }
+  $('#exportBookPng').addEventListener('click', async e => {
+    const btn = e.target; const label = btn.textContent;
+    btn.textContent = '書き出し中…';
+    try {
+      const scale = +$('#bookPngScale').value;
+      const cv = await renderClosedBook(scale);
+      const url = cv.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.download = `passport_book_${artist || 'plain'}_${logoMode}.png`;
+      a.href = url; a.click();
+      btn.classList.add('ok'); btn.textContent = '✓ 保存しました';
+    } catch (err) {
+      btn.textContent = '✗ 失敗（consoleを確認）'; console.error(err);
+    }
+    setTimeout(() => { btn.classList.remove('ok'); btn.textContent = label; }, 1500);
+  });
 
   /* ---------- flutter export ---------- */
   function genDart() {

@@ -27,7 +27,7 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
    裏表紙そのものなので、**必ず表紙と同色**にする（`coverColor` を共有）。
    開く途中に見える表紙の裏面は表紙色を約28%暗くした色（`insideCoverColor`）。
 3. **質感（Paper By WeTransfer「sinta」を再現）**:
-   - **アーティストロゴ**（Figma Design_System_V2 `521:583`, 12組）を表紙**中央**に配置。
+   - **アーティストロゴ**（Figma Design_System_V2 `521:583`, 12組 ＋ BWUロゴ `132:1334`）を表紙**中央**に配置。
      `assets/artists/<id>_<light|dark>.svg`。**light=白ロゴ（濃い表紙向き）/ dark=黒ロゴ
      （淡い表紙向き）を手動切替**。サイズは表紙幅比 `logoSizeFraction`（0.20〜0.80）で可変。
      **配置は帯(`spineWidth`)を除いた面積の中央から `logoOffsetY = -4`px（4px上）**。
@@ -85,6 +85,8 @@ index.html のチェックイン画面は上記 Figma 準拠で実装済み
       ease-in（`exitCurve` = Cubic(0.55, 0, 0.85, 0.36)）で加速フェードアウト
       （`exitDuration`）。背景の暗幕・シャドウも同時にフェード
    4. 完全に消えてからオーバーレイを非表示にする
+   - ジェネレーターの「ブックPNG（透過）を保存」で、**閉じた状態のブックのみ**を
+     透過PNG（2〜4x、端末・背景なし）で書き出せる。BWUの閉じたブック素材の書き出しに使用。
 7. **ページ**: オフホワイト（デフォルト #EBEBE8）＋ドットグリッド
    （17px 間隔、ページ色を14%暗くしたドット）。角丸はブック角丸より小さく
    `cornerRadius - pageFrameInset * 0.6`。
