@@ -40,6 +40,22 @@
       font-weight: 700;
       line-height: 1.2;
     }
+    .section {
+      margin-bottom: 40px;
+    }
+    .section:last-of-type {
+      margin-bottom: 0;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
     .cards {
       display: flex;
       flex-direction: column;
@@ -71,16 +87,15 @@
       flex-shrink: 0;
       font-size: 24px;
     }
-    .card-icon.badge { background: linear-gradient(135deg, #7c8cff 0%, #5c4dff 100%); }
     .card-icon.article { background: linear-gradient(135deg, #ff7eb3 0%, #ff4081 100%); }
     .card-icon.video { background: linear-gradient(135deg, #ff9a5c 0%, #ff5e3a 100%); }
-    .card-icon.live { background: linear-gradient(135deg, #ff5e7e 0%, #e0245e 100%); }
     .card-icon.handoff { background: linear-gradient(135deg, #48c7a5 0%, #2f9e87 100%); }
     .card-icon.collection { background: linear-gradient(135deg, #9b8cff 0%, #6c5ce7 100%); }
     .card-icon.splash { background: linear-gradient(135deg, #1F32D9 0%, #1FD738 100%); }
     .card-icon.bookgen { background: linear-gradient(135deg, #812DFF 0%, #FF6739 100%); }
     .card-icon.passportgen { background: linear-gradient(135deg, #16324F 0%, #4A90D9 100%); }
     .card-icon.checkin { background: linear-gradient(135deg, #812DFF 0%, #FF6739 100%); }
+    .card-icon.appicon { background: linear-gradient(135deg, #3a3a3e 0%, #101010 100%); border: 1px solid rgba(255,255,255,0.12); }
     .card-body {
       flex: 1;
       min-width: 0;
@@ -116,148 +131,167 @@
       <h1>BWITHU</h1>
       <h2>Prototypes</h2>
     </div>
-    <div class="cards">
-      <a class="card" href="checkin/">
-        <div class="card-icon checkin">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">チェックイン完了モーション</div>
-          <div class="card-desc">チェックイン可能ボタン → ピンの液体フィル → 完了カード — gradient border・liquid wave・confetti domino</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="splash/">
-        <div class="card-icon splash">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 13c1.5-2 3-2 4.5 0s3 2 4.5 0"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">スプラッシュ+利用規約</div>
-          <div class="card-desc">Splash → 言語設定・利用規約 → ログイン — Lottie logo write-on &amp; animated gradient background</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="splash/handoff.html">
-        <div class="card-icon handoff">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">スプラッシュflutter素材＋指示書</div>
-          <div class="card-desc">BWU logo Lottie &amp; motion color layers — Dart (CustomPainter) + Lottie JSON + implementation guide (ZIP download)</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="splash_logined/">
-        <div class="card-icon splash">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">スプラッシュ（ログイン済み）→ ホーム遷移</div>
-          <div class="card-desc">Splash → BWU 文字が窓になり 0.5s ズームでホームへ — letter-window mask zoom transition</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="splash_logined/handoff.html">
-        <div class="card-icon handoff">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">スプラッシュ（ログイン済み）遷移 実装指示</div>
-          <div class="card-desc">Letter-window mask &amp; zoom — レイヤー構成・タイムライン・くり抜きパス実装（Flutter向け）</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="collection/">
-        <div class="card-icon collection">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><line x1="13" y1="6" x2="21" y2="6"/><line x1="13" y1="9" x2="19" y2="9"/><line x1="13" y1="16" x2="21" y2="16"/><line x1="13" y1="19" x2="19" y2="19"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">記事一覧（New Contents）</div>
-          <div class="card-desc">Article list — icon thumbnails per type (横/縦 video, LIVE, doc), links to each PH2/PH3 destination</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="generator/book/">
-        <div class="card-icon bookgen">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22H20"/><circle cx="11" cy="8" r="1.5"/><path d="m16 12-2.5-2.5L8 15"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">Book画像入れ替えジェネレーター</div>
-          <div class="card-desc">アルバムビューのブック画像を差し替え・クロップしてPNG書き出し — Book 1つ / 6つUI 切り替え</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="generator/passport/">
-        <div class="card-icon passportgen">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12V2z"/><path d="M20 2v20"/><circle cx="13" cy="10" r="3.2"/><path d="M10 16.5h6"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">チェックインパスポート ブック開きアニメ</div>
-          <div class="card-desc">Paper風質感のパスポートが開いてスタンプページへ — 表紙/帯カラー・タイミング調整＋Flutter (Dart/JSON) 書き出し</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="generator/passport/handoff.html">
-        <div class="card-icon handoff">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">チェックインパスポート 実装指示</div>
-          <div class="card-desc">ブック開きアニメの Flutter 向け仕様 — レイヤー構成・シーケンス・モーション/色パラメータ・ページ内UI・アイコンSVG</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="badge.html">
-        <div class="card-icon badge">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">3D Badge Generator</div>
-          <div class="card-desc">Enamel pin badge 3D preview with customizable colors and export</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="article/article.html">
-        <div class="card-icon article">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">記事詳細プロトタイプ</div>
-          <div class="card-desc">Loading animation patterns — Icon, Text, Artist, Skeleton modes</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="video/">
-        <div class="card-icon video">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polygon points="10 8 16 12 10 16 10 8" fill="white" stroke="none"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">縦型動画記事のUI</div>
-          <div class="card-desc">Vertical Vimeo video screen — 9:16 fixed, Lottie action buttons, description &amp; comment bottom sheets</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="live/">
-        <div class="card-icon live">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="white" stroke="none"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a12 12 0 0 0 0 17M20.5 3.5a12 12 0 0 1 0 17"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">ライブ配信のUI</div>
-          <div class="card-desc">Live streaming screen — floating comment overlay (top-fade) &amp; flowing live chat, newest at bottom</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
-      <a class="card" href="handoff.html">
-        <div class="card-icon handoff">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <div class="card-body">
-          <div class="card-title">記事詳細flutter素材＋指示書</div>
-          <div class="card-desc">Loading icon, heart &amp; bookmark animations — Dart + Lottie + docs (ZIP download)</div>
-        </div>
-        <div class="card-arrow">&rsaquo;</div>
-      </a>
+
+    <div class="section">
+      <div class="section-title">アプリアイコン</div>
+      <div class="cards">
+        <a class="card" href="appicon/">
+          <div class="card-icon appicon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M9 12.5c1-1.3 2-1.3 3 0s2 1.3 3 0"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">BwU App Icon（iOS）仕様・素材</div>
+            <div class="card-desc">Apple HIG 準拠の AppIcon 一式 — #101010 背景・配置仕様・全17サイズ + iOS 18 Dark/Tinted・appiconset ZIP</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
     </div>
+
+    <div class="section">
+      <div class="section-title">スプラッシュ</div>
+      <div class="cards">
+        <a class="card" href="splash/">
+          <div class="card-icon splash">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 13c1.5-2 3-2 4.5 0s3 2 4.5 0"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">スプラッシュ+利用規約</div>
+            <div class="card-desc">Splash → 言語設定・利用規約 → ログイン — Lottie logo write-on &amp; animated gradient background</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="splash/handoff.html">
+          <div class="card-icon handoff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">スプラッシュflutter素材＋指示書</div>
+            <div class="card-desc">BWU logo Lottie &amp; motion color layers — Dart (CustomPainter) + Lottie JSON + implementation guide (ZIP download)</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="splash_logined/">
+          <div class="card-icon splash">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">スプラッシュ（ログイン済み）→ ホーム遷移</div>
+            <div class="card-desc">Splash → BWU 文字が窓になり 0.5s ズームでホームへ — letter-window mask zoom transition</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="splash_logined/handoff.html">
+          <div class="card-icon handoff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">スプラッシュ（ログイン済み）遷移 実装指示</div>
+            <div class="card-desc">Letter-window mask &amp; zoom — レイヤー構成・タイムライン・くり抜きパス実装（Flutter向け）</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">チェックイン</div>
+      <div class="cards">
+        <a class="card" href="checkin/">
+          <div class="card-icon checkin">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">チェックイン完了モーション</div>
+            <div class="card-desc">チェックイン可能ボタン → ピンの液体フィル → 完了カード — gradient border・liquid wave・confetti domino</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="generator/passport/">
+          <div class="card-icon passportgen">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12V2z"/><path d="M20 2v20"/><circle cx="13" cy="10" r="3.2"/><path d="M10 16.5h6"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">チェックインパスポート ブック開きアニメ</div>
+            <div class="card-desc">Paper風質感のパスポートが開いてスタンプページへ — 表紙/帯カラー・タイミング調整＋Flutter (Dart/JSON) 書き出し</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="generator/passport/handoff.html">
+          <div class="card-icon handoff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">チェックインパスポート 実装指示</div>
+            <div class="card-desc">ブック開きアニメの Flutter 向け仕様 — レイヤー構成・シーケンス・モーション/色パラメータ・ページ内UI・アイコンSVG</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">記事・コンテンツ</div>
+      <div class="cards">
+        <a class="card" href="collection/">
+          <div class="card-icon collection">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><line x1="13" y1="6" x2="21" y2="6"/><line x1="13" y1="9" x2="19" y2="9"/><line x1="13" y1="16" x2="21" y2="16"/><line x1="13" y1="19" x2="19" y2="19"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">記事一覧（New Contents）</div>
+            <div class="card-desc">Article list — icon thumbnails per type (横/縦 video, LIVE, doc), links to each PH2/PH3 destination</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="article/article.html">
+          <div class="card-icon article">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">記事詳細プロトタイプ</div>
+            <div class="card-desc">Loading animation patterns — Icon, Text, Artist, Skeleton modes</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="handoff.html">
+          <div class="card-icon handoff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">記事詳細flutter素材＋指示書</div>
+            <div class="card-desc">Loading icon, heart &amp; bookmark animations — Dart + Lottie + docs (ZIP download)</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="video/">
+          <div class="card-icon video">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polygon points="10 8 16 12 10 16 10 8" fill="white" stroke="none"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">縦型動画記事のUI</div>
+            <div class="card-desc">Vertical Vimeo video screen — 9:16 fixed, Lottie action buttons, description &amp; comment bottom sheets</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ジェネレーター</div>
+      <div class="cards">
+        <a class="card" href="generator/book/">
+          <div class="card-icon bookgen">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15A2.5 2.5 0 0 0 6.5 22H20"/><circle cx="11" cy="8" r="1.5"/><path d="m16 12-2.5-2.5L8 15"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Book画像入れ替えジェネレーター</div>
+            <div class="card-desc">アルバムビューのブック画像を差し替え・クロップしてPNG書き出し — Book 1つ / 6つUI 切り替え</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
     <div class="footer">BWITHU BMSG</div>
   </div>
 </body>

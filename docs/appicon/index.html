@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BwU App Icon — iOS 仕様・素材</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', 'Hiragino Sans', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .container { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; font-weight: 600;
+      margin-bottom: 32px;
+    }
+    .back:hover { color: rgba(255,255,255,0.7); }
+    .eyebrow {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    h1 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .lead { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.55); max-width: 620px; }
+    h2 {
+      font-size: 20px; font-weight: 700; margin: 64px 0 20px;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    h2 .num { color: rgba(255,255,255,0.25); margin-right: 10px; }
+
+    /* hero */
+    .hero {
+      margin-top: 40px; display: flex; flex-wrap: wrap; gap: 40px; align-items: center;
+      padding: 40px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;
+    }
+    .hero-icon {
+      width: 180px; height: 180px; border-radius: 22.37%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    .hero-meta { flex: 1; min-width: 240px; }
+    .hero-meta dl { display: grid; grid-template-columns: 110px 1fr; gap: 10px 16px; font-size: 13px; }
+    .hero-meta dt { color: rgba(255,255,255,0.4); font-weight: 600; }
+    .hero-meta dd { color: rgba(255,255,255,0.85); }
+    .chip {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      background: rgba(124,140,255,0.15); color: #aab4ff; font-size: 12px; font-weight: 600;
+    }
+
+    /* placement diagram */
+    .diagram-wrap { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+    .diagram { flex-shrink: 0; }
+    .spec-list { flex: 1; min-width: 260px; font-size: 14px; line-height: 1.9; color: rgba(255,255,255,0.7); }
+    .spec-list li { margin-bottom: 12px; list-style: none; padding-left: 20px; position: relative; }
+    .spec-list li::before { content: '—'; position: absolute; left: 0; color: rgba(255,255,255,0.3); }
+    .spec-list b { color: #fff; }
+    code {
+      font-family: 'SF Mono', Menlo, monospace; font-size: 0.9em;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 5px; color: #c7cdff;
+    }
+
+    /* checklist */
+    .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
+    .check {
+      display: flex; gap: 12px; padding: 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+      font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.7);
+    }
+    .check svg { flex-shrink: 0; margin-top: 2px; }
+    .check b { color: #fff; display: block; margin-bottom: 2px; font-size: 14px; }
+
+    /* appearance variants */
+    .variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    .variant {
+      padding: 24px; text-align: center;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+    }
+    .variant img { width: 96px; height: 96px; border-radius: 22.37%; display: block; margin: 0 auto 14px; }
+    .variant.v-dark img { background: linear-gradient(145deg, #3a3a3e 0%, #1c1c1f 100%); }
+    .variant.v-tinted img { background: linear-gradient(145deg, #5a4a8a 0%, #2a2340 100%); }
+    .variant .v-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .variant .v-desc { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+
+    /* size table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 12px; letter-spacing: 0.04em; }
+    td { color: rgba(255,255,255,0.8); }
+    td .thumb { width: 32px; height: 32px; border-radius: 7px; vertical-align: middle; }
+    td a { color: #aab4ff; text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    .table-scroll { overflow-x: auto; }
+
+    /* scale strip */
+    .strip {
+      display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+      padding: 32px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; margin-bottom: 24px;
+    }
+    .strip figure { text-align: center; }
+    .strip img { display: block; border-radius: 22.37%; margin: 0 auto 8px; }
+    .strip figcaption { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+    /* downloads */
+    .dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .dl {
+      display: flex; align-items: center; gap: 14px; padding: 18px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+      text-decoration: none; color: inherit; transition: background 0.2s, border-color 0.2s;
+    }
+    .dl:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+    .dl-icon {
+      width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #48c7a5 0%, #2f9e87 100%);
+    }
+    .dl-name { font-size: 14px; font-weight: 700; }
+    .dl-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .footer { margin-top: 80px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../">&lsaquo; BWITHU Prototypes</a>
+    <div class="eyebrow">Apple / iOS</div>
+    <h1>BwU App Icon 仕様・素材</h1>
+    <p class="lead">Design_System_V2 の BwU ワードマーク（Type=BwU, Color=Dark）をベースに、Apple Human Interface Guidelines に準拠した iOS アプリアイコン一式。背景 <code>#101010</code>、iPhone / iPad / App Store の全サイズと iOS 18 の Dark / Tinted アピアランスを含みます。</p>
+
+    <div class="hero">
+      <img class="hero-icon" src="AppIcon.appiconset/Icon-1024.png" alt="BwU App Icon 1024px">
+      <div class="hero-meta">
+        <dl>
+          <dt>マスター</dt><dd>1024 × 1024 px（PNG / sRGB）</dd>
+          <dt>背景色</dt><dd><code>#101010</code> フルブリード</dd>
+          <dt>ロゴ</dt><dd>BwU ワードマーク（White）</dd>
+          <dt>ソース</dt><dd>Design_System_V2 / node 132-1334</dd>
+          <dt>形式</dt><dd><span class="chip">AppIcon.appiconset</span></dd>
+        </dl>
+      </div>
+    </div>
+
+    <h2><span class="num">01</span>配置仕様（HIG 準拠）</h2>
+    <div class="diagram-wrap">
+      <svg class="diagram" width="300" height="300" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1024" height="1024" rx="0" fill="#101010" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+        <g transform="translate(204.8 419.17) scale(1.2288)" opacity="0.95">
+          <path d="M429.204 0.439453V91.4607C429.204 93.2114 427.81 94.6305 426.09 94.6305H425.89C424.17 94.6305 422.776 93.2114 422.776 91.4607V0.439453H369.371C375.51 5.71017 378.933 14.1323 378.208 23.9181C377.049 39.5091 366.311 59.3019 351.968 78.2654C352.113 118.515 384.203 151.079 423.79 151.079H428.172C467.832 151.079 499.994 118.349 499.994 77.989V0.439453H429.186H429.204Z" fill="white"/>
+          <path d="M107.733 73.5292C127.562 73.5292 143.644 57.1642 143.644 36.9843C143.644 16.8045 127.562 0.439453 107.733 0.439453H0V146.619H107.733C127.562 146.619 143.644 130.254 143.644 110.074C143.644 89.8942 127.562 73.5292 107.733 73.5292ZM82.4339 113.244H50.4708V106.886H82.4339C84.1543 106.886 85.5487 108.305 85.5487 110.056C85.5487 111.806 84.1543 113.225 82.4339 113.225V113.244ZM82.4339 40.1541H50.4708V33.7961H82.4339C84.1543 33.7961 85.5487 35.2151 85.5487 36.9659C85.5487 38.7166 84.1543 40.1357 82.4339 40.1357V40.1541Z" fill="white"/>
+          <path d="M354.856 0.215011C337.435 -1.13031 326.424 10.5353 321.788 31.4523C317.732 48.6651 314.11 80.9159 303.009 106.016C295.24 123.561 273.291 145.952 254.041 144.459C245.783 143.814 242.397 139.815 243.049 131.098C244.262 114.918 270.72 93.8163 280.064 83.9014C293.701 69.9322 313.132 43.4312 314.671 22.9012C315.595 10.4616 307.047 1.35761 295.131 0.43616C280.499 -0.540581 265.269 10.1851 248.21 37.0363C242.976 45.3847 237.561 56.2394 232.726 67.4259C208.858 111.25 189.68 141.677 170.122 140.165C164.925 139.76 161.122 137.272 161.719 129.2C163.784 101.52 232.98 68.0709 235.895 28.8907C237.507 7.42078 216.881 0.528305 203.009 0.0307204C178.615 -0.853875 163.748 17.4646 148.771 42.1596C148.536 44.1315 148.155 46.085 147.667 47.9648C161.973 24.3387 177.112 3.97454 193.719 5.26458C196.779 5.50416 198.21 6.86791 198.011 9.66913C196.634 28.2272 157.427 50.3974 140.35 84.2332C145.837 91.3652 149.097 100.359 149.097 110.089C149.097 119.82 146.073 128.113 140.966 135.116C146.254 140.516 153.769 143.925 162.752 144.625C187.887 146.56 210.343 119.525 236.421 67.5733C229.774 82.3903 220.321 102.146 219.253 116.466C217.75 136.682 226.316 149.546 241.6 150.725C261.321 152.255 289.753 134.581 315.106 110.974L316.518 109.592C346.109 81.69 371.136 46.0113 372.802 23.5462C373.726 11.1066 366.482 1.15489 354.874 0.270298L354.856 0.215011Z" fill="white"/>
+        </g>
+        <!-- guides -->
+        <line x1="204.8" y1="0" x2="204.8" y2="1024" stroke="#8A38F5" stroke-width="3" stroke-dasharray="14 10" opacity="0.7"/>
+        <line x1="819.2" y1="0" x2="819.2" y2="1024" stroke="#8A38F5" stroke-width="3" stroke-dasharray="14 10" opacity="0.7"/>
+        <line x1="0" y1="512" x2="1024" y2="512" stroke="#8A38F5" stroke-width="3" stroke-dasharray="14 10" opacity="0.35"/>
+        <text x="512" y="80" fill="#c7a4ff" font-size="44" font-family="Menlo, monospace" text-anchor="middle">614 px (60%)</text>
+        <line x1="204.8" y1="120" x2="819.2" y2="120" stroke="#c7a4ff" stroke-width="3"/>
+        <text x="100" y="530" fill="rgba(255,255,255,0.45)" font-size="38" font-family="Menlo, monospace" text-anchor="middle">20%</text>
+        <text x="924" y="530" fill="rgba(255,255,255,0.45)" font-size="38" font-family="Menlo, monospace" text-anchor="middle">20%</text>
+      </svg>
+      <ul class="spec-list">
+        <li>キャンバス <b>1024 × 1024 px</b>・角丸なしフルブリード。角丸マスク（スーパー楕円）は <b>システムが自動適用</b>するため素材側では付けない。</li>
+        <li>ワードマーク幅は <b>キャンバスの 60%（614 px）</b>、天地左右<b>中央配置</b>。横長ロゴの推奨バランスで、左右に 20% ずつのクリアスペースを確保。</li>
+        <li>ロゴの縦寸は約 <b>186 px（18%）</b>。ホーム画面の角丸マスクやフォーカス時の切り欠きでも欠けない<b>セーフゾーン内</b>に収まる。</li>
+        <li>背景は指定の <code>#101010</code> 単色。グラデーションや写真を使わないため、<b>60 px（Spotlight 40pt 相当）以下でも視認性が落ちない</b>。</li>
+        <li>すべてのサイズは 1024 マスターからの<b>等比スケール</b>で生成（サイズごとのデザイン差し替えなし）。</li>
+      </ul>
+    </div>
+
+    <h2><span class="num">02</span>ガイドライン準拠チェック</h2>
+    <div class="check-grid">
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>透過なし（App Store 用）</b>1024px マーケティングアイコンはアルファチャンネルなしの不透明 PNG。</div></div>
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>角丸を焼き込まない</b>マスクは iOS が適用。素材は正方形フルブリードで書き出し。</div></div>
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>シンプルで単一のフォーカス</b>ワードマーク 1 要素のみ。小サイズでも判別可能。</div></div>
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>テキスト・UI 要素・写真の不使用</b>スクリーンショットやシステム UI 風の表現なし。</div></div>
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>iOS 18 アピアランス対応</b>Dark / Tinted 用 1024px を同梱（下記 03 参照）。</div></div>
+      <div class="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#48c7a5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><div><b>全デバイススロット網羅</b>iPhone / iPad / App Store の Xcode 必須サイズをすべて同梱、<code>Contents.json</code> 付き。</div></div>
+    </div>
+
+    <h2><span class="num">03</span>アピアランス（Light / Dark / Tinted）</h2>
+    <div class="variants">
+      <div class="variant">
+        <img src="AppIcon.appiconset/Icon-1024.png" alt="Light">
+        <div class="v-name">Light（標準）</div>
+        <div class="v-desc">#101010 背景 + White ロゴ。デフォルト表示。</div>
+      </div>
+      <div class="variant v-dark">
+        <img src="AppIcon.appiconset/Icon-1024-dark.png" alt="Dark">
+        <div class="v-name">Dark</div>
+        <div class="v-desc">背景透過 + White ロゴ。背景はシステムが暗色グラデーションを供給。</div>
+      </div>
+      <div class="variant v-tinted">
+        <img src="AppIcon.appiconset/Icon-1024-tinted.png" alt="Tinted">
+        <div class="v-name">Tinted</div>
+        <div class="v-desc">グレースケール素材。ユーザーのアクセントカラーでシステムが着色。</div>
+      </div>
+    </div>
+
+    <h2><span class="num">04</span>サイズ一覧（iOS 全スロット）</h2>
+    <div class="strip">
+      <figure><img src="AppIcon.appiconset/Icon-1024.png" width="120" height="120" alt=""><figcaption>1024</figcaption></figure>
+      <figure><img src="AppIcon.appiconset/Icon-60@3x.png" width="90" height="90" alt=""><figcaption>180</figcaption></figure>
+      <figure><img src="AppIcon.appiconset/Icon-60@2x.png" width="60" height="60" alt=""><figcaption>120</figcaption></figure>
+      <figure><img src="AppIcon.appiconset/Icon-40@2x.png" width="40" height="40" alt=""><figcaption>80</figcaption></figure>
+      <figure><img src="AppIcon.appiconset/Icon-29@2x.png" width="29" height="29" alt=""><figcaption>58</figcaption></figure>
+      <figure><img src="AppIcon.appiconset/Icon-20@2x.png" width="20" height="20" alt=""><figcaption>40</figcaption></figure>
+    </div>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th></th><th>用途</th><th>デバイス</th><th>ポイント</th><th>倍率</th><th>ピクセル</th><th>ファイル</th></tr></thead>
+      <tbody>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-60@2x.png" alt=""></td><td>ホーム画面</td><td>iPhone</td><td>60pt</td><td>@2x</td><td>120 × 120</td><td><a href="AppIcon.appiconset/Icon-60@2x.png" download>Icon-60@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-60@3x.png" alt=""></td><td>ホーム画面</td><td>iPhone</td><td>60pt</td><td>@3x</td><td>180 × 180</td><td><a href="AppIcon.appiconset/Icon-60@3x.png" download>Icon-60@3x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-76@2x.png" alt=""></td><td>ホーム画面</td><td>iPad</td><td>76pt</td><td>@2x</td><td>152 × 152</td><td><a href="AppIcon.appiconset/Icon-76@2x.png" download>Icon-76@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-83.5@2x.png" alt=""></td><td>ホーム画面</td><td>iPad Pro</td><td>83.5pt</td><td>@2x</td><td>167 × 167</td><td><a href="AppIcon.appiconset/Icon-83.5@2x.png" download>Icon-83.5@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-76.png" alt=""></td><td>ホーム画面</td><td>iPad</td><td>76pt</td><td>@1x</td><td>76 × 76</td><td><a href="AppIcon.appiconset/Icon-76.png" download>Icon-76.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-40@2x.png" alt=""></td><td>Spotlight</td><td>iPhone / iPad</td><td>40pt</td><td>@2x</td><td>80 × 80</td><td><a href="AppIcon.appiconset/Icon-40@2x.png" download>Icon-40@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-40@3x.png" alt=""></td><td>Spotlight</td><td>iPhone</td><td>40pt</td><td>@3x</td><td>120 × 120</td><td><a href="AppIcon.appiconset/Icon-40@3x.png" download>Icon-40@3x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-40.png" alt=""></td><td>Spotlight</td><td>iPad</td><td>40pt</td><td>@1x</td><td>40 × 40</td><td><a href="AppIcon.appiconset/Icon-40.png" download>Icon-40.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-29@2x.png" alt=""></td><td>設定</td><td>iPhone / iPad</td><td>29pt</td><td>@2x</td><td>58 × 58</td><td><a href="AppIcon.appiconset/Icon-29@2x.png" download>Icon-29@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-29@3x.png" alt=""></td><td>設定</td><td>iPhone</td><td>29pt</td><td>@3x</td><td>87 × 87</td><td><a href="AppIcon.appiconset/Icon-29@3x.png" download>Icon-29@3x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-29.png" alt=""></td><td>設定</td><td>iPad</td><td>29pt</td><td>@1x</td><td>29 × 29</td><td><a href="AppIcon.appiconset/Icon-29.png" download>Icon-29.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-20@2x.png" alt=""></td><td>通知</td><td>iPhone / iPad</td><td>20pt</td><td>@2x</td><td>40 × 40</td><td><a href="AppIcon.appiconset/Icon-20@2x.png" download>Icon-20@2x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-20@3x.png" alt=""></td><td>通知</td><td>iPhone</td><td>20pt</td><td>@3x</td><td>60 × 60</td><td><a href="AppIcon.appiconset/Icon-20@3x.png" download>Icon-20@3x.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-20.png" alt=""></td><td>通知</td><td>iPad</td><td>20pt</td><td>@1x</td><td>20 × 20</td><td><a href="AppIcon.appiconset/Icon-20.png" download>Icon-20.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-1024.png" alt=""></td><td>App Store</td><td>—</td><td>1024pt</td><td>@1x</td><td>1024 × 1024</td><td><a href="AppIcon.appiconset/Icon-1024.png" download>Icon-1024.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-1024-dark.png" alt="" style="background:linear-gradient(145deg,#3a3a3e,#1c1c1f)"></td><td>Dark アピアランス</td><td>iOS 18+</td><td>1024pt</td><td>@1x</td><td>1024 × 1024</td><td><a href="AppIcon.appiconset/Icon-1024-dark.png" download>Icon-1024-dark.png</a></td></tr>
+        <tr><td><img class="thumb" src="AppIcon.appiconset/Icon-1024-tinted.png" alt="" style="background:linear-gradient(145deg,#5a4a8a,#2a2340)"></td><td>Tinted アピアランス</td><td>iOS 18+</td><td>1024pt</td><td>@1x</td><td>1024 × 1024</td><td><a href="AppIcon.appiconset/Icon-1024-tinted.png" download>Icon-1024-tinted.png</a></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2><span class="num">05</span>ダウンロード</h2>
+    <div class="dl-grid">
+      <a class="dl" href="AppIcon.appiconset.zip" download>
+        <div class="dl-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div><div class="dl-name">AppIcon.appiconset.zip</div><div class="dl-sub">全17サイズ PNG + Contents.json — Xcode にそのままドロップ</div></div>
+      </a>
+      <a class="dl" href="bwu-appicon-master.svg" download>
+        <div class="dl-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+        <div><div class="dl-name">bwu-appicon-master.svg</div><div class="dl-sub">1024px マスター（ベクター・編集用）</div></div>
+      </a>
+      <a class="dl" href="AppIcon.appiconset/Icon-1024.png" download>
+        <div class="dl-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.5-3.5L9 20"/></svg></div>
+        <div><div class="dl-name">Icon-1024.png</div><div class="dl-sub">App Store 提出用マスター PNG</div></div>
+      </a>
+    </div>
+
+    <div class="footer">BWITHU BMSG — App Icon Spec &amp; Assets</div>
+  </div>
+</body>
+</html>
