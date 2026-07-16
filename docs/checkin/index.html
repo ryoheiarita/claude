@@ -520,7 +520,7 @@
   /* ---------- phase 2 : liquid pin (quick) ---------- */
   const PIN_W = 117, PIN_BOTTOM = 172, LEVEL_TOP = -10, LEVEL_BOTTOM = 176;
   const FILL_MS = 1500, SETTLE_MS = 350;
-  const PIN_GROW = 0.10;             // pin grows to 110% as it fills
+  const PIN_GROW = 0.20;             // pin grows to 120% as it fills
   let rafId = null;
 
   const easeInOut = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
