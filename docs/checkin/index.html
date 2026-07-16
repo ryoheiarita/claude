@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Check-in Motion — BwU</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,6 +40,15 @@
     backdrop-filter:blur(8px);transition:background .2s;
   }
   #replay:hover{background:rgba(255,255,255,.16);}
+
+  /* on a real phone: no bezel, fill the screen */
+  body.mobile #phone{
+    border-radius:0;box-shadow:none;
+  }
+  body.mobile #replay{
+    top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;
+    padding:6px 12px;font-size:12px;
+  }
 
   .screen{position:absolute;inset:0;}
   [hidden]{display:none !important;}
@@ -508,7 +517,11 @@
 
   /* ---------- fit phone to viewport ---------- */
   function fit(){
-    const s = Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
+    const mobile = innerWidth <= 500;
+    document.body.classList.toggle('mobile', mobile);
+    const s = mobile
+      ? Math.min(innerWidth / 390, innerHeight / 844)   // fullscreen, no bezel
+      : Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
     $('#phoneWrap').style.transform = `scale(${s})`;
   }
   addEventListener('resize', fit); fit();
