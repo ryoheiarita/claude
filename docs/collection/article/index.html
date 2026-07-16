@@ -212,6 +212,20 @@
       color: #fff;
     }
 
+    /* ── H2: Section heading (note.com mobile) ── */
+    .article-h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.875rem;
+      letter-spacing: 0.04em;
+      font-feature-settings: "palt" 1;
+      color: #fff;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      width: 100%;
+      margin-top: 16px;    /* 親の gap 16px + 16px = 上余白 32px */
+    }
+
     /* ── H3: Sub heading (note.com mobile) ── */
     .article-h3 {
       font-size: 1.125rem;
@@ -228,10 +242,6 @@
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
-      /* タグ群の下の divider（Figma: pb16 + 1px 白15%） */
-      width: 100%;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.15);
     }
     .badge {
       display: inline-flex;
@@ -558,6 +568,8 @@
       border-radius: 14px 14px 8px 8px;
     }
 
+    /* H2: font 20px */
+    .sk-h2 { width: 65%; height: 20px; }
     /* H3: font 18px */
     .sk-h3 { width: 48%; height: 18px; }
 
@@ -667,6 +679,8 @@
           <div class="skeleton sk-body-line short"></div>
         </div>
         <div class="skeleton sk-image"></div>
+        <!-- Skeleton: H2 -->
+        <div class="skeleton sk-h2"></div>
         <div>
           <div class="skeleton sk-body-line"></div>
           <div class="skeleton sk-body-line"></div>
@@ -718,31 +732,33 @@
         </div>
         <img class="article-image reveal-item" data-reveal="3" src="assets/photo.png" alt="BE:FIRST at SUMMER SONIC 2025">
 
-        <div class="article-body reveal-item" data-reveal="4">
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="4">オーディションから始まった革命</h2>
+        <div class="article-body reveal-item" data-reveal="5">
           <p>BMSGが一躍注目を集めたのは、2021年に放送されたオーディション番組「THE FIRST」だった。参加者がアーティストとしての資質だけでなく、人間性やビジョンも問われるこの番組は、従来のアイドルオーディションとは明確に異なる空気を持っていた。</p>
           <p>審査の過程はすべてドキュメンタリー形式で公開され、SKY-HI自身が涙を流しながら選考する姿も包み隠さず映し出された。視聴者はその透明性に驚き、そして共鳴した。完成されたパッケージを提示するのではなく、悩み抜くプロセスを見せること——それ自体がBMSGのブランドを形成していった。</p>
         </div>
 
         <!-- H3 -->
-        <h3 class="article-h3 reveal-item" data-reveal="5">BE:FIRSTの誕生と世界への視線</h3>
-        <div class="article-body reveal-item" data-reveal="6">
+        <h3 class="article-h3 reveal-item" data-reveal="6">BE:FIRSTの誕生と世界への視線</h3>
+        <div class="article-body reveal-item" data-reveal="7">
           <p>オーディションを経て結成されたBE:FIRSTは、デビュー直後から国際的な視点で活動を展開した。英語と日本語を織り交ぜた楽曲、K-POPに影響を受けながらも独自のサウンドを追求するスタンス、そしてメンバー自身がクリエイティブに関わる姿勢。これらすべてが「グローバルで戦えるアーティスト」を育てるというBMSGの意志の表れだった。</p>
           <p>デビューシングル「Gifted.」はリリース直後からSNSで拡散し、日本国内だけでなく海外のリスナーにも届いた。その後も「Smile Again」「Mainstream」「Be Crazy」と続くリリースは、毎回異なる音楽的挑戦を含んでおり、グループとしての成長軌跡が明確に見える。</p>
         </div>
 
         <!-- Inline image 1 — 独立スケルトン -->
-        <div class="img-block reveal-item" data-reveal="7">
+        <div class="img-block reveal-item" data-reveal="8">
           <div class="img-block-skeleton"></div>
           <img class="img-block-actual" src="assets/photo.png" alt="BE:FIRST live performance">
         </div>
 
         <!-- Highlight — 単体セクション -->
-        <div class="article-body reveal-item" data-reveal="8">
+        <div class="article-body reveal-item" data-reveal="9">
           <p>SKY-HIはインタビューでこう語っている。<span class="highlight-mark">「アーティストが損をしない仕組みを作ることが、日本の音楽産業全体を底上げすることに繋がる」</span>。この言葉は、単なる理想論ではなく、BMSG自身の契約モデルや収益構造に具体的に落とし込まれている。</p>
         </div>
 
         <!-- 記事途中の縦型 Vimeo（標準埋め込み・画像と同じ角丸） -->
-        <div class="vimeo-block reveal-item" data-reveal="9">
+        <div class="vimeo-block reveal-item" data-reveal="10">
           <iframe
             src="https://player.vimeo.com/video/179894977?title=0&byline=0&portrait=0&dnt=1&playsinline=1"
             allow="autoplay; fullscreen; picture-in-picture"
@@ -750,20 +766,22 @@
             title="BE:FIRST vertical video"></iframe>
         </div>
 
-        <div class="article-body reveal-item" data-reveal="10">
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="11">レーベルとしての設計思想</h2>
+        <div class="article-body reveal-item" data-reveal="12">
           <p>BMSGが他のレーベルと一線を画すのは、「アーティストの自律」を経営の中心に置いている点だ。所属アーティストは、楽曲のクリエイティブ方向性について強い発言権を持ち、マーケティング戦略においても積極的に意見を出すことが奨励されている。</p>
           <p>また、SNSでの発信についても、事前承認を必要としない範囲が広く設けられており、アーティスト自身がファンと直接コミュニケーションを取りやすい環境が整っている。こうした設計は、長期的な信頼関係の構築に繋がっており、BMSG所属アーティストのファンエンゲージメントの高さとして表れている。</p>
         </div>
 
         <!-- Inline image 2 — 独立スケルトン -->
-        <div class="img-block reveal-item" data-reveal="11">
+        <div class="img-block reveal-item" data-reveal="13">
           <div class="img-block-skeleton"></div>
           <img class="img-block-actual" src="assets/photo.png" alt="BMSG label scene">
         </div>
 
         <!-- Bullet list — 単体セクション -->
-        <h3 class="article-h3 reveal-item" data-reveal="12">BMSGが掲げる主な取り組み</h3>
-        <ul class="article-list reveal-item" data-reveal="13">
+        <h3 class="article-h3 reveal-item" data-reveal="14">BMSGが掲げる主な取り組み</h3>
+        <ul class="article-list reveal-item" data-reveal="15">
           <li>楽曲制作への参加権限をアーティストに開放</li>
           <li>収益分配の透明化と公平な報酬設計</li>
           <li>グローバル市場を見据えたプロモーション戦略</li>
@@ -771,7 +789,9 @@
           <li>所属アーティスト間のコラボレーションを積極的に促進</li>
         </ul>
 
-        <div class="article-body reveal-item" data-reveal="14">
+        <!-- H2 -->
+        <h2 class="article-h2 reveal-item" data-reveal="16">これからのBMSGと日本の音楽</h2>
+        <div class="article-body reveal-item" data-reveal="17">
           <p>2025年現在、BMSGはBE:FIRSTに続く新たなアーティストの育成にも着手している。第二のグループ、ソロアーティスト、そしてプロデューサーやクリエイターとの協業——その範囲はエンタテインメント全体に広がりつつある。</p>
           <p>日本の音楽業界が長年抱えてきた構造的な問題——アーティストの権利の弱さ、透明性の欠如、グローバル展開の遅れ——に対して、BMSGは実験的でありながら誠実なアプローチで向き合っている。すべてが成功しているわけではないかもしれない。だがその試みの誠実さが、ファンだけでなく業界内外から支持を集め続ける理由になっている。</p>
           <p>「まだ途中だ」とSKY-HIは言う。それは謙虚さではなく、現在進行形の意志の表明だ。BMSGの物語は、まだ序章にある。</p>
