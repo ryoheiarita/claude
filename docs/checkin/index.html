@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check-in Motion — BwU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --jp:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    --ff:'Figtree', var(--jp);
+    --grad-purple:#812DFF;   /* figma brand gradient */
+    --grad-orange:#FF6739;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:#050505;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--ff);-webkit-font-smoothing:antialiased;color:#fff;
+    overflow:hidden;
+  }
+
+  /* ============ phone frame ============ */
+  #phoneWrap{position:relative;}
+  #phone{
+    position:relative;width:390px;height:844px;
+    background:#101010;border-radius:47px;overflow:hidden;
+    box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 40px 90px rgba(0,0,0,.8);
+  }
+
+  /* replay */
+  #replay{
+    position:fixed;top:20px;right:24px;z-index:99;
+    background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+    border:1px solid rgba(255,255,255,.15);border-radius:20px;
+    padding:8px 16px;font-size:13px;font-family:inherit;cursor:pointer;
+    backdrop-filter:blur(8px);transition:background .2s;
+  }
+  #replay:hover{background:rgba(255,255,255,.16);}
+
+  .screen{position:absolute;inset:0;}
+  [hidden]{display:none !important;}
+
+  /* ============ SCREEN A : ui_video top (HANA) ============ */
+  #screenA{z-index:1;background:#101010;}
+
+  /* --- hero --- */
+  #hero{position:absolute;left:0;top:0;width:390px;height:391px;z-index:0;overflow:hidden;}
+  #hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #hero .fade{position:absolute;left:0;right:0;top:181px;bottom:-1px;
+    background:linear-gradient(180deg,rgba(16,16,16,0) 0%,#101010 100%);}
+  #herotext{position:absolute;left:0;top:231px;width:390px;height:160px;z-index:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:16px;}
+  #herotext .hana{font-weight:700;font-size:40px;letter-spacing:-0.8px;line-height:1.05;}
+  #herotext .fc{font-weight:400;font-size:16px;letter-spacing:-0.32px;margin-top:4px;}
+
+  /* --- content cards --- */
+  #content{position:absolute;left:0;top:0;width:390px;z-index:1;}
+  .noti{position:absolute;left:16px;top:391px;width:358px;
+    background:rgba(255,255,255,0.08);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-radius:16px;padding:16px;display:flex;gap:8px;align-items:flex-start;}
+  .noti .bell{width:24px;height:24px;border-radius:12px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(154deg,var(--grad-purple) 0%,var(--grad-orange) 100%);}
+  .noti .bell img{width:12.17px;height:13.5px;display:block;}
+  .noti .body{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;justify-content:center;}
+  .noti .ttl{font-weight:600;font-size:16px;line-height:22px;color:#fff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .noti .sub{font-weight:400;font-size:14px;line-height:20px;color:rgba(255,255,255,0.75);
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+
+  .promo{position:absolute;left:16px;top:485px;width:358px;
+    border:1px solid rgba(255,255,255,0.15);border-radius:16px;overflow:hidden;padding:2px;
+    background:#141414;}
+  .promo .pbg{position:absolute;inset:-20px;background-size:cover;background-position:center;
+    filter:blur(16px);transform:scale(1.15);opacity:0.55;}
+  .promo .pbg-dark{position:absolute;inset:0;background:rgba(0,0,0,0.6);}
+  .promo .photo{position:relative;width:100%;aspect-ratio:354/199;border-radius:14px;overflow:hidden;}
+  .promo .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .promo .pickup{position:absolute;top:8px;left:8px;z-index:2;
+    background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-radius:24px;padding:2px 8px;font-weight:400;font-size:14px;letter-spacing:-0.28px;color:#fff;}
+  .promo .info{position:relative;padding:12px 12px;}
+  .promo .info .t{font-weight:600;font-size:16px;line-height:22px;color:#fff;height:44px;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .promo .info .d{margin-top:4px;font-weight:400;font-size:14px;line-height:20px;color:rgba(255,255,255,0.5);}
+
+  /* --- chrome (status bar + nav buttons + check-in pill) --- */
+  #chrome{position:absolute;left:0;top:0;width:390px;height:112px;z-index:5;
+    background:linear-gradient(180deg,rgba(0,0,0,0.58) 0%,rgba(0,0,0,0) 100%);
+    transition:opacity .3s ease;}
+  #chrome .time{position:absolute;left:54px;top:15px;font-weight:600;font-size:17px;color:#fff;
+    font-feature-settings:"tnum";}
+  #chrome .levels{position:absolute;right:16px;top:19px;display:flex;align-items:center;gap:7px;}
+  #chrome .levels img{display:block;}
+  #chrome .btn{position:absolute;top:64px;width:40px;height:40px;border-radius:42px;
+    background:rgba(0,0,0,0.3);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;}
+  #chrome .btn.left{left:12px;}
+  #chrome .btn.right{right:12px;}
+
+  /* --- チェックイン可能 pill : rotating gradient border (figma colors) --- */
+  @property --a{syntax:'<angle>';initial-value:0deg;inherits:false;}
+  #checkinPill{
+    position:absolute;left:50%;top:64px;height:40px;border-radius:20px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:0 16px;cursor:pointer;border:none;
+    background:transparent;
+    color:#fff;font-family:inherit;font-size:14px;font-weight:600;line-height:20px;
+    opacity:0;transform:translateX(-50%) translateY(-72px);
+  }
+  #checkinPill.in{animation:pillDrop .8s cubic-bezier(.34,1.4,.5,1) forwards;}
+  @keyframes pillDrop{
+    0%{opacity:0;transform:translateX(-50%) translateY(-72px);}
+    60%{opacity:1;}
+    100%{opacity:1;transform:translateX(-50%) translateY(0);}
+  }
+  /* rotating border: figma gradient #812DFF -> #FF6739 */
+  #checkinPill::before{
+    content:'';position:absolute;inset:-1.5px;border-radius:22px;z-index:0;
+    background:conic-gradient(from var(--a),
+      var(--grad-purple),var(--grad-orange),var(--grad-purple));
+    animation:borderSpin 2.8s linear infinite;
+  }
+  @keyframes borderSpin{to{--a:360deg;}}
+  #checkinPill .inner{
+    position:absolute;inset:0;border-radius:20px;background:rgba(0,0,0,.8);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:1;
+  }
+  #checkinPill img,#checkinPill span.lbl{position:relative;z-index:2;}
+  #checkinPill img{width:20px;height:20px;padding:0 1.2px;}
+  #checkinPill:active{transform:translateX(-50%) scale(.96);}
+
+  /* ===== TABBAR — reusable component (bwu/components/tabbar) ===== */
+  :root{
+    --tabbar-bg:        rgba(0,0,0,0.65);
+    --tabbar-border:    rgba(255,255,255,0.15);
+    --tabbar-blur:      16px;
+    --tabbar-radius:    42px;
+    --tab-inactive:     rgba(255,255,255,0.5);
+    --tab-active:       #ffffff;
+    --tab-more-bg:      rgba(255,255,255,0.25);
+    --tab-more-border:  rgba(255,255,255,0.15);
+    --tab-more-blur:    8px;
+  }
+  .tabbar{
+    position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:6;
+    height:64px;padding:7px 20px;border-radius:var(--tabbar-radius);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    transition:opacity .3s ease;
+  }
+  .tabbar::before{
+    content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;
+    background:var(--tabbar-bg);border:1px solid var(--tabbar-border);
+    backdrop-filter:blur(var(--tabbar-blur));-webkit-backdrop-filter:blur(var(--tabbar-blur));
+  }
+  .tabbar__row{position:relative;z-index:1;display:flex;gap:12px;align-items:flex-end;justify-content:center;}
+  .tab-item{
+    width:48px;padding:4px 0 2px;border:0;background:none;cursor:pointer;
+    display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:flex-end;
+    color:var(--tab-inactive);font-family:var(--ff);
+  }
+  .tab-item svg{width:24px;height:24px;display:block;fill:currentColor;}
+  .tab-item__label{
+    font-size:11px;line-height:15px;letter-spacing:0.11px;text-align:center;white-space:nowrap;
+    color:currentColor;text-shadow:0 0 4px rgba(0,0,0,0.25);
+  }
+  .tab-item.active{color:var(--tab-active);}
+  .tab-item.is-center{width:48px;height:75px;gap:2px;padding:0 0 2px;}
+  .tab-item.is-center .tab-item__icon{
+    width:48px;height:48px;border-radius:40px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--tab-more-bg);border:1px solid var(--tab-more-border);
+    backdrop-filter:blur(var(--tab-more-blur));-webkit-backdrop-filter:blur(var(--tab-more-blur));
+  }
+  .tab-item.is-center .ic-hana{width:48px;height:48px;}
+
+  /* ============ fill-phase dim (no blur) ============ */
+  #dimOverlay{
+    position:absolute;inset:0;background:rgba(0,0,0,.72);
+    -webkit-backdrop-filter:blur(32px);backdrop-filter:blur(32px);
+    opacity:0;transition:opacity .35s ease;
+  }
+  #dimOverlay.on{opacity:1;}
+  #screenA.checking #chrome,
+  #screenA.checking .tabbar{opacity:0;pointer-events:none;}
+
+  /* black dip used when switching to the complete screen */
+  #fader{
+    position:absolute;inset:0;z-index:30;background:#000;
+    opacity:0;pointer-events:none;transition:opacity .3s ease;
+  }
+  #fader.on{opacity:1;}
+
+  /* ============ SCREEN B : pin liquid fill ============ */
+  #screenB{z-index:10;pointer-events:none;}
+  #pinWrap{
+    position:absolute;left:50%;top:317px;width:117px;height:169px;
+    transform:translateX(-50%);
+    opacity:0;
+  }
+  #pinWrap.in{animation:pinPop .45s cubic-bezier(.34,1.45,.55,1) forwards;}
+  @keyframes pinPop{
+    0%{opacity:0;transform:translateX(-50%) scale(.45) translateY(24px);}
+    100%{opacity:1;transform:translateX(-50%) scale(1) translateY(0);}
+  }
+  #pinWrap.done{animation:pinDone .4s cubic-bezier(.4,0,.6,1) forwards;}
+  @keyframes pinDone{
+    0%{opacity:1;transform:translateX(-50%) scale(1);}
+    35%{transform:translateX(-50%) scale(1.1);}
+    100%{opacity:0;transform:translateX(-50%) scale(1.26);}
+  }
+  #pinSvg{
+    position:relative;width:117px;height:169px;overflow:visible;display:block;
+    transform-origin:50% 50%;
+  }
+
+  /* ============ SCREEN C : complete ============ */
+  #screenC{z-index:20;background:#101010;opacity:0;}
+  #screenC.in{opacity:1;}
+
+  #confettiBg{
+    position:absolute;inset:0;
+    background:url('assets/confetti_bg.png') center/cover no-repeat;
+  }
+  #screenC.in #confettiBg{animation:confettiFade 3s ease-out forwards;}
+  @keyframes confettiFade{
+    0%{opacity:1;transform:scale(1) translateY(0);}
+    100%{opacity:0;transform:scale(1.12) translateY(-26px);}
+  }
+  #confettiPieces{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+  .cpiece{position:absolute;will-change:transform,opacity;}
+
+  #completeCol{
+    position:absolute;left:48px;top:50%;transform:translateY(-50%);
+    width:295px;display:flex;flex-direction:column;gap:24px;align-items:center;
+  }
+
+  /* domino helpers */
+  .domino{opacity:0;}
+  .domino.in{animation:dominoIn .55s cubic-bezier(.3,1.35,.55,1) forwards;}
+  @keyframes dominoIn{
+    0%{opacity:0;transform:translateY(26px) scale(.92);}
+    100%{opacity:1;transform:translateY(0) scale(1);}
+  }
+  #ticketCard.domino.in{animation:cardIn .65s cubic-bezier(.3,1.3,.5,1) forwards;}
+  @keyframes cardIn{
+    0%{opacity:0;transform:translateY(34px) scale(.72);}
+    100%{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  /* --- ticket card --- */
+  #ticketCard{width:278px;display:flex;flex-direction:column;}
+  .ticketTop{
+    position:relative;width:278px;height:62px;margin-bottom:-1px;
+    border-radius:24px 24px 0 0;overflow:hidden;
+  }
+  .ticketTop .shape{
+    position:absolute;inset:0;width:278px;height:62px;transform:rotate(180deg);
+  }
+  .ticketTop .stripes{
+    position:absolute;inset:0;
+    background:repeating-linear-gradient(131deg,
+      rgba(0,0,0,.05) 0 7px,transparent 7px 30px);
+    -webkit-mask-image:url('assets/ticket_top.svg');
+    mask-image:url('assets/ticket_top.svg');
+    -webkit-mask-size:100% 100%;mask-size:100% 100%;
+    transform:rotate(180deg);
+  }
+  .ticketTop .row{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:230px;height:48px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .ticketTop .row img{width:56px;height:17px;display:block;}
+  .ticketTop .row .date{
+    font-size:16px;line-height:20px;letter-spacing:-.8px;color:#393939;
+  }
+  .ticketBottom{
+    position:relative;width:278px;height:149px;
+    border-radius:0 0 24px 24px;overflow:hidden;
+  }
+  .ticketBottom .shape{position:absolute;inset:0;width:278px;height:149px;}
+  .ticketBottom .info{
+    position:absolute;left:24px;top:20px;width:230px;
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .ticketBottom .evt{font-size:12px;line-height:15px;letter-spacing:-.6px;color:#838383;}
+  .ticketBottom .title{
+    font-size:20px;line-height:1.3;font-weight:700;letter-spacing:-.6px;color:#191919;
+  }
+  .ticketBottom .stamp{
+    position:absolute;right:0;bottom:0;width:126px;height:126px;
+    mix-blend-mode:darken;opacity:.5;object-fit:cover;
+  }
+
+  #completeTexts{display:flex;flex-direction:column;gap:8px;text-align:center;width:100%;}
+  #completeTitle{font-size:22px;line-height:28px;font-weight:700;color:#fff;}
+  #completeSub{font-size:12px;line-height:20px;letter-spacing:-.4px;color:#9F9F9F;}
+
+  #historyBtn{
+    position:absolute;left:16px;bottom:80px;width:358px;
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    padding:14px 24px;border-radius:999px;border:none;cursor:pointer;
+    background:#fff;backdrop-filter:blur(6px);
+    font-family:inherit;font-size:14px;font-weight:600;line-height:20px;color:#000;
+  }
+  #historyBtn:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+
+<button id="replay" type="button">↺ Replay</button>
+
+<div id="phoneWrap">
+  <div id="phone">
+
+    <!-- ============ SCREEN A : ui_video top ============ -->
+    <div id="screenA" class="screen">
+
+      <!-- HERO video + gradient -->
+      <div id="hero">
+        <video id="vid" muted playsinline autoplay loop preload="auto" src="assets/top/hero.mp4"></video>
+        <div class="fade"></div>
+      </div>
+      <div id="herotext">
+        <div class="hana">HANA</div>
+        <div class="fc">HONEYs</div>
+      </div>
+
+      <!-- CONTENT -->
+      <div id="content">
+        <div class="noti">
+          <div class="bell"><img src="assets/top/ic_bell.svg" alt=""></div>
+          <div class="body">
+            <div class="ttl">HANA 初の全国ホールツアー開催決定</div>
+            <div class="sub">HANA Official Fan Club会員先行スタート！</div>
+          </div>
+        </div>
+
+        <div class="promo">
+          <div class="pbg" style="background-image:url('assets/top/btb.png')"></div>
+          <div class="pbg-dark"></div>
+          <div class="photo"><img src="assets/top/btb.png" alt=""></div>
+          <div class="info">
+            <div class="t">《追加公演Fan Club最終先行》『HANA 1st TOUR 2026 &ldquo;Born to Bloom&rdquo;』 追加公演のFan Club会員最終先行受付スタート</div>
+            <div class="d">2026.06.12</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHROME -->
+      <div id="chrome">
+        <div class="time">9:41</div>
+        <div class="levels">
+          <img src="assets/top/cellular.svg" style="width:19.2px;height:12.2px" alt="">
+          <img src="assets/top/wifi.svg" style="width:17.1px;height:12.3px" alt="">
+          <img src="assets/top/battery.svg" style="width:27.3px;height:13px" alt="">
+        </div>
+        <div class="btn left"><img src="assets/top/ic_back.svg" style="width:9px;height:16px" alt=""></div>
+        <div class="btn right"><img src="assets/top/ic_search.svg" style="width:20px;height:20px" alt=""></div>
+
+        <!-- チェックイン可能 pill -->
+        <button id="checkinPill" type="button">
+          <span class="inner"></span>
+          <img src="assets/icon_pin_small.svg" alt="">
+          <span class="lbl">チェックイン可能</span>
+        </button>
+      </div>
+
+      <!-- TABBAR — reusable component (bwu/components/tabbar), Home active, center = More -->
+      <nav class="tabbar" id="tabbar">
+        <div class="tabbar__row">
+          <button class="tab-item active" data-tab="0">
+            <span class="tab-item__icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.121 9.069L15.536 1.483C14.5972 0.546989 13.3257 0.0213736 12 0.0213736C10.6743 0.0213736 9.40276 0.546989 8.464 1.483L0.879 9.069C0.599426 9.34678 0.37777 9.6773 0.226883 10.0414C0.0759953 10.4055 -0.00112232 10.7959 1.60589e-07 11.19V21.007C1.60589e-07 21.8026 0.316071 22.5657 0.87868 23.1283C1.44129 23.6909 2.20435 24.007 3 24.007H21C21.7957 24.007 22.5587 23.6909 23.1213 23.1283C23.6839 22.5657 24 21.8026 24 21.007V11.19C24.0011 10.7959 23.924 10.4055 23.7731 10.0414C23.6222 9.6773 23.4006 9.34678 23.121 9.069ZM15 22.007H9V18.073C9 17.2774 9.31607 16.5143 9.87868 15.9517C10.4413 15.3891 11.2044 15.073 12 15.073C12.7957 15.073 13.5587 15.3891 14.1213 15.9517C14.6839 16.5143 15 17.2774 15 18.073V22.007ZM22 21.007C22 21.2722 21.8946 21.5266 21.7071 21.7141C21.5196 21.9016 21.2652 22.007 21 22.007H17V18.073C17 16.7469 16.4732 15.4751 15.5355 14.5375C14.5979 13.5998 13.3261 13.073 12 13.073C10.6739 13.073 9.40215 13.5998 8.46447 14.5375C7.52679 15.4751 7 16.7469 7 18.073V22.007H3C2.73478 22.007 2.48043 21.9016 2.29289 21.7141C2.10536 21.5266 2 21.2722 2 21.007V11.19C2.00093 10.925 2.10619 10.671 2.293 10.483L9.878 2.9C10.4417 2.33893 11.2047 2.02394 12 2.02394C12.7953 2.02394 13.5583 2.33893 14.122 2.9L21.707 10.486C21.8931 10.6732 21.9983 10.926 22 11.19V21.007Z"/></svg>
+            </span>
+            <span class="tab-item__label">Home</span>
+          </button>
+
+          <button class="tab-item" data-tab="1">
+            <span class="tab-item__icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.499 11.9996C13.499 12.8276 12.827 13.4996 11.999 13.4996C11.171 13.4996 10.499 12.8276 10.499 11.9996C10.499 11.1716 11.171 10.4996 11.999 10.4996C12.827 10.4996 13.499 11.1716 13.499 11.9996ZM16.999 10.4996C16.171 10.4996 15.499 11.1716 15.499 11.9996C15.499 12.8276 16.171 13.4996 16.999 13.4996C17.827 13.4996 18.499 12.8276 18.499 11.9996C18.499 11.1716 17.827 10.4996 16.999 10.4996ZM6.99904 10.4996C6.17104 10.4996 5.49904 11.1716 5.49904 11.9996C5.49904 12.8276 6.17104 13.4996 6.99904 13.4996C7.82704 13.4996 8.49904 12.8276 8.49904 11.9996C8.49904 11.1716 7.82704 10.4996 6.99904 10.4996ZM23.999 12.3396V18.9996C23.999 21.7566 21.756 23.9996 18.999 23.9996H13.082C6.08104 23.9996 0.469035 19.2076 0.029035 12.8536C-0.211965 9.37761 1.05604 5.97561 3.50804 3.52062C5.96004 1.06562 9.36204 -0.206384 12.835 0.0286163C19.095 0.453616 23.999 5.86062 23.999 12.3396ZM21.999 12.3396C21.999 6.90861 17.915 2.37762 12.7 2.02362C12.471 2.00762 12.242 2.00062 12.014 2.00062C9.35804 2.00062 6.80504 3.04862 4.92304 4.93361C2.87904 6.97961 1.82204 9.81661 2.02404 12.7156C2.39704 18.0956 7.04804 22.0006 13.083 22.0006H19C20.654 22.0006 22 20.6546 22 19.0006V12.3406L21.999 12.3396Z"/></svg>
+            </span>
+            <span class="tab-item__label">Poppin'</span>
+          </button>
+
+          <!-- CENTER: More (frosted glass) -->
+          <button class="tab-item is-center is-more" data-tab="2">
+            <span class="tab-item__icon">
+              <svg class="ic-hana" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <g opacity="0.75" fill="#fff">
+                  <path d="M15.5158 28.2887V25.5105C15.5158 25.1996 15.8231 24.7969 15.8231 24.7969C15.8231 24.7969 15.5816 24.8253 15.2925 24.9217V23.8315C15.3718 23.523 15.6814 23.5751 15.6814 23.5751C15.6814 23.5751 15.3718 23.1701 15.2925 22.6517V20.1333C15.2925 18.9535 15.0997 18.8139 15.2074 18.4759L15.7165 17.0238C15.1984 17.6137 13.7324 18.9716 13.2165 19.0783C13.2165 19.0783 13.9762 19.4935 13.9762 20.1333V22.4123C13.6269 22.5859 13.0567 22.7402 12.5022 22.8457C12.3821 22.7878 12.2653 22.6426 12.2653 22.6426C12.2653 22.6426 12.1009 22.8366 11.9376 22.9353C11.6292 22.975 11.3594 22.9909 11.1757 22.9784V22.2422C11.2369 21.3165 11.5544 21.4674 11.5544 21.4674C11.5544 21.4674 11.2675 20.9274 11.1757 20.2615V20.1344C11.1757 18.9546 10.983 18.8151 11.0907 18.477L11.3616 17.81C10.8435 18.3999 9.61561 18.9728 9.09974 19.0805C9.09974 19.0805 9.85938 19.4957 9.85938 20.1355V23.2552C9.43647 23.2098 9.04078 23.194 8.70405 23.2178C8.67684 23.515 8.14962 23.827 7.5011 24.1787C7.5011 24.1787 8.78228 23.5604 9.27207 23.5967C9.46822 23.6114 9.66436 23.6296 9.85938 23.65V24.4838L9.30382 23.9393C9.30382 23.9393 9.64055 24.6528 9.47956 24.8899C9.31856 25.1282 8.80722 25.7861 7.87071 26.2989C8.86504 26.5916 10.7369 28.8049 10.8254 29.262C10.9127 29.7192 10.5918 30.6517 10.5918 30.6517C11.4251 30.2864 11.8582 29.4299 12.0589 28.9342C11.8163 28.2955 11.2528 27.5513 10.7018 26.9512C11.1666 26.6994 11.6519 26.5167 11.9376 26.4566C11.9376 26.4566 11.178 26.0414 11.178 25.4016V23.844C11.9557 23.9971 12.678 24.2161 13.2902 24.5235C13.4342 24.6392 13.4796 24.8344 13.4875 24.9217C13.5873 24.8797 13.6644 24.7515 13.8435 24.848C13.8934 24.8843 13.9376 24.9206 13.9796 24.958V25.9676C13.9796 26.1923 13.636 26.5848 13.636 26.5848C13.7562 26.5621 13.958 26.4725 14.1757 26.3511V28.8083C14.1757 29.211 13.8684 30.3 13.7222 30.4101C14.3072 29.9529 14.6417 29.0204 15.1825 29.203C15.7233 29.3857 16.0158 29.0204 16.0158 29.0204C15.7823 29.0204 15.5181 28.8559 15.5181 28.2887H15.5158ZM9.89226 26.1605C9.70178 25.9971 9.54532 25.8837 9.44894 25.8395C9.44894 25.8395 9.70291 25.4844 9.85824 25.0885V25.4004C9.85824 25.7237 9.87298 25.9676 9.89226 26.1605ZM13.9365 24.4203C13.6338 24.2365 13.187 24.0482 12.6678 23.8758C12.5487 23.7635 12.3129 23.6398 12.2347 23.4413C12.1406 23.5071 11.839 23.5774 11.6156 23.5717C11.4694 23.5354 11.322 23.5014 11.1746 23.4696V23.2938C11.6893 23.262 12.7551 23.0295 13.5102 22.9353C13.6474 22.9671 13.7494 23.0624 13.7494 23.0624C13.7494 23.0624 13.8197 22.9523 13.9195 22.8979C13.9387 22.8979 13.958 22.8956 13.9762 22.8956V24.4452C13.9626 24.4373 13.9501 24.4294 13.9365 24.4214V24.4203Z"/>
+                  <path d="M23.5125 28.028V25.6275C23.6032 25.2713 23.8923 25.336 23.8923 25.336C23.8923 25.336 23.6021 25.0206 23.5125 24.3649V23.1726C23.5125 22.5873 23.4762 22.1255 23.4138 21.7852C23.6667 21.6548 23.932 21.4245 24.1655 21.176C24.1655 21.176 23.8254 21.176 23.6928 21.0093C23.5601 20.8425 21.7064 18.1993 21.7801 17.9406C21.8538 17.682 22.0465 16.9979 22.0465 16.9979C21.8549 17.2384 20.5544 18.5873 20.0601 19.049C19.542 19.6389 18.3141 20.2118 17.7982 20.3195C17.7982 20.3195 18.5578 20.7347 18.5578 21.3746V22.1743C17.9195 22.1029 17.4547 22.1743 17.2971 22.2333C17.2971 22.2333 16.9909 22.4625 16.8821 22.737C16.7959 22.847 16.6928 22.9503 16.4966 23.1624C16.4966 23.1624 17.4138 22.5249 17.9694 22.5181C18.1655 22.5158 18.3628 22.5294 18.559 22.5544V24.7812C18.3617 25.4959 17.9796 25.8034 17.6055 26.0892C17.4637 26.1857 17.3129 26.2844 17.1497 26.3694C17.1497 26.3694 17.5987 26.5237 17.7665 26.644C18.1247 26.9004 19.8356 28.8788 20.1383 29.1919C20.4411 29.505 20.3889 30.2503 20.305 30.7075C21.1406 30.1063 21.1508 28.4171 21.1508 28.4171C21.0125 28.1539 20.3084 27.3451 19.6848 26.6791C20.0397 26.5657 20.39 26.5044 20.6349 26.4534C20.6349 26.4534 19.8753 26.0382 19.8753 25.3984V24.197C20.3776 24.3241 20.9717 24.3808 21.4569 24.416C21.6451 24.4625 21.8061 24.5839 21.8061 24.5839C21.8061 24.5839 21.8311 24.4863 21.9229 24.4466C22.0023 24.4523 22.0737 24.4568 22.1349 24.4625C22.1553 24.4863 22.1769 24.5124 22.1973 24.5373V28.0246C22.1973 29.2044 22.39 29.3439 22.2823 29.682L22.0114 30.349C22.5295 29.7591 23.7574 29.1862 24.2733 29.0785C24.2733 29.0785 23.5136 28.6633 23.5136 28.0234L23.5125 28.028ZM19.873 21.3757C19.873 21.2101 19.8685 21.0671 19.8628 20.9401C19.8628 20.1834 20.2132 19.3836 20.8197 18.8663C20.9411 19.0626 21.8685 20.6111 22.4036 21.378C22.059 21.4914 21.6746 21.6105 21.4354 21.6604C21.4354 21.6604 22.195 22.5328 22.195 23.1726V23.9713C22.1894 23.9656 22.1837 23.9588 22.178 23.9531C22.0907 23.7773 22.1191 23.5742 22.1191 23.5742C22.1191 23.5742 21.8912 23.6105 21.7007 23.5345C21.4694 23.3564 21.1871 23.1647 20.8367 22.9571C20.5057 22.762 20.1826 22.6111 19.8719 22.4942V21.3746L19.873 21.3757ZM20.8628 24.1199C20.7313 24.0348 20.7007 23.8612 20.7007 23.8612C20.7007 23.8612 20.5692 24.0314 20.2789 24.0042C20.1417 23.969 20.0068 23.9282 19.873 23.8816V22.9026C19.9252 22.9231 19.9762 22.9446 20.0261 22.965C20.1758 23.1023 20.2143 23.3473 20.2143 23.3473C20.2143 23.3473 20.449 23.1749 20.6712 23.2849C21.1962 23.581 21.5125 23.7864 21.9036 24.205C21.5805 24.1947 21.2245 24.1732 20.864 24.1199H20.8628Z"/>
+                  <path d="M39.7404 28.028V25.6275C39.8311 25.2713 40.1202 25.336 40.1202 25.336C40.1202 25.336 39.8299 25.0206 39.7404 24.3649V23.1726C39.7404 22.5873 39.7041 22.1255 39.6417 21.7852C39.8946 21.6548 40.1599 21.4245 40.3934 21.176C40.3934 21.176 40.0533 21.176 39.9206 21.0093C39.788 20.8425 37.9342 18.1993 38.0079 17.9406C38.0816 17.682 38.2744 16.9979 38.2744 16.9979C38.0828 17.2384 36.7823 18.5873 36.288 19.049C35.7698 19.6389 34.5419 20.2118 34.0261 20.3195C34.0261 20.3195 34.7857 20.7347 34.7857 21.3746V22.1743C34.1474 22.1029 33.6825 22.1743 33.5249 22.2333C33.5249 22.2333 33.2188 22.4625 33.11 22.737C33.0238 22.847 32.9206 22.9503 32.7245 23.1624C32.7245 23.1624 33.6417 22.5249 34.1973 22.5181C34.3934 22.5158 34.5907 22.5294 34.7868 22.5544V24.7812C34.5896 25.4959 34.2075 25.8034 33.8333 26.0892C33.6916 26.1857 33.5408 26.2844 33.3775 26.3694C33.3775 26.3694 33.8265 26.5237 33.9943 26.644C34.3526 26.9004 36.0635 28.8788 36.3662 29.1919C36.6689 29.505 36.6168 30.2503 36.5329 30.7075C37.3685 30.1063 37.3787 28.4171 37.3787 28.4171C37.2404 28.1539 36.5363 27.3451 35.9127 26.6791C36.2676 26.5657 36.6179 26.5044 36.8628 26.4534C36.8628 26.4534 36.1032 26.0382 36.1032 25.3984V24.197C36.6054 24.3241 37.1995 24.3808 37.6848 24.416C37.873 24.4625 38.034 24.5839 38.034 24.5839C38.034 24.5839 38.059 24.4863 38.1508 24.4466C38.2302 24.4523 38.3016 24.4568 38.3628 24.4625C38.3832 24.4863 38.4048 24.5124 38.4252 24.5373V28.0246C38.4252 29.2044 38.6179 29.3439 38.5102 29.682L38.2392 30.349C38.7574 29.7591 39.9853 29.1862 40.5011 29.0785C40.5011 29.0785 39.7415 28.6633 39.7415 28.0234L39.7404 28.028ZM36.102 21.3757C36.102 21.2101 36.0975 21.0671 36.0918 20.9401C36.0918 20.1834 36.4422 19.3836 37.0488 18.8663C37.1701 19.0626 38.0975 20.6111 38.6327 21.378C38.288 21.4914 37.9036 21.6105 37.6644 21.6604C37.6644 21.6604 38.424 22.5328 38.424 23.1726V23.9713C38.4184 23.9656 38.4127 23.9588 38.407 23.9531C38.3197 23.7773 38.3481 23.5742 38.3481 23.5742C38.3481 23.5742 38.1202 23.6105 37.9297 23.5345C37.6984 23.3564 37.4161 23.1647 37.0658 22.9571C36.7347 22.762 36.4116 22.6111 36.1009 22.4942V21.3746L36.102 21.3757ZM37.0907 24.1199C36.9592 24.0348 36.9286 23.8612 36.9286 23.8612C36.9286 23.8612 36.797 24.0314 36.5068 24.0042C36.3696 23.969 36.2347 23.9282 36.1009 23.8816V22.9026C36.1519 22.9231 36.2041 22.9446 36.254 22.965C36.4036 23.1023 36.4422 23.3473 36.4422 23.3473C36.4422 23.3473 36.6769 23.1749 36.8991 23.2849C37.424 23.581 37.7404 23.7864 38.1315 24.205C37.8084 24.1947 37.4524 24.1732 37.0918 24.1199H37.0907Z"/>
+                  <path d="M31.525 28.3205V26.3897C31.5782 25.9926 31.8481 25.954 31.8481 25.954C31.8481 25.954 31.6077 25.5422 31.525 24.9932V20.1333C31.525 18.9535 31.3322 18.8139 31.4399 18.4759L31.949 17.0238C31.4308 17.6137 29.9649 18.9716 29.449 19.0783C29.449 19.0783 30.2086 19.4935 30.2086 20.1333V25.0181C30.1565 25.0193 30.085 25.0147 30.017 24.992C29.8186 24.3965 29.6236 23.8451 29.4342 23.3403C29.3708 23.0953 29.5045 22.8854 29.5045 22.8854C29.5045 22.8854 29.2925 22.8037 29.1655 22.6415C28.6066 21.2246 28.1191 20.2229 27.7801 19.5887C27.7358 18.8979 27.6225 18.7527 27.712 18.4759L27.983 17.8088C27.4649 18.3987 26.237 18.9716 25.7211 19.0794C25.7211 19.0794 26.4807 19.4946 26.4807 20.1344V21.5672C26.4694 22.1514 26.1304 22.5099 26.1304 22.5099C26.1304 22.5099 26.4059 22.4589 26.4807 22.7572V25.4016C26.4807 25.5785 26.4853 25.7498 26.4921 25.9143C26.1825 25.405 25.9581 24.9875 25.9581 24.8446V24.4339C25.7392 24.983 25.4025 25.5127 25.373 26.1163C25.3435 26.7198 25.5601 27.0181 25.8231 27.4016C26.1803 27.9223 27.3469 29.4685 27.6395 29.9211C27.7846 30.1458 27.932 30.8355 27.9467 31C28.1803 30.2864 27.9172 29.591 28.0204 29.3358C28.1225 29.0794 28.2982 28.6404 28.2982 28.6404C28.2982 28.6404 28.0726 28.3182 27.7608 27.861C28.017 27.549 28.2687 27.2983 28.5556 27.2382C28.5556 27.2382 27.7959 26.0414 27.7959 25.4016V22.992C27.8515 23.0624 27.9082 23.1338 27.9683 23.2064C28.1168 23.439 28.0612 23.8043 28.0612 23.8043C28.0612 23.8043 28.3243 23.7464 28.4649 23.7918C28.8061 24.1832 29.1712 24.587 29.5147 24.9705C29.4909 25.2008 29.4127 25.3891 29.4127 25.3891C29.4127 25.3891 29.6395 25.3641 29.7857 25.5536C29.9479 26.0505 30.093 26.5156 30.2098 26.9081V28.3216C30.2098 29.5014 30.4025 29.6409 30.2948 29.979L30.0238 30.646C30.542 30.0561 31.7698 29.4832 32.2857 29.3755C32.2857 29.3755 31.5261 28.9603 31.5261 28.3205H31.525ZM27.7959 20.5428C27.8095 20.5644 27.8243 20.5859 27.8401 20.6097C27.8866 20.6801 27.9376 20.7663 27.9909 20.8673L27.9807 20.8616C28.1372 21.1667 28.0363 21.6194 28.0363 21.6194C28.0363 21.6194 28.2812 21.6194 28.432 21.8202C28.7234 22.5167 29.0476 23.3914 29.3515 24.266C28.7937 23.6545 28.2075 23.0488 27.7959 22.5791V20.5439V20.5428Z"/>
+                </g>
+              </svg>
+            </span>
+            <span class="tab-item__label">More</span>
+          </button>
+
+          <button class="tab-item" data-tab="3">
+            <span class="tab-item__icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 6H18C18 4.4087 17.3679 2.88258 16.2426 1.75736C15.1174 0.632141 13.5913 0 12 0C10.4087 0 8.88258 0.632141 7.75736 1.75736C6.63214 2.88258 6 4.4087 6 6H3C2.20435 6 1.44129 6.31607 0.87868 6.87868C0.31607 7.44129 0 8.20435 0 9L0 19C0.00158786 20.3256 0.528882 21.5964 1.46622 22.5338C2.40356 23.4711 3.6744 23.9984 5 24H19C20.3256 23.9984 21.5964 23.4711 22.5338 22.5338C23.4711 21.5964 23.9984 20.3256 24 19V9C24 8.20435 23.6839 7.44129 23.1213 6.87868C22.5587 6.31607 21.7956 6 21 6ZM12 2C13.0609 2 14.0783 2.42143 14.8284 3.17157C15.5786 3.92172 16 4.93913 16 6H8C8 4.93913 8.42143 3.92172 9.17157 3.17157C9.92172 2.42143 10.9391 2 12 2ZM22 19C22 19.7956 21.6839 20.5587 21.1213 21.1213C20.5587 21.6839 19.7956 22 19 22H5C4.20435 22 3.44129 21.6839 2.87868 21.1213C2.31607 20.5587 2 19.7956 2 19V9C2 8.73478 2.10536 8.48043 2.29289 8.29289C2.48043 8.10536 2.73478 8 3 8H6V10C6 10.2652 6.10536 10.5196 6.29289 10.7071C6.48043 10.8946 6.73478 11 7 11C7.26522 11 7.51957 10.8946 7.70711 10.7071C7.89464 10.5196 8 10.2652 8 10V8H16V10C16 10.2652 16.1054 10.5196 16.2929 10.7071C16.4804 10.8946 16.7348 11 17 11C17.2652 11 17.5196 10.8946 17.7071 10.7071C17.8946 10.5196 18 10.2652 18 10V8H21C21.2652 8 21.5196 8.10536 21.7071 8.29289C21.8946 8.48043 22 8.73478 22 9V19Z"/></svg>
+            </span>
+            <span class="tab-item__label">Shop</span>
+          </button>
+
+          <button class="tab-item" data-tab="4">
+            <span class="tab-item__icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.383 0 0 5.383 0 12C0 18.617 5.383 24 12 24C18.617 24 24 18.617 24 12C24 5.383 18.617 0 12 0ZM8 21.164V21C8 18.794 9.794 17 12 17C14.206 17 16 18.794 16 21V21.164C14.774 21.701 13.422 22 12 22C10.578 22 9.226 21.701 8 21.164ZM17.925 20.051C17.469 17.192 14.986 15 12 15C9.014 15 6.532 17.192 6.075 20.051C3.605 18.228 2 15.298 2 12C2 6.486 6.486 2 12 2C17.514 2 22 6.486 22 12C22 15.298 20.395 18.228 17.925 20.051ZM12 5C9.794 5 8 6.794 8 9C8 11.206 9.794 13 12 13C14.206 13 16 11.206 16 9C16 6.794 14.206 5 12 5ZM12 11C10.897 11 10 10.103 10 9C10 7.897 10.897 7 12 7C13.103 7 14 7.897 14 9C14 10.103 13.103 11 12 11Z"/></svg>
+            </span>
+            <span class="tab-item__label">Mypage</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ============ SCREEN B : pin ============ -->
+    <div id="screenB" class="screen" hidden>
+      <!-- fill-phase dim (no blur) -->
+      <div id="dimOverlay"></div>
+      <div id="pinWrap">
+        <svg id="pinSvg" viewBox="0 0 117 169" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="pinClip">
+              <path d="M117 56.3494C117 66.0539 114.144 75.049 109.912 83.7081C104.189 95.415 97.3229 106.492 90.5206 117.61C80.7037 133.654 70.8868 149.699 61.0495 165.733C60.4279 166.747 60.0485 168.128 58.4143 168.052C56.9144 167.98 56.5409 166.704 55.9339 165.713C45.9798 149.48 36.0258 133.247 26.0864 117.006C19.5875 106.384 12.9106 95.8565 7.41563 84.6823C3.82039 77.3733 1.00431 69.828 0.260167 61.673C-1.11431 46.5937 2.94492 33.0126 12.7326 21.3257C25.7099 5.83906 42.7202 -1.26766 63.1214 0.185018C90.2842 2.11907 112.077 22.0691 116.385 48.4081C116.814 51.0343 116.992 53.689 117 56.3494Z"/>
+            </clipPath>
+            <linearGradient id="liquidGrad" x1="58.5" y1="0" x2="58.5" y2="168" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#812DFF"/>
+              <stop offset="1" stop-color="#FF6739"/>
+            </linearGradient>
+            <linearGradient id="liquidGradBack" x1="58.5" y1="0" x2="58.5" y2="168" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#812DFF" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#FF6739" stop-opacity=".55"/>
+            </linearGradient>
+            <clipPath id="artClip"><circle cx="58.5" cy="58.5" r="50"/></clipPath>
+          </defs>
+
+          <!-- empty pin base -->
+          <path d="M117 56.3494C117 66.0539 114.144 75.049 109.912 83.7081C104.189 95.415 97.3229 106.492 90.5206 117.61C80.7037 133.654 70.8868 149.699 61.0495 165.733C60.4279 166.747 60.0485 168.128 58.4143 168.052C56.9144 167.98 56.5409 166.704 55.9339 165.713C45.9798 149.48 36.0258 133.247 26.0864 117.006C19.5875 106.384 12.9106 95.8565 7.41563 84.6823C3.82039 77.3733 1.00431 69.828 0.260167 61.673C-1.11431 46.5937 2.94492 33.0126 12.7326 21.3257C25.7099 5.83906 42.7202 -1.26766 63.1214 0.185018C90.2842 2.11907 112.077 22.0691 116.385 48.4081C116.814 51.0343 116.992 53.689 117 56.3494Z" fill="#2F2F2F"/>
+
+          <!-- liquid -->
+          <g clip-path="url(#pinClip)">
+            <path id="waveBack" fill="url(#liquidGradBack)"/>
+            <path id="waveFront" fill="url(#liquidGrad)"/>
+          </g>
+
+          <!-- artwork -->
+          <g clip-path="url(#artClip)">
+            <image href="assets/pin_artwork.png" x="8.5" y="8.5" width="100" height="100"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN C : complete ============ -->
+    <div id="screenC" class="screen" hidden>
+      <div id="confettiBg"></div>
+      <div id="confettiPieces"></div>
+
+      <div id="completeCol">
+        <div id="ticketCard" class="domino">
+          <div class="ticketTop">
+            <img class="shape" src="assets/ticket_top.svg" alt="">
+            <div class="stripes"></div>
+            <div class="row">
+              <img src="assets/ticket_logo.svg" alt="BwU">
+              <div class="date">2026.08.05</div>
+            </div>
+          </div>
+          <div class="ticketBottom">
+            <img class="shape" src="assets/ticket_bottom.svg" alt="">
+            <img class="stamp" src="assets/ticket_stamp.png" alt="">
+            <div class="info">
+              <div class="evt">EVENT</div>
+              <div class="title">B with U Release Party 2026 @Tokyo</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="completeTexts">
+          <div id="completeTitle" class="domino">チェックインが完了しました</div>
+          <div id="completeSub" class="domino">チェックインページで確認しましょう</div>
+        </div>
+      </div>
+
+      <button id="historyBtn" class="domino" type="button">チェックイン履歴へ</button>
+    </div>
+
+    <!-- black dip for screen switch -->
+    <div id="fader"></div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const screenA = $('#screenA'), screenB = $('#screenB'), screenC = $('#screenC');
+  const pill = $('#checkinPill'), pinWrap = $('#pinWrap'), pinSvg = $('#pinSvg');
+  const dim = $('#dimOverlay'), fader = $('#fader');
+  const waveFront = $('#waveFront'), waveBack = $('#waveBack');
+  const confettiPieces = $('#confettiPieces');
+
+  /* ---------- fit phone to viewport ---------- */
+  function fit(){
+    const s = Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
+    $('#phoneWrap').style.transform = `scale(${s})`;
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------- phase 1 : pill entrance ---------- */
+  let started = false;
+  function intro(){ setTimeout(() => pill.classList.add('in'), 450); }
+
+  /* ---------- phase 2 : liquid pin (quick) ---------- */
+  const PIN_W = 117, PIN_BOTTOM = 172, LEVEL_TOP = -10, LEVEL_BOTTOM = 176;
+  const FILL_MS = 1500, SETTLE_MS = 350;
+  const PIN_GROW = 0.10;             // pin grows to 110% as it fills
+  let rafId = null;
+
+  const easeInOut = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+
+  function wavePath(level, phase, amp, lambda){
+    let d = `M0 ${PIN_BOTTOM} L0 ${level.toFixed(2)}`;
+    for (let x = 0; x <= PIN_W; x += 3){
+      const y = level + Math.sin((x / lambda) * Math.PI * 2 + phase) * amp;
+      d += ` L${x} ${y.toFixed(2)}`;
+    }
+    return d + ` L${PIN_W} ${PIN_BOTTOM} Z`;
+  }
+
+  function startFill(){
+    const t0 = performance.now();
+    function frame(now){
+      const el = now - t0;
+      const p = Math.min(el / FILL_MS, 1);
+      const e = easeInOut(p);
+      const level = LEVEL_BOTTOM + (LEVEL_TOP - LEVEL_BOTTOM) * e;
+      const settle = el > FILL_MS ? Math.max(0, 1 - (el - FILL_MS) / SETTLE_MS) : 1;
+      const amp = (3 + 2.6 * Math.sin(p * Math.PI)) * settle;
+      const ph = now / 200;
+      waveFront.setAttribute('d', wavePath(level, ph, amp, 68));
+      waveBack .setAttribute('d', wavePath(level + 2.5, -ph * 1.25 + 1.7, amp * 1.35, 92));
+      pinSvg.style.transform = `scale(${(1 + PIN_GROW * e).toFixed(4)})`;
+
+      if (el < FILL_MS + SETTLE_MS){ rafId = requestAnimationFrame(frame); }
+      else { setTimeout(finishPin, 120); }
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function finishPin(){
+    pinWrap.classList.add('done');
+    fader.style.display = '';
+    setTimeout(() => fader.classList.add('on'), 150);   // dip to black
+    setTimeout(showComplete, 480);                       // swap under black
+  }
+
+  function startCheckin(){
+    if (started) return; started = true;
+    screenA.classList.add('checking');
+    screenB.hidden = false;
+    requestAnimationFrame(() => dim.classList.add('on'));
+    setTimeout(() => {
+      pinWrap.classList.add('in');
+      setTimeout(startFill, 300);
+    }, 150);
+  }
+
+  /* ---------- phase 3 : complete ---------- */
+  function spawnConfetti(){
+    const imgs = ['confetti_p1','confetti_p2','confetti_p3','confetti_p4'];
+    for (let i = 0; i < 26; i++){
+      const el = document.createElement('img');
+      el.className = 'cpiece';
+      el.src = `assets/${imgs[i % imgs.length]}.png`;
+      const size = 14 + Math.random() * 30;
+      el.style.width = size + 'px';
+      el.style.left = (Math.random() * 390 - 15) + 'px';
+      el.style.top = (-60 - Math.random() * 120) + 'px';
+      confettiPieces.appendChild(el);
+      const fall = 400 + Math.random() * 480;
+      const drift = (Math.random() - .5) * 120;
+      const rot0 = Math.random() * 360, rot1 = rot0 + (Math.random() - .5) * 720;
+      el.animate([
+        { transform:`translate(0,0) rotate(${rot0}deg)`, opacity:1 },
+        { transform:`translate(${drift}px,${fall}px) rotate(${rot1}deg)`, opacity:0 }
+      ], {
+        duration: 2100 + Math.random() * 800,
+        delay: Math.random() * 250,
+        easing: 'cubic-bezier(.25,.4,.6,1)',
+        fill: 'forwards'
+      });
+    }
+    setTimeout(() => confettiPieces.replaceChildren(), 3400);
+  }
+
+  function showComplete(){
+    // screens swap while the fader is fully black
+    screenB.hidden = true;
+    dim.classList.remove('on');
+    screenA.classList.remove('checking');
+    // hide the hero video: its composited layer can bleed through the
+    // opaque complete screen (Chromium overlay artifact)
+    const vid = $('#vid');
+    vid.pause(); vid.style.visibility = 'hidden';
+    screenC.hidden = false;
+    screenC.classList.add('in');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      fader.classList.remove('on');   // reveal
+      // drop the fader layer once revealed (avoids stale-layer artifacts)
+      setTimeout(() => { fader.style.display = 'none'; }, 350);
+      spawnConfetti();
+      // domino : card -> title -> sub -> button
+      const steps = [['#ticketCard',150], ['#completeTitle',410], ['#completeSub',550], ['#historyBtn',710]];
+      steps.forEach(([sel, t]) => setTimeout(() => $(sel).classList.add('in'), t));
+    }));
+  }
+
+  /* ---------- wiring ---------- */
+  pill.addEventListener('click', startCheckin);
+  $('#historyBtn').addEventListener('click', reset);
+  $('#replay').addEventListener('click', reset);
+
+  function reset(){
+    if (rafId) cancelAnimationFrame(rafId);
+    started = false;
+    screenA.classList.remove('checking');
+    dim.classList.remove('on');
+    fader.classList.remove('on');
+    fader.style.display = 'none';
+    screenB.hidden = true;
+    screenC.hidden = true;
+    screenC.classList.remove('in');
+    pinWrap.classList.remove('in','done');
+    pinSvg.style.transform = '';
+    waveFront.removeAttribute('d'); waveBack.removeAttribute('d');
+    pill.classList.remove('in');
+    void pill.offsetWidth; // restart entrance animation
+    document.querySelectorAll('.domino').forEach(el => el.classList.remove('in'));
+    confettiPieces.replaceChildren();
+    const vid = $('#vid');
+    vid.style.visibility = '';
+    if (vid.paused) vid.play().catch(() => {});
+    intro();
+  }
+
+  intro();
+})();
+</script>
+</body>
+</html>
