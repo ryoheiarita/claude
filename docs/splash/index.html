@@ -100,19 +100,42 @@
       overflow: hidden;
     }
 
+    /* ════════════ 筐体フレーム（デスクトップのみ / checkin と同一） ════════════ */
+    body {
+      --phone-h: 844px; /* 筐体内での「画面高」。スマホ時は実 100dvh に切替 */
+      background: #050505;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* ベゼル（box-shadow）はラッパー側。.phone の clip-path で切られないようにする */
+    #phoneWrap {
+      position: relative;
+      border-radius: 47px;
+      box-shadow: 0 0 0 10px #1c1c1e, 0 0 0 12px #3a3a3c, 0 40px 90px rgba(0,0,0,.8);
+    }
     .phone {
       position: relative;
-      width: 100%;
-      height: 100dvh;
+      width: 390px;
+      height: 844px;
       background: var(--c-bg);
+      border-radius: 47px;
       overflow: clip;
+      /* backdrop-filter 等の合成レイヤーも確実に角丸へクリップする */
+      clip-path: inset(0 round 47px);
+    }
+    /* 実機スマホ: 筐体なしで全画面 */
+    body.mobile { --phone-h: 100dvh; }
+    body.mobile #phoneWrap { border-radius: 0; box-shadow: none; }
+    body.mobile .phone {
+      width: 100vw; height: 100dvh;
+      border-radius: 0;
+      clip-path: none;
     }
 
     /* ════════════ 背景ブロブアニメーション（全画面共通） ════════════ */
     #bg-wrap {
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 100dvh;
+      height: var(--phone-h);
       transition: height 0.6s var(--ease);
     }
     #bg-wrap svg { display: block; width: 100%; height: 100%; }
@@ -120,7 +143,7 @@
        シートの背面に 64px 潜り込ませ、角丸の切り欠きからも色が見えるようにする。
        下端のフェード（黒グラデーション）はなし */
     .phase-login #bg-wrap {
-      height: calc(max(calc(100dvh - var(--sheet-h, 560px)), 160px) + 64px);
+      height: calc(max(calc(var(--phone-h) - var(--sheet-h, 560px)), 160px) + 64px);
     }
 
     /* ロゴ出現(1.0s完了)の後、カラーレイヤーが 0.3s 間隔でドミノ出現
@@ -159,7 +182,7 @@
     /* ログイン画面: ロゴはシートを除いた残り画面高の縦中央へ移動して縮小
        （--sheet-h は JS がシート実高を計測してセット。
          表示幅 112px = Lottie コンポ比 112/(678/960) ≒ 159px） */
-    .phase-login .logo { top: calc((100dvh - var(--sheet-h, 560px)) / 2); width: 159px; }
+    .phase-login .logo { top: calc((var(--phone-h) - var(--sheet-h, 560px)) / 2); width: 159px; }
     .logo svg { display: block; width: 100%; height: auto; }
     @keyframes logo-in { from { opacity: 0; } to { opacity: 1; } }
 
@@ -303,7 +326,7 @@
       border-radius: 32px 32px 0 0;
       box-shadow: none; /* シート上のシャドウは不要 */
       padding: 32px 24px 64px;
-      max-height: calc(100dvh - 160px); /* 上部モーションエリア min 160px を確保 */
+      max-height: calc(var(--phone-h) - 160px); /* 上部モーションエリア min 160px を確保 */
       overflow-y: auto;
       display: flex; flex-direction: column; gap: 24px;
       opacity: 0;
@@ -362,6 +385,7 @@
   </style>
 </head>
 <body>
+<div id="phoneWrap">
   <div class="phone" id="phone">
 
     <!-- 背景ブロブアニメーション（全画面共通） -->
@@ -510,9 +534,19 @@
     </div>
 
   </div>
+</div>
 
   <script>
     const phone = document.getElementById('phone');
+
+    // ── 筐体フレーム: デスクトップは 390×844 をスケール表示、スマホ(≤500px)は全画面 ──
+    function fit() {
+      const mobile = innerWidth <= 500;
+      document.body.classList.toggle('mobile', mobile);
+      document.getElementById('phoneWrap').style.transform =
+        mobile ? '' : `scale(${Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15)})`;
+    }
+    addEventListener('resize', fit); fit();
 
 
     // ── ロゴ出現: Lottie 書き順アニメーション（0.2s 遅延で再生開始） ──
