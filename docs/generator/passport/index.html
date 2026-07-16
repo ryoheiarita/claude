@@ -57,9 +57,7 @@
 
   /* --- check-in screen (Figma 9044-41658 準拠, ベース: ui_video/checkin) --- */
   .screen{font-family:'Figtree',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;}
-  /* UI初期状態では地図・ピン・チケット（＋1/10ピル）は非表示（2026-07-10 指示） */
-  .screen #map,.screen .pin,.screen #tickets,.screen #pill{display:none;}
-  #map{position:absolute;left:-27px;top:-26px;width:451px;height:898px;object-fit:cover;
+  #map{position:absolute;left:-58px;top:-26px;width:451px;height:898px;object-fit:cover;
     pointer-events:none;}
   #nav-grad{position:absolute;left:0;top:0;width:390px;height:163px;z-index:1;
     background:linear-gradient(180deg,rgba(0,0,0,.65) 50%,rgba(0,0,0,0) 100%);}
@@ -68,11 +66,12 @@
   #tab-grad{position:absolute;left:0;bottom:0;width:390px;height:268px;z-index:3;pointer-events:none;
     background:linear-gradient(180deg,rgba(0,0,0,0) 52.4%,rgba(0,0,0,.6) 100%);}
 
-  .pin{position:absolute;left:171px;top:276px;width:48px;height:48px;z-index:2;}
-  .pin img{position:absolute;left:5.72px;top:0;width:36.56px;height:48px;
+  #pins{position:absolute;inset:0;z-index:2;pointer-events:none;}
+  .pin{position:absolute;width:48px;height:48px;}
+  .pin img{position:absolute;inset:0;width:48px;height:48px;
     filter:drop-shadow(0 6px 7px rgba(0,0,0,.45));}
 
-  #pill{position:absolute;left:168px;top:459px;width:55px;height:28px;z-index:2;
+  #pill{position:absolute;left:171px;top:468px;width:48px;height:28px;z-index:2;
     display:flex;align-items:center;justify-content:center;gap:2px;
     background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     border:1px solid rgba(255,255,255,.14);border-radius:999px;
@@ -121,9 +120,9 @@
   #h-help img{width:24px;height:24px;display:block;}
 
   /* ---- tickets (Figma 9044-41747: 斜めストライプの新デザイン) ---- */
-  #tickets{position:absolute;left:0;top:495px;width:390px;height:222px;z-index:2;
+  #tickets{position:absolute;left:0;top:504px;width:390px;height:210px;z-index:2;
     filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));}
-  .ticket{position:absolute;top:0;width:278px;height:222px;}
+  .ticket{position:absolute;top:0;width:278px;height:210px;}
   .tk-top{position:relative;width:278px;height:62px;}
   .tk-top .tk-shape{position:absolute;inset:0;width:100%;height:100%;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
@@ -134,9 +133,9 @@
       linear-gradient(315deg,rgba(255,255,255,.9),rgba(255,255,255,.8));}
   .tk-top-row{position:absolute;left:24px;top:21.5px;width:230px;height:20px;
     display:flex;align-items:center;justify-content:space-between;}
-  .tk-logo{width:68px;height:17px;display:block;mix-blend-mode:darken;object-fit:cover;}
+  .tk-logo{width:56px;height:17px;display:block;object-fit:contain;object-position:left center;}
   .tk-date{font-size:16px;line-height:20px;color:#393939;letter-spacing:-.8px;text-align:right;}
-  .tk-body{position:relative;width:278px;height:161px;margin-top:-1px;}
+  .tk-body{position:relative;width:278px;height:149px;margin-top:-1px;}
   .tk-body .tk-shape{position:absolute;inset:0;width:100%;height:100%;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     -webkit-mask:url(assets/ticket_body_shape.svg) 0 0/100% 100%;
@@ -145,8 +144,8 @@
   .tk-content{position:absolute;left:24px;top:20px;width:230px;}
   .tk-event{font-size:12px;line-height:15px;color:#838383;letter-spacing:-.6px;margin-bottom:4px;}
   .tk-name{font-size:20px;font-weight:700;color:#191919;line-height:1.3;letter-spacing:-1px;}
-  .tk-stamp{position:absolute;right:1px;top:35px;width:126px;height:126px;opacity:.5;
-    object-fit:cover;pointer-events:none;}
+  .tk-stamp{position:absolute;right:2px;top:12px;width:126px;height:126px;opacity:.92;
+    object-fit:contain;pointer-events:none;}
 
   /* ---- tabbar (Figma component: Tabbar_set) ---- */
   #tabbar{position:absolute;left:0;right:0;bottom:24px;z-index:30;
@@ -429,36 +428,37 @@
 <main class="stage">
   <div class="phone">
     <div class="screen">
-      <!-- check-in screen (Figma 9044-41658) -->
-      <img id="map" src="assets/map.png" alt="">
+      <!-- check-in screen (Figma 7150-30328) -->
+      <img id="map" src="assets/map_new.png" alt="">
       <div id="nav-grad"></div>
       <div id="bottom-rect"></div>
 
-      <div class="pin"><img src="assets/pin_pink.svg" alt=""></div>
-      <div id="pill">1<span class="sl">/</span>10</div>
+      <!-- pins (6: 5 gray + 1 pink active) -->
+      <div id="pins"></div>
+      <div id="pill">1<span class="sl">/</span>6</div>
 
-      <!-- tickets -->
+      <!-- tickets (BℓℓU 統一デザイン) -->
       <div id="tickets">
-        <div class="ticket" style="left:-238px">
+        <div class="ticket" style="left:-239px">
           <div class="tk-top"><div class="tk-shape"></div>
-            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
           <div class="tk-body"><div class="tk-shape"></div>
-            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
-            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
         </div>
         <div class="ticket" style="left:56px">
           <div class="tk-top"><div class="tk-shape"></div>
-            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
           <div class="tk-body"><div class="tk-shape"></div>
-            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
-            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
         </div>
-        <div class="ticket" style="left:350px">
+        <div class="ticket" style="left:351px">
           <div class="tk-top"><div class="tk-shape"></div>
-            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo.png"><span class="tk-date">2025.11.30</span></div></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
           <div class="tk-body"><div class="tk-shape"></div>
-            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">BE:FIRST 2nd Fan Meeting -Hello My ”BESTY” vol.2-【福岡】マリンメッセ福岡</div></div>
-            <img class="tk-stamp" src="assets/ticket_stamp.png"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
         </div>
       </div>
 
@@ -477,10 +477,10 @@
       <!-- header -->
       <button id="h-passport" class="hdr" title="チェックインパスポートを開く">
         <img class="pp-logo" src="assets/logo_passport.svg">
-        <span class="pp-txt"><span class="pp-1">Artist_name</span><span class="pp-2">PASSPORT</span></span>
+        <span class="pp-txt"><span class="pp-1">B with U</span><span class="pp-2">PASSPORT</span></span>
       </button>
       <div id="h-counter" class="hdr">
-        <div class="cnt-row"><span class="cnt-num">1</span><span class="cnt-times">Times!</span></div>
+        <div class="cnt-row"><span class="cnt-num">6</span><span class="cnt-times">Times!</span></div>
         <div class="cnt-sub">Thanks for checking in</div>
       </div>
       <div id="h-help" class="hdr"><img src="assets/help.svg"></div>
@@ -1347,6 +1347,25 @@ class _CoverFront extends StatelessWidget {
   });
   $('#copyDart').addEventListener('click', e => copy(e.target, genDart()));
   $('#copyJson').addEventListener('click', e => copy(e.target, genJson()));
+
+  /* ---------- check-in map pins (Figma 7150-30328: 5 gray + 1 pink) ---------- */
+  const PINS = [
+    {x:81,  y:175, pink:false},
+    {x:271, y:279, pink:false},
+    {x:152, y:328, pink:false},
+    {x:155, y:382, pink:false},
+    {x:125, y:388, pink:false},
+    {x:177, y:280, pink:true},
+  ];
+  const pinsRoot = $('#pins');
+  PINS.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'pin'; d.style.left = p.x + 'px'; d.style.top = p.y + 'px';
+    if (p.pink) d.style.zIndex = 2;
+    const im = document.createElement('img');
+    im.src = 'assets/' + (p.pink ? 'pin_pink.svg' : 'pin_gray.svg');
+    d.appendChild(im); pinsRoot.appendChild(d);
+  });
 
   apply();
 })();
