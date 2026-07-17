@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../../gate.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>会員証 画像入れ替えジェネレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html,body { height:100%; }
+  body {
+    background:#0a0a0c; color:#e8e8ea;
+    font-family:'Figtree','Hiragino Sans','Noto Sans JP',sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* ---------- app chrome ---------- */
+  header {
+    display:flex; align-items:center; gap:20px;
+    padding:12px 20px; border-bottom:1px solid #232328; flex-shrink:0;
+  }
+  header h1 { font-size:14px; font-weight:600; color:#fff; letter-spacing:.02em; }
+  .tabs { display:flex; background:#1a1a1f; border-radius:10px; padding:3px; gap:2px; }
+  .tabs button {
+    border:0; background:transparent; color:#9a9aa2; font:inherit; font-size:12px; font-weight:600;
+    padding:7px 16px; border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .tabs button.active { background:#3d3df5; color:#fff; }
+  .spacer { flex:1; }
+  .export-group { display:flex; align-items:center; gap:8px; }
+  select, input[type="text"], textarea {
+    background:#1a1a1f; border:1px solid #2c2c33; color:#e8e8ea; font:inherit; font-size:12px;
+    border-radius:8px; padding:7px 10px; outline:none;
+  }
+  select:focus, input[type="text"]:focus { border-color:#3d3df5; }
+  .btn {
+    border:0; background:#2a2a31; color:#fff; font:inherit; font-size:12px; font-weight:600;
+    padding:8px 16px; border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .btn:hover { background:#34343c; }
+  .btn.primary { background:#3d3df5; }
+  .btn.primary:hover { background:#5050ff; }
+
+  main { flex:1; display:flex; min-height:0; }
+
+  /* ---------- stage ---------- */
+  #stage {
+    flex:1; display:flex; align-items:flex-start; justify-content:center;
+    overflow:auto; padding:20px; min-width:0;
+  }
+  #phoneScaler { flex-shrink:0; }
+  #phone {
+    width:390px; height:1692px; background:#101010; position:relative;
+    overflow:hidden; border-radius:24px; box-shadow:0 0 0 1px #2a2a30, 0 24px 80px rgba(0,0,0,.6);
+    transform-origin:top left;
+  }
+  #phone, #phone * { user-select:none; -webkit-user-select:none; }
+
+  /* 会員証カード単体モード */
+  body.mode-card #stage { align-items:center; }
+  body.mode-card #phone {
+    width:358px; height:231px; background:transparent;
+    box-shadow:none; border-radius:0; overflow:visible;
+  }
+  body.mode-card #phone > *:not(#card) { display:none; }
+  body.mode-card #card { left:0; top:0; }
+
+  /* ---------- マイページ (Figma: 1812:15159, 390×1692) ---------- */
+  /* 上部背景: Images/16:9 644×362 at (-127,-17), layer blur 64, opacity 50% */
+  #bgTop {
+    position:absolute; left:-127px; top:-17px; width:644px; height:362px;
+    filter:blur(64px); opacity:.5; overflow:hidden; pointer-events:none;
+  }
+  #bgTop img { position:absolute; max-width:none; }
+
+  /* 会員証カード (Figma: 167:338 / 1812:15163, 358×231) */
+  /* ベース: 塗りFFFFFF10% + r24（枠線は ::before のグラデ） */
+  #card {
+    position:absolute; left:16px; top:59px; width:358px; height:231px;
+    background:rgba(255,255,255,.1);
+    border-radius:24px; overflow:hidden;
+  }
+  /* グラデ枠線 (FFFFFF 30% → 10%, 内側1px) */
+  #card::before {
+    content:''; position:absolute; inset:0; border-radius:24px; padding:1px;
+    background:linear-gradient(90deg, rgba(255,255,255,.3), rgba(255,255,255,.1));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    pointer-events:none; z-index:30;
+  }
+  /* カード背景ぼかし: レイヤー自身が角丸クリップを持つ（親のoverflowはblur子に効かないため）
+     画像はカードより大きくcover配置し、blur縁のにじみは角丸の外側でクリップされる */
+  #cardBg {
+    position:absolute; inset:0;
+    border-radius:24px; overflow:hidden; pointer-events:none;
+  }
+  #cardBg img { position:absolute; max-width:none; filter:blur(32px); }
+  /* Frame 71: 黒30%オーバーレイ (Figma: backdrop blur 32 + black 30% を分解) */
+  #cardBlur {
+    position:absolute; inset:0;
+    background:rgba(0,0,0,.3); pointer-events:none;
+  }
+  /* 通常画像: 上6/左6/右6 に乗る 346×195、角丸 上20/下12 */
+  #crop {
+    position:absolute; left:6px; top:6px; width:346px; height:195px;
+    border-radius:20px 20px 12px 12px; overflow:hidden;
+    cursor:grab; touch-action:none;
+  }
+  #crop.dragging { cursor:grabbing; }
+  #crop img { position:absolute; max-width:none; pointer-events:none; }
+  #crop .ph {
+    position:absolute; inset:0; display:flex; flex-direction:column; gap:6px;
+    align-items:center; justify-content:center; color:rgba(255,255,255,.4);
+    font-size:11px; border:1px dashed rgba(255,255,255,.22); border-radius:inherit;
+  }
+  #crop .ph svg { opacity:.6; }
+  #card.selected::after {
+    content:''; position:absolute; inset:0; border:2px solid #3d3df5; border-radius:inherit;
+    pointer-events:none; z-index:20;
+  }
+  .card-label {
+    position:absolute; bottom:8px; font-size:12px; letter-spacing:-.24px;
+    color:rgba(255,255,255,.7); line-height:normal; pointer-events:none; white-space:nowrap;
+  }
+  #txtArtist { left:16px; width:226px; overflow:hidden; text-overflow:ellipsis; }
+  #txtNick { right:16px; width:70px; text-align:right; overflow:hidden; }
+
+  /* 会員証を変更ボタン行 y306 */
+  .chg-row { position:absolute; left:16px; top:306px; width:358px; height:32px;
+    display:flex; align-items:center; justify-content:center; }
+  .chg-btn {
+    display:flex; gap:6px; align-items:center; justify-content:center;
+    height:32px; padding:7px 16px; border:1px solid #fff; border-radius:30px;
+  }
+  .chg-btn img { width:16px; height:16px; display:block; }
+  .chg-btn span { font-size:14px; font-weight:700; line-height:1.32; letter-spacing:-.28px; color:#fff; }
+  .chg-dot { position:absolute; left:236px; top:-4px; width:16px; height:16px; }
+
+  /* プロフィールブロック (16,354) 358×256 */
+  #profile { position:absolute; left:16px; top:354px; width:358px; height:256px;
+    border-radius:16px; overflow:hidden; }
+  .pf-head { position:absolute; left:0; top:0; width:358px; height:144px; background:rgba(255,255,255,.08); }
+  .pf-avatar { position:absolute; left:16px; top:16px; width:56px; height:56px;
+    border-radius:999px; overflow:hidden; }
+  .pf-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+  .pf-name { position:absolute; left:84px; top:32px; height:24px; line-height:24px;
+    font-size:18px; font-weight:700; color:#fff; white-space:nowrap; }
+  .pf-qr { position:absolute; left:286px; top:16px; width:56px; height:56px;
+    background:rgba(255,255,255,.15); border-radius:8px; }
+  .pf-qr img { position:absolute; left:7px; top:7px; width:42px; height:42px; }
+  .pf-idrow { position:absolute; left:16px; top:84px; width:326px; height:44px;
+    border:.5px solid rgba(255,255,255,.15); border-radius:99px;
+    display:flex; align-items:center; justify-content:space-between; padding:8px 8px 8px 16px; }
+  .pf-idrow .idtxt { display:flex; gap:4px; font-size:16px; line-height:24px; white-space:nowrap; }
+  .pf-idrow .idtxt .lb { color:rgba(255,255,255,.5); }
+  .pf-idrow .idtxt .vl { color:#fff; }
+  .pf-copy { background:rgba(255,255,255,.15); border-radius:24px; padding:4px 8px;
+    font-size:14px; line-height:20px; color:#fff; }
+  .pf-divider { position:absolute; left:16px; top:143.5px; width:342px; height:.5px;
+    background:rgba(255,255,255,.15); }
+
+  /* リスト行 */
+  .lrow { position:absolute; width:358px; height:56px; background:rgba(255,255,255,.08); }
+  .lrow .in { position:absolute; left:16px; right:16px; top:0; height:100%;
+    display:flex; gap:12px; align-items:center; }
+  .lrow .in img.ic { width:24px; height:24px; flex-shrink:0; }
+  .lrow .in p { flex:1; font-size:14px; line-height:20px; color:#fff; }
+  .lrow .in img.ch { width:24px; height:24px; flex-shrink:0; }
+  .lrow .dv { position:absolute; left:16px; right:0; bottom:0; height:.5px; background:rgba(255,255,255,.15); }
+  .lgroup { position:absolute; width:358px; border-radius:16px; overflow:hidden; }
+  .lhead { position:absolute; left:16px; width:326px; height:48px;
+    display:flex; align-items:flex-end; padding-bottom:8px;
+    font-size:14px; line-height:20px; color:rgba(255,255,255,.5); }
+
+  /* Navigation Bar */
+  .nav-grad { position:absolute; left:0; top:0; width:390px; height:67px; pointer-events:none; z-index:5;
+    background:linear-gradient(to bottom, rgba(0,0,0,.58), rgba(0,0,0,0)); }
+  .st-time { position:absolute; top:11px; left:16px; width:116px; height:22px; z-index:6;
+    display:flex; align-items:center; justify-content:center; padding-top:2px;
+    font-family:-apple-system,'SF Pro',sans-serif; font-weight:600; font-size:17px; color:#fff; }
+  .st-levels { position:absolute; top:12px; left:257px; width:117px; height:22px; z-index:6;
+    display:flex; align-items:center; justify-content:center; gap:7px; padding-top:1px; }
+
+  /* Tabbar_set (0,1424) 390×268 */
+  .tb-set { position:absolute; left:0; top:1424px; width:390px; height:268px; z-index:8;
+    background:linear-gradient(to bottom, rgba(0,0,0,0) 52.404%, rgba(0,0,0,.6) 100%);
+    pointer-events:none; }
+  .tabbar { position:absolute; left:50%; transform:translateX(-50%); bottom:24px; height:64px;
+    background:rgba(0,0,0,.65); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15); border-radius:42px;
+    display:flex; align-items:flex-end; gap:12px; padding:7px 20px; }
+  .tb-item { position:relative; width:48px; height:48px; flex-shrink:0;
+    display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:flex-end;
+    padding:4px 0 2px; }
+  .tb-item img.ic { width:24px; height:24px; display:block; }
+  .tb-item .lb { font-size:11px; line-height:15px; font-weight:400; color:rgba(255,255,255,.5);
+    letter-spacing:.11px; text-shadow:0 0 4px rgba(0,0,0,.25); white-space:nowrap; }
+  .tb-item .lb.on { color:#fff; }
+  .tb-item .dot { position:absolute; left:28px; top:5px; width:12px; height:12px; }
+  .tb-center { position:relative; width:48px; height:75px; flex-shrink:0;
+    display:flex; flex-direction:column; gap:2px; align-items:center; justify-content:flex-end;
+    padding-bottom:2px; }
+  .tb-center .circ { width:48px; height:48px; border-radius:40px;
+    background:rgba(255,255,255,.25); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.15);
+    display:flex; align-items:center; justify-content:center; }
+  .tb-center .circ img { width:24px; height:24px; }
+  .tb-glow { position:absolute; left:-20px; top:-20px; width:64px; height:64px; max-width:none; }
+
+  /* ---------- panel ---------- */
+  aside {
+    width:280px; flex-shrink:0; border-left:1px solid #232328; padding:18px 18px 24px;
+    overflow-y:auto; display:flex; flex-direction:column; gap:18px;
+  }
+  .sec { display:flex; flex-direction:column; gap:8px; }
+  .sec label { font-size:11px; font-weight:600; color:#8a8a92; letter-spacing:.06em; text-transform:uppercase; }
+  .hint { font-size:11px; color:#6e6e76; line-height:1.6; }
+  input[type=range] { width:100%; accent-color:#3d3df5; }
+  .row2 { display:flex; gap:8px; align-items:center; }
+  .row2 .btn { flex-shrink:0; }
+  .zoomval { font-size:11px; color:#9a9aa2; width:38px; text-align:right; }
+  aside select, aside input[type=text] { width:100%; }
+  .posin { width:70px; padding:6px 8px; }
+  .poslb { font-size:11px; color:#8a8a92; }
+  input[type=checkbox] { accent-color:#3d3df5; width:16px; height:16px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>会員証ジェネレーター</h1>
+  <div class="tabs">
+    <button id="tabMypage" class="active">マイページ</button>
+    <button id="tabCard">会員証カード</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="export-group">
+    <select id="exTarget">
+      <option value="crop" selected>クロップ画像</option>
+      <option value="card">会員証カード</option>
+    </select>
+    <select id="exScale">
+      <option value="1">×1</option>
+      <option value="2">×2</option>
+      <option value="3" selected>×3</option>
+    </select>
+    <button class="btn primary" id="exportBtn">PNG 書き出し</button>
+  </div>
+</header>
+<main>
+  <div id="stage"><div id="phoneScaler"><div id="phone"></div></div></div>
+  <aside>
+    <div class="sec">
+      <label>画像</label>
+      <button class="btn" id="pickBtn">画像を選択…</button>
+      <div class="hint">会員証に画像ファイルをドロップしても差し替えられます。同じ画像が会員証フレーム・カード背景（ブラー）・ページ上部背景（ブラー）に反映されます。</div>
+    </div>
+    <div class="sec">
+      <label>クロップ</label>
+      <div class="row2" style="justify-content:space-between">
+        <span style="font-size:12px">自由配置（余白を許可）</span>
+        <input type="checkbox" id="freeChk">
+      </div>
+      <div class="row2">
+        <input type="range" id="zoomSlider" min="1" max="4" step="0.01" value="1">
+        <span class="zoomval" id="zoomVal">100%</span>
+      </div>
+      <div class="row2">
+        <span class="poslb">X</span><input type="number" id="posX" step="1" class="posin">
+        <span class="poslb">Y</span><input type="number" id="posY" step="1" class="posin">
+        <span class="poslb">px</span>
+      </div>
+      <label style="margin-top:6px">切り落とし（上下左右 %）</label>
+      <div class="row2">
+        <span class="poslb">上</span><input type="number" id="trimT" min="0" max="90" step="1" value="0" class="posin">
+        <span class="poslb">下</span><input type="number" id="trimB" min="0" max="90" step="1" value="0" class="posin">
+      </div>
+      <div class="row2">
+        <span class="poslb">左</span><input type="number" id="trimL" min="0" max="90" step="1" value="0" class="posin">
+        <span class="poslb">右</span><input type="number" id="trimR" min="0" max="90" step="1" value="0" class="posin">
+      </div>
+      <button class="btn" id="resetBtn">位置をリセット</button>
+      <div class="hint">カード上をドラッグで位置調整、マウスホイールでズーム。通常は余白が出ない範囲に制限されます。</div>
+    </div>
+    <div class="sec">
+      <label>テキスト</label>
+      <span class="poslb">Artist・FCname（カード左下）</span>
+      <input type="text" id="inArtist" value="Artist・FCname">
+      <span class="poslb">Nickname（カード右下）</span>
+      <input type="text" id="inNick" value="Nickname">
+      <span class="poslb">プロフィール名</span>
+      <input type="text" id="inProf" value="Nickname">
+      <span class="poslb">ID</span>
+      <input type="text" id="inId" value="123456789">
+    </div>
+    <div class="sec">
+      <label>表示</label>
+      <div class="row2">
+        <input type="range" id="viewZoom" min="0.3" max="2.5" step="0.05" value="0">
+        <span class="zoomval" id="viewZoomVal">fit</span>
+      </div>
+      <div class="hint">プレビューの表示倍率（クロップ操作しやすいサイズに調整できます）。</div>
+    </div>
+  </aside>
+</main>
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<script>
+'use strict';
+/* ================= layout constants (Figma: マイページ/表 1812:15159, 390×1692) ================= */
+const W = 390, H = 1692;
+const FW = 346, FH = 195;                 // 会員証メイン画像フレーム
+const CARD = { x: 16, y: 59, w: 358, h: 231, r: 24 };
+const CARD_BG = { x: -60, y: -60, w: 478, h: 351 };  // カード背景ぼかし（カード全面を余白込みでcover）
+const TOP_BG = { x: -127, y: -17, w: 644, h: 362, blur: 64, alpha: .5 };
+const CARD_BLUR = 32;                     // Design System V2 (167:329) の background blur
+const RADII_IMG = [20, 20, 12, 12];       // 画像フレーム角丸: 上20 / 下12
+
+/* ================= state ================= */
+const state = {
+  img: null, zoom: 1, ox: 0, oy: 0, free: false,
+  trim: { t: 0, r: 0, b: 0, l: 0 },
+  artist: 'Artist・FCname', nick: 'Nickname', prof: 'Nickname', id: '123456789',
+};
+
+/* ================= assets ================= */
+const ASSET_SRC = {
+  cardsBlank: 'assets/cards_blank.svg', ellipse78: 'assets/ellipse78.svg',
+  avatar: 'assets/avatar.png', qr: 'assets/qr.svg',
+  icUser: 'assets/ic_user.svg', icPayment: 'assets/ic_payment.svg',
+  icHeart: 'assets/ic_heart.svg', icBookmark: 'assets/ic_bookmark.svg', icPremium: 'assets/ic_premium.svg',
+  icShopbag: 'assets/ic_shopbag.svg', icUsers: 'assets/ic_users.svg', icBook: 'assets/ic_book.svg',
+  icTranslation: 'assets/ic_translation.svg', icBell: 'assets/ic_bell.svg',
+  icFiledoc: 'assets/ic_filedoc.svg', icShield: 'assets/ic_shield.svg',
+  icHelp: 'assets/ic_help.svg', icUserclose: 'assets/ic_userclose.svg',
+  chevron: 'assets/ic_chevron.svg',
+  cellular: 'assets/cellular.svg', wifi: 'assets/wifi.svg', battery: 'assets/battery.svg',
+  tbHome: 'assets/tb_home.svg', tbTalk: 'assets/tb_talk.svg', tbDot: 'assets/tb_dot.svg',
+  tbMore: 'assets/tb_more.svg', tbShop: 'assets/tb_shop.svg', tbMypage: 'assets/tb_mypage.svg',
+};
+const A = {}; // name -> {img, url}
+
+function loadAsset(name, src) {
+  return fetch(src).then(r => {
+    if (src.endsWith('.svg')) {
+      return r.text().then(txt => {
+        // SVGs from Figma use width="100%" — give them intrinsic size so canvas drawImage works
+        const vb = txt.match(/viewBox="([\d.\s-]+)"/);
+        if (vb) {
+          const [, , vw, vh] = vb[1].trim().split(/\s+/).map(Number);
+          txt = txt.replace(/width="100%"/, `width="${vw}"`).replace(/height="100%"/, `height="${vh}"`);
+        }
+        const url = URL.createObjectURL(new Blob([txt], { type: 'image/svg+xml' }));
+        return loadImg(url).then(img => { A[name] = { img, url }; });
+      });
+    }
+    return r.blob().then(b => {
+      const url = URL.createObjectURL(b);
+      return loadImg(url).then(img => { A[name] = { img, url }; });
+    });
+  });
+}
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = rej;
+    im.src = url;
+  });
+}
+
+/* ================= crop math (book generator と同じ) ================= */
+function minZoom() { return state.free ? 0.2 : 1; }
+function srcRect() { // trim (%) 適用後の元画像領域
+  const s = state, iw = s.img.naturalWidth, ih = s.img.naturalHeight, t = s.trim;
+  return {
+    sx: iw * t.l / 100, sy: ih * t.t / 100,
+    sw: iw * (100 - t.l - t.r) / 100, sh: ih * (100 - t.t - t.b) / 100,
+  };
+}
+function cropRect() { // メイン画像フレーム(346×195)内での配置
+  const s = state;
+  const { sw, sh } = srcRect();
+  const base = Math.max(FW / sw, FH / sh);
+  const sc = base * s.zoom;
+  const dw = sw * sc, dh = sh * sc;
+  let x = (FW - dw) / 2 + s.ox, y = (FH - dh) / 2 + s.oy;
+  if (!s.free) {
+    x = Math.min(0, Math.max(FW - dw, x));
+    y = Math.min(0, Math.max(FH - dh, y));
+  }
+  return { dw, dh, x, y, sc };
+}
+function setPanPx(nx, ny) {
+  const s = state;
+  const { dw, dh } = cropRect();
+  s.ox = nx - (FW - dw) / 2;
+  s.oy = ny - (FH - dh) / 2;
+  if (!s.free) {
+    const r = cropRect();
+    s.ox = r.x - (FW - dw) / 2;
+    s.oy = r.y - (FH - dh) / 2;
+  }
+}
+/* crop枠に見えている範囲を元画像座標で返す（背景レイヤーはこの範囲をcover配置する） */
+function visibleRect() {
+  const { sc, x, y } = cropRect();
+  const { sx, sy, sw, sh } = srcRect();
+  // frame(0,0,FW,FH) を画像座標へ逆変換し、trim領域内にクランプ
+  let vx = sx - x / sc, vy = sy - y / sc, vw = FW / sc, vh = FH / sc;
+  const x2 = Math.min(sx + sw, vx + vw), y2 = Math.min(sy + sh, vy + vh);
+  vx = Math.max(sx, vx); vy = Math.max(sy, vy);
+  return { vx, vy, vw: Math.max(1, x2 - vx), vh: Math.max(1, y2 - vy) };
+}
+/* 可視範囲を (fw×fh) に cover 配置したときの img 描画パラメータ */
+function coverOf(fw, fh) {
+  const { vx, vy, vw, vh } = visibleRect();
+  const sc = Math.max(fw / vw, fh / vh);
+  return {
+    sc,
+    left: (fw - vw * sc) / 2 - vx * sc,
+    top: (fh - vh * sc) / 2 - vy * sc,
+  };
+}
+
+/* ================= DOM build ================= */
+const phone = document.getElementById('phone');
+
+const LISTS = [
+  // プロフィールブロック直下の2行（y = 354+144, +200）
+  { group: { y: 498, flat: true }, rows: [
+    { ic: 'icUser', label: 'プロフィール画像・ニックネーム' },
+    { ic: 'icPayment', label: '支払い方法・変更確認', last: true },
+  ]},
+  { head: 'コンテンツ', y: 610, rows: [
+    { ic: 'icHeart', label: 'いいね履歴' },
+    { ic: 'icBookmark', label: 'ブックマーク' },
+    { ic: 'icPremium', label: '購入済みのPremium', last: true },
+  ]},
+  { head: 'BMSG SHOP', y: 826, rows: [
+    { ic: 'icShopbag', label: 'TOP' },
+    { ic: 'icUsers', label: 'ファンクラブ限定ページ' },
+    { ic: 'icBook', label: 'フォトブック（※13ヶ月継続特典）', last: true },
+  ]},
+  { head: '設定', y: 1042, rows: [
+    { ic: 'icTranslation', label: '言語設定（Language）' },
+    { ic: 'icBell', label: '通知設定', last: true },
+  ]},
+  { head: 'その他', y: 1202, rows: [
+    { ic: 'icFiledoc', label: '利用規約' },
+    { ic: 'icShield', label: 'プライバシーポリシー' },
+    { ic: 'icHelp', label: 'お問い合わせ' },
+    { ic: 'icUserclose', label: 'アカウント削除はこちら', last: true },
+  ]},
+];
+
+function rowHTML(r) {
+  return `<div class="in">
+    <img class="ic" src="${A[r.ic].url}" alt="">
+    <p>${r.label}</p>
+    <img class="ch" src="${A.chevron.url}" alt="">
+  </div>${r.last ? '' : '<div class="dv"></div>'}`;
+}
+
+function render() {
+  let listsHTML = '';
+  for (const sec of LISTS) {
+    if (sec.head) {
+      listsHTML += `<div class="lhead" style="top:${sec.y}px;left:32px;">${sec.head}</div>`;
+      const gy = sec.y + 48;
+      listsHTML += `<div class="lgroup" style="left:16px;top:${gy}px;height:${sec.rows.length * 56}px;">` +
+        sec.rows.map((r, i) => `<div class="lrow" style="position:absolute;left:0;top:${i * 56}px;">${rowHTML(r)}</div>`).join('') +
+        `</div>`;
+    } else {
+      // プロフィールブロックに続く行は profile 内に描く（下で構築）
+    }
+  }
+
+  phone.innerHTML = `
+    <div id="bgTop"><img id="bgTopImg" alt=""></div>
+
+    <div id="card">
+      <div id="cardBg"><img id="cardBgImg" alt=""></div>
+      <div id="cardBlur"></div>
+      <div id="crop">
+        <img id="cropImg" alt="">
+        <div class="ph" hidden>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span>画像を選択</span>
+        </div>
+      </div>
+      <div class="card-label" id="txtArtist"></div>
+      <div class="card-label" id="txtNick"></div>
+    </div>
+
+    <div class="chg-row">
+      <div class="chg-btn">
+        <img src="${A.cardsBlank.url}" alt=""><span>会員証を変更</span>
+      </div>
+      <img class="chg-dot" src="${A.ellipse78.url}" alt="">
+    </div>
+
+    <div id="profile">
+      <div class="pf-head"></div>
+      <div class="pf-avatar"><img src="${A.avatar.url}" alt=""></div>
+      <div class="pf-name" id="txtProf"></div>
+      <div class="pf-qr"><img src="${A.qr.url}" alt=""></div>
+      <div class="pf-idrow">
+        <div class="idtxt"><span class="lb">ID</span><span class="vl" id="txtId"></span></div>
+        <div class="pf-copy">コピー</div>
+      </div>
+      <div class="pf-divider"></div>
+      <div class="lrow" style="left:0;top:144px;">${rowHTML(LISTS[0].rows[0])}</div>
+      <div class="lrow" style="left:0;top:200px;">${rowHTML(LISTS[0].rows[1])}</div>
+    </div>
+
+    ${listsHTML}
+
+    <div class="nav-grad"></div>
+    <div class="st-time">9:18</div>
+    <div class="st-levels">
+      <img src="${A.cellular.url}" style="width:19.2px;height:12.2px" alt="">
+      <img src="${A.wifi.url}" style="width:17.1px;height:12.3px" alt="">
+      <img src="${A.battery.url}" style="width:27.3px;height:13px" alt="">
+    </div>
+
+    <div class="tb-set">
+      <div class="tabbar">
+        <div class="tb-item"><img class="ic" src="${A.tbHome.url}" alt=""><div class="lb">Home</div></div>
+        <div class="tb-item"><img class="ic" src="${A.tbTalk.url}" alt=""><img class="dot" src="${A.tbDot.url}" alt=""><div class="lb">Poppin’</div></div>
+        <div class="tb-center">
+          <div class="circ"><img src="${A.tbMore.url}" alt=""></div>
+          <div class="lb" style="font-size:11px;line-height:15px;color:rgba(255,255,255,.5);letter-spacing:.11px;text-shadow:0 0 4px rgba(0,0,0,.25)">More</div>
+        </div>
+        <div class="tb-item"><img class="ic" src="${A.tbShop.url}" alt=""><div class="lb">Shop</div></div>
+        <div class="tb-item" style="overflow:visible">
+          <div style="position:relative;width:24px;height:24px;flex-shrink:0"><img class="tb-glow" src="${A.tbMypage.url}" alt=""></div>
+          <div class="lb on">Mypage</div>
+        </div>
+      </div>
+    </div>`;
+
+  bindCard();
+  updateImages();
+  updateTexts();
+}
+
+const $ = id => document.getElementById(id);
+
+function updateImages() {
+  const s = state;
+  const crop = $('crop'), cropImg = $('cropImg'), ph = crop.querySelector('.ph');
+  if (s.img) {
+    const { x, y, sc } = cropRect();
+    const { sx, sy } = srcRect();
+    // メイン画像（trim適用: 全体を置き、フレームでクリップ）
+    cropImg.style.cssText = `left:${x - sx * sc}px;top:${y - sy * sc}px;width:${s.img.naturalWidth * sc}px;height:${s.img.naturalHeight * sc}px;`;
+    cropImg.src = s.img.src;
+    cropImg.hidden = false;
+    ph.hidden = true;
+    // カード背景（同じ可視範囲を411×231へcover）
+    const cb = coverOf(CARD_BG.w, CARD_BG.h);
+    const cbImg = $('cardBgImg');
+    cbImg.src = s.img.src;
+    // #cardBg は inset:0（カード0基準）。CARD_BG原点(-60,-60)を加算して大きくcover配置
+    cbImg.style.cssText = `left:${CARD_BG.x + cb.left}px;top:${CARD_BG.y + cb.top}px;width:${s.img.naturalWidth * cb.sc}px;height:${s.img.naturalHeight * cb.sc}px;`;
+    $('cardBg').hidden = false;
+    // 上部背景（644×362へcover）
+    const tb = coverOf(TOP_BG.w, TOP_BG.h);
+    const tbImg = $('bgTopImg');
+    tbImg.src = s.img.src;
+    tbImg.style.cssText = `left:${tb.left}px;top:${tb.top}px;width:${s.img.naturalWidth * tb.sc}px;height:${s.img.naturalHeight * tb.sc}px;`;
+    $('bgTop').hidden = false;
+  } else {
+    cropImg.hidden = true;
+    ph.hidden = false;
+    $('cardBg').hidden = true;
+    $('bgTop').hidden = true;
+  }
+}
+
+function updateTexts() {
+  $('txtArtist').textContent = state.artist;
+  $('txtNick').textContent = state.nick;
+  $('txtProf').textContent = state.prof;
+  $('txtId').textContent = state.id;
+}
+
+/* ================= interactions ================= */
+function previewZoom() {
+  const r = $('crop').getBoundingClientRect();
+  return r.width / FW;
+}
+function bindCard() {
+  const el = $('crop');
+  let drag = null;
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (!state.img) return;
+    const r = cropRect();
+    drag = { sx: e.clientX, sy: e.clientY, ox: r.x, oy: r.y, moved: false };
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const z = previewZoom();
+    const dx = (e.clientX - drag.sx) / z, dy = (e.clientY - drag.sy) / z;
+    if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+    setPanPx(drag.ox + dx, drag.oy + dy);
+    updateImages();
+    syncZoomUI();
+  });
+  el.addEventListener('pointerup', () => {
+    el.classList.remove('dragging');
+    const wasDrag = drag && drag.moved;
+    drag = null;
+    if (!wasDrag && !state.img) fileInput.click();
+  });
+  el.addEventListener('click', () => { if (!state.img) fileInput.click(); });
+  el.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (!state.img) return;
+    const z = previewZoom();
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / z, py = (e.clientY - rect.top) / z;
+    const before = cropRect();
+    const u = (px - before.x) / before.sc, v = (py - before.y) / before.sc;
+    state.zoom = Math.min(4, Math.max(minZoom(), state.zoom * Math.exp(-e.deltaY * 0.0018)));
+    const after = cropRect();
+    setPanPx(px - u * after.sc, py - v * after.sc);
+    updateImages();
+    syncZoomUI();
+  }, { passive: false });
+  const card = $('card');
+  card.addEventListener('dragover', e => e.preventDefault());
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadUserImage(f);
+  });
+}
+
+function loadUserImage(file) {
+  const url = URL.createObjectURL(file);
+  loadImg(url).then(img => {
+    state.img = img;
+    state.zoom = Math.max(minZoom(), 1); state.ox = 0; state.oy = 0;
+    state.trim = { t: 0, r: 0, b: 0, l: 0 };
+    updateImages();
+    syncZoomUI();
+  });
+}
+
+/* ================= panel ================= */
+const fileInput = $('fileInput');
+const zoomSlider = $('zoomSlider'), zoomVal = $('zoomVal');
+const freeChk = $('freeChk');
+const posX = $('posX'), posY = $('posY');
+const trimT = $('trimT'), trimB = $('trimB'), trimL = $('trimL'), trimR = $('trimR');
+
+function syncZoomUI() {
+  freeChk.checked = state.free;
+  zoomSlider.min = minZoom();
+  zoomSlider.value = state.zoom;
+  zoomVal.textContent = Math.round(state.zoom * 100) + '%';
+  if (state.img) {
+    const r = cropRect();
+    posX.value = Math.round(r.x);
+    posY.value = Math.round(r.y);
+  } else { posX.value = ''; posY.value = ''; }
+  trimT.value = state.trim.t; trimB.value = state.trim.b;
+  trimL.value = state.trim.l; trimR.value = state.trim.r;
+}
+$('pickBtn').onclick = () => fileInput.click();
+fileInput.onchange = () => {
+  if (fileInput.files[0]) loadUserImage(fileInput.files[0]);
+  fileInput.value = '';
+};
+zoomSlider.oninput = () => {
+  state.zoom = parseFloat(zoomSlider.value);
+  if (state.img) setPanPx(cropRect().x, cropRect().y);
+  updateImages();
+  syncZoomUI();
+};
+freeChk.onchange = () => {
+  state.free = freeChk.checked;
+  if (!state.free) {
+    state.zoom = Math.max(1, state.zoom);
+    if (state.img) setPanPx(cropRect().x, cropRect().y);
+  }
+  updateImages();
+  syncZoomUI();
+};
+function onPosInput() {
+  if (!state.img) return;
+  setPanPx(parseFloat(posX.value) || 0, parseFloat(posY.value) || 0);
+  updateImages();
+}
+posX.oninput = onPosInput;
+posY.oninput = onPosInput;
+function onTrimInput() {
+  const v = el => Math.min(90, Math.max(0, parseFloat(el.value) || 0));
+  let t = v(trimT), b = v(trimB), l = v(trimL), r = v(trimR);
+  if (t + b > 90) { b = 90 - t; trimB.value = b; }
+  if (l + r > 90) { r = 90 - l; trimR.value = r; }
+  state.trim = { t, r, b, l };
+  if (state.img) setPanPx(cropRect().x, cropRect().y);
+  updateImages();
+  if (state.img) { const cr = cropRect(); posX.value = Math.round(cr.x); posY.value = Math.round(cr.y); }
+}
+[trimT, trimB, trimL, trimR].forEach(el => el.oninput = onTrimInput);
+$('resetBtn').onclick = () => {
+  state.zoom = Math.max(minZoom(), 1); state.ox = 0; state.oy = 0;
+  state.trim = { t: 0, r: 0, b: 0, l: 0 };
+  updateImages();
+  syncZoomUI();
+};
+$('inArtist').oninput = e => { state.artist = e.target.value; updateTexts(); };
+$('inNick').oninput = e => { state.nick = e.target.value; updateTexts(); };
+$('inProf').oninput = e => { state.prof = e.target.value; updateTexts(); };
+$('inId').oninput = e => { state.id = e.target.value; updateTexts(); };
+
+/* ================= view scaling / モード ================= */
+const viewZoom = $('viewZoom'), viewZoomVal = $('viewZoomVal');
+let mode = 'mypage'; // 'mypage' | 'card'
+let fitScale = 0.45;
+function dims() { return mode === 'card' ? { w: CARD.w, h: CARD.h } : { w: W, h: H }; }
+function computeFit() {
+  const st = $('stage'), d = dims();
+  fitScale = Math.min(2.5, (st.clientHeight - 40) / d.h, (st.clientWidth - 40) / d.w);
+}
+function currentScale() {
+  const v = parseFloat(viewZoom.value);
+  return v > 0.29 ? v : fitScale;
+}
+function fit() {
+  computeFit();
+  const d = dims(), z = currentScale();
+  phone.style.transform = `scale(${z})`;
+  const sc = $('phoneScaler');
+  sc.style.width = d.w * z + 'px';
+  sc.style.height = d.h * z + 'px';
+  viewZoomVal.textContent = parseFloat(viewZoom.value) > 0.29 ? Math.round(z * 100) + '%' : 'fit';
+}
+function setMode(m) {
+  if (mode === m) return;
+  mode = m;
+  document.body.classList.toggle('mode-card', m === 'card');
+  $('tabMypage').classList.toggle('active', m === 'mypage');
+  $('tabCard').classList.toggle('active', m === 'card');
+  // モードごとの既定表示倍率（マイページ=幅600px / カード=幅540px相当）
+  viewZoom.value = m === 'card' ? (540 / CARD.w) : (600 / W);
+  $('stage').scrollTop = 0;
+  fit();
+}
+$('tabMypage').onclick = () => setMode('mypage');
+$('tabCard').onclick = () => setMode('card');
+viewZoom.value = 600 / W; // 既定でスマホ幅を約600pxに
+viewZoom.oninput = fit;
+window.addEventListener('resize', fit);
+
+/* ================= canvas export ================= */
+function rrPath(ctx, x, y, w, h, tl, tr, br, bl) {
+  if (tr === undefined) { tr = tl; br = tl; bl = tl; }
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y); ctx.arcTo(x + w, y, x + w, y + tr, tr);
+  ctx.lineTo(x + w, y + h - br); ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+  ctx.lineTo(x + bl, y + h); ctx.arcTo(x, y + h, x, y + h - bl, bl);
+  ctx.lineTo(x, y + tl); ctx.arcTo(x, y, x + tl, y, tl);
+  ctx.closePath();
+}
+function mkCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h));
+  return c;
+}
+/* 可視範囲を fw×fh(デバイスpx) に cover 描画 */
+function drawCoverInto(ctx, fx, fy, fw, fh) {
+  const { vx, vy, vw, vh } = visibleRect();
+  const sc = Math.max(fw / vw, fh / vh);
+  const dw = vw * sc, dh = vh * sc;
+  ctx.drawImage(state.img, vx, vy, vw, vh, fx + (fw - dw) / 2, fy + (fh - dh) / 2, dw, dh);
+}
+/* 端をエッジ延長（backdrop blurのclamp近似） */
+function clampEdges(ctx, m, w, h) {
+  ctx.drawImage(ctx.canvas, m, 0, 1, h + 2 * m, 0, 0, m, h + 2 * m);
+  ctx.drawImage(ctx.canvas, m + w - 1, 0, 1, h + 2 * m, m + w, 0, m, h + 2 * m);
+  ctx.drawImage(ctx.canvas, 0, m, w + 2 * m, 1, 0, 0, w + 2 * m, m);
+  ctx.drawImage(ctx.canvas, 0, m + h - 1, w + 2 * m, 1, 0, m + h, w + 2 * m, m);
+}
+
+/* カード背景のブラー済みレイヤー（358k×231k）を返す */
+function blurredCardLayer(k) {
+  const w = CARD.w * k, h = CARD.h * k;
+  const M = Math.ceil(CARD_BLUR * k * 1.5);
+  const offA = mkCanvas(w + 2 * M, h + 2 * M);
+  const a = offA.getContext('2d');
+  a.fillStyle = '#101010';
+  a.fillRect(0, 0, offA.width, offA.height);
+  drawCoverInto(a, M + CARD_BG.x * k, M + CARD_BG.y * k, CARD_BG.w * k, CARD_BG.h * k);
+  clampEdges(a, M, w, h);
+  const offB = mkCanvas(w + 2 * M, h + 2 * M);
+  const b = offB.getContext('2d');
+  b.filter = `blur(${CARD_BLUR * k}px)`;
+  b.drawImage(offA, 0, 0);
+  const out = mkCanvas(w, h);
+  out.getContext('2d').drawImage(offB, M, M, w, h, 0, 0, w, h);
+  return out;
+}
+
+/* 上部背景のブラー済みレイヤー（縁がフェードするlayer blur） */
+function blurredTopLayer(k) {
+  const w = TOP_BG.w * k, h = TOP_BG.h * k;
+  const M = Math.ceil(TOP_BG.blur * k * 1.5);
+  const offA = mkCanvas(w + 2 * M, h + 2 * M);
+  drawCoverInto(offA.getContext('2d'), M, M, w, h);
+  const offB = mkCanvas(w + 2 * M, h + 2 * M);
+  const b = offB.getContext('2d');
+  b.filter = `blur(${TOP_BG.blur * k}px)`;
+  b.drawImage(offA, 0, 0);
+  return { canvas: offB, margin: M };
+}
+
+function fontStr(weight, size, k) {
+  return `${weight} ${size * k}px Figtree, "Hiragino Sans", "Noto Sans JP", sans-serif`;
+}
+
+/* 会員証カードを (X,Y)（論理px）に描画。ctx は transform=identity、単位=デバイスpx */
+function drawCard(ctx, k, X, Y) {
+  const x = X * k, y = Y * k, w = CARD.w * k, h = CARD.h * k, r = CARD.r * k;
+  // クリップしてカード内部を描画
+  ctx.save();
+  rrPath(ctx, x, y, w, h, r);
+  ctx.clip();
+  if (state.img) {
+    ctx.drawImage(blurredCardLayer(k), x, y);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.1)';
+    ctx.fillRect(x, y, w, h);
+  }
+  // Frame 71: black 30% overlay
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.fillRect(x, y, w, h);
+  // メイン画像 346×195 at (6,6)、角丸 上20/下12
+  ctx.save();
+  rrPath(ctx, x + 6 * k, y + 6 * k, FW * k, FH * k, RADII_IMG[0] * k, RADII_IMG[1] * k, RADII_IMG[2] * k, RADII_IMG[3] * k);
+  ctx.clip();
+  if (state.img) {
+    const cr = cropRect();
+    const { sx, sy, sw, sh } = srcRect();
+    ctx.drawImage(state.img, sx, sy, sw, sh, x + 6 * k + cr.x * k, y + 6 * k + cr.y * k, cr.dw * k, cr.dh * k);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.font = fontStr(500, 11, k);
+    ctx.textAlign = 'center';
+    ctx.fillText('No Image', x + w / 2, y + h / 2);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+  // テキスト（12px, white 70%, letter-spacing -0.24px, y209）
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.font = fontStr(400, 12, k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${-0.24 * k}px`;
+  ctx.fillText(state.artist, x + 16 * k, y + 220 * k);
+  ctx.textAlign = 'right';
+  ctx.fillText(state.nick, x + (CARD.w - 16) * k, y + 220 * k);
+  ctx.textAlign = 'left';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  ctx.restore();
+  // グラデ枠線（inside 1px, FFFFFF 30% → 10%, 90deg, r24）
+  ctx.save();
+  rrPath(ctx, x + 0.5 * k, y + 0.5 * k, w - 1 * k, h - 1 * k, r - 0.5 * k);
+  const bord = ctx.createLinearGradient(x, y, x + w, y);
+  bord.addColorStop(0, 'rgba(255,255,255,.3)');
+  bord.addColorStop(1, 'rgba(255,255,255,.1)');
+  ctx.strokeStyle = bord;
+  ctx.lineWidth = 1 * k;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawListRow(ctx, k, y, r) {
+  ctx.fillStyle = 'rgba(255,255,255,.08)';
+  ctx.fillRect(16 * k, y * k, 358 * k, 56 * k);
+  ctx.drawImage(A[r.ic].img, 32 * k, (y + 16) * k, 24 * k, 24 * k);
+  ctx.fillStyle = '#fff';
+  ctx.font = fontStr(400, 14, k);
+  ctx.fillText(r.label, 68 * k, (y + 33) * k);
+  ctx.drawImage(A.chevron.img, 334 * k, (y + 16) * k, 24 * k, 24 * k);
+  if (!r.last) {
+    ctx.fillStyle = 'rgba(255,255,255,.15)';
+    ctx.fillRect(32 * k, (y + 55.5) * k, 342 * k, 0.5 * k);
+  }
+}
+
+function drawScreen(ctx, k) {
+  // ページ背景
+  ctx.fillStyle = '#101010';
+  ctx.fillRect(0, 0, W * k, H * k);
+  // 上部背景（blur 64, opacity 50%）
+  if (state.img) {
+    const { canvas, margin } = blurredTopLayer(k);
+    ctx.save();
+    ctx.globalAlpha = TOP_BG.alpha;
+    ctx.drawImage(canvas, TOP_BG.x * k - margin, TOP_BG.y * k - margin);
+    ctx.restore();
+  }
+  // 会員証カード
+  drawCard(ctx, k, CARD.x, CARD.y);
+  // 会員証を変更ボタン（中央揃え）
+  ctx.font = fontStr(700, 14, k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${-0.28 * k}px`;
+  const tw = ctx.measureText('会員証を変更').width;
+  const bw = (16 + 16 + 6 + 16) * k + tw; // pad+icon+gap+pad
+  const bx = (W * k - bw) / 2, by = 306 * k;
+  rrPath(ctx, bx + 0.5 * k, by + 0.5 * k, bw - k, 31 * k, 15.5 * k);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1 * k;
+  ctx.stroke();
+  ctx.drawImage(A.cardsBlank.img, bx + 16 * k, by + 8 * k, 16 * k, 16 * k);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('会員証を変更', bx + 38 * k, by + 21 * k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  ctx.drawImage(A.ellipse78.img, 252 * k, 302 * k, 16 * k, 16 * k);
+  // プロフィールブロック (16,354) 358×256 r16
+  ctx.save();
+  rrPath(ctx, 16 * k, 354 * k, 358 * k, 256 * k, 16 * k);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.08)';
+  ctx.fillRect(16 * k, 354 * k, 358 * k, 256 * k);
+  ctx.restore();
+  // アバター
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(60 * k, 398 * k, 28 * k, 0, 7);
+  ctx.clip();
+  ctx.drawImage(A.avatar.img, 32 * k, 370 * k, 56 * k, 56 * k);
+  ctx.restore();
+  // ニックネーム
+  ctx.fillStyle = '#fff';
+  ctx.font = fontStr(700, 18, k);
+  ctx.fillText(state.prof, 100 * k, (386 + 18) * k);
+  // QRタイル
+  rrPath(ctx, 302 * k, 370 * k, 56 * k, 56 * k, 8 * k);
+  ctx.fillStyle = 'rgba(255,255,255,.15)';
+  ctx.fill();
+  ctx.drawImage(A.qr.img, 309 * k, 377 * k, 42 * k, 42 * k);
+  // ID行ピル
+  rrPath(ctx, 32.25 * k, 438.25 * k, 325.5 * k, 43.5 * k, 21.75 * k);
+  ctx.strokeStyle = 'rgba(255,255,255,.15)';
+  ctx.lineWidth = 0.5 * k;
+  ctx.stroke();
+  ctx.font = fontStr(400, 16, k);
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.fillText('ID', 48 * k, 466 * k);
+  const idw = ctx.measureText('ID').width;
+  ctx.fillStyle = '#fff';
+  ctx.fillText(state.id, 48 * k + idw + 4 * k, 466 * k);
+  // コピー chip
+  rrPath(ctx, 292 * k, 446 * k, 58 * k, 28 * k, 14 * k);
+  ctx.fillStyle = 'rgba(255,255,255,.15)';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = fontStr(400, 14, k);
+  ctx.fillText('コピー', 300 * k, 465 * k);
+  // ブロック内ディバイダ
+  ctx.fillStyle = 'rgba(255,255,255,.15)';
+  ctx.fillRect(32 * k, 497.5 * k, 342 * k, 0.5 * k);
+  // プロフィール直下の2行
+  drawListRow(ctx, k, 498, LISTS[0].rows[0]);
+  drawListRow(ctx, k, 554, LISTS[0].rows[1]);
+  // セクション
+  for (const sec of LISTS) {
+    if (!sec.head) continue;
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.font = fontStr(400, 14, k);
+    ctx.fillText(sec.head, 32 * k, (sec.y + 35) * k);
+    const gy = sec.y + 48;
+    ctx.save();
+    rrPath(ctx, 16 * k, gy * k, 358 * k, sec.rows.length * 56 * k, 16 * k);
+    ctx.clip();
+    sec.rows.forEach((r, i) => drawListRow(ctx, k, gy + i * 56, r));
+    ctx.restore();
+  }
+  // Navigation gradient + status bar
+  let g = ctx.createLinearGradient(0, 0, 0, 67 * k);
+  g.addColorStop(0, 'rgba(0,0,0,.58)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W * k, 67 * k);
+  ctx.fillStyle = '#fff';
+  ctx.font = `600 ${17 * k}px -apple-system, "SF Pro", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('9:18', 74 * k, 30 * k);
+  ctx.textAlign = 'left';
+  ctx.drawImage(A.cellular.img, 277 * k, 17 * k, 19.2 * k, 12.2 * k);
+  ctx.drawImage(A.wifi.img, 303.2 * k, 17 * k, 17.1 * k, 12.3 * k);
+  ctx.drawImage(A.battery.img, 327.3 * k, 16.5 * k, 27.3 * k, 13 * k);
+  // Tabbar_set gradient
+  g = ctx.createLinearGradient(0, 1424 * k, 0, H * k);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(0.52404, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(0,0,0,.6)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 1424 * k, W * k, 268 * k);
+  // Tabbar pill
+  const pw = 330, px0 = (W - pw) / 2, py0 = H - 24 - 64;
+  rrPath(ctx, px0 * k, py0 * k, pw * k, 64 * k, 32 * k);
+  ctx.fillStyle = 'rgba(0,0,0,.65)';
+  ctx.fill();
+  rrPath(ctx, (px0 + 0.5) * k, (py0 + 0.5) * k, (pw - 1) * k, 63 * k, 31.5 * k);
+  ctx.strokeStyle = 'rgba(255,255,255,.15)';
+  ctx.lineWidth = 1 * k;
+  ctx.stroke();
+  // items（content bottom = py0+64-8 = 1660）
+  const iconY = 1615, lbBase = 1654;
+  ctx.font = fontStr(400, 11, k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${0.11 * k}px`;
+  ctx.textAlign = 'center';
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 4 * k;
+  const items = [
+    { x: 51, ic: 'tbHome', lb: 'Home' },
+    { x: 111, ic: 'tbTalk', lb: 'Poppin’' },
+    { x: 231, ic: 'tbShop', lb: 'Shop' },
+  ];
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  for (const it of items) {
+    ctx.drawImage(A[it.ic].img, (it.x + 12) * k, iconY * k, 24 * k, 24 * k);
+    ctx.fillText(it.lb, (it.x + 24) * k, lbBase * k);
+  }
+  // Poppin' バッジ
+  ctx.drawImage(A.tbDot.img, 139 * k, 1617 * k, 12 * k, 12 * k);
+  // More（中央・持ち上がった円）
+  ctx.beginPath();
+  ctx.arc(195 * k, 1617 * k, 24 * k, 0, 7);
+  ctx.fillStyle = 'rgba(255,255,255,.25)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(195 * k, 1617 * k, 23.5 * k, 0, 7);
+  ctx.strokeStyle = 'rgba(255,255,255,.15)';
+  ctx.lineWidth = 1 * k;
+  ctx.stroke();
+  ctx.drawImage(A.tbMore.img, 183 * k, 1605 * k, 24 * k, 24 * k);
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.fillText('More', 195 * k, lbBase * k);
+  // Mypage（アクティブ・グロー付きアイコン）
+  ctx.drawImage(A.tbMypage.img, 283 * k, 1595 * k, 64 * k, 64 * k);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('Mypage', 315 * k, lbBase * k);
+  ctx.restore();
+  ctx.textAlign = 'left';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+}
+
+function downloadCanvas(c, name) {
+  c.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, 'image/png');
+}
+
+const exTarget = $('exTarget'), exScale = $('exScale');
+function updateScaleLabels() {
+  const dims = exTarget.value === 'card' ? [CARD.w, CARD.h] : [FW, FH];
+  for (const op of exScale.options) {
+    const k = +op.value;
+    op.textContent = `×${k} (${dims[0] * k}×${dims[1] * k})`;
+  }
+}
+exTarget.onchange = updateScaleLabels;
+
+$('exportBtn').onclick = async () => {
+  await document.fonts.ready;
+  if (!state.img) { alert('画像がありません。'); return; }
+  const k = parseInt(exScale.value, 10);
+  if (exTarget.value === 'card') {
+    const c = mkCanvas(CARD.w * k, CARD.h * k);
+    drawCard(c.getContext('2d'), k, 0, 0);
+    downloadCanvas(c, `membership_card_${k}x.png`);
+  } else {
+    const c = mkCanvas(FW * k, FH * k);
+    const ctx = c.getContext('2d');
+    const cr = cropRect();
+    const { sx, sy, sw, sh } = srcRect();
+    ctx.drawImage(state.img, sx, sy, sw, sh, cr.x * k, cr.y * k, cr.dw * k, cr.dh * k);
+    downloadCanvas(c, `membership_crop_${k}x.png`);
+  }
+};
+
+/* ================= boot ================= */
+Promise.all(Object.entries(ASSET_SRC).map(([n, s]) => loadAsset(n, s)))
+  .then(() => loadImg('assets/sample_bf5.png').then(img => { state.img = img; }).catch(() => {}))
+  .then(() => {
+    render();
+    fit();
+    syncZoomUI();
+    updateScaleLabels();
+  });
+</script>
+</body>
+</html>
