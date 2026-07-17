@@ -1097,7 +1097,7 @@ $('exportBtn').onclick = async () => {
 
 /* ================= boot ================= */
 Promise.all(Object.entries(ASSET_SRC).map(([n, s]) => loadAsset(n, s)))
-  .then(() => loadImg('assets/sample_bf5.png').then(img => { state.img = img; }).catch(() => {}))
+  .then(() => loadImg('assets/sample_bwu.png').then(img => { state.img = img; }).catch(() => {}))
   .then(() => {
     render();
     fit();
