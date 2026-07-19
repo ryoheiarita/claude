@@ -621,31 +621,6 @@
       position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
       width: 134px; height: 5px; border-radius: 100px; background: #fff;
     }
-
-    /* ── 合成フォント比較トグル（テスト用・右上） ── */
-    .lat { font-size: calc(1em * var(--fig-scale, 1)); }
-    html.compo { --fig-scale: 1.105; }   /* 合成ON: 欧文Figtreeを110.5%拡大（和文Notoは原寸） */
-    .font-toggle {
-      position: fixed; top: 50px; right: 12px; z-index: 200;
-      display: flex; align-items: center; gap: 8px;
-      height: 34px; padding: 0 5px 0 12px; border-radius: 20px;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.14);
-      font-size: 12px; font-weight: 600; color: #fff;
-      cursor: pointer; -webkit-user-select: none; user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .font-toggle .ft-sw {
-      width: 40px; height: 24px; border-radius: 14px; flex-shrink: 0;
-      background: rgba(255,255,255,0.22); position: relative; transition: background .2s;
-    }
-    .font-toggle .ft-sw::after {
-      content: ''; position: absolute; top: 2px; left: 2px;
-      width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s;
-    }
-    html.compo .font-toggle .ft-sw { background: linear-gradient(135deg,#812dff,#ff6739); }
-    html.compo .font-toggle .ft-sw::after { transform: translateX(16px); }
   </style>
 </head>
 <body>
@@ -1110,61 +1085,7 @@
 
   <!-- iOSホームインジケーター（全画面共通・最前面） -->
   <div class="ios-home-bar"></div>
-
-  <!-- ════ 合成フォント比較トグル（テスト用・右上） ════
-       ON  = 合成: 欧文 Figtree を 110.5% に拡大（和文 Noto 原寸）
-       OFF = 現状: Figtree + Noto 無調整 -->
-  <script>
-  (function () {
-    var JP = /[　-ヿ㐀-鿿豈-﫿＀-￯‐-‧‰-⁯]/;
-    function wrapLatin(root) {
-      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-      var nodes = [], n;
-      while ((n = walker.nextNode())) {
-        var p = n.parentNode;
-        if (n.nodeValue && /\S/.test(n.nodeValue) && !(p && p.classList && p.classList.contains('lat'))) nodes.push(n);
-      }
-      nodes.forEach(function (node) {
-        var frag = document.createDocumentFragment(), buf = '', mode = null;
-        function flush() {
-          if (!buf) return;
-          if (mode === 'lat') { var s = document.createElement('span'); s.className = 'lat'; s.textContent = buf; frag.appendChild(s); }
-          else { frag.appendChild(document.createTextNode(buf)); }
-          buf = '';
-        }
-        var chars = Array.from(node.nodeValue);
-        for (var i = 0; i < chars.length; i++) {
-          var ch = chars[i], m;
-          if (/\s/.test(ch)) m = mode || 'lat';           // 空白は現在の連続に含める
-          else m = JP.test(ch) ? 'jp' : 'lat';
-          if (m !== mode) { flush(); mode = m; }
-          buf += ch;
-        }
-        flush();
-        node.parentNode.replaceChild(frag, node);
-      });
-    }
-    function init() {
-      var art = document.querySelector('.article-content');
-      if (art) wrapLatin(art);
-      var t = document.createElement('div');
-      t.className = 'font-toggle';
-      t.innerHTML = '<span class="ft-label"></span><span class="ft-sw"></span>';
-      document.body.appendChild(t);
-      var label = t.querySelector('.ft-label');
-      function render() { label.textContent = document.documentElement.classList.contains('compo') ? '合成 ON' : '合成 OFF'; }
-      var on = localStorage.getItem('figtreejp') !== '0'; // 既定 ON
-      document.documentElement.classList.toggle('compo', on);
-      render();
-      t.addEventListener('click', function () {
-        var now = document.documentElement.classList.toggle('compo');
-        localStorage.setItem('figtreejp', now ? '1' : '0');
-        render();
-      });
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
-  })();
-  </script>
+  <!-- collection 共通: 合成フォント仕様（記事/概要 連動） -->
+  <script src="../font-spec.js"></script>
 </body>
 </html>
