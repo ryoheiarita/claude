@@ -31,15 +31,15 @@
     ".lat{font-size:calc(1em * var(--fig-scale,1));}",
     "html.compo{--fig-scale:1.105;}",
     // 記事＆概要 共通タイポ仕様（行間 / タグ中央 / gap）
-    // 概要欄は動画=.desc-sheet/.desc-body、LIVE=.detail-sheet/.detail-body の両方に対応
-    ".article-body,.desc-sheet .desc-body,.detail-body{line-height:32px;}",
-    ".article-title,.desc-sheet .desc-title,.detail-sheet .desc-title{line-height:35.6px;}",
+    // 概要欄: 縦=.desc-sheet / LIVE=.detail-sheet / 横向き(landscape)=.ls-detail の3系統に対応
+    ".article-body,.desc-sheet .desc-body,.detail-body,.ls-detail .desc-body{line-height:32px;}",
+    ".article-title,.desc-sheet .desc-title,.detail-sheet .desc-title,.ls-detail .desc-title{line-height:35.6px;}",
     ".article-h2,.article-h3{line-height:34px;}",
-    ".badge,.desc-sheet .desc-tag,.detail-sheet .desc-tag{padding-bottom:2px;}", /* タグ内テキストを中央へ */
+    ".badge,.desc-sheet .desc-tag,.detail-sheet .desc-tag,.ls-detail .desc-tag{padding-bottom:2px;}", /* タグ内テキストを中央へ */
     ".article-inner{gap:20px;}",                            /* 記事: タイトル↔タグ↔本文 +4 */
     ".article-meta{gap:8px;}",                              /* 記事: 日付↔タイトル +4 */
-    ".desc-sheet .desc-head,.detail-sheet .desc-head{margin-bottom:8px;}",   /* 概要: +4 */
-    ".desc-sheet .desc-tags,.detail-sheet .desc-tags{margin-bottom:20px;}",  /* 概要: +4 */
+    ".desc-sheet .desc-head,.detail-sheet .desc-head,.ls-detail .desc-head{margin-bottom:8px;}",   /* 概要: +4 */
+    ".desc-sheet .desc-tags,.detail-sheet .desc-tags,.ls-detail .desc-tags{margin-bottom:20px;}",  /* 概要: +4 */
     // 右上トグル
     ".font-toggle{position:fixed;top:50px;right:12px;z-index:200;display:flex;align-items:center;gap:8px;" +
       "height:34px;padding:0 5px 0 12px;border-radius:20px;background:rgba(0,0,0,0.55);" +
@@ -92,7 +92,7 @@
 
   // ── 4. トグル設置 + 状態復元 ──
   function init() {
-    document.querySelectorAll('.article-content, .desc-sheet, .detail-sheet').forEach(wrapLatin);
+    document.querySelectorAll('.article-content, .desc-sheet, .detail-sheet, .ls-detail').forEach(wrapLatin);
 
     if (!document.querySelector('.font-toggle')) {
       var t = document.createElement('div');
