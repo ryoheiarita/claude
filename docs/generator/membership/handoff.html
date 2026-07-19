@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会員証カード Flutter 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a; color: #fff; min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.55); }
+    .header p b { color: rgba(255,255,255,0.85); }
+    .header p a { color: #8fa0ff; }
+    .header p code, .header p .fig {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .lead { font-size: 13.5px; line-height: 1.7; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+
+    /* ── ライブプレビュー ── */
+    .preview-stage {
+      margin-top: 20px; display: flex; justify-content: center;
+      padding: 40px 20px; border-radius: 16px; background: #101010;
+      border: 1px solid rgba(255,255,255,0.08);
+      /* マイページ上部背景ぼかしの雰囲気 */
+      position: relative; overflow: hidden;
+    }
+    .stage-bg {
+      position: absolute; inset: -80px; z-index: 0; opacity: .5;
+      background-size: cover; background-position: center; filter: blur(64px);
+    }
+    .mc-card {
+      position: relative; z-index: 1; width: 358px; height: 231px; flex-shrink: 0;
+      border-radius: 24px; overflow: hidden; background: rgba(255,255,255,0.1);
+    }
+    .mc-card::before {
+      content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      z-index: 5; pointer-events: none;
+    }
+    .mc-bg { position: absolute; inset: 0; }
+    .mc-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(32px); transform: scale(1.35); }
+    .mc-dim { position: absolute; inset: 0; background: rgba(0,0,0,0.3); }
+    .mc-main {
+      position: absolute; left: 6px; top: 6px; width: 346px; height: 195px;
+      border-radius: 20px 20px 12px 12px; overflow: hidden;
+    }
+    .mc-main img { width: 100%; height: 100%; object-fit: cover; }
+    .mc-txt { position: absolute; bottom: 8px; font-size: 12px; letter-spacing: -0.24px; color: rgba(255,255,255,0.7); }
+    .mc-artist { left: 16px; }
+    .mc-nick { right: 16px; }
+    .preview-cap { margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; }
+
+    /* ── コードブロック ── */
+    .code {
+      margin-top: 16px; border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08); background: #0d0d0f;
+    }
+    .code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 12px; color: rgba(255,255,255,0.5); font-family: ui-monospace, monospace;
+    }
+    .code-copy {
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: transparent;
+      color: #fff; font: inherit; font-size: 11px; padding: 4px 10px; border-radius: 6px;
+    }
+    .code-copy:hover { background: rgba(255,255,255,0.08); }
+    .code pre { margin: 0; padding: 16px; overflow-x: auto; }
+    .code code {
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-size: 12px; line-height: 1.65; color: #e8e8ea; white-space: pre;
+    }
+
+    /* ── note / table ── */
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.6);
+    }
+    .note b { color: rgba(255,255,255,0.85); font-weight: 600; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+
+    table { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 12.5px; line-height: 1.5; }
+    th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); vertical-align: top; }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    td { color: rgba(255,255,255,0.72); }
+    .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid rgba(255,255,255,0.15); }
+    .table-wrap { overflow-x: auto; }
+
+    @media (max-width: 420px) {
+      .mc-card { transform: scale(0.92); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>会員証カード スタイル実装指示</h2>
+      <p>マイページの会員証カード（Figma <span class="fig">Design_System_V2 809:255</span> / <span class="fig">Renewal_UI 1812:15163</span>）のスタイル仕様です。固定サイズ <b>358 × 231</b>・角丸 24。<b>1枚の会員証画像を「背景ぼかし」と「メイン画像」の両方に使う</b>のが要点です。動きの正解・クロップ調整は<a href="./">ジェネレーター</a>を参照してください。</p>
+    </div>
+
+    <!-- ════════ プレビュー ════════ -->
+    <h3 class="section">プレビュー</h3>
+    <p class="lead">実寸 358 × 231。下の見た目がゴールです（画像はサンプル）。</p>
+    <div class="preview-stage">
+      <div class="stage-bg" style="background-image:url('assets/sample_bwu.png')"></div>
+      <div class="mc-card">
+        <div class="mc-bg"><img src="assets/sample_bwu.png" alt=""></div>
+        <div class="mc-dim"></div>
+        <div class="mc-main"><img src="assets/sample_bwu.png" alt=""></div>
+        <div class="mc-txt mc-artist">Artist・FCname</div>
+        <div class="mc-txt mc-nick">Nickname</div>
+      </div>
+    </div>
+    <p class="preview-cap">背景のぼかし（blur 64・不透明度 50%）は、マイページ上部背景にも同じ画像で敷かれます。</p>
+
+    <!-- ════════ レイヤー構成 ════════ -->
+    <h3 class="section">レイヤー構成（下 → 上）</h3>
+    <div class="note">
+      カードは <code>ClipRRect(radius: 24)</code> で角丸クリップした <code>Stack</code>。<b>枠線だけは最前面</b>に重ねる（クリップに食われないように）。
+      <ul>
+        <li><b>① 背景ぼかし</b> — 同一画像を全面 <code>BoxFit.cover</code> → Gaussian <code>blur σ=32</code>。ぼかし縁の透けを防ぐため <code>Transform.scale(1.35)</code> で少し広げる（Figma <span style="font-family:ui-monospace">Frame 71</span> の backdrop-blur 32 に相当）</li>
+        <li><b>② 黒 30% オーバーレイ</b> — <code>Color(0x4D000000)</code> を全面に</li>
+        <li><b>③ メイン画像</b> — <b>上6 / 左6 / 右6</b> の位置、高さ 195（= 346 × 195）。角丸は<b>上 20 / 下 12</b> の非対称。<code>BoxFit.cover</code></li>
+        <li><b>④ テキスト</b> — <code>Artist・FCname</code>（左下）/ <code>Nickname</code>（右下）。左右 16・下 8 の余白</li>
+        <li><b>⑤ グラデ枠線</b> — 内側 1px、<code>#FFFFFF 30% → 10%</code> の水平グラデ（<code>CustomPaint</code> で最前面）</li>
+      </ul>
+    </div>
+
+    <!-- ════════ スタイル一覧 ════════ -->
+    <h3 class="section">スタイル値</h3>
+    <div class="table-wrap"><table>
+      <tr><th>要素</th><th>サイズ / 位置</th><th>スタイル</th></tr>
+      <tr>
+        <td>カード</td>
+        <td>358 × 231 / radius 24</td>
+        <td>塗り <span class="swatch" style="background:rgba(255,255,255,.1)"></span><code>#FFFFFF</code> 10%（画像で隠れる下地）/ <code>overflow: clip</code></td>
+      </tr>
+      <tr>
+        <td>グラデ枠線</td>
+        <td>内側 1px</td>
+        <td>LinearGradient 90°（左→右）<span class="swatch" style="background:rgba(255,255,255,.3)"></span><code>#FFFFFF 30%</code> → <span class="swatch" style="background:rgba(255,255,255,.1)"></span><code>#FFFFFF 10%</code></td>
+      </tr>
+      <tr>
+        <td>背景ぼかし</td>
+        <td>全面（scale 1.35）</td>
+        <td>同一画像 <code>cover</code> → <code>blur σ=32</code>、上に <span class="swatch" style="background:#000"></span><code>#000000 30%</code></td>
+      </tr>
+      <tr>
+        <td>メイン画像</td>
+        <td>left 6 / top 6 / right 6・h 195<br>(= 346 × 195)</td>
+        <td>角丸 <code>TL 20 / TR 20 / BL 12 / BR 12</code>・<code>BoxFit.cover</code></td>
+      </tr>
+      <tr>
+        <td>テキスト</td>
+        <td>Artist=left 16 / bottom 8<br>Nickname=right 16 / bottom 8</td>
+        <td>Figtree Regular 12 / <span class="swatch" style="background:rgba(255,255,255,.7)"></span><code>#FFFFFF 70%</code> / letterSpacing −0.24</td>
+      </tr>
+    </table></div>
+    <div class="note">
+      <b>ARGB 変換メモ</b>（Flutter の <code>Color(0xAARRGGBB)</code>）: 白30%=<code>0x4DFFFFFF</code> / 白10%=<code>0x1AFFFFFF</code> / 白70%=<code>0xB3FFFFFF</code> / 黒30%=<code>0x4D000000</code>。<br>
+      フォント <b>Figtree</b> は <code>pubspec.yaml</code> の <code>fonts:</code> に登録してください（未登録ならシステムフォントにフォールバック）。
+    </div>
+
+    <!-- ════════ Flutter コード ════════ -->
+    <h3 class="section">Flutter Widget（コピーして使用）</h3>
+    <p class="lead"><code style="font-family:ui-monospace;font-size:12px">image</code> に会員証画像を渡すだけ。追加パッケージ不要（<code>dart:ui</code> と <code>material</code> のみ）。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>membership_card.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+
+/// 会員証カード
+/// Figma: Design_System_V2 `809:255` / Renewal_UI `1812:15163`
+/// 固定サイズ 358 × 231、角丸 24。
+/// [image] の同一画像を「背景ぼかし」と「メイン画像」の両方に使う。
+class MembershipCard extends StatelessWidget {
+  const MembershipCard({
+    super.key,
+    required this.image,
+    this.artist = 'Artist・FCname',
+    this.nickname = 'Nickname',
+  });
+
+  final ImageProvider image;
+  final String artist;
+  final String nickname;
+
+  @override
+  Widget build(BuildContext context) {
+    const label = TextStyle(
+      fontFamily: 'Figtree',
+      fontSize: 12,
+      height: 1.0,
+      letterSpacing: -0.24,
+      color: Color(0xB3FFFFFF), // #FFFFFF 70%
+    );
+
+    return SizedBox(
+      width: 358,
+      height: 231,
+      child: Stack(
+        children: [
+          // 本体（角丸 24 でクリップ）
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ① 背景ぼかし：同一画像を全面 cover → Gaussian blur 32
+                //    Transform.scale で少し広げ、ぼかし縁の透けを防ぐ
+                ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+                  child: Transform.scale(
+                    scale: 1.35,
+                    child: Image(image: image, fit: BoxFit.cover),
+                  ),
+                ),
+                // Frame 71：黒 30% オーバーレイ
+                const ColoredBox(color: Color(0x4D000000)),
+                // ② メイン画像：上6 / 左6 / 右6、高さ 195、角丸 上20・下12
+                Positioned(
+                  left: 6,
+                  top: 6,
+                  right: 6,
+                  height: 195,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
+                    ),
+                    child: Image(image: image, fit: BoxFit.cover),
+                  ),
+                ),
+                // ③ テキスト：左下 / 右下（下8・左右16）
+                Positioned(left: 16, bottom: 8, child: Text(artist, style: label)),
+                Positioned(right: 16, bottom: 8, child: Text(nickname, style: label)),
+              ],
+            ),
+          ),
+          // ④ グラデ枠線：内側 1px、#FFFFFF 30% → 10%（水平）
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(painter: _GradientBorderPainter()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GradientBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero &amp; size;
+    // stroke 中心を 0.5 内側に寄せて内側 1px にする
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(0.5),
+      const Radius.circular(23.5),
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [Color(0x4DFFFFFF), Color(0x1AFFFFFF)], // 30% → 10%
+      ).createShader(rect);
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) =&gt; false;
+}</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code-head">
+        <span>使用例</span>
+        <button class="code-copy">コピー</button>
+      </div>
+      <pre><code>MembershipCard(
+  image: NetworkImage('https://example.com/membership.jpg'),
+  // image: AssetImage('assets/membership.jpg'),  // ローカル画像の場合
+  artist: 'BE:FIRST・BMSG',
+  nickname: 'RYUHEI',
+)</code></pre>
+    </div>
+
+    <!-- ════════ マイページ配置 ════════ -->
+    <h3 class="section">マイページへの配置</h3>
+    <div class="note">
+      会員証カードはマイページ上部（Figma <code>1812:15161</code>、左右 16 余白 = 幅 358）に置かれ、<b>同じ会員証画像がページ最上部の背景にも敷かれます</b>。
+      <ul>
+        <li>ページ上部背景 — 画像を <code>644 × 362</code> 相当で <code>cover</code> → <code>blur σ=64</code>・<b>不透明度 50%</b>。カード上端付近から上へ伸ばし、下方向は透明へフェード</li>
+        <li>カード下のボタン「会員証を変更」までが 1 セット。ボタン・リスト類は本仕様の範囲外</li>
+      </ul>
+    </div>
+
+    <!-- ════════ Web プロトタイプ対応 ════════ -->
+    <h3 class="section">Web プロトタイプとの対応（参考）</h3>
+    <div class="note">
+      <ul>
+        <li>ジェネレーター（<a href="./">generator/membership/</a>）の HTML/CSS が見た目の正。書き出し PNG と Flutter の描画を見比べてください</li>
+        <li>ぼかしは CSS <code>filter: blur(32px)</code> = Flutter <code>ImageFilter.blur(sigmaX: 32, sigmaY: 32)</code>（stdDeviation とほぼ同義）。上部背景は 64</li>
+        <li>グラデ枠線は CSS では擬似要素 + <code>mask-composite</code>、Flutter では <code>CustomPaint</code> の stroke。どちらも<b>内側 1px</b></li>
+        <li>角丸クリップは CSS <code>overflow: hidden + border-radius</code> = Flutter <code>ClipRRect</code>。メイン画像の非対称角丸（上20/下12）に注意</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.code-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.closest('.code').querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(function () {
+          var t = btn.textContent;
+          btn.textContent = 'コピーしました';
+          setTimeout(function () { btn.textContent = t; }, 1500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
