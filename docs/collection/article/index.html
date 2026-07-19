@@ -608,17 +608,6 @@
     }
 
 
-    /* ════ iOSホームインジケーター（iPhoneアプリ想定・全画面 下部固定・最前面） ════ */
-    .ios-home-bar {
-      position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
-      width: 390px; max-width: 100%; height: 34px;
-      z-index: 300; pointer-events: none;
-    }
-    .ios-home-bar::before {
-      content: '';
-      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
-      width: 134px; height: 5px; border-radius: 100px; background: #fff;
-    }
   </style>
 </head>
 <body>
@@ -1084,8 +1073,6 @@
   })();
   </script>
 
-  <!-- iOSホームインジケーター（全画面共通・最前面） -->
-  <div class="ios-home-bar"></div>
   <!-- collection 共通: 合成フォント仕様（記事/概要 連動） -->
   <script src="../font-spec.js"></script>
 </body>
