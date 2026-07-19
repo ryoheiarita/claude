@@ -352,8 +352,50 @@
       height: 28px; padding: 0 10px; border-radius: 20px;
       background: var(--c-chip); font-size: 14px;
     }
-    .react.add { padding: 0 8px; }
+    .react.add { padding: 0 8px; position: relative; }
     .react.add svg { width: 16px; height: 16px; opacity: .8; }
+    /* ピッカー表示中はボタン自体に白 1px 枠（box-sizing:border-box のためレイアウトずれなし） */
+    .react.add.picking { border: 1px solid #fff; }
+
+    /* ── リアクションピッカー（Figma: emoji_stamp） ── */
+    /* リアクションボタンの 4px 下に表示。ボックスは下からふわっと、絵文字は左からドミノ式で出現 */
+    .reaction-picker {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 30;
+      display: flex; align-items: center; gap: 16px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      font-size: 28px; line-height: 32px;
+      white-space: nowrap;
+      transform-origin: bottom left;
+      /* 下からふわっと */
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .28s ease, transform .34s cubic-bezier(.22,.61,.36,1);
+      pointer-events: none;
+    }
+    .reaction-picker.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .reaction-picker .rp-emoji {
+      display: inline-block; cursor: pointer;
+      opacity: 0; transform: translateY(8px) scale(.4);
+    }
+    /* 左からドミノ式（animation-delay は JS で index ごとに付与） */
+    .reaction-picker.show .rp-emoji {
+      animation: rpEmojiIn .4s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes rpEmojiIn {
+      0%   { opacity: 0; transform: translateY(8px) scale(.4); }
+      60%  { opacity: 1; }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
     /* ── コメント入力エリア ── */
     .cs-input {
@@ -750,6 +792,54 @@
           </div>
         </div>`;
       }).join('');
+
+    /* ── リアクションピッカー：リアクションボタン(.react.add)タップで 4px 下に表示 ── */
+    (function initReactionPicker(){
+      const PICK_EMOJIS = ['❤️', '👍', '🎉', '👏', '✨', '😆'];
+      let activePicker = null;
+      function closePicker() {
+        if (!activePicker) return;
+        const p = activePicker;
+        if (p._owner) p._owner.classList.remove('picking');
+        activePicker = null;
+        p.classList.remove('show');
+        setTimeout(() => p.remove(), 300);
+      }
+      csList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.react.add');
+        if (btn) {
+          e.stopPropagation();
+          // 同じボタンを再タップ → 閉じる（トグル）
+          if (activePicker && activePicker._owner === btn) { closePicker(); return; }
+          closePicker();
+          const picker = document.createElement('div');
+          picker.className = 'reaction-picker';
+          picker._owner = btn;
+          // 左からドミノ式：ボックスがふわっと出た後(120ms)、50msずつ遅延
+          picker.innerHTML = PICK_EMOJIS
+            .map((em, i) => `<span class="rp-emoji" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
+            .join('');
+          btn.appendChild(picker);
+          btn.classList.add('picking');
+          activePicker = picker;
+          // リスト右端からはみ出す場合は左へ寄せる
+          const listRect = csList.getBoundingClientRect();
+          const pr = picker.getBoundingClientRect();
+          const margin = 12;
+          if (pr.right > listRect.right - margin) {
+            picker.style.left = ((listRect.right - margin) - pr.right) + 'px';
+          }
+          void picker.offsetWidth; // reflow
+          requestAnimationFrame(() => picker.classList.add('show'));
+          return;
+        }
+        if (e.target.closest('.rp-emoji')) { e.stopPropagation(); closePicker(); return; }
+        closePicker();
+      });
+      csList.addEventListener('scroll', closePicker);
+      const _cc = document.getElementById('commentClose');
+      if (_cc) _cc.addEventListener('click', closePicker);
+    })();
 
     /* ════════ 戻るボタン ════════ */
     document.getElementById('backBtn').addEventListener('click', () => {
