@@ -28,8 +28,10 @@
     // 和文=Noto / 欧文=Figtree（Noto を Hiragino より優先）
     "body{font-family:'Figtree','Noto Sans JP',sans-serif;}",
     // 合成: 欧文グリフだけ拡大（ON 時 110.5%）
-    ".lat{font-size:calc(1em * var(--fig-scale,1));}",
+    ".lat{font-size:calc(1em * var(--fig-scale,1));vertical-align:baseline;}",
     "html.compo{--fig-scale:1.105;}",
+    // 拡大した欧文が和文より上に見えるのを、わずかに下げて光学的に馴染ませる（合成ON時のみ）
+    "html.compo .lat{position:relative;top:var(--lat-drop,0.04em);}",
     // 記事＆概要 共通タイポ仕様（行間 / タグ中央 / gap）
     // 概要欄: 縦=.desc-sheet / LIVE=.detail-sheet / 横向き(landscape)=.ls-detail の3系統に対応
     ".article-body,.desc-sheet .desc-body,.detail-body,.ls-detail .desc-body{line-height:32px;}",
