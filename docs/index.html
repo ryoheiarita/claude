@@ -90,6 +90,7 @@
     .card-icon.article { background: linear-gradient(135deg, #ff7eb3 0%, #ff4081 100%); }
     .card-icon.handoff { background: linear-gradient(135deg, #48c7a5 0%, #2f9e87 100%); }
     .card-icon.collection { background: linear-gradient(135deg, #9b8cff 0%, #6c5ce7 100%); }
+    .card-icon.reactpicker { background: linear-gradient(135deg, #FFD36E 0%, #FF6F91 100%); }
     .card-icon.splash { background: linear-gradient(135deg, #1F32D9 0%, #1FD738 100%); }
     .card-icon.bookgen { background: linear-gradient(135deg, #812DFF 0%, #FF6739 100%); }
     .card-icon.membergen { background: linear-gradient(135deg, #E23744 0%, #1B3FCC 100%); }
@@ -240,6 +241,16 @@
           <div class="card-body">
             <div class="card-title">記事一覧（New Contents）</div>
             <div class="card-desc">Article list — icon thumbnails per type (横/縦 video, LIVE, doc), links to each PH2/PH3 destination</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="collection/reaction-picker/">
+          <div class="card-icon reactpicker">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6"/><line x1="9" y1="9.5" x2="9" y2="9.5"/><line x1="15" y1="9.5" x2="15" y2="9.5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">リアクションピッカー（emoji_stamp）</div>
+            <div class="card-desc">コメント絵文字リアクションの切り出し仕様。ライブプレビュー＋Flutter向け実装仕様（通常/動画記事・Poppin'）。Figma 11294-28859</div>
           </div>
           <div class="card-arrow">&rsaquo;</div>
         </a>
