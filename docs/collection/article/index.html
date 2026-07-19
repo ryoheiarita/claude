@@ -181,7 +181,7 @@
       padding: 0 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px; /* 16 + 4: タイトル↔タグ↔本文↔各ブロックの間隔 */
     }
 
     .article-header {
@@ -193,7 +193,7 @@
     .article-meta {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 8px; /* 4 + 4: 日付↔タイトル */
     }
 
     .article-date {
@@ -207,7 +207,7 @@
     .article-title {
       font-size: 24px;
       font-weight: 600;
-      line-height: 1.4;
+      line-height: 35.6px; /* 1.4(=33.6) + 2 */
       letter-spacing: -0.4px;
       color: #fff;
     }
