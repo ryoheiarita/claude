@@ -797,7 +797,7 @@
         setTimeout(() => p.remove(), 300);
       }
 
-      // 選択トグル（単一選択：別を選ぶと乗り換え、同じなら解除）
+      // 選択トグル（複数選択可：各絵文字を独立してトグル）
       function toggleReaction(comment, em) {
         const reactsEl = comment.querySelector('.c-reacts');
         const addBtn   = reactsEl.querySelector('.react.add');
@@ -817,9 +817,10 @@
           }
           chip.classList.add('selected');
         };
-        const cur = comment.dataset.selected || '';
-        if (cur === em) { deselect(em); comment.dataset.selected = ''; }
-        else { if (cur) deselect(cur); select(em); comment.dataset.selected = em; }
+        // 複数選択可：この絵文字だけを独立してトグル（他の選択は保持）
+        const chip = chipOf(em);
+        if (chip && chip.classList.contains('selected')) deselect(em);
+        else select(em);
       }
 
       csList.addEventListener('click', (e) => {
@@ -830,13 +831,13 @@
           if (activePicker && activePicker._owner === btn) { closePicker(); return; }
           closePicker();
           const comment = btn.closest('.comment');
-          const selected = comment.dataset.selected || '';
+          const reacted = new Set([...comment.querySelectorAll('.c-reacts .react.selected')].map(c => c.dataset.emoji));
           const picker = document.createElement('div');
           picker.className = 'reaction-picker';
           picker._owner = btn;
           // 左からドミノ式（120ms + i×50ms）。選択中の絵文字は円背景つき
           picker.innerHTML = PICK_EMOJIS
-            .map((em, i) => `<span class="rp-emoji${em === selected ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
+            .map((em, i) => `<span class="rp-emoji${reacted.has(em) ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
             .join('');
           btn.appendChild(picker);
           btn.classList.add('picking');
@@ -857,7 +858,7 @@
           e.stopPropagation();
           const comment = rp.closest('.comment');
           const em = rp.dataset.emoji;
-          const willSelect = (comment.dataset.selected || '') !== em;
+          const willSelect = ![...comment.querySelectorAll('.c-reacts .react.selected')].some(c => c.dataset.emoji === em);
           toggleReaction(comment, em);
           rp.classList.toggle('selected', willSelect);
           setTimeout(closePicker, 300);   // selected が見えたらピッカー消失

@@ -253,7 +253,7 @@
   </table>
 
   <h3>リアクションピッカー：select（選択）状態</h3>
-  <p class="lead">自分がそのコメントに付けたリアクション。<b>1コメント 1 つだけ</b>選択でき、もう一度押すと解除（トグル）。</p>
+  <p class="lead">自分がそのコメントに付けたリアクション。<b>複数選択可能</b>（各絵文字を独立してトグル）。もう一度押すと解除。別の絵文字を選んでも前の選択は保持される。</p>
   <table>
     <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
     <tr><td>ピッカー内（選択中の絵文字）</td><td>その 40×40 枠に <b>円の背景 white 15%</b>（<code>rounded 30px</code>）。ピッカーを開いた時点で既存の選択を反映（Figma emoji_stamp の ❤️ がこの状態）</td><td>選択セルに <code>BoxDecoration(color: Color(0x26FFFFFF), shape: circle)</code></td></tr>

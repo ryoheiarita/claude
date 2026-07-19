@@ -229,7 +229,7 @@
 
     <!-- ════ 3b. select 状態 ════ -->
     <h3>select（選択）状態</h3>
-    <p>自分がそのコメントに付けたリアクションを表す状態。1コメント<b>1つだけ</b>選択でき、もう一度押すと解除（トグル）。</p>
+    <p>自分がそのコメントに付けたリアクションを表す状態。<b>複数選択可能</b>（各絵文字を独立してトグル）。もう一度押すと解除。</p>
     <table>
       <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
       <tr><td>ピッカー内（選択中の絵文字）</td><td>その 40×40 枠に <b>円の背景 white 15%</b>（<code>rounded 30px</code>）が付く（Figma emoji_stamp の ❤️ がこの状態）。ピッカーを開いた時点で既存の選択を反映</td><td>選択セルだけ <code>decoration: BoxDecoration(color: Color(0x26FFFFFF), shape: circle)</code></td></tr>
@@ -273,7 +273,7 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
       <li>backdrop blur は<b>下に何か描画があって初めて効く</b>。単色ベタ塗りの上では効果が見えない点に注意（実画面はコメント文の上に重なる）</li>
       <li>リスト<b>スクロール開始で即クローズ</b>（追従させない）。コメントシートを閉じる時も一緒に閉じる</li>
       <li>絵文字の<b>順序・個数は固定</b>（❤️👍🎉👏✨😆 の6個）</li>
-      <li><b>選択は1コメント1つ</b>（単一選択）。別を選ぶと前の選択を解除して乗り換え。選択の永続化（サーバ連携）は別途</li>
+      <li><b>選択は複数可</b>（各絵文字を独立トグル）。別の絵文字を選んでも前の選択は保持。選択の永続化（サーバ連携）は別途</li>
       <li>ピッカーは<b>追加ボタンの内側</b>に生成するため、絵文字タップが「追加ボタンのタップ」と誤判定されないよう、絵文字判定を先に行う</li>
     </ul>
 
@@ -304,7 +304,7 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
         setTimeout(() => p.remove(), 300);
       }
 
-      // 選択トグル（単一選択：別を選ぶと乗り換え、同じなら解除）
+      // 選択トグル（複数選択可：各絵文字を独立してトグル）
       function toggleReaction(comment, em) {
         const reactsEl = comment.querySelector('.c-reacts');
         const addB     = reactsEl.querySelector('.react.add');
@@ -324,20 +324,21 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
           }
           chip.classList.add('selected');
         };
-        const cur = comment.dataset.selected || '';
-        if (cur === em) { deselect(em); comment.dataset.selected = ''; }
-        else { if (cur) deselect(cur); select(em); comment.dataset.selected = em; }
+        // 複数選択可：この絵文字だけを独立してトグル（他の選択は保持）
+        const chip = chipOf(em);
+        if (chip && chip.classList.contains('selected')) deselect(em);
+        else select(em);
       }
 
       function openPicker(btn) {
         closePicker();
         const comment = btn.closest('.comment');
-        const selected = comment.dataset.selected || '';
+        const reacted = new Set([...comment.querySelectorAll('.c-reacts .react.selected')].map(c => c.dataset.emoji));
         const picker = document.createElement('div');
         picker.className = 'reaction-picker';
         picker._owner = btn;
         picker.innerHTML = PICK_EMOJIS
-          .map((em, i) => `<span class="rp-emoji${em === selected ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
+          .map((em, i) => `<span class="rp-emoji${reacted.has(em) ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
           .join('');
         btn.appendChild(picker);
         btn.classList.add('picking');
@@ -367,7 +368,7 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
           e.stopPropagation();
           const comment = rp.closest('.comment');
           const em = rp.dataset.emoji;
-          const willSelect = (comment.dataset.selected || '') !== em;
+          const willSelect = ![...comment.querySelectorAll('.c-reacts .react.selected')].some(c => c.dataset.emoji === em);
           toggleReaction(comment, em);
           rp.classList.toggle('selected', willSelect);
           setTimeout(closePicker, 300);   // selected が見えたらピッカー消失
