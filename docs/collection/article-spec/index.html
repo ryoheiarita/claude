@@ -238,6 +238,20 @@
     <tr><td><b>引き下げで閉じる</b></td><td>リスト最上部（scrollTop ≤ 0）から下方向に <b>50px</b> 以上ドラッグしたら閉じる（BWU_SHEET_PULL_DISMISS 共通仕様）。追従中はシートを指に合わせて translateY、離したら通常の閉じアニメへ</td></tr>
   </table>
 
+  <h3>リアクションピッカー <code>emoji_stamp</code>（Figma 11294-28859）</h3>
+  <p class="lead">各コメント行の<b>リアクション追加ボタン</b>（😊 スマイリー・<code>.react.add</code>）をタップすると、<b>ボタンの 4px 下</b>に絵文字ピッカーが出現する。<b>この仕様は article と縦動画・横動画のコメントシートで共通</b>。ライブ配信画面（live-*）は追加ボタンを持たないため対象外。</p>
+  <table>
+    <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
+    <tr><td>形状 / サイズ</td><td>ピル（<code>border-radius: 999px</code>）、実寸 <code>280×48</code>（内容依存）</td><td><code>BorderRadius.circular(999)</code></td></tr>
+    <tr><td>背景</td><td>white <b>15%</b>（Surface/Secondary）＋ <b>backdrop blur 16</b>（Blur/16）</td><td><code>Color(0x26FFFFFF)</code> + <code>BackdropFilter(ImageFilter.blur(sigmaX:16, sigmaY:16))</code></td></tr>
+    <tr><td>絵文字</td><td><code>❤️ 👍 🎉 👏 ✨ 😆</code> の <b>6個</b>・左から順（Title/Title 1: Figtree Bold <b>28px</b>／line-height 32）</td><td>固定 6 グリフ。順序厳守</td></tr>
+    <tr><td>内側 padding / gap</td><td><code>padding: 8px 16px</code>／絵文字間 <b>gap 16px</b></td><td><code>EdgeInsets.symmetric(h:16, v:8)</code>／<code>Row</code> gap 16</td></tr>
+    <tr><td>位置</td><td>ボタンの<b>直下 4px</b>（<code>top: calc(100% + 4px)</code>）・ボタン<b>左端に左揃え</b>。<b>transform-origin: bottom left</b></td><td>ボタンを anchor に <code>CompositedTransformFollower</code>（offset <code>(0, ボタン高 + 4)</code>）等</td></tr>
+    <tr><td>右端はみ出し</td><td>シート（リスト）右端 − <b>12px</b> を超える場合は左へシフトして収める</td><td>画面幅でクランプ（右マージン 12px）</td></tr>
+    <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタン自体に <b>白 1px 枠</b>（<code>border: 1px solid #fff</code>／box-sizing border-box でレイアウトずれ無し）。閉じたら解除</td><td><code>Border.all(color: Colors.white, width: 1)</code>（枠内側描画）</td></tr>
+    <tr><td>開閉挙動</td><td>同じボタン再タップでトグル閉じ／絵文字タップ・シート外/他コメントタップ・<b>リストスクロール</b>で閉じる（1つのみ表示）</td><td>OverlayEntry の生成/破棄。スクロール通知で dismiss</td></tr>
+  </table>
+
   <!-- ════ 6. アニメーション ════ -->
   <h2><span class="no">6</span>アニメーション仕様（この画面の肝）</h2>
 
@@ -268,6 +282,22 @@ t=1300   B 開始（ドミノ・ブラーリビール）</code></pre>
     <li>Flutter: <code>visibility_detector</code>（<code>visibleFraction &gt;= 0.2</code>）が簡単</li>
   </ul>
 
+  <h3>D. リアクションピッカーの出現（§5 のピッカー）</h3>
+  <ul class="plain">
+    <li><b>角丸ボックス自体は下からふわっと</b>: translateY <code>10px → 0</code> ／ opacity <code>0 → 1</code>。transition は opacity <b>0.28s ease</b> ＋ transform <b>0.34s <code>cubic-bezier(0.22, 0.61, 0.36, 1)</code></b>（シート開閉と同じ標準カーブ）</li>
+    <li><b>絵文字は左からドミノ式</b>で1つずつ出現: i 番目の絵文字は <b>120ms + i × 50ms</b> 遅れて開始（ボックスがふわっと出た後に始める）</li>
+    <li>1絵文字あたり: duration <b>0.4s</b>、curve <b><code>cubic-bezier(0.34, 1.56, 0.64, 1)</code></b>（＝<b>オーバーシュート/バウンド</b>）。値の変化: opacity <code>0 → 1</code> ／ scale <code>0.4 → 1</code> ／ translateY <code>8px → 0</code></li>
+    <li>閉じる時: ボックスを逆再生（fade + translateY down）し、<b>300ms</b> 後に DOM から除去。ボタンの白枠も同時に解除</li>
+    <li>Flutter: ボックスは <code>AnimationController</code> 1本（slide-up + fade）。絵文字は各 index に <code>Interval(begin, end)</code> をずらした <b>staggered</b> アニメ。バウンドは <b><code>Curves.easeOutBack</code></b> が <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code> 相当。ディレイ換算 <code>begin = (120 + i×50) / totalMs</code></li>
+  </ul>
+  <pre><code>t=0      タップ → ボックスが下からふわっと（0.34s）
+t=120    絵文字[0] ❤️ 出現開始
+t=170    絵文字[1] 👍
+t=220    絵文字[2] 🎉
+t=270    絵文字[3] 👏
+t=320    絵文字[4] ✨
+t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code></pre>
+
   <h3>シマー（スケルトン）共通仕様</h3>
   <pre><code>LinearGradient: white6% → white12% → white6%（stops 0.25 / 0.5 / 0.75）
 背景位置 -200% → 200% を 1.5s ease-in-out で無限ループ、角丸 4px</code></pre>
@@ -288,6 +318,8 @@ t=1300   B 開始（ドミノ・ブラーリビール）</code></pre>
     <tr><td>ハイライト背景</td><td><code>rgba(255,179,71,0.22)</code></td><td><code>Color(0x38FFB347)</code></td></tr>
     <tr><td>コメントシート背景</td><td><code>#1a1a1a</code>（chip <code>#2c2c2e</code> / 入力 <code>#2a2a2c</code>）</td><td><code>Color(0xFF1A1A1A)</code> 他</td></tr>
     <tr><td>シートオーバーレイ</td><td>black 70%</td><td><code>Colors.black.withValues(alpha: 0.70)</code></td></tr>
+    <tr><td>リアクションピッカー背景</td><td>white 15% ＋ backdrop blur 16</td><td><code>Color(0x26FFFFFF)</code> + <code>ImageFilter.blur(16, 16)</code></td></tr>
+    <tr><td>ピッカー表示中のボタン枠</td><td>white 100%・1px</td><td><code>Colors.white</code> / <code>width: 1</code></td></tr>
   </table>
 
   <!-- ════ 8. 実装上の注意 ════ -->
