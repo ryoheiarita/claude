@@ -87,6 +87,12 @@ tr td{font-variant-numeric:tabular-nums;}
 .txt .lat,.badges .b .lat{font-family:'FJ';font-size:1.105em;} /* 合成=欧文110.5%拡大 */
 .txt .jp{font-family:'NJ';}
 .palt .jp{font-feature-settings:"palt" 1;}
+.dlbox{display:flex;align-items:center;gap:16px;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:12px;background:var(--panel);box-shadow:var(--shadow);padding:16px 18px;margin:16px 0;}
+.dlbox-l{flex:1;min-width:0;}
+.dlt{font-size:14.5px;font-weight:700;}
+.dld{font-size:12.5px;color:var(--ink2);margin-top:4px;}
+.dlbtn{flex-shrink:0;background:var(--grad);color:#fff;font-weight:700;font-size:14px;padding:11px 20px;border-radius:10px;white-space:nowrap;}
+.dlbtn:hover{text-decoration:none;opacity:.92;}
 .linkgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
 .lcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;box-shadow:var(--shadow);display:block;}
 .lcard:hover{border-color:var(--acc);text-decoration:none;}
@@ -156,6 +162,11 @@ tr td{font-variant-numeric:tabular-nums;}
 
     <section class="sec" id="install">
       <h2><span class="n">03</span>導入手順</h2>
+      <div class="dlbox">
+        <div class="dlbox-l"><div class="dlt">📦 導入パッケージをダウンロード</div>
+        <div class="dld">フォント3ウェイト（FigtreeJP-Regular/SemiBold/Bold.ttf）＋ pubspec_fonts.yaml ＋ app_typography.dart ＋ README ＋ 申し送り(ENGINEER_HANDOFF.md) ＋ 再生成スクリプト（約10MB）</div></div>
+        <a class="dlbtn" href="FigtreeJP-handoff.zip" download>↓ .zip</a>
+      </div>
       <p class="p"><b>やること＝2フォント(Figtree+Noto)を合成1フォント(FigtreeJP)に置き換える</b>だけ。既に Noto を同梱しているので<b>容量の純増はほぼ0</b>です。</p>
       <div class="steps">
         <div class="step"><div class="no"></div><div class="b"><div class="t">フォントを配置</div><div class="d"><code>FigtreeJP-Regular.ttf</code> / <code>-SemiBold.ttf</code> / <code>-Bold.ttf</code> を現状の Noto と同じ <code>fonts/</code> に置く（3ファイル・受領パッケージ同梱）。</div></div></div>
@@ -325,10 +336,10 @@ abstract final class ArticleText {
     <section class="sec" id="links">
       <h2><span class="n">08</span>リンク</h2>
       <div class="linkgrid">
+        <a class="lcard" href="FigtreeJP-handoff.zip" download><div class="lt">📦 導入パッケージ (.zip) ↓</div><div class="ld">フォント3ウェイト・pubspec・app_typography.dart・README・申し送り（約10MB）</div></a>
         <a class="lcard" href="../collection/article/"><div class="lt">実機デモ（記事・合成トグル）→</div><div class="ld">記事ページ。右上「合成 ON/OFF」で比較（サイトPW）</div></a>
         <a class="lcard" href="../collection/"><div class="lt">collection 一覧 →</div><div class="ld">記事・動画・LIVE。各ページで同じ仕様が適用済み</div></a>
       </div>
-      <p class="p" style="margin-top:14px;">フォント本体（<code>FigtreeJP-*.ttf</code> 3ウェイト）・<code>pubspec_fonts.yaml</code>・<code>app_typography.dart</code>・再生成スクリプト・申し送りは、デザイナー配布の <b>導入パッケージ（FigtreeJP-handoff.zip）</b> に同梱しています。</p>
       <p class="foot">B with U · Design System V2 ／ 出典: article-spec §4 ・実ページ実測 ・合成フォント FigtreeJP（欧文110.5%）。</p>
     </section>
 
