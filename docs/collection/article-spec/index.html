@@ -98,7 +98,7 @@
    ├─ スクロール領域 .scroll-area        … 記事本体（下記）
    ├─ ナビバー（上部固定・グラデ）        … z 100
    ├─ 起動ローディングオーバーレイ        … z 95（1秒後に消える）
-   ├─ &lt;bwu-action-bar&gt;（下部固定）        … z 100
+   ├─ &lt;bwu-action-dock&gt;＋&lt;bwu-action-bar&gt;（下部固定・88pxグラデ枠） … z 100
    ├─ コメントオーバーレイ（黒70%）       … z 110
    └─ コメントシート（80dvh）             … z 120</code></pre>
 
@@ -211,12 +211,13 @@
     <tr><td>Flutter</td><td>WebView 埋め込み。詳細は <a href="../flutter-handoff/docs/VIMEO_PLAYER_FLUTTER.md" download>VIMEO_PLAYER_FLUTTER.md</a></td></tr>
   </table>
 
-  <h3>下部固定バー <code>&lt;bwu-action-bar&gt;</code>（共通コンポーネント）</h3>
-  <p class="lead">横動画・横LIVEと共通。<b>新規に作らず共通実装を流用</b>すること。見た目・挙動の正は <a href="../bwu-action-bar.js" download>bwu-action-bar.js</a>。</p>
+  <h3>下部固定バー <code>&lt;bwu-action-dock&gt;</code> ＋ <code>&lt;bwu-action-bar&gt;</code>（共通コンポーネント）</h3>
+  <p class="lead">横動画系と共通。<b>ボタン位置の正は Figma <code>9345-38216</code>（＝<code>&lt;bwu-action-dock&gt;</code> の枠）</b>。<b>新規に作らず共通実装を流用</b>すること。枠の正は <a href="../bwu-action-dock.js" download>bwu-action-dock.js</a>、中身（ピル/♥🔖）の正は <a href="../bwu-action-bar.js" download>bwu-action-bar.js</a>。</p>
+  <div class="note"><b>枠 <code>&lt;bwu-action-dock&gt;</code>（Figma 9345-38216 が位置の正）:</b> iPhone の角丸を想定した <b>高さ 88px</b> のボックス。<code>padding: 20px</code>（上下左右）、背景は黒の <b>0%→50% 縦グラデ</b>（<code>linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%)</code>）。画面最下部にフラッシュ配置（<code>bottom: 0</code>）。枠自体は <code>pointer-events: none</code>（余白タップは背面に通す）。中身の <code>&lt;bwu-action-bar&gt;</code>（高さ 48px）は上下中央＝上下 20px の余白。</div>
   <table>
     <tr><th>項目</th><th>値</th></tr>
-    <tr><td>配置</td><td>画面下固定、<code>padding: 0 12px calc(12px + safe-area-bottom)</code></td></tr>
-    <tr><td>構成</td><td>左: コメントピル（💬 アイコン + 「Comments」+ アバター3つ）／ 右: ♥ / 🔖 の Lottie トグルボタン（48×48 円）</td></tr>
+    <tr><td>枠（dock）</td><td>高さ <code>88px</code>／<code>padding 20px</code>／背景 黒 <code>0%→50%</code> 縦グラデ／<code>bottom: 0</code> フラッシュ配置（Figma 9345-38216）</td></tr>
+    <tr><td>構成</td><td>左: コメントピル（💬 アイコン + 「Comments」+ アバター3つ）／ 右: ♥ / 🔖 の Lottie トグルボタン（48×48 円）。枠内で <code>space-between</code></td></tr>
     <tr><td>ピル背景</td><td><code>#303030</code> + blur10、border white 15%</td></tr>
     <tr><td>アイコン↔ラベル gap</td><td><b>4px</b>（Figma 10121-28405）</td></tr>
     <tr><td>Lottie フレーム</td><td><code>LIKE_START=17 / FILLED=90 / UNLIKE_START=105</code>。アニメ中は連打ガード</td></tr>
@@ -312,6 +313,7 @@ t=1300   B 開始（ドミノ・ブラーリビール）</code></pre>
     <a class="file" href="../flutter-handoff/lottie/heart-like.json" download><span class="ic lot">LT</span><span><span class="nm">heart-like.json</span><br><span class="ds">♥ トグル Lottie</span></span></a>
     <a class="file" href="../flutter-handoff/lottie/bookmark-like.json" download><span class="ic lot">LT</span><span><span class="nm">bookmark-like.json</span><br><span class="ds">🔖 トグル Lottie</span></span></a>
     <a class="file" href="../flutter-handoff/lottie/messages-4.json" download><span class="ic lot">LT</span><span><span class="nm">messages-4.json</span><br><span class="ds">💬 コメント（ワンショット）</span></span></a>
+    <a class="file" href="../bwu-action-dock.js" download><span class="ic js">JS</span><span><span class="nm">bwu-action-dock.js</span><br><span class="ds">下部バーのグラデ枠 88px（位置の正・Figma 9345-38216）</span></span></a>
     <a class="file" href="../bwu-action-bar.js" download><span class="ic js">JS</span><span><span class="nm">bwu-action-bar.js</span><br><span class="ds">下部バー共通コンポーネント（挙動の正）</span></span></a>
     <a class="file" href="../lottie-data.js" download><span class="ic js">JS</span><span><span class="nm">lottie-data.js</span><br><span class="ds">♥🔖 Lottie データ（JS同梱版）</span></span></a>
   </div>

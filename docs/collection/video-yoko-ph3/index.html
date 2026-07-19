@@ -436,12 +436,11 @@
     .phone.vid-landscape .cs-grabber { display: none !important; }
     .phone.vid-landscape .cs-header { padding: 14px 16px 12px; }
 
-    /* ── 下部バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
-       見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
+    /* ── 下部バー（共通コンポーネント <bwu-action-dock> ＋ <bwu-action-bar>）の配置だけをここで指定 ──
+       枠（88px/padding20/黒0→50%グラデ）は bwu-action-dock.js 側、中身の見た目は bwu-action-bar.js 側 ── */
     .ls-bar {
-      position: absolute; left: 0; bottom: 34px; width: 100%;   /* iOSバーの直上に0gap */
-      box-sizing: border-box; display: none;
-      padding: 0 12px;
+      position: absolute; left: 0; bottom: 0; width: 100%;   /* Figma 9345-38216: 88pxボックスを最下部にフラッシュ配置 */
+      display: none;
       z-index: 50;
     }
     .phone.vid-landscape .ls-bar { display: flex; }
@@ -683,16 +682,19 @@
       </div>
     </div>
 
-    <!-- ════ 〔横モード〕下部固定バー＝共通コンポーネント <bwu-action-bar>。Figma 9448-27814 ════ -->
-    <bwu-action-bar class="ls-bar reveal-item" data-reveal="2" id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+    <!-- ════ 〔横モード〕下部固定バー＝共通コンポーネント <bwu-action-dock>（グラデ枠 88px・Figma 9345-38216）＋ <bwu-action-bar> ════ -->
+    <bwu-action-dock class="ls-bar reveal-item" data-reveal="2">
+      <bwu-action-bar id="lsBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+    </bwu-action-dock>
 
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <!-- ハート/ブックマークの Lottie データを同梱（file:// でも fetch 不要で動く） -->
   <script src="../lottie-data.js"></script>
-  <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
+  <!-- 下部固定バー 共通コンポーネント（枠 <bwu-action-dock> ＋ 中身 <bwu-action-bar>） -->
   <script src="../bwu-action-bar.js"></script>
+  <script src="../bwu-action-dock.js"></script>
   <script>
     /* ════════ アバター（プレースホルダの単色グラデ円） ════════ */
     const AV_COLORS = [

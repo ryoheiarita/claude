@@ -390,17 +390,15 @@
       border: 0;
     }
 
-    /* ── 下部固定バー（共通コンポーネント <bwu-action-bar>）の配置だけをここで指定 ──
-       見た目（ピル/アバター/divider/♥🔖）は bwu-action-bar.js 側 ── */
+    /* ── 下部固定バー（共通コンポーネント <bwu-action-dock> ＋ <bwu-action-bar>）の配置だけをここで指定 ──
+       枠（88px/padding20/黒0→50%グラデ）は bwu-action-dock.js 側、中身の見た目は bwu-action-bar.js 側 ── */
     .action-bar {
       position: fixed;
-      bottom: 34px;   /* iOSバーの直上に0gap */
+      bottom: 0;      /* Figma 9345-38216: 88pxボックスを画面最下部にフラッシュ配置 */
       left: 50%;
       transform: translateX(-50%);
       width: 390px;
       max-width: 100%;
-      box-sizing: border-box;
-      padding: 0 12px;
       z-index: 100;
     }
 
@@ -800,8 +798,10 @@
     </div>
   </div>
 
-  <!-- 下部固定バー＝共通コンポーネント <bwu-action-bar>（コメント ＋ ♥🔖） -->
-  <bwu-action-bar class="action-bar" id="actionBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+  <!-- 下部固定バー＝共通コンポーネント <bwu-action-dock>（グラデ枠 88px）＋ <bwu-action-bar>（コメント ＋ ♥🔖） -->
+  <bwu-action-dock class="action-bar">
+    <bwu-action-bar id="actionBar" label="コメント" avatars="0,2,4"></bwu-action-bar>
+  </bwu-action-dock>
 
   <!-- Comment Sheet（動画記事のシートを流用。シート外は 70% 黒オーバーレイ） -->
   <div class="comment-overlay" id="commentOverlay"></div>
@@ -831,8 +831,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <!-- ハート/ブックマークの Lottie データ（<bwu-action-bar> が参照） -->
   <script src="../lottie-data.js"></script>
-  <!-- 下部フローティングバー 共通コンポーネント <bwu-action-bar> -->
+  <!-- 下部固定バー 共通コンポーネント（枠 <bwu-action-dock> ＋ 中身 <bwu-action-bar>） -->
   <script src="../bwu-action-bar.js"></script>
+  <script src="../bwu-action-dock.js"></script>
 
   <!-- コメントシート（動画記事のシートを流用） -->
   <script>
