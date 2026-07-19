@@ -216,7 +216,7 @@
     .article-h2 {
       font-size: 1.25rem;
       font-weight: 700;
-      line-height: 1.875rem;
+      line-height: 34px; /* 30 + 4 */
       letter-spacing: 0.04em;
       font-feature-settings: "palt" 1;
       color: #fff;
@@ -230,7 +230,7 @@
     .article-h3 {
       font-size: 1.125rem;
       font-weight: 700;
-      line-height: 1.875rem;
+      line-height: 34px; /* 30 + 4 */
       letter-spacing: 0.04em;
       font-feature-settings: "palt" 1;
       color: rgba(255,255,255,0.9);
@@ -248,7 +248,7 @@
       align-items: center;
       justify-content: center;
       height: 24px;
-      padding: 0 8px;
+      padding: 0 8px 2px;   /* 下に2px: 和文/欧文が中央より下に見えるのを光学補正 */
       border-radius: 24px;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(6px);
@@ -265,7 +265,7 @@
     .article-body {
       font-size: 1rem;
       font-weight: 400;
-      line-height: 28px;
+      line-height: 32px; /* 28 + 4 */
       color: rgba(255,255,255,0.7);
     }
     .article-body p { margin-bottom: 24px; }
