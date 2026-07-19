@@ -248,7 +248,7 @@
     <tr><td><b>マージン構成</b>（修正版）</td><td>コンテナ <code>padding: 4px</code>／絵文字間 <b>gap 2px</b>。各絵文字は <b>40×40</b> のタップ枠（角丸30）に中央寄せ。<br>※旧: padding 8/16・gap 16・28px から更新</td><td>外 <code>EdgeInsets.all(4)</code>／各セル <code>SizedBox(40,40)+Center</code>／間 <code>SizedBox(width:2)</code></td></tr>
     <tr><td>位置</td><td>ボタンの<b>直下 4px</b>（<code>top: calc(100% + 4px)</code>）・ボタン<b>左端に左揃え</b>。<b>transform-origin: bottom left</b></td><td>ボタンを anchor に <code>CompositedTransformFollower</code>（offset <code>(0, ボタン高 + 4)</code>）等</td></tr>
     <tr><td>右端はみ出し</td><td>シート（リスト）右端 − <b>12px</b> を超える場合は左へシフトして収める</td><td>画面幅でクランプ（右マージン 12px）</td></tr>
-    <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタン自体に <b>白 1px 枠</b>（<code>border: 1px solid #fff</code>／box-sizing border-box でレイアウトずれ無し）。閉じたら解除</td><td><code>Border.all(color: Colors.white, width: 1)</code>（枠内側描画）</td></tr>
+    <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタンに <b>白 1px 枠</b>。<b>border ではなく内側描画</b>（<code>box-shadow: inset 0 0 0 1px #fff</code>）で、<b>active でもボタンサイズ・位置は不変</b>（border だと幅auto要素は左右1pxずつ伸びる）。閉じたら解除</td><td><code>foregroundDecoration: BoxDecoration(border: Border.all(color: Colors.white, width: 1), borderRadius: ...)</code>（前面描画でサイズ不変）</td></tr>
     <tr><td>開閉挙動</td><td>同じボタン再タップでトグル閉じ／絵文字選択後・シート外/他コメントタップ・<b>リストスクロール</b>で閉じる（1つのみ表示）</td><td>OverlayEntry の生成/破棄。スクロール通知で dismiss</td></tr>
   </table>
 
@@ -257,7 +257,7 @@
   <table>
     <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
     <tr><td>ピッカー内（選択中の絵文字）</td><td>その 40×40 枠に <b>円の背景 white 15%</b>（<code>rounded 30px</code>）。ピッカーを開いた時点で既存の選択を反映（Figma emoji_stamp の ❤️ がこの状態）</td><td>選択セルに <code>BoxDecoration(color: Color(0x26FFFFFF), shape: circle)</code></td></tr>
-    <tr><td>対応するリアクションチップ</td><td>選んだ絵文字のチップ（例 <code>❤️ 120</code>）に <b>白 1px 枠</b>。該当チップが無ければ <code>絵文字 1</code> を新規追加、解除時に削除</td><td>チップに <code>Border.all(color: Colors.white, width: 1)</code></td></tr>
+    <tr><td>対応するリアクションチップ</td><td>選んだ絵文字のチップ（例 <code>❤️ 120</code>）に <b>白 1px 枠</b>（同じく <code>box-shadow: inset</code> で<b>サイズ不変</b>）。該当チップが無ければ <code>絵文字 1</code> を新規追加、解除時に削除</td><td>チップの <code>foregroundDecoration</code> に <code>Border.all(width:1)</code></td></tr>
     <tr><td>選択の流れ（消失）</td><td>絵文字タップ → 円背景で <b>selected を見せる（約300ms）</b> → ピッカー<b>消失</b>。チップに白枠が残る</td><td>選択後 <code>~300ms</code> ディレイで Overlay を閉じる</td></tr>
     <tr><td>解除</td><td>チップ再タップ、または同じ絵文字を再選択（白枠・円背景を外す）</td><td>同上トグル</td></tr>
   </table>

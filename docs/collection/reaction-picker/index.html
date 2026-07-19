@@ -109,8 +109,8 @@
     .react { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border-radius: 20px; background: var(--c-chip); font-size: 14px; }
     .react.add { padding: 0 8px; position: relative; cursor: pointer; }
     .react.add svg { width: 16px; height: 16px; opacity: 1; }
-    /* ピッカー表示中はボタン自体に白 1px 枠（box-sizing:border-box のためレイアウトずれなし） */
-    .react.add.picking { border: 1px solid #fff; }
+    /* ピッカー表示中はボタンに白1px枠。border でなく inset box-shadow で描画しサイズ不変 */
+    .react.add.picking { box-shadow: inset 0 0 0 1px #fff; }  /* 内側1px枠：activeでもサイズ不変 */
 
     /* ── リアクションピッカー（Figma: emoji_stamp） ── */
     .reaction-picker {
@@ -147,7 +147,7 @@
     /* 選択中の絵文字：円の背景（Figma emoji_stamp selected） */
     .reaction-picker .rp-emoji.selected { background: rgba(255,255,255,0.15); }
     /* 自分が選択したリアクションチップ：白 1px 枠 */
-    .react.selected { border: 1px solid #fff; }
+    .react.selected { box-shadow: inset 0 0 0 1px #fff; }     /* 内側1px枠：選択でもサイズ不変 */
 
     footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted2); font-size: 13px; }
     footer a { color: var(--accent); text-decoration: none; }
@@ -223,7 +223,7 @@
       <tr><td>絵文字</td><td><code>❤️ 👍 🎉 👏 ✨ 😆</code> の <b>6個</b>・左から順（Figtree Bold <b>24px</b> / line-height 1）</td><td>固定6グリフ・順序厳守・24px</td></tr>
       <tr><td>位置</td><td>追加ボタン直下 <b>4px</b>（<code>top: calc(100% + 4px)</code>）・ボタン左端に左揃え・<code>transform-origin: bottom left</code></td><td>ボタンを anchor に <code>CompositedTransformFollower</code>（offset <code>(0, h+4)</code>）</td></tr>
       <tr><td>右端はみ出し</td><td>リスト右端 − <b>12px</b> を超えたら左へシフトして収める</td><td>画面幅でクランプ（右マージン12px）</td></tr>
-      <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタン自体に <b>白 1px 枠</b>（<code>border: 1px solid #fff</code>）。閉じたら解除</td><td><code>Border.all(color: Colors.white, width: 1)</code></td></tr>
+      <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタンに <b>白 1px 枠</b>。<b>border ではなく内側描画</b>（<code>box-shadow: inset 0 0 0 1px #fff</code>）で <b>active でもボタンサイズ・位置は不変</b>。閉じたら解除</td><td><code>foregroundDecoration</code> の <code>Border.all(width:1)</code>（前面描画・サイズ不変）</td></tr>
       <tr><td>開閉挙動</td><td>同じボタン再タップでトグル閉じ／絵文字選択後・シート外/他コメントタップ・<b>スクロール</b>で閉じる（同時に1つのみ）</td><td>OverlayEntry の生成/破棄。スクロール通知で dismiss</td></tr>
     </table>
 
@@ -233,7 +233,7 @@
     <table>
       <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
       <tr><td>ピッカー内（選択中の絵文字）</td><td>その 40×40 枠に <b>円の背景 white 15%</b>（<code>rounded 30px</code>）が付く（Figma emoji_stamp の ❤️ がこの状態）。ピッカーを開いた時点で既存の選択を反映</td><td>選択セルだけ <code>decoration: BoxDecoration(color: Color(0x26FFFFFF), shape: circle)</code></td></tr>
-      <tr><td>対応するリアクションチップ</td><td>選んだ絵文字のチップ（例 <code>❤️ 120</code>）に <b>白 1px 枠</b>。該当チップが無ければ <code>絵文字 1</code> のチップを新規追加、解除時に削除</td><td>チップ <code>Border.all(color: Colors.white, width: 1)</code></td></tr>
+      <tr><td>対応するリアクションチップ</td><td>選んだ絵文字のチップ（例 <code>❤️ 120</code>）に <b>白 1px 枠</b>（同じく <code>box-shadow: inset</code> で<b>サイズ不変</b>）。該当チップが無ければ <code>絵文字 1</code> のチップを新規追加、解除時に削除</td><td>チップ <code>foregroundDecoration</code> の <code>Border.all(width:1)</code></td></tr>
       <tr><td>選択の流れ（消失）</td><td>絵文字タップ → 円背景で <b>selected を見せる（約300ms）</b> → ピッカーは<b>消失</b>。チップに白枠が残る</td><td>選択後 <code>~300ms</code> ディレイで Overlay を閉じる</td></tr>
       <tr><td>解除</td><td>チップ再タップ、または同じ絵文字を再選択で解除（白枠・円背景を外す）</td><td>同上トグル</td></tr>
     </table>
@@ -269,7 +269,7 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
     <h2><span class="no">6</span>実装上の注意</h2>
     <ul class="plain">
       <li>ピッカーは<b>同時に1つだけ</b>。別ボタンを開いたら既存を閉じる。開いたボタンには <code>picking</code> フラグ（＝白枠）を付け、閉じたら必ず外す</li>
-      <li><code>box-sizing: border-box</code> 前提。白1px枠でボタンの外寸が変わらない（内側に描画）＝レイアウトずれ無し</li>
+      <li>白1px枠は <b><code>border</code> ではなく <code>box-shadow: inset 0 0 0 1px</code></b> で内側描画する。border だと幅auto要素は左右1pxずつ横に伸び、active時にボタン/チップのサイズ・位置がずれるため（Flutter は <code>foregroundDecoration</code> で前面に描くとサイズ不変）</li>
       <li>backdrop blur は<b>下に何か描画があって初めて効く</b>。単色ベタ塗りの上では効果が見えない点に注意（実画面はコメント文の上に重なる）</li>
       <li>リスト<b>スクロール開始で即クローズ</b>（追従させない）。コメントシートを閉じる時も一緒に閉じる</li>
       <li>絵文字の<b>順序・個数は固定</b>（❤️👍🎉👏✨😆 の6個）</li>
