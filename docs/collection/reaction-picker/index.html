@@ -118,12 +118,11 @@
       top: calc(100% + 4px);
       left: 0;
       z-index: 30;
-      display: flex; align-items: center; gap: 16px;
-      padding: 8px 16px;
+      display: flex; align-items: center; gap: 2px;
+      padding: 4px;
       border-radius: 999px;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      font-size: 28px; line-height: 32px;
       white-space: nowrap;
       transform-origin: bottom left;
       opacity: 0; transform: translateY(10px);
@@ -131,13 +130,24 @@
       pointer-events: none;
     }
     .reaction-picker.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .reaction-picker .rp-emoji { display: inline-block; cursor: pointer; opacity: 0; transform: translateY(8px) scale(.4); }
+    .reaction-picker .rp-emoji {
+      width: 40px; height: 40px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; line-height: 1; cursor: pointer;
+      border-radius: 30px; background: transparent;
+      transition: background .18s ease;
+      opacity: 0; transform: translateY(8px) scale(.4);
+    }
     .reaction-picker.show .rp-emoji { animation: rpEmojiIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
     @keyframes rpEmojiIn {
       0%   { opacity: 0; transform: translateY(8px) scale(.4); }
       60%  { opacity: 1; }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
+    /* 選択中の絵文字：円の背景（Figma emoji_stamp selected） */
+    .reaction-picker .rp-emoji.selected { background: rgba(255,255,255,0.15); }
+    /* 自分が選択したリアクションチップ：白 1px 枠 */
+    .react.selected { border: 1px solid #fff; }
 
     footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted2); font-size: 13px; }
     footer a { color: var(--accent); text-decoration: none; }
@@ -183,8 +193,8 @@
             </div>
             <div class="c-text">みんな要チェックだぜ🚩</div>
             <div class="c-reacts" id="reacts">
-              <span class="react">💖 120</span>
-              <span class="react">👍 32</span>
+              <span class="react" data-emoji="❤️">❤️ 120</span>
+              <span class="react" data-emoji="👍">👍 32</span>
               <span class="react add" id="addBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.5"/><circle cx="9" cy="10" r="1" fill="#fff"/><circle cx="15" cy="10" r="1" fill="#fff"/><path d="M8.5 14c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></span>
             </div>
           </div>
@@ -207,14 +217,25 @@
     <h2><span class="no">3</span>コンポーネント仕様</h2>
     <table>
       <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
-      <tr><td>形状 / サイズ</td><td>ピル（<code>border-radius: 999px</code>）、実寸 <code>280×48</code>（内容依存）</td><td><code>BorderRadius.circular(999)</code></td></tr>
+      <tr><td>形状 / サイズ</td><td>ピル（<code>border-radius: 999px</code>）、実寸 <code>258×48</code>（＝40×6 + gap2×5 + padding4×2）</td><td><code>BorderRadius.circular(999)</code></td></tr>
       <tr><td>背景</td><td>white <b>15%</b>（Surface/Secondary）＋ <b>backdrop blur 16</b>（Blur/16）</td><td><code>Color(0x26FFFFFF)</code> + <code>BackdropFilter(ImageFilter.blur(16,16))</code></td></tr>
-      <tr><td>絵文字</td><td><code>❤️ 👍 🎉 👏 ✨ 😆</code> の <b>6個</b>・左から順（Figtree Bold <b>28px</b> / line-height 32）</td><td>固定6グリフ・順序厳守</td></tr>
-      <tr><td>padding / gap</td><td><code>padding: 8px 16px</code> ／ 絵文字間 <b>gap 16px</b></td><td><code>EdgeInsets.symmetric(h:16,v:8)</code> / Row gap 16</td></tr>
+      <tr><td><b>マージン構成</b>（修正版）</td><td>コンテナ <code>padding: 4px</code>／絵文字間 <b>gap 2px</b>。各絵文字は <b>40×40</b> のタップ枠（角丸30）に中央寄せ</td><td>外 <code>EdgeInsets.all(4)</code>／各セル <code>SizedBox(40,40)</code> + <code>Center</code>／間 <code>SizedBox(width:2)</code></td></tr>
+      <tr><td>絵文字</td><td><code>❤️ 👍 🎉 👏 ✨ 😆</code> の <b>6個</b>・左から順（Figtree Bold <b>24px</b> / line-height 1）</td><td>固定6グリフ・順序厳守・24px</td></tr>
       <tr><td>位置</td><td>追加ボタン直下 <b>4px</b>（<code>top: calc(100% + 4px)</code>）・ボタン左端に左揃え・<code>transform-origin: bottom left</code></td><td>ボタンを anchor に <code>CompositedTransformFollower</code>（offset <code>(0, h+4)</code>）</td></tr>
       <tr><td>右端はみ出し</td><td>リスト右端 − <b>12px</b> を超えたら左へシフトして収める</td><td>画面幅でクランプ（右マージン12px）</td></tr>
       <tr><td><b>ボタン枠（表示中）</b></td><td>ピッカー表示中はボタン自体に <b>白 1px 枠</b>（<code>border: 1px solid #fff</code>）。閉じたら解除</td><td><code>Border.all(color: Colors.white, width: 1)</code></td></tr>
-      <tr><td>開閉挙動</td><td>同じボタン再タップでトグル閉じ／絵文字・シート外/他コメントタップ・<b>スクロール</b>で閉じる（同時に1つのみ）</td><td>OverlayEntry の生成/破棄。スクロール通知で dismiss</td></tr>
+      <tr><td>開閉挙動</td><td>同じボタン再タップでトグル閉じ／絵文字選択後・シート外/他コメントタップ・<b>スクロール</b>で閉じる（同時に1つのみ）</td><td>OverlayEntry の生成/破棄。スクロール通知で dismiss</td></tr>
+    </table>
+
+    <!-- ════ 3b. select 状態 ════ -->
+    <h3>select（選択）状態</h3>
+    <p>自分がそのコメントに付けたリアクションを表す状態。1コメント<b>1つだけ</b>選択でき、もう一度押すと解除（トグル）。</p>
+    <table>
+      <tr><th>項目</th><th>値</th><th>Flutter</th></tr>
+      <tr><td>ピッカー内（選択中の絵文字）</td><td>その 40×40 枠に <b>円の背景 white 15%</b>（<code>rounded 30px</code>）が付く（Figma emoji_stamp の ❤️ がこの状態）。ピッカーを開いた時点で既存の選択を反映</td><td>選択セルだけ <code>decoration: BoxDecoration(color: Color(0x26FFFFFF), shape: circle)</code></td></tr>
+      <tr><td>対応するリアクションチップ</td><td>選んだ絵文字のチップ（例 <code>❤️ 120</code>）に <b>白 1px 枠</b>。該当チップが無ければ <code>絵文字 1</code> のチップを新規追加、解除時に削除</td><td>チップ <code>Border.all(color: Colors.white, width: 1)</code></td></tr>
+      <tr><td>選択の流れ（消失）</td><td>絵文字タップ → 円背景で <b>selected を見せる（約300ms）</b> → ピッカーは<b>消失</b>。チップに白枠が残る</td><td>選択後 <code>~300ms</code> ディレイで Overlay を閉じる</td></tr>
+      <tr><td>解除</td><td>チップ再タップ、または同じ絵文字を再選択で解除（白枠・円背景を外す）</td><td>同上トグル</td></tr>
     </table>
 
     <!-- ════ 4. アニメーション ════ -->
@@ -239,7 +260,8 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
     <table>
       <tr><th>用途</th><th>値</th><th>Flutter</th></tr>
       <tr><td>ピッカー背景</td><td>white 15% ＋ backdrop blur 16</td><td><code>Color(0x26FFFFFF)</code> + <code>ImageFilter.blur(16,16)</code></td></tr>
-      <tr><td>表示中のボタン枠</td><td>white 100% ・1px</td><td><code>Colors.white</code> / <code>width: 1</code></td></tr>
+      <tr><td>選択中の絵文字の円背景</td><td>white 15%（コンテナ 15% の上に重なり少し明るく見える）</td><td><code>Color(0x26FFFFFF)</code>・shape circle</td></tr>
+      <tr><td>選択中チップ／表示中のボタン枠</td><td>white 100% ・1px</td><td><code>Colors.white</code> / <code>width: 1</code></td></tr>
       <tr><td>絵文字</td><td>OS 標準絵文字（色は端末依存）</td><td>プラットフォーム絵文字フォント</td></tr>
     </table>
 
@@ -250,7 +272,9 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
       <li><code>box-sizing: border-box</code> 前提。白1px枠でボタンの外寸が変わらない（内側に描画）＝レイアウトずれ無し</li>
       <li>backdrop blur は<b>下に何か描画があって初めて効く</b>。単色ベタ塗りの上では効果が見えない点に注意（実画面はコメント文の上に重なる）</li>
       <li>リスト<b>スクロール開始で即クローズ</b>（追従させない）。コメントシートを閉じる時も一緒に閉じる</li>
-      <li>絵文字の<b>順序・個数は固定</b>（❤️👍🎉👏✨😆 の6個）。タップされた絵文字を実データのリアクションに加算する連携は別途</li>
+      <li>絵文字の<b>順序・個数は固定</b>（❤️👍🎉👏✨😆 の6個）</li>
+      <li><b>選択は1コメント1つ</b>（単一選択）。別を選ぶと前の選択を解除して乗り換え。選択の永続化（サーバ連携）は別途</li>
+      <li>ピッカーは<b>追加ボタンの内側</b>に生成するため、絵文字タップが「追加ボタンのタップ」と誤判定されないよう、絵文字判定を先に行う</li>
     </ul>
 
     <footer>
@@ -280,13 +304,40 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
         setTimeout(() => p.remove(), 300);
       }
 
+      // 選択トグル（単一選択：別を選ぶと乗り換え、同じなら解除）
+      function toggleReaction(comment, em) {
+        const reactsEl = comment.querySelector('.c-reacts');
+        const addB     = reactsEl.querySelector('.react.add');
+        const chipOf = (e) => [...reactsEl.querySelectorAll('.react:not(.add)')].find(c => c.dataset.emoji === e);
+        const deselect = (e) => {
+          const chip = chipOf(e); if (!chip) return;
+          chip.classList.remove('selected');
+          if (chip.dataset.added === '1') chip.remove();   // 自分だけのチップは消す
+        };
+        const select = (e) => {
+          let chip = chipOf(e);
+          if (!chip) {
+            chip = document.createElement('span');
+            chip.className = 'react'; chip.dataset.emoji = e; chip.dataset.added = '1';
+            chip.textContent = e + ' 1';
+            reactsEl.insertBefore(chip, addB);
+          }
+          chip.classList.add('selected');
+        };
+        const cur = comment.dataset.selected || '';
+        if (cur === em) { deselect(em); comment.dataset.selected = ''; }
+        else { if (cur) deselect(cur); select(em); comment.dataset.selected = em; }
+      }
+
       function openPicker(btn) {
         closePicker();
+        const comment = btn.closest('.comment');
+        const selected = comment.dataset.selected || '';
         const picker = document.createElement('div');
         picker.className = 'reaction-picker';
         picker._owner = btn;
         picker.innerHTML = PICK_EMOJIS
-          .map((em, i) => `<span class="rp-emoji" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
+          .map((em, i) => `<span class="rp-emoji${em === selected ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
           .join('');
         btn.appendChild(picker);
         btn.classList.add('picking');
@@ -303,14 +354,33 @@ t=370    絵文字[5] 😆   （各 0.4s・easeOutBack でバウンド）</code>
       }
 
       stage.addEventListener('click', (e) => {
-        const btn = e.target.closest('.react.add');
+        const btn = e.target.closest('.rp-emoji') ? null : e.target.closest('.react.add');
         if (btn) {
           e.stopPropagation();
           if (activePicker && activePicker._owner === btn) { closePicker(); return; }
           openPicker(btn);
           return;
         }
-        if (e.target.closest('.rp-emoji')) { e.stopPropagation(); closePicker(); return; }
+        // ピッカー内の絵文字 → 選択トグル → selected を見せてから消失
+        const rp = e.target.closest('.rp-emoji');
+        if (rp) {
+          e.stopPropagation();
+          const comment = rp.closest('.comment');
+          const em = rp.dataset.emoji;
+          const willSelect = (comment.dataset.selected || '') !== em;
+          toggleReaction(comment, em);
+          rp.classList.toggle('selected', willSelect);
+          setTimeout(closePicker, 300);   // selected が見えたらピッカー消失
+          return;
+        }
+        // チップタップ → 選択トグル（もう一度押したら解除）
+        const chip = e.target.closest('.react:not(.add)');
+        if (chip && chip.dataset.emoji) {
+          e.stopPropagation();
+          toggleReaction(chip.closest('.comment'), chip.dataset.emoji);
+          closePicker();
+          return;
+        }
         closePicker();
       });
       document.addEventListener('click', closePicker);

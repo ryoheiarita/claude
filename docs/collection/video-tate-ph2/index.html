@@ -364,12 +364,11 @@
       top: calc(100% + 4px);
       left: 0;
       z-index: 30;
-      display: flex; align-items: center; gap: 16px;
-      padding: 8px 16px;
+      display: flex; align-items: center; gap: 2px;
+      padding: 4px;
       border-radius: 999px;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      font-size: 28px; line-height: 32px;
       white-space: nowrap;
       transform-origin: bottom left;
       /* 下からふわっと */
@@ -384,7 +383,11 @@
       pointer-events: auto;
     }
     .reaction-picker .rp-emoji {
-      display: inline-block; cursor: pointer;
+      width: 40px; height: 40px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; line-height: 1; cursor: pointer;
+      border-radius: 30px; background: transparent;
+      transition: background .18s ease;
       opacity: 0; transform: translateY(8px) scale(.4);
     }
     /* 左からドミノ式（animation-delay は JS で index ごとに付与） */
@@ -396,6 +399,10 @@
       60%  { opacity: 1; }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
+    /* 選択中の絵文字：円の背景（Figma emoji_stamp selected） */
+    .reaction-picker .rp-emoji.selected { background: rgba(255,255,255,0.15); }
+    /* 自分が選択したリアクションチップ：白 1px 枠 */
+    .react.selected { border: 1px solid #fff; }
 
     /* ── コメント入力エリア ── */
     .cs-input {
@@ -761,11 +768,11 @@
 
     /* ════════ コメントデータ（Figma準拠） ════════ */
     const COMMENTS = [
-      { av:0, name:'SOTA', verified:true, time:'12時間前', text:'みんな要チェックだぜ🚩', reacts:[['💖','120'],['👍','32']], add:true },
+      { av:0, name:'SOTA', verified:true, time:'12時間前', text:'みんな要チェックだぜ🚩', reacts:[['❤️','120'],['👍','32']], add:true },
       { av:1, name:'SOTA', time:'1時間前', text:'みんなライブに来てくれてありがとう！', add:true },
-      { av:2, name:'SHUNTO', time:'2時間前', text:'みんなライブに来てくれてありがとう！', reacts:[['💖','120'],['👍','32']], add:true },
-      { av:3, name:'ななえ', time:'13時間前', text:'ライブ会場で普通に誕プレ開けるところがいいよね〜 そして本当に嬉しそうでギリギリまで着てて可愛かったー😀', reacts:[['💖','64'],['👍','24']], add:true },
-      { av:4, name:'ひろみ', time:'14時間前', text:'本当に素敵なライブでした❤️またいきたいな☺️', reacts:[['💖','32'],['👍','12']], add:true },
+      { av:2, name:'SHUNTO', time:'2時間前', text:'みんなライブに来てくれてありがとう！', reacts:[['❤️','120'],['👍','32']], add:true },
+      { av:3, name:'ななえ', time:'13時間前', text:'ライブ会場で普通に誕プレ開けるところがいいよね〜 そして本当に嬉しそうでギリギリまで着てて可愛かったー😀', reacts:[['❤️','64'],['👍','24']], add:true },
+      { av:4, name:'ひろみ', time:'14時間前', text:'本当に素敵なライブでした❤️またいきたいな☺️', reacts:[['❤️','32'],['👍','12']], add:true },
       { av:5, name:'ひろみ', time:'2分前', text:'本当に素敵なライブでした❤️またいきたいな☺️', add:true },
     ];
     const checkSVG = `<svg class="c-check" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#2aa7ff"/><path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -775,7 +782,7 @@
     csList.innerHTML =
       `<div class="pinned-label"><svg viewBox="0 0 24 24" fill="none"><path d="M9 4h6l-1 6 3 3v2H7v-2l3-3-1-6z" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 15v5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/></svg>固定されたコメント</div>` +
       COMMENTS.map(c => {
-        const reacts = (c.reacts || []).map(r => `<span class="react">${r[0]} ${r[1]}</span>`).join('');
+        const reacts = (c.reacts || []).map(r => `<span class="react" data-emoji="${r[0]}">${r[0]} ${r[1]}</span>`).join('');
         const add = c.add ? `<span class="react add">${moodSVG}</span>` : '';
         return `<div class="comment">
           <img class="avatar" src="${avatarDataURL(c.av)}" alt="">
@@ -793,10 +800,12 @@
         </div>`;
       }).join('');
 
-    /* ── リアクションピッカー：リアクションボタン(.react.add)タップで 4px 下に表示 ── */
+    /* ── リアクションピッカー（emoji_stamp）＋ select 状態 ── */
     (function initReactionPicker(){
+      // ── リアクションピッカー（emoji_stamp）＋ select 状態 ──
       const PICK_EMOJIS = ['❤️', '👍', '🎉', '👏', '✨', '😆'];
       let activePicker = null;
+
       function closePicker() {
         if (!activePicker) return;
         const p = activePicker;
@@ -805,40 +814,85 @@
         p.classList.remove('show');
         setTimeout(() => p.remove(), 300);
       }
+
+      // 選択トグル（単一選択：別を選ぶと乗り換え、同じなら解除）
+      function toggleReaction(comment, em) {
+        const reactsEl = comment.querySelector('.c-reacts');
+        const addBtn   = reactsEl.querySelector('.react.add');
+        const chipOf = (e) => [...reactsEl.querySelectorAll('.react:not(.add)')].find(c => c.dataset.emoji === e);
+        const deselect = (e) => {
+          const chip = chipOf(e); if (!chip) return;
+          chip.classList.remove('selected');
+          if (chip.dataset.added === '1') chip.remove();   // 自分だけのチップは消す
+        };
+        const select = (e) => {
+          let chip = chipOf(e);
+          if (!chip) {
+            chip = document.createElement('span');
+            chip.className = 'react'; chip.dataset.emoji = e; chip.dataset.added = '1';
+            chip.textContent = e + ' 1';
+            reactsEl.insertBefore(chip, addBtn);
+          }
+          chip.classList.add('selected');
+        };
+        const cur = comment.dataset.selected || '';
+        if (cur === em) { deselect(em); comment.dataset.selected = ''; }
+        else { if (cur) deselect(cur); select(em); comment.dataset.selected = em; }
+      }
+
       csList.addEventListener('click', (e) => {
-        const btn = e.target.closest('.react.add');
+        // 追加ボタン → ピッカー開閉
+        const btn = e.target.closest('.rp-emoji') ? null : e.target.closest('.react.add');
         if (btn) {
           e.stopPropagation();
-          // 同じボタンを再タップ → 閉じる（トグル）
           if (activePicker && activePicker._owner === btn) { closePicker(); return; }
           closePicker();
+          const comment = btn.closest('.comment');
+          const selected = comment.dataset.selected || '';
           const picker = document.createElement('div');
           picker.className = 'reaction-picker';
           picker._owner = btn;
-          // 左からドミノ式：ボックスがふわっと出た後(120ms)、50msずつ遅延
+          // 左からドミノ式（120ms + i×50ms）。選択中の絵文字は円背景つき
           picker.innerHTML = PICK_EMOJIS
-            .map((em, i) => `<span class="rp-emoji" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
+            .map((em, i) => `<span class="rp-emoji${em === selected ? ' selected' : ''}" data-emoji="${em}" style="animation-delay:${120 + i * 50}ms">${em}</span>`)
             .join('');
           btn.appendChild(picker);
           btn.classList.add('picking');
           activePicker = picker;
-          // リスト右端からはみ出す場合は左へ寄せる
           const listRect = csList.getBoundingClientRect();
           const pr = picker.getBoundingClientRect();
           const margin = 12;
           if (pr.right > listRect.right - margin) {
             picker.style.left = ((listRect.right - margin) - pr.right) + 'px';
           }
-          void picker.offsetWidth; // reflow
+          void picker.offsetWidth;
           requestAnimationFrame(() => picker.classList.add('show'));
           return;
         }
-        if (e.target.closest('.rp-emoji')) { e.stopPropagation(); closePicker(); return; }
+        // ピッカー内の絵文字 → 選択トグル → selected を見せてから消失
+        const rp = e.target.closest('.rp-emoji');
+        if (rp) {
+          e.stopPropagation();
+          const comment = rp.closest('.comment');
+          const em = rp.dataset.emoji;
+          const willSelect = (comment.dataset.selected || '') !== em;
+          toggleReaction(comment, em);
+          rp.classList.toggle('selected', willSelect);
+          setTimeout(closePicker, 300);   // selected が見えたらピッカー消失
+          return;
+        }
+        // チップタップ → 選択トグル（もう一度押したら解除）
+        const chip = e.target.closest('.react:not(.add)');
+        if (chip && chip.dataset.emoji) {
+          e.stopPropagation();
+          toggleReaction(chip.closest('.comment'), chip.dataset.emoji);
+          closePicker();
+          return;
+        }
         closePicker();
       });
       csList.addEventListener('scroll', closePicker);
-      const _cc = document.getElementById('commentClose');
-      if (_cc) _cc.addEventListener('click', closePicker);
+      ['commentOverlay','commentClose'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('click', closePicker); });
     })();
 
     /* ════════ 戻るボタン ════════ */
