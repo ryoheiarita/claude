@@ -353,7 +353,7 @@
       background: var(--c-chip); font-size: 14px;
     }
     .react.add { padding: 0 8px; position: relative; }
-    .react.add svg { width: 16px; height: 16px; opacity: .8; }
+    .react.add svg { width: 16px; height: 16px; opacity: 1; }
     /* ピッカー表示中はボタン自体に白 1px 枠（box-sizing:border-box のためレイアウトずれなし） */
     .react.add.picking { border: 1px solid #fff; }
 
@@ -769,7 +769,7 @@
       { av:5, name:'ひろみ', time:'2分前', text:'本当に素敵なライブでした❤️またいきたいな☺️', add:true },
     ];
     const checkSVG = `<svg class="c-check" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#2aa7ff"/><path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    const moodSVG  = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/><circle cx="9" cy="10" r="1" fill="rgba(255,255,255,0.7)"/><circle cx="15" cy="10" r="1" fill="rgba(255,255,255,0.7)"/><path d="M8.5 14c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    const moodSVG  = `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.5"/><circle cx="9" cy="10" r="1" fill="#fff"/><circle cx="15" cy="10" r="1" fill="#fff"/><path d="M8.5 14c.8 1 2 1.6 3.5 1.6s2.7-.6 3.5-1.6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 
     const csList = document.getElementById('csList');
     csList.innerHTML =
