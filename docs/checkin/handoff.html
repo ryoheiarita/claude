@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チェックイン完了モーション Flutter 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a; color: #fff; min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.55); }
+    .header p b { color: rgba(255,255,255,0.85); }
+    .header p a { color: #8fa0ff; }
+    .header p .fig {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .lead { font-size: 13.5px; line-height: 1.7; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+    .lead code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    /* ── ライブプレビュー（本物のプロトタイプを埋め込み） ── */
+    .preview-stage {
+      margin-top: 20px; display: flex; justify-content: center;
+      padding: 32px 20px; border-radius: 16px; background: #101010;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .proto-frame {
+      width: 234px; height: 506.4px; overflow: hidden; border-radius: 28px;
+      outline: 1px solid rgba(255,255,255,0.12);
+    }
+    .proto-frame iframe {
+      width: 390px; height: 844px; border: 0;
+      transform: scale(0.6); transform-origin: top left;
+      pointer-events: auto;
+    }
+    .preview-cap { margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; }
+    .preview-cap a { color: #8fa0ff; }
+
+    /* ── コードブロック ── */
+    .code {
+      margin-top: 16px; border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08); background: #0d0d0f;
+    }
+    .code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 12px; color: rgba(255,255,255,0.5); font-family: ui-monospace, monospace;
+    }
+    .code-copy {
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: transparent;
+      color: #fff; font: inherit; font-size: 11px; padding: 4px 10px; border-radius: 6px;
+    }
+    .code-copy:hover { background: rgba(255,255,255,0.08); }
+    .code pre { margin: 0; padding: 16px; overflow: auto; max-height: 480px; }
+    .code code {
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-size: 12px; line-height: 1.65; color: #e8e8ea; white-space: pre;
+    }
+
+    /* ── note / table ── */
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.6);
+    }
+    .note b { color: rgba(255,255,255,0.85); font-weight: 600; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+    .note a { color: #8fa0ff; }
+
+    table { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 12.5px; line-height: 1.5; }
+    th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); vertical-align: top; }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+    td { color: rgba(255,255,255,0.72); }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid rgba(255,255,255,0.15); }
+    .grad { background: linear-gradient(135deg, #812DFF, #FF6739); }
+    .table-wrap { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>チェックイン完了モーション 実装指示</h2>
+      <p>チェックインの一連のモーション（Figma <span class="fig">Renewal_UI_Design 11077:28046「チェックインをする」</span>）の Flutter 実装一式です。<b>チェックイン可能ピル → ピンの液体フィル → 完了ドミノ</b>の3パーツと、それらをつなぐフロー配線サンプルを<b>コピペで使える Dart 4ファイル</b>として用意しました（追加パッケージ不要・<code style="font-family:ui-monospace;font-size:12px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px">flutter analyze</code> クリーン確認済み）。動きの正解は<a href="./">プロトタイプ</a>を参照してください。</p>
+    </div>
+
+    <!-- ════════ プレビュー ════════ -->
+    <h3 class="section">動きの正解（ライブ）</h3>
+    <p class="lead">下は本物のプロトタイプの埋め込みです。「チェックイン可能」をタップすると一連のモーションが再生されます。</p>
+    <div class="preview-stage">
+      <div class="proto-frame"><iframe src="./" title="check-in prototype"></iframe></div>
+    </div>
+    <p class="preview-cap">フルサイズは <a href="./">checkin/</a>（スマホで開くと全画面）。</p>
+
+    <!-- ════════ タイムライン ════════ -->
+    <h3 class="section">タイムライン</h3>
+    <p class="lead">タップを 0ms とした全体の流れ。数値はすべて下の Dart コードと一致しています。</p>
+    <div class="table-wrap"><table>
+      <tr><th>時刻</th><th>イベント</th><th>時間 / イージング</th></tr>
+      <tr><td>（画面表示 +450ms）</td><td>ピルが上から出現（y −72 → 0）</td><td>0.8s / <code>Cubic(0.16, 1, 0.3, 1)</code>（バウンドなし ease-out）</td></tr>
+      <tr><td>常時</td><td>ピル枠線グラデーションが回転</td><td>2.8s/周・linear・#812DFF→#FF6739</td></tr>
+      <tr><td>0ms</td><td>タップ → ナビ・タブバー fade out ／ 暗転 72% + blur 32 fade in</td><td>0.3s ／ 0.35s</td></tr>
+      <tr><td>150ms</td><td>ピン ポップイン（scale 0.45→1, y +24→0）</td><td>0.45s / <code>Cubic(0.34, 1.45, 0.55, 1)</code></td></tr>
+      <tr><td>450ms</td><td>液体フィル開始（液面 176 → −10）＋ピン 100%→<b>120%</b> 連動拡大</td><td>1.5s / easeInOutCubic</td></tr>
+      <tr><td>1950ms</td><td>波が静まる（振幅 → 0）</td><td>0.35s</td></tr>
+      <tr><td>2420ms</td><td>フィル完了判定（<code>onFilled</code>）</td><td>+120ms</td></tr>
+      <tr><td>2570ms</td><td>dip-to-black（黒フェードで画面差し替えを隠す）</td><td>0.3s</td></tr>
+      <tr><td>2900ms</td><td>完了画面に切り替え → 黒明け。紙吹雪スタート（<b>最初のみ・3s で消滅</b>）</td><td>明け 0.3s / 紙吹雪 3.0s</td></tr>
+      <tr><td>+150ms</td><td>チケットカード出現（ドミノ 1）</td><td>0.65s / <code>Cubic(0.3, 1.3, 0.5, 1)</code>・scale 0.72→1・y 34→0</td></tr>
+      <tr><td>+410ms</td><td>タイトル「チェックインが完了しました」（ドミノ 2）</td><td rowspan="3">0.55s / <code>Cubic(0.3, 1.35, 0.55, 1)</code>・scale 0.92→1・y 26→0</td></tr>
+      <tr><td>+550ms</td><td>サブテキスト（ドミノ 3）</td></tr>
+      <tr><td>+710ms</td><td>「チェックイン履歴へ」ボタン（ドミノ 4）</td></tr>
+    </table></div>
+
+    <!-- ════════ スタイル値 ════════ -->
+    <h3 class="section">スタイル値</h3>
+    <div class="table-wrap"><table>
+      <tr><th>要素</th><th>値</th></tr>
+      <tr><td>ブランドグラデーション</td><td><span class="swatch grad"></span><code>#812DFF</code> → <code>#FF6739</code>（ピル枠線・ピンアイコン・液体。Figma の全グラデーションと共通）</td></tr>
+      <tr><td>ピル</td><td>h 40 / radius 20 / 枠線 1.5px（conic 回転）/ 中身 <span class="swatch" style="background:rgba(0,0,0,.8)"></span>黒 80% <code>0xCC000000</code> + backdrop blur 16 / Figtree SemiBold 14</td></tr>
+      <tr><td>ピン（空）</td><td>117 × 169 / <span class="swatch" style="background:#2F2F2F"></span><code>#2F2F2F</code>（Figma ベクターパスをそのまま Dart Path 化）</td></tr>
+      <tr><td>液体</td><td>縦グラデ #812DFF(上)→#FF6739(下)。手前波 λ=68 / 奥波 λ=92・逆方向・<b>55%</b>（<code>0x8C…</code>）・液面 +2.5px</td></tr>
+      <tr><td>アートワーク</td><td>円形 中心 (58.5, 58.5) / 半径 50（<code>assets/pin_artwork.png</code>）</td></tr>
+      <tr><td>フィル中の暗転</td><td><span class="swatch" style="background:rgba(0,0,0,.72)"></span>黒 72% <code>0xB8000000</code> + <b>blur 32</b>（<code>ImageFilter.blur(sigma 32)</code>）</td></tr>
+      <tr><td>完了画面</td><td>bg <span class="swatch" style="background:#101010"></span><code>#101010</code> / タイトル Bold 22 白 / サブ 12 <code>#9F9F9F</code> / ボタン 白 pill h48 ・ 下 80</td></tr>
+      <tr><td>紙吹雪</td><td>背景1枚（fade 3s + scale 1→1.12 + y 0→−26）＋破片 26 枚（落下 400〜880px・回転 ±360°・2.1〜2.9s でフェード）</td></tr>
+    </table></div>
+
+    <!-- ════════ コード ════════ -->
+    <h3 class="section">① チェックイン可能ピル</h3>
+    <p class="lead">上から降ってくる出現＋回転し続けるグラデーション枠線。CSS の <code>conic-gradient</code> は <code>SweepGradient</code> + <code>GradientRotation</code> で同じ見た目になります。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>checkin_pill.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+
+/// BwU ブランドグラデーション（Figma 準拠）
+const kGradPurple = Color(0xFF812DFF);
+const kGradOrange = Color(0xFFFF6739);
+
+/// 「チェックイン可能」ピル
+/// - 出現: 上 -72px から 0.8s / Cubic(0.16, 1, 0.3, 1)（easeOutExpo 系・バウンドなし）
+/// - 枠線: #812DFF → #FF6739 の conic グラデーションが 2.8s/周 で回転し続ける
+/// - 中身: 黒 80% + backdrop blur 16（背景が動画などの場合に効く）
+class CheckinPill extends StatefulWidget {
+  const CheckinPill({
+    super.key,
+    this.onTap,
+    this.entranceDelay = const Duration(milliseconds: 450),
+    this.label = 'チェックイン可能',
+  });
+
+  final VoidCallback? onTap;
+  final Duration entranceDelay;
+  final String label;
+
+  @override
+  State&lt;CheckinPill&gt; createState() =&gt; _CheckinPillState();
+}
+
+class _CheckinPillState extends State&lt;CheckinPill&gt; with TickerProviderStateMixin {
+  static const _dropCurve = Cubic(0.16, 1.0, 0.3, 1.0);
+  late final AnimationController _border;
+  late final AnimationController _drop;
+
+  @override
+  void initState() {
+    super.initState();
+    _border = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2800))
+      ..repeat();
+    _drop =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    Future.delayed(widget.entranceDelay, () {
+      if (mounted) _drop.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _border.dispose();
+    _drop.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final content = ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xCC000000), // 黒 80%
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CustomPaint(size: Size(20, 20), painter: _MiniPinPainter()),
+              const SizedBox(width: 6),
+              Text(
+                widget.label,
+                style: const TextStyle(
+                  fontFamily: 'Figtree',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 20 / 14,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([_drop, _border]),
+      builder: (context, _) {
+        final e = _dropCurve.transform(_drop.value);
+        return Opacity(
+          // 進行 60% の時点で完全に不透明（CSS keyframes の 60% と同じ）
+          opacity: (_drop.value / 0.6).clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, -72 * (1 - e)),
+            child: CustomPaint(
+              painter: _RotatingBorderPainter(angle: _border.value * 2 * math.pi),
+              child: GestureDetector(onTap: widget.onTap, child: content),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// 回転する conic グラデーション枠線（幅 1.5px・ピル外側）
+class _RotatingBorderPainter extends CustomPainter {
+  const _RotatingBorderPainter({required this.angle});
+  final double angle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero &amp; size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.inflate(0.75),
+      Radius.circular(size.height / 2 + 0.75),
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..shader = SweepGradient(
+        colors: const [kGradPurple, kGradOrange, kGradPurple],
+        stops: const [0.0, 0.5, 1.0],
+        transform: GradientRotation(angle),
+      ).createShader(rect);
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(_RotatingBorderPainter oldDelegate) =&gt;
+      oldDelegate.angle != angle;
+}
+
+/// ピル内の小さなグラデーションピンアイコン（20×20）
+class _MiniPinPainter extends CustomPainter {
+  const _MiniPinPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // アイコン実寸 15.23 × 20 を中央配置
+    canvas.translate((size.width - 15.234) / 2, 0);
+
+    final pin = Path()
+      ..moveTo(7.617, 20)
+      ..cubicTo(7.433, 20, 7.259, 19.913, 7.148, 19.765)
+      ..lineTo(1.519, 12.178)
+      ..cubicTo(0.525, 10.852, 0, 9.275, 0, 7.617)
+      ..cubicTo(0, 3.417, 3.417, 0, 7.617, 0)
+      ..cubicTo(11.817, 0, 15.234, 3.417, 15.234, 7.617)
+      ..cubicTo(15.234, 9.275, 14.709, 10.852, 13.716, 12.178)
+      ..lineTo(8.086, 19.765)
+      ..cubicTo(7.975, 19.913, 7.801, 20, 7.617, 20)
+      ..close();
+
+    canvas.drawPath(
+      pin,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [kGradPurple, kGradOrange],
+        ).createShader(const Rect.fromLTWH(0, 0, 15.234, 20)),
+    );
+    canvas.drawCircle(
+        const Offset(7.617, 7.617), 2.93, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) =&gt; false;
+}
+</code></pre>
+    </div>
+
+    <h3 class="section">② ピンの液体フィル</h3>
+    <p class="lead">Figma のティアドロップベクターを Dart <code>Path</code> に変換済み。サイン波2枚を <code>clipPath</code> 内で描き、フィル進行に合わせてピン全体を 120% まで拡大します。満タンになると <code>onFilled</code> が呼ばれます。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>checkin_pin.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+
+const _purple = Color(0xFF812DFF);
+const _orange = Color(0xFFFF6739);
+// 奥の波（55% 相当）
+const _purple55 = Color(0x8C812DFF);
+const _orange55 = Color(0x8CFF6739);
+
+/// ピンの液体フィル。論理サイズ 117 × 169（Figma と同じ）。
+///
+/// タイムライン（start() から）:
+///   0ms     ポップイン 0.45s / Cubic(0.34, 1.45, 0.55, 1)（scale 0.45→1, y +24→0）
+///   300ms   フィル開始 1.5s / easeInOutCubic。液面 176 → -10、
+///           波面はサイン波2枚（λ=68 / λ=92・逆方向・55%）、
+///           振幅 (3 + 2.6·sin(p·π))。同時にピン全体が 100% → 120% に拡大
+///   1800ms  波が静まる 0.35s（振幅 → 0）
+///   2270ms  onFilled 呼び出し（+120ms）→ 呼び出し側で完了画面へ
+class CheckinPin extends StatefulWidget {
+  const CheckinPin({
+    super.key,
+    required this.artwork,
+    this.autoStart = true,
+    this.onFilled,
+  });
+
+  /// 円形アートワーク（例: AssetImage('assets/pin_artwork.png')）
+  final ImageProvider artwork;
+  final bool autoStart;
+  final VoidCallback? onFilled;
+
+  static const Size size = Size(117, 169);
+
+  @override
+  State&lt;CheckinPin&gt; createState() =&gt; CheckinPinState();
+}
+
+class CheckinPinState extends State&lt;CheckinPin&gt;
+    with SingleTickerProviderStateMixin {
+  static const _popCurve = Cubic(0.34, 1.45, 0.55, 1.0);
+  static const int _popMs = 450;
+  static const int _fillDelayMs = 300;
+  static const int _fillMs = 1500;
+  static const int _settleMs = 350;
+
+  Ticker? _ticker;
+  double _elapsedMs = -1; // 負 = 未開始
+  bool _notified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoStart) start();
+  }
+
+  void start() {
+    if (_ticker != null) return;
+    _ticker = createTicker((d) {
+      setState(() =&gt; _elapsedMs = d.inMicroseconds / 1000.0);
+      const fillEnd = _fillDelayMs + _fillMs + _settleMs + 120;
+      if (!_notified &amp;&amp; _elapsedMs &gt;= fillEnd) {
+        _notified = true;
+        _ticker?.stop();
+        widget.onFilled?.call();
+      }
+    })
+      ..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker?.dispose();
+    super.dispose();
+  }
+
+  static double _easeInOutCubic(double t) =&gt; t &lt; 0.5
+      ? 4 * t * t * t
+      : 1 - math.pow(-2 * t + 2, 3).toDouble() / 2;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_elapsedMs &lt; 0) return SizedBox.fromSize(size: CheckinPin.size);
+
+    final pop = _popCurve.transform((_elapsedMs / _popMs).clamp(0.0, 1.0));
+    final fillT = ((_elapsedMs - _fillDelayMs) / _fillMs).clamp(0.0, 1.0);
+    final e = _easeInOutCubic(fillT);
+    final settleT =
+        ((_elapsedMs - _fillDelayMs - _fillMs) / _settleMs).clamp(0.0, 1.0);
+    final amp = (3 + 2.6 * math.sin(fillT * math.pi)) * (1.0 - settleT);
+
+    return Opacity(
+      opacity: pop.clamp(0.0, 1.0),
+      child: Transform.translate(
+        offset: Offset(0, 24 * (1 - pop)),
+        child: Transform.scale(
+          // ポップイン(0.45→1) × フィル連動の拡大(1→1.2)
+          scale: (0.45 + 0.55 * pop) * (1 + 0.20 * e),
+          child: SizedBox.fromSize(
+            size: CheckinPin.size,
+            child: Stack(
+              children: [
+                CustomPaint(
+                  size: CheckinPin.size,
+                  painter: _PinLiquidPainter(
+                    fillEase: e,
+                    amp: amp,
+                    phase: _elapsedMs / 200.0,
+                  ),
+                ),
+                // 円形アートワーク（中心 58.5, 58.5 / 半径 50）
+                Positioned(
+                  left: 8.5,
+                  top: 8.5,
+                  width: 100,
+                  height: 100,
+                  child: ClipOval(
+                      child: Image(image: widget.artwork, fit: BoxFit.cover)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PinLiquidPainter extends CustomPainter {
+  const _PinLiquidPainter({
+    required this.fillEase,
+    required this.amp,
+    required this.phase,
+  });
+
+  final double fillEase;
+  final double amp;
+  final double phase;
+
+  static const double _levelBottom = 176; // 空
+  static const double _levelTop = -10; // 満タン
+  static const double _bottom = 172; // 波パスの下辺
+
+  /// ティアドロップ形状（Figma ベクターそのまま / viewBox 117 × 168.055）
+  static final Path _pin = Path()
+    ..moveTo(117.000, 56.349)
+    ..cubicTo(117.000, 66.054, 114.144, 75.049, 109.912, 83.708)
+    ..cubicTo(104.189, 95.415, 97.323, 106.492, 90.521, 117.610)
+    ..cubicTo(80.704, 133.654, 70.887, 149.699, 61.050, 165.733)
+    ..cubicTo(60.428, 166.747, 60.048, 168.128, 58.414, 168.052)
+    ..cubicTo(56.914, 167.980, 56.541, 166.704, 55.934, 165.713)
+    ..cubicTo(45.980, 149.480, 36.026, 133.247, 26.086, 117.006)
+    ..cubicTo(19.587, 106.384, 12.911, 95.856, 7.416, 84.682)
+    ..cubicTo(3.820, 77.373, 1.004, 69.828, 0.260, 61.673)
+    ..cubicTo(-1.114, 46.594, 2.945, 33.013, 12.733, 21.326)
+    ..cubicTo(25.710, 5.839, 42.720, -1.268, 63.121, 0.185)
+    ..cubicTo(90.284, 2.119, 112.077, 22.069, 116.385, 48.408)
+    ..cubicTo(116.814, 51.034, 116.992, 53.689, 117.000, 56.349)
+    ..close();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 空のピン（ベース）
+    canvas.drawPath(_pin, Paint()..color = const Color(0xFF2F2F2F));
+
+    final level = _levelBottom + (_levelTop - _levelBottom) * fillEase;
+    const gradRect = Rect.fromLTWH(0, 0, 117, 168);
+
+    canvas.save();
+    canvas.clipPath(_pin);
+    // 奥の波: 55%・少し高い液面・逆方向・広い波長
+    canvas.drawPath(
+      _wave(level + 2.5, -phase * 1.25 + 1.7, amp * 1.35, 92),
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_purple55, _orange55],
+        ).createShader(gradRect),
+    );
+    // 手前の波: 100%
+    canvas.drawPath(
+      _wave(level, phase, amp, 68),
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [_purple, _orange],
+        ).createShader(gradRect),
+    );
+    canvas.restore();
+  }
+
+  Path _wave(double level, double ph, double a, double lambda) {
+    final p = Path()
+      ..moveTo(0, _bottom)
+      ..lineTo(0, level);
+    for (double x = 0; x &lt;= 117; x += 3) {
+      p.lineTo(x, level + math.sin(x / lambda * 2 * math.pi + ph) * a);
+    }
+    return p
+      ..lineTo(117, _bottom)
+      ..close();
+  }
+
+  @override
+  bool shouldRepaint(_PinLiquidPainter oldDelegate) =&gt;
+      oldDelegate.fillEase != fillEase ||
+      oldDelegate.amp != amp ||
+      oldDelegate.phase != phase;
+}
+</code></pre>
+    </div>
+
+    <h3 class="section">③ 完了画面（紙吹雪 + ドミノ出現）</h3>
+    <p class="lead"><code>CheckinConfetti</code> は表示から3秒で消える使い切りオーバーレイ、<code>DominoReveal</code> は delay を変えて並べるだけのドミノ出現ラッパーです。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>checkin_complete.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+/// 紙吹雪オーバーレイ。表示された瞬間から約 3 秒で消滅する（1回のみ・ループなし）。
+/// [background] に書き出し済みの紙吹雪背景画像
+/// （例: AssetImage('assets/confetti_bg.png')）を渡すと、
+/// 背景ごと fade(3s) + scale 1→1.12 + y 0→-26 で消える。
+/// さらに 26 枚の破片が舞い落ちながらフェードアウトする。
+class CheckinConfetti extends StatefulWidget {
+  const CheckinConfetti({super.key, this.background, this.pieceCount = 26});
+
+  final ImageProvider? background;
+  final int pieceCount;
+
+  @override
+  State&lt;CheckinConfetti&gt; createState() =&gt; _CheckinConfettiState();
+}
+
+class _CheckinConfettiState extends State&lt;CheckinConfetti&gt;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 3000))
+    ..forward();
+  late final List&lt;_Piece&gt; _pieces =
+      List.generate(widget.pieceCount, (i) =&gt; _Piece(math.Random(i * 7 + 1)));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final t = Curves.easeOut.transform(_c.value);
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              if (widget.background != null)
+                Opacity(
+                  opacity: 1 - t,
+                  child: Transform.translate(
+                    offset: Offset(0, -26 * t),
+                    child: Transform.scale(
+                      scale: 1 + 0.12 * t,
+                      child:
+                          Image(image: widget.background!, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+              CustomPaint(painter: _PiecesPainter(_pieces, _c.value)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 舞い落ちる破片 1 枚分のパラメータ（乱数固定シードで毎回同じ見た目）
+class _Piece {
+  _Piece(math.Random r)
+      : x = r.nextDouble(),
+        y = -0.07 - r.nextDouble() * 0.14,
+        size = 14 + r.nextDouble() * 30,
+        fall = 400 + r.nextDouble() * 480,
+        drift = (r.nextDouble() - 0.5) * 120,
+        rot0 = r.nextDouble() * math.pi * 2,
+        rotDelta = (r.nextDouble() - 0.5) * math.pi * 4,
+        delay = r.nextDouble() * 0.083, // 0〜250ms / 3000ms
+        durFrac = (2100 + r.nextDouble() * 800) / 3000,
+        hue = r.nextDouble() * 360;
+
+  final double x, y; // 画面比率（y は画面上端より上から）
+  final double size, fall, drift, rot0, rotDelta, delay, durFrac, hue;
+}
+
+class _PiecesPainter extends CustomPainter {
+  const _PiecesPainter(this.pieces, this.t);
+  final List&lt;_Piece&gt; pieces;
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in pieces) {
+      final lt = ((t - p.delay) / p.durFrac).clamp(0.0, 1.0);
+      if (lt &lt;= 0 || lt &gt;= 1) continue;
+      final e = Curves.easeInOut.transform(lt);
+      final cx = p.x * size.width + p.drift * e;
+      final cy = p.y * size.height + p.fall * e;
+
+      canvas.save();
+      canvas.translate(cx, cy);
+      canvas.rotate(p.rot0 + p.rotDelta * e);
+      // ホログラム風の淡い短冊（横:縦 ≒ 1:2.2）
+      final rect = Rect.fromCenter(
+          center: Offset.zero, width: p.size * 0.45, height: p.size);
+      final paint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            HSLColor.fromAHSL(0.85 * (1 - lt), p.hue, 0.35, 0.82).toColor(),
+            HSLColor.fromAHSL(0.85 * (1 - lt), (p.hue + 60) % 360, 0.3, 0.72)
+                .toColor(),
+          ],
+        ).createShader(rect);
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(1.5)), paint);
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PiecesPainter oldDelegate) =&gt; oldDelegate.t != t;
+}
+
+/// ドミノ式出現。delay をずらして並べるだけ。
+/// カード → タイトル → サブテキスト → ボタン の順:
+///   150ms / 410ms / 550ms / 710ms
+class DominoReveal extends StatefulWidget {
+  const DominoReveal({
+    super.key,
+    required this.delay,
+    required this.child,
+    this.card = false,
+  });
+
+  final Duration delay;
+  final Widget child;
+
+  /// カードだけ少し大きめのポップ（scale 0.72 / y 34 / 0.65s）
+  final bool card;
+
+  @override
+  State&lt;DominoReveal&gt; createState() =&gt; _DominoRevealState();
+}
+
+class _DominoRevealState extends State&lt;DominoReveal&gt;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: widget.card ? 650 : 550),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(widget.delay, () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curve =
+        widget.card ? const Cubic(0.3, 1.3, 0.5, 1.0) : const Cubic(0.3, 1.35, 0.55, 1.0);
+    final s0 = widget.card ? 0.72 : 0.92;
+    final dy = widget.card ? 34.0 : 26.0;
+
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        final e = curve.transform(_c.value);
+        return Opacity(
+          opacity: _c.value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, dy * (1 - e)),
+            child: Transform.scale(scale: s0 + (1 - s0) * e, child: child),
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+</code></pre>
+    </div>
+
+    <h3 class="section">④ フロー配線サンプル</h3>
+    <p class="lead">idle → filling → complete の状態遷移と、暗転・dip-to-black のつなぎ方。実アプリでは「元画面」「チケットカード」を実コンポーネントに差し替えてください。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>checkin_flow.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+
+import 'checkin_complete.dart';
+import 'checkin_pill.dart';
+import 'checkin_pin.dart';
+
+/// チェックインフロー全体の配線サンプル。
+/// idle（ピル表示）→ filling（暗転+blur32 の上でピンが液体フィル）
+/// → 一瞬の暗転（dip-to-black 0.3s）→ complete（紙吹雪 + ドミノ出現）
+enum CheckinPhase { idle, filling, complete }
+
+class CheckinFlowDemo extends StatefulWidget {
+  const CheckinFlowDemo({super.key, this.pinArtwork});
+
+  /// ピン中央の円形アートワーク。省略時はダミーの黒円。
+  final ImageProvider? pinArtwork;
+
+  @override
+  State&lt;CheckinFlowDemo&gt; createState() =&gt; _CheckinFlowDemoState();
+}
+
+class _CheckinFlowDemoState extends State&lt;CheckinFlowDemo&gt; {
+  CheckinPhase _phase = CheckinPhase.idle;
+  bool _faderOn = false;
+
+  void _startCheckin() {
+    if (_phase != CheckinPhase.idle) return;
+    setState(() =&gt; _phase = CheckinPhase.filling);
+  }
+
+  // ピンが満タンになった: 150ms 後に暗転 → 480ms 後に画面を差し替えて明ける
+  void _onPinFilled() async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (!mounted) return;
+    setState(() =&gt; _faderOn = true);
+    await Future.delayed(const Duration(milliseconds: 330));
+    if (!mounted) return;
+    setState(() {
+      _phase = CheckinPhase.complete;
+      _faderOn = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF101010),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ─── 元画面（実アプリではイベント/アーティストページ） ───
+          if (_phase != CheckinPhase.complete) ...[
+            const Center(
+              child: Text('（ここに元画面のコンテンツ）',
+                  style: TextStyle(color: Colors.white24, fontSize: 13)),
+            ),
+            // チェックイン可能ピル（ツールバー中央 / top 64）
+            Positioned(
+              top: 64,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: _phase == CheckinPhase.idle ? 1 : 0,
+                duration: const Duration(milliseconds: 300),
+                child: Center(child: CheckinPill(onTap: _startCheckin)),
+              ),
+            ),
+          ],
+
+          // ─── フィル中: 暗転 72% + blur 32 → その上にピン ───
+          if (_phase == CheckinPhase.filling) ...[
+            _AnimatedDim(
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+                  child: const ColoredBox(color: Color(0xB8000000)), // 黒 72%
+                ),
+              ),
+            ),
+            Positioned(
+              // Figma: ピン上端 y=317（画面高 844 基準）
+              top: 317,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: CheckinPin(
+                  artwork: widget.pinArtwork ??
+                      const AssetImage('assets/pin_artwork.png'),
+                  onFilled: _onPinFilled,
+                ),
+              ),
+            ),
+          ],
+
+          // ─── 完了画面 ───
+          if (_phase == CheckinPhase.complete) const _CompleteScreen(),
+
+          // ─── dip-to-black（画面差し替えを黒で隠す） ───
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: _faderOn ? 1 : 0,
+              duration: const Duration(milliseconds: 300),
+              child: const ColoredBox(color: Colors.black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 暗転レイヤーを 0.35s でフェードイン
+class _AnimatedDim extends StatelessWidget {
+  const _AnimatedDim({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder&lt;double&gt;(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 350),
+      builder: (context, v, c) =&gt; Opacity(opacity: v, child: c),
+      child: child,
+    );
+  }
+}
+
+/// 完了画面: 紙吹雪（3s で消滅）+ カード → タイトル → サブ → ボタンのドミノ
+class _CompleteScreen extends StatelessWidget {
+  const _CompleteScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: Color(0xFF101010)),
+        // 紙吹雪は書き出し済み背景があれば
+        // CheckinConfetti(background: AssetImage('assets/confetti_bg.png'))
+        const CheckinConfetti(),
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DominoReveal(
+                delay: const Duration(milliseconds: 150),
+                card: true,
+                child: _ticketCard(),
+              ),
+              const SizedBox(height: 24),
+              const DominoReveal(
+                delay: Duration(milliseconds: 410),
+                child: Text('チェックインが完了しました',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
+              ),
+              const SizedBox(height: 8),
+              const DominoReveal(
+                delay: Duration(milliseconds: 550),
+                child: Text('チェックインページで確認しましょう',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9F9F9F))),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 80,
+          child: DominoReveal(
+            delay: const Duration(milliseconds: 710),
+            child: SizedBox(
+              height: 48,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white, foregroundColor: Colors.black),
+                onPressed: () {},
+                child: const Text('チェックイン履歴へ',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // デモ用の簡易チケットカード（本番はチケット UI コンポーネントを使用）
+  Widget _ticketCard() {
+    return Container(
+      width: 278,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(24)),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('EVENT',
+              style: TextStyle(fontSize: 12, color: Color(0xFF838383))),
+          SizedBox(height: 4),
+          Text('B with U Release Party 2026 @Tokyo',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: Color(0xFF191919))),
+        ],
+      ),
+    );
+  }
+}
+</code></pre>
+    </div>
+
+    <!-- ════════ アセット ════════ -->
+    <h3 class="section">アセット</h3>
+    <div class="note">
+      プロトタイプと同じものを <code>assets/</code> に置いて <code>pubspec.yaml</code> に登録してください。
+      <ul>
+        <li><a href="assets/pin_artwork.png" download>pin_artwork.png</a> — ピン中央の円形アートワーク（200×200）</li>
+        <li><a href="assets/confetti_bg.png" download>confetti_bg.png</a> — 紙吹雪背景（390×844 書き出し）。<code>CheckinConfetti(background: AssetImage(...))</code> に渡す</li>
+        <li><a href="assets/ticket_top.svg" download>ticket_top.svg</a> / <a href="assets/ticket_bottom.svg" download>ticket_bottom.svg</a> / <a href="assets/ticket_logo.svg" download>ticket_logo.svg</a> / <a href="assets/ticket_stamp.png" download>ticket_stamp.png</a> — チケットカード用（カード UI 実装時に）</li>
+        <li>フォント <b>Figtree</b>（SemiBold / Bold）を <code>pubspec.yaml</code> の <code>fonts:</code> に登録</li>
+      </ul>
+    </div>
+
+    <!-- ════════ 実装ノート ════════ -->
+    <h3 class="section">実装ノート（CSS → Flutter 対応）</h3>
+    <div class="note">
+      <ul>
+        <li><b>blur の換算</b>: CSS <code>blur(Npx)</code> = <code>ImageFilter.blur(sigmaX: N, sigmaY: N)</code>。暗転は 32、ピル内は 16</li>
+        <li><b>conic-gradient の回転枠線</b>: <code>SweepGradient(colors: [紫, 橙, 紫], stops: [0, .5, 1], transform: GradientRotation(angle))</code> を stroke で描く。<code>AnimationController(2.8s).repeat()</code> で回す</li>
+        <li><b>暗転 + blur はピンと同レイヤーに</b>: Web 版では背景側に blur を掛けると動画レイヤーの合成問題が出たため、<b>暗転レイヤー（BackdropFilter）→ ピン</b> の順で上に重ねる構成にしている。Flutter でも <code>BackdropFilter</code> は <code>ClipRect</code> で範囲を必ず区切ること</li>
+        <li><b>画面差し替えは dip-to-black</b>: フィル画面 → 完了画面はクロスフェードではなく黒を 0.3s 挟む（透過クロスフェードだと背景が透けて見える瞬間が出るため）</li>
+        <li><b>紙吹雪は最初の1回だけ</b>: <code>CheckinConfetti</code> は <code>initState</code> で 3s 再生して終わり。ループさせない</li>
+        <li><b>ピンのアンカー</b>: 画面高 844 基準で上端 y=317・水平中央。拡大の transform-origin はピン中心</li>
+        <li>数値検証: 各パラメータは HTML プロトタイプ（<a href="./">checkin/</a>）の実装値と同一。迷ったらプロトタイプの <code>index.html</code> 内 JS が一次ソース</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.code-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.closest('.code').querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(function () {
+          var t = btn.textContent;
+          btn.textContent = 'コピーしました';
+          setTimeout(function () { btn.textContent = t; }, 1500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
