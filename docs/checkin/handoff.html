@@ -994,7 +994,7 @@ class _CompleteScreen extends StatelessWidget {
     <div class="note">
       プロトタイプと同じものを <code>assets/</code> に置いて <code>pubspec.yaml</code> に登録してください。
       <ul>
-        <li><a href="assets/pin_artwork.png" download>pin_artwork.png</a> — ピン中央の円形アートワーク（200×200）</li>
+        <li><a href="assets/pin_artwork_skyhi.svg" download>pin_artwork_skyhi.svg</a> — ピン中央の円形アートワーク（<b>黒背景 + アーティストロゴ</b> / Design_System_V2 <code>521:382</code>）。Flutter では <code>flutter_svg</code> の <code>SvgPicture</code> を <code>ClipOval</code> に入れるか、黒円 + ロゴパスの描画で再現（ロゴ単体: <a href="assets/skyhi_logo.svg" download>skyhi_logo.svg</a>、ロゴ幅は円直径の約42%）</li>
         <li><a href="assets/confetti_bg.png" download>confetti_bg.png</a> — 紙吹雪背景（390×844 書き出し）。<code>CheckinConfetti(background: AssetImage(...))</code> に渡す</li>
         <li><a href="assets/ticket_top.svg" download>ticket_top.svg</a> / <a href="assets/ticket_bottom.svg" download>ticket_bottom.svg</a> / <a href="assets/ticket_logo.svg" download>ticket_logo.svg</a> / <a href="assets/ticket_stamp.png" download>ticket_stamp.png</a> — チケットカード用（カード UI 実装時に）</li>
         <li>フォント <b>Figtree</b>（SemiBold / Bold）を <code>pubspec.yaml</code> の <code>fonts:</code> に登録</li>
