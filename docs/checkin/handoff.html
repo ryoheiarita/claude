@@ -158,7 +158,7 @@
       <tr><td>ピル</td><td>h 40 / radius 20 / 枠線 1.5px（conic 回転）/ 中身 <span class="swatch" style="background:rgba(0,0,0,.8)"></span>黒 80% <code>0xCC000000</code> + backdrop blur 16 / Figtree SemiBold 14</td></tr>
       <tr><td>ピン（空）</td><td>117 × 169 / <span class="swatch" style="background:#2F2F2F"></span><code>#2F2F2F</code>（Figma ベクターパスをそのまま Dart Path 化）</td></tr>
       <tr><td>液体</td><td>縦グラデ #812DFF(上)→#FF6739(下)。手前波 λ=68 / 奥波 λ=92・逆方向・<b>55%</b>（<code>0x8C…</code>）・液面 +2.5px</td></tr>
-      <tr><td>アートワーク</td><td>円形 中心 (58.5, 58.5) / 半径 50（<code>assets/pin_artwork.png</code>）</td></tr>
+      <tr><td>アートワーク</td><td>円形 中心 (58.5, 58.5) / 半径 50。<b>黒背景 + アーティストロゴ</b>（ロゴ幅は円直径の約42%）。ロゴは<b>タブバー中央に表示されるアーティストロゴと同一アセット</b>を使用する（Design_System_V2 の Logo コンポーネント / artist バリアント）</td></tr>
       <tr><td>フィル中の暗転</td><td><span class="swatch" style="background:rgba(0,0,0,.72)"></span>黒 72% <code>0xB8000000</code> + <b>blur 32</b>（<code>ImageFilter.blur(sigma 32)</code>）</td></tr>
       <tr><td>完了画面</td><td>bg <span class="swatch" style="background:#101010"></span><code>#101010</code> / タイトル Bold 22 白 / サブ 12 <code>#9F9F9F</code> / ボタン 白 pill h48 ・ 下 80</td></tr>
       <tr><td>紙吹雪</td><td>背景1枚（fade 3s + scale 1→1.12 + y 0→−26）＋破片 26 枚（落下 400〜880px・回転 ±360°・2.1〜2.9s でフェード）</td></tr>
@@ -994,7 +994,7 @@ class _CompleteScreen extends StatelessWidget {
     <div class="note">
       プロトタイプと同じものを <code>assets/</code> に置いて <code>pubspec.yaml</code> に登録してください。
       <ul>
-        <li><a href="assets/pin_artwork_skyhi.svg" download>pin_artwork_skyhi.svg</a> — ピン中央の円形アートワーク（<b>黒背景 + アーティストロゴ</b> / Design_System_V2 <code>521:382</code>）。Flutter では <code>flutter_svg</code> の <code>SvgPicture</code> を <code>ClipOval</code> に入れるか、黒円 + ロゴパスの描画で再現（ロゴ単体: <a href="assets/skyhi_logo.svg" download>skyhi_logo.svg</a>、ロゴ幅は円直径の約42%）</li>
+        <li><a href="assets/pin_artwork_skyhi.svg" download>pin_artwork_skyhi.svg</a> — ピン中央の円形アートワーク（<b>黒背景 + アーティストロゴ</b> / Design_System_V2 <code>521:382</code>、例は SKY-HI）。<b>ロゴはタブバー中央のアーティストロゴと同一アセットを使い回す</b>こと（アーティストごとに切り替え）。Flutter では <code>flutter_svg</code> の <code>SvgPicture</code> を <code>ClipOval</code> に入れるか、黒円 + ロゴパスの描画で再現（ロゴ単体: <a href="assets/skyhi_logo.svg" download>skyhi_logo.svg</a>、ロゴ幅は円直径の約42%）</li>
         <li><a href="assets/confetti_bg.png" download>confetti_bg.png</a> — 紙吹雪背景（390×844 書き出し）。<code>CheckinConfetti(background: AssetImage(...))</code> に渡す</li>
         <li><a href="assets/ticket_top.svg" download>ticket_top.svg</a> / <a href="assets/ticket_bottom.svg" download>ticket_bottom.svg</a> / <a href="assets/ticket_logo.svg" download>ticket_logo.svg</a> / <a href="assets/ticket_stamp.png" download>ticket_stamp.png</a> — チケットカード用（カード UI 実装時に）</li>
         <li>フォント <b>Figtree</b>（SemiBold / Bold）を <code>pubspec.yaml</code> の <code>fonts:</code> に登録</li>
