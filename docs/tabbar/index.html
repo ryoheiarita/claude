@@ -5,9 +5,11 @@
     - 形 = checkin_motion のタブバー verbatim(中央HANA丸がバー上端から10pxはみ出す)
     - バー4アイコン + Moreメニュー3アイコン = animated iconsax Lottie
     - More タップ → Tabbar_set 322:1202 Opened: 白丸反転 + Check In / Gallery / Calendar 展開
-    - 背景グラデ完全再現: 通常時 transparent 52.404%→rgba(0,0,0,.6) / 展開時 #101010グラデ + blur8
-  The TABBAR CSS / MARKUP / JS blocks below are spliced verbatim from the component.
-  Phone frame + mobile fit は checkin_motion と同方式。
+    - 背景グラデ完全再現: 通常時 transparent 52.404%→rgba(0,0,0,.6) /
+      展開時 #101010グラデ + 上に向かって消える background-blur 8px
+  TABBAR CSS / MARKUP / JS はコンポーネントから verbatim スプライス。
+  ⚠️ サイズ検証用ページなので desktop は縮小せず 1:1(定義値どおりの実寸)。
+     ウィンドウが低い場合はページをスクロール。スマホは実機画面にフィット。
 -->
 <html lang="ja">
 <head>
@@ -22,23 +24,24 @@
 <script src="lottie-icons.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html,body{min-height:100%;}
   body{
     background:#050505;
-    display:flex;align-items:center;justify-content:center;
+    display:flex;justify-content:center;align-items:flex-start;
+    padding:24px 0;overflow:auto;
     font-family:'Figtree','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
     -webkit-font-smoothing:antialiased;color:#fff;
-    overflow:hidden;
   }
+  /* 実機ではベゼル無し・画面いっぱい */
+  body.mobile{padding:0;overflow:hidden;align-items:center;}
 
-  /* ============ phone frame (checkin_motion方式) ============ */
-  #phoneWrap{position:relative;}
+  /* ============ phone frame ============ */
+  #phoneWrap{position:relative;margin:auto;}   /* margin:auto = 収まる時は中央、溢れる時は上詰め */
   #phone{
     position:relative;width:390px;height:844px;
     background:#101010;border-radius:47px;overflow:hidden;
     box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 40px 90px rgba(0,0,0,.8);
   }
-  /* on a real phone: no bezel, fill the screen */
   body.mobile #phone{border-radius:0;box-shadow:none;}
 
   #docLink{
@@ -192,9 +195,12 @@
     color:rgba(255,255,255,0.5);   /* Figma 261:558: white 50%, no shadow */
   }
   /* ---- 追加分: バー背景の黒透過グラデーション (322:1202 コンテナ背景の完全再現) ----
-     通常時: linear-gradient(transparent 52.404% -> rgba(0,0,0,0.6))、blurなし
-     展開時: linear-gradient(rgba(16,16,16,0) -> #101010) + backdrop-blur 8px
-     2層をopacityクロスフェード(backdrop-filter自体はtransition不可のため) */
+     通常時 (261:414): linear-gradient(transparent 52.404% -> rgba(0,0,0,0.6))、blurなし
+     展開時 (316:1059): linear-gradient(rgba(16,16,16,0) -> #101010) + background-blur 8px
+     ⚠️ 展開時のblurは「上に向かって透明になるblur」。Figmaのbackground-blurは
+        レイヤー自身のアルファで変調される(グラデが透明な上側ではblurも効かない)ため、
+        CSSでは blur層に同じアルファ勾配の mask を掛けて再現する。
+     層構成(paint順): ::before=通常グラデ → __blur=マスク付きblur → ::after=展開グラデ */
   .tabbar-bg{
     position:absolute;left:0;right:0;bottom:0;height:268px;
     pointer-events:none;z-index:4;   /* グラデ4 < スクリム5 < バー6 */
@@ -204,10 +210,21 @@
     background:linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%);
     opacity:1;transition:opacity .3s ease;
   }
-  .tabbar-bg::after{    /* Opened (316:1059) */
+  /* 上に向かって消えるblur。opacityでフェードすると合成レイヤー化でblurが飛ぶので、
+     backdrop-filter の半径そのものを 0px -> 8px でアニメーションさせる。 */
+  .tabbar-bg__blur{
+    position:absolute;inset:0;
+    backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+    transition:backdrop-filter .3s ease,-webkit-backdrop-filter .3s ease;
+    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+    mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+  }
+  .tabbar-bg.open .tabbar-bg__blur{
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  }
+  .tabbar-bg::after{    /* Opened (316:1059) の色グラデ — blurの上に乗る */
     content:"";position:absolute;inset:0;
     background:linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%);
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     opacity:0;transition:opacity .3s ease;
   }
   .tabbar-bg.open::before{opacity:0;}
@@ -238,7 +255,7 @@
     <div id="scroller">
       <div class="feed">
         <h1>Tab Bar 260726</h1>
-        <div class="sub">More をタップ → メニュー展開(背景グラデ+blur)/ タブでアイコン再生</div>
+        <div class="sub">More をタップ → メニュー展開(背景グラデ + 上に向かって消える blur)/ タブでアイコン再生</div>
         <div class="hero"></div>
         <div class="grid">
           <div class="tile t1"></div><div class="tile t2"></div>
@@ -251,7 +268,7 @@
     </div>
 
     <!-- ===== TABBAR (verbatim from component) ===== -->
-    <div class="tabbar-bg" id="tabbarBg"></div>
+    <div class="tabbar-bg" id="tabbarBg"><div class="tabbar-bg__blur"></div></div>
       <div class="tabbar-scrim" id="tabbarScrim"></div>
       <!-- TABBAR — bar verbatim from checkin_motion, Home active, center = More -->
       <nav class="tabbar" id="tabbar">
@@ -314,15 +331,20 @@
 </div>
 
 <script>
-/* ---------- fit phone to viewport (checkin_motion方式) ---------- */
+/* ---------- phone frame fit ----------
+   desktop: 1:1(縮小しない = 定義値どおりの実寸で検証できる)
+   mobile : 実機画面にフィット(実機での見え方が正) */
 (function(){
+  const wrap = document.getElementById('phoneWrap');
   function fit(){
     const mobile = innerWidth <= 500;
     document.body.classList.toggle('mobile', mobile);
-    const s = mobile
-      ? Math.min(innerWidth / 390, innerHeight / 844)   // fullscreen, no bezel
-      : Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
-    document.getElementById('phoneWrap').style.transform = `scale(${s})`;
+    if (mobile){
+      const s = Math.min(innerWidth / 390, innerHeight / 844);
+      wrap.style.transform = `scale(${s})`;
+    } else {
+      wrap.style.transform = 'none';
+    }
   }
   addEventListener('resize', fit); fit();
 })();

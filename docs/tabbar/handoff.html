@@ -137,10 +137,22 @@ flutter:
   <table>
     <tr><th>状態</th><th>値</th></tr>
     <tr><td>通常時 <span class="fig">261:414</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%)</code> / <b>blur なし</b></td></tr>
-    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%)</code> + <b>backdrop blur 8</b></td></tr>
-    <tr><td>切替</td><td>2層を opacity クロスフェード <b>0.3s ease</b>(blur自体はアニメしない)</td></tr>
-    <tr><td>重なり順</td><td>コンテンツ &lt; <b>背景グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
+    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%)</code> + <b>background blur 8</b>(下記)</td></tr>
+    <tr><td>切替</td><td>色グラデは opacity クロスフェード <b>0.3s ease</b> / blur は<b>半径 0 → 8 をアニメーション</b></td></tr>
+    <tr><td>重なり順</td><td>コンテンツ &lt; <b>①通常グラデ → ②blur層 → ③展開グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
   </table>
+
+  <div class="warn"><b>展開時の blur は「上に向かって透明になる blur」。</b>
+  Figma の background-blur は<b>レイヤー自身のアルファで変調される</b>ため、グラデが透明な
+  上側では blur も効かず、下へ行くほど強くかかる(上端 blur 0 → 下端 blur 8 の連続変化)。
+  一様な全面 blur にしないこと。
+  <br><br>
+  実装:<br>
+  ・Flutter → blur 層を <code>ShaderMask</code>(<code>BlendMode.dstIn</code> + 縦グラデ
+  transparent→black)で抜く。<code>TabBarBg260726</code> に実装済み。<br>
+  ・CSS → blur 層に <code>mask-image: linear-gradient(180deg, transparent 0%, #000 100%)</code>。<br>
+  ・フェードは <b>opacity ではなく blur 半径(sigma)をアニメーション</b>させる
+  (opacity を動かすと合成レイヤー化して blur が一時的に消える)。</div>
 
   <h3 class="section">3. アニメーション仕様</h3>
 
@@ -208,7 +220,7 @@ Stack(children: [
   <h3 class="section">6. リファレンス</h3>
   <table>
     <tr><th>項目</th><th>場所</th></tr>
-    <tr><td>動作デモ</td><td><a href="./" style="color:#8fa0ff">tabbar/(このサイト内)</a> — スマホで開くと実寸で確認可</td></tr>
+    <tr><td>動作デモ</td><td><a href="./" style="color:#8fa0ff">tabbar/(このサイト内)</a> — PCは<b>1:1(縮小なし)</b>で寸法検証可、スマホは実機画面にフィット</td></tr>
     <tr><td>Figma</td><td>Design_System_V2 <span class="fig">Tabbar_set 322:1202</span>(Default 261:414 / Opened 316:1059)</td></tr>
     <tr><td>ソースコンポーネント</td><td><span class="mono">bwu/components/tabbar-260726</span>(BASELINE 2026-07-26)</td></tr>
   </table>

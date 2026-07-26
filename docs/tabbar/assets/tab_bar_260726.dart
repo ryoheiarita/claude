@@ -489,13 +489,22 @@ class _TabBar260726State extends State<TabBar260726>
 /// 背景グラデーション — Tabbar_set 322:1202 コンテナ背景の完全再現。
 /// Stack 内で画面下端に Positioned(left:0, right:0, bottom:0) で置き、
 /// [open] を More メニューの開閉([TabBar260726.onMoreOpenChanged])と同期させる。
-///   通常時: transparent 52.404% → rgba(0,0,0,.6)、blurなし
-///   展開時: rgba(16,16,16,0) → #101010 + backdrop blur 8(.3sクロスフェード)
+///   通常時 (261:414): transparent 52.404% → rgba(0,0,0,.6)、blurなし
+///   展開時 (316:1059): rgba(16,16,16,0) → #101010 +
+///     **上に向かって透明になる** background blur 8
+///
+/// blur が上に向かって消えるのは Figma の background-blur がレイヤー自身のアルファで
+/// 変調されるため(グラデが透明な上側では blur も効かない)。Flutter では
+/// [ShaderMask] + [BlendMode.dstIn] で同じ縦アルファ勾配を blur 層に掛けて再現する。
+/// blur 半径は 0 → 8 を [TweenAnimationBuilder] でアニメーションさせる
+/// (Opacity でフェードすると合成レイヤー化で blur が飛ぶため)。
 class TabBarBg260726 extends StatelessWidget {
   const TabBarBg260726({super.key, required this.open});
   final bool open;
 
   static const double height = 268;
+  static const double blurSigma = 8;
+  static const Duration duration = Duration(milliseconds: 300);
 
   @override
   Widget build(BuildContext context) {
@@ -505,9 +514,9 @@ class TabBarBg260726 extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Default (261:414)
+            // ① Default (261:414) の黒グラデ
             AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
+              duration: duration,
               opacity: open ? 0 : 1,
               child: const DecoratedBox(
                 decoration: BoxDecoration(
@@ -520,21 +529,41 @@ class TabBarBg260726 extends StatelessWidget {
                 ),
               ),
             ),
-            // Opened (316:1059): #101010 グラデ + blur 8
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
-              opacity: open ? 1 : 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x00101010), Color(0xFF101010)],
-                      ),
+
+            // ② 上に向かって消える blur(展開時のみ、半径を 0 → 8 でアニメ)
+            TweenAnimationBuilder<double>(
+              tween: Tween(end: open ? blurSigma : 0),
+              duration: duration,
+              curve: Curves.easeInOut,
+              builder: (context, sigma, _) {
+                if (sigma <= 0.01) return const SizedBox.expand();
+                return ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x00000000), Color(0xFF000000)],
+                  ).createShader(rect),
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                      child: const SizedBox.expand(),
                     ),
+                  ),
+                );
+              },
+            ),
+
+            // ③ Opened (316:1059) の #101010 グラデ(blur の上に乗る)
+            AnimatedOpacity(
+              duration: duration,
+              opacity: open ? 1 : 0,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x00101010), Color(0xFF101010)],
                   ),
                 ),
               ),
