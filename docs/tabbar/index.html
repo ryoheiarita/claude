@@ -22,6 +22,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <script src="lottie-icons.js"></script>
+<!-- 確定した微調整値(コンポーネントと同一ファイル)。これが無いと指定が外れる -->
+<script src="tabbar-adjust.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{min-height:100%;}
@@ -409,6 +411,29 @@ window.Tabbar = (function(){
     if (bg) bg.classList.remove('open');
   }
   function toggleMore(){ root.classList.contains('more-open') ? closeMore() : openMore(); }
+  /* 確定した微調整値(tabbar-adjust.js)を適用 — これが無いと調整値は
+     localStorage 内にしか存在せず、公開ページでは反映されない(= 指定が外れる)。 */
+  function applyAdjust(a){
+    if (!a) return;
+    if (a.global){
+      const g = a.global, r = document.documentElement.style;
+      if (g.circle != null) r.setProperty('--more-circle', g.circle + 'px');
+      if (g.pitch  != null) r.setProperty('--more-pitch',  g.pitch  + 'px');
+      if (g.drop   != null) r.setProperty('--more-drop',   g.drop   + 'px');
+      if (g.mgap   != null) r.setProperty('--more-gap',    g.mgap   + 'px');
+    }
+    if (a.items){
+      Object.keys(a.items).forEach(key => {
+        const v = a.items[key];
+        const holder = root.querySelector('[data-key="' + key + '"] .tab-item__icon');
+        if (!holder || !v) return;
+        holder.style.setProperty('--adj-x', (v.dx || 0) + 'px');
+        holder.style.setProperty('--adj-y', (v.dy || 0) + 'px');
+        holder.style.setProperty('--adj-s', (v.s == null ? 1 : v.s));
+      });
+    }
+  }
+  applyAdjust(window.TABBAR_ADJUST);
   const isAdjusting = () => document.body.classList.contains('adjusting');
   items.forEach((el, idx) => el.addEventListener('click', () => {
     if (el.classList.contains('is-center')) { toggleMore(); return; } // works in adjust mode too
@@ -421,7 +446,7 @@ window.Tabbar = (function(){
     // navigation would go here; keep the menu open for the prototype
   }));
   if (scrim) scrim.addEventListener('click', closeMore);
-  return { setActive, play, openMore, closeMore, toggleMore, items, moreItems, anims };
+  return { setActive, play, openMore, closeMore, toggleMore, applyAdjust, items, moreItems, anims };
 })();
 </script>
 </body>

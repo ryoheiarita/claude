@@ -202,7 +202,9 @@ Stack(children: [
     ))),
 ])</code></pre>
   <p class="note">微調整値(<code>kMoreSpec</code> / <code>kTabAdjust</code>)はデザイナー側のツールから出力された
-  ブロックをそのまま貼り替える運用。現在は全てデフォルト(調整ゼロ)が正。</p>
+  ブロックをそのまま貼り替える運用。<b>デモページの表示は <code>tabbar-adjust.js</code>(確定値)と一致</b>しており、
+  Dart 側の定数もこれと同じ値に揃えてあるので、デモと実装が食い違うことはない。
+  現在は全てデフォルト(調整ゼロ / Moreメニューは circle 56・pitch 80・drop 32・gap 12)が正。</p>
 
   <h3 class="section">5. 実装上の注意(ハマりどころ)</h3>
   <div class="warn"><b>① blur の入れ子:</b> バーの blur の内側に More 丸・サテライトの blur がある。
