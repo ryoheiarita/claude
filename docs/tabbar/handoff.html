@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タブバー 260726 Flutter 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a; color: #fff; min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.55); }
+    .header p b { color: rgba(255,255,255,0.85); }
+    .header p a { color: #8fa0ff; }
+    .fig {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    h4 { margin: 28px 0 10px; font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.9); }
+    p.note { font-size: 13.5px; line-height: 1.8; color: rgba(255,255,255,0.6); margin: 10px 0; }
+    p.note b { color: rgba(255,255,255,0.9); }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 4px;
+    }
+    th, td {
+      text-align: left; padding: 9px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07); vertical-align: top;
+    }
+    th { color: rgba(255,255,255,0.4); font-weight: 500; font-size: 12px; white-space: nowrap; }
+    td { color: rgba(255,255,255,0.85); line-height: 1.55; }
+    td:first-child { color: rgba(255,255,255,0.55); white-space: nowrap; }
+    code, .mono {
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.07); padding: 1px 6px; border-radius: 4px; color: #cfd8ff;
+    }
+    pre {
+      background: #121216; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+      padding: 18px 20px; overflow-x: auto; margin: 12px 0; line-height: 1.6;
+    }
+    pre code { background: none; padding: 0; font-size: 12.5px; color: #dfe3f0; }
+    .dl {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; color: #0a0a0a; font-weight: 700; font-size: 14px;
+      padding: 12px 20px; border-radius: 999px; text-decoration: none; margin: 8px 12px 8px 0;
+    }
+    .dl.ghost { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); font-weight: 500; }
+    ul.files { font-size: 13.5px; line-height: 2.0; color: rgba(255,255,255,0.7); margin: 8px 0 0 18px; }
+    ul.files code { color: #cfd8ff; }
+    .warn {
+      background: rgba(255,170,60,0.07); border: 1px solid rgba(255,170,60,0.25);
+      border-radius: 12px; padding: 16px 18px; margin: 14px 0; font-size: 13.5px; line-height: 1.8;
+      color: rgba(255,255,255,0.75);
+    }
+    .warn b { color: #ffc46b; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="./">&lsaquo; デモに戻る</a>
+
+  <div class="header">
+    <h1>BWITHU — Engineering Handoff</h1>
+    <h2>タブバー 260726(アニメアイコン + More展開メニュー)</h2>
+    <p>
+      フローティングタブバーの Flutter 実装指示。バーの形状は既存タブバー(checkin_motion と同一)、
+      バー4タブ + Moreメニュー3項目のアイコンは <b>animated iconsax の Lottie</b>。
+      More タップで白丸反転 + 3つのサテライトが展開し、背景のグラデーションが blur 付きに切り替わる。
+      デザイン: Figma Design_System_V2 <span class="fig">Tabbar_set 322:1202</span>
+      (Default <span class="fig">261:414</span> / Opened <span class="fig">316:1059</span>)。
+      <a href="./">動作デモはこちら</a>(スマホで開くと実寸)。
+    </p>
+  </div>
+
+  <h3 class="section">1. アセット(このファイル一式をそのまま使う)</h3>
+  <p class="note">アイコンは支給の Lottie JSON を<b>そのまま</b>使用(加工不要)。白ストローク焼き込みなので色指定は不要、非アクティブは opacity で表現する。</p>
+  <a class="dl" href="assets/tabbar-260726-assets.zip" download>⬇ アセット一式 (zip)</a>
+  <a class="dl ghost" href="assets/tab_bar_260726.dart" download>tab_bar_260726.dart のみ</a>
+  <ul class="files">
+    <li><code>home.json</code> — バー Home / <code>talk.json</code> — バー Poppin' / <code>shop.json</code> — バー Shop / <code>mypage.json</code> — バー Mypage</li>
+    <li><code>checkin.json</code> — More &gt; Check In / <code>gallery.json</code> — More &gt; Gallery / <code>calendar.json</code> — More &gt; Calendar</li>
+    <li><code>ic_hana.svg</code> — 中央 More の HANA ロゴ(48×48、静的SVG)</li>
+    <li><code>tab_bar_260726.dart</code> — 完成済みウィジェット(<code>TabBar260726</code> + <code>TabBarBg260726</code>)</li>
+  </ul>
+  <pre><code>dependencies:
+  lottie: ^3.1.0
+  flutter_svg: ^2.0.0
+
+flutter:
+  assets:
+    - assets/tabbar/   # 上記 json 7つ + ic_hana.svg</code></pre>
+
+  <h3 class="section">2. レイアウト / スタイル値</h3>
+
+  <h4>バー(既存タブバーと同一)</h4>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>バー</td><td>h <b>64</b> / radius <b>42</b> / padding <b>7×20</b> / 画面下端から <b>bottom 24</b> 中央寄せ</td></tr>
+    <tr><td>バー背景</td><td><code>rgba(0,0,0,0.65)</code> + border <code>rgba(255,255,255,0.15)</code> 1px + <b>backdrop blur 16</b></td></tr>
+    <tr><td>タブ</td><td>幅 <b>48</b> / 間隔 <b>12</b> / アイコン <b>24×24</b>(Lottie)</td></tr>
+    <tr><td>ラベル</td><td>Figtree 11px / line 15 / letter 0.11 / active <code>#fff</code>・inactive <code>rgba(255,255,255,0.5)</code></td></tr>
+    <tr><td>非アクティブアイコン</td><td>opacity <b>0.5</b>(白Lottieのため)/ 切替 0.18s ease</td></tr>
+    <tr><td>中央 More(通常)</td><td>丸 <b>48</b> / bg <code>rgba(255,255,255,0.25)</code> + border white15 + <b>blur 8</b> / HANAロゴ 48(白 75%)/ ボタン全高 <b>75</b> → 丸がバー上端から <b>10px はみ出す</b> / ラベルは常に 50%</td></tr>
+    <tr><td>中央 More(展開時)</td><td>bg <code>#fff</code>・border 無し / ロゴ <b>黒</b> / 切替 0.25s ease</td></tr>
+  </table>
+
+  <h4>More メニュー(展開時のサテライト)</h4>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>丸</td><td><b>56×56</b>(アイコン 24 中央)/ bg <code>rgba(0,0,0,0.65)</code> + border white15 + <b>blur 16</b>(バーと同スタイル)</td></tr>
+    <tr><td>配置</td><td>列ピッチ <b>80</b>(丸間隔 24)/ 中央 Gallery が最上・左右(Check In / Calendar)は <b>+32px 下げ</b> / メニュー下端はバー上端の <b>12px 上</b></td></tr>
+    <tr><td>ラベル</td><td>11px / <code>rgba(255,255,255,0.5)</code> / 丸の 2px 下(シャドウ無し)</td></tr>
+    <tr><td>閉じる操作</td><td>More 再タップ or バー外タップ(透明スクリム)</td></tr>
+  </table>
+
+  <h4>背景グラデーション(バーの背面・高さ 268 / 完全再現ポイント)</h4>
+  <table>
+    <tr><th>状態</th><th>値</th></tr>
+    <tr><td>通常時 <span class="fig">261:414</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%)</code> / <b>blur なし</b></td></tr>
+    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%)</code> + <b>backdrop blur 8</b></td></tr>
+    <tr><td>切替</td><td>2層を opacity クロスフェード <b>0.3s ease</b>(blur自体はアニメしない)</td></tr>
+    <tr><td>重なり順</td><td>コンテンツ &lt; <b>背景グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
+  </table>
+
+  <h3 class="section">3. アニメーション仕様</h3>
+
+  <h4>Lottie 再生(タップで1回)</h4>
+  <p class="note">タブ/サテライトのタップで該当アイコンの Lottie を1回再生。<b>各 Lottie の冒頭には
+  160〜534ms の「何も動かないフレーム」が焼き込まれている</b>ため、下表の開始位置から再生する
+  (dart では <code>kIconStartFraction</code> として定義済み — <code>controller.forward(from: fraction)</code>)。</p>
+  <table>
+    <tr><th>アイコン</th><th>開始フレーム / 総フレーム</th><th>fraction</th><th>スキップされる死に時間</th></tr>
+    <tr><td>home</td><td>10 / 40 (25fps)</td><td>0.25</td><td>400ms</td></tr>
+    <tr><td>talk (Poppin')</td><td>6 / 59 (30fps)</td><td>0.10</td><td>200ms</td></tr>
+    <tr><td>shop</td><td>10.8 / 59 (30fps)</td><td>0.18</td><td>360ms</td></tr>
+    <tr><td>mypage</td><td>4 / 40 (25fps)</td><td>0.10</td><td>160ms</td></tr>
+    <tr><td>checkin</td><td>8.4 / 59 (30fps)</td><td>0.14</td><td>280ms</td></tr>
+    <tr><td>gallery</td><td>0 / 40 (25fps)</td><td>0.00</td><td>—</td></tr>
+    <tr><td>calendar</td><td>16 / 60 (30fps)</td><td>0.27</td><td>534ms</td></tr>
+  </table>
+
+  <h4>More メニュー展開</h4>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>サテライト入場</td><td>scale 0.55 → 1 + translateY 18 → 0(origin: 下端中央)/ <b>0.32s cubic-bezier(.34,1.56,.64,1)</b>(easeOutBack相当)+ opacity 0.22s ease</td></tr>
+    <tr><td>スタッガー</td><td>中央 Gallery <b>0ms</b> → Check In <b>+30ms</b> → Calendar <b>+60ms</b>(各自の入場に合わせて Lottie も再生)</td></tr>
+    <tr><td>中央丸の反転</td><td>bg/border/ロゴ色 0.25s ease</td></tr>
+    <tr><td>背景グラデ</td><td>上記クロスフェード 0.3s と同時進行</td></tr>
+  </table>
+
+  <h3 class="section">4. Flutter 組み込み</h3>
+  <p class="note"><code>tab_bar_260726.dart</code> は完成済み。<code>Stack</code> 内に背景グラデ → バーの順で重ねる:</p>
+  <pre><code>bool _moreOpen = false;
+int _tab = 0;
+
+Stack(children: [
+  /* ...screen content... */
+
+  // 背景グラデ(通常/展開でクロスフェード、blurは展開時のみ)
+  Positioned(left: 0, right: 0, bottom: 0,
+    child: TabBarBg260726(open: _moreOpen)),
+
+  // タブバー本体(Moreメニュー込み)
+  Positioned(left: 0, right: 0, bottom: 24,
+    child: Center(child: TabBar260726(
+      index: _tab,
+      onChanged: (i) =&gt; setState(() =&gt; _tab = i),
+      onMoreItem: (key) { /* 'checkin' | 'gallery' | 'calendar' で画面遷移 */ },
+      onMoreOpenChanged: (open) =&gt; setState(() =&gt; _moreOpen = open),
+    ))),
+])</code></pre>
+  <p class="note">微調整値(<code>kMoreSpec</code> / <code>kTabAdjust</code>)はデザイナー側のツールから出力された
+  ブロックをそのまま貼り替える運用。現在は全てデフォルト(調整ゼロ)が正。</p>
+
+  <h3 class="section">5. 実装上の注意(ハマりどころ)</h3>
+  <div class="warn"><b>① blur の入れ子:</b> バーの blur の内側に More 丸・サテライトの blur がある。
+  Flutter は <code>BackdropFilter</code> の入れ子で問題ないが、Web/CSS 実装の場合は
+  祖先に backdrop-filter を置くと内側が無効化されるため、バーの blur は擬似要素(::before)に置くこと。</div>
+  <div class="warn"><b>② 中央ボタンのはみ出し:</b> バー h64 に対し中央ボタンは h75(丸がバー上端から10pxはみ出す)。
+  クリッピングしないこと(<code>Clip.none</code> / overflow visible)。CSS実装では <b>box-sizing:border-box 必須</b>
+  (無いとバーが78pxに膨らみ、はみ出しが消える — 実際に起きたバグ)。</div>
+  <div class="warn"><b>③ バーを動かすアニメ:</b> 出入りやスクロール連動でバーを動かす場合、
+  CSS では transform/opacity ではなく bottom 等のレイアウトプロパティで(transformを充てると blur が
+  一時停止する)。Flutter では通常問題なし。</div>
+  <div class="warn"><b>④ Lottie の死に時間:</b> 冒頭スキップ(§3の表)を入れないと
+  「タップしたのに反応が遅い」と感じる。<code>kIconStartFraction</code> を必ず使うこと。</div>
+
+  <h3 class="section">6. リファレンス</h3>
+  <table>
+    <tr><th>項目</th><th>場所</th></tr>
+    <tr><td>動作デモ</td><td><a href="./" style="color:#8fa0ff">tabbar/(このサイト内)</a> — スマホで開くと実寸で確認可</td></tr>
+    <tr><td>Figma</td><td>Design_System_V2 <span class="fig">Tabbar_set 322:1202</span>(Default 261:414 / Opened 316:1059)</td></tr>
+    <tr><td>ソースコンポーネント</td><td><span class="mono">bwu/components/tabbar-260726</span>(BASELINE 2026-07-26)</td></tr>
+  </table>
+</div>
+</body>
+</html>
