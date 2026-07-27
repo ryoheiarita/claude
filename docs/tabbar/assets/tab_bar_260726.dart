@@ -187,6 +187,10 @@ class _TabBar260726State extends State<TabBar260726>
   late final AnimationController _enterCtl; // 出現アニメ
   final List<Timer> _enterTimers = [];
 
+  /// More メニューで選択中の項目('checkin' | 'gallery' | 'calendar')。
+  /// 選択中は中央 More が「白背景 + そのアイコン(黒) + そのラベル」になる。
+  String? _selectedMore;
+
   bool get _open => _menu.status == AnimationStatus.forward ||
       _menu.status == AnimationStatus.completed;
 
@@ -355,8 +359,12 @@ class _TabBar260726State extends State<TabBar260726>
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
+            // 選んだら中央 More に反映し、メニューを閉じる
+            setState(() => _selectedMore = t.key);
             _play(t.key);
             widget.onMoreItem?.call(t.key);
+            _menu.reverse();
+            widget.onMoreOpenChanged?.call(false);
           },
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -373,19 +381,23 @@ class _TabBar260726State extends State<TabBar260726>
                       border: Border.all(color: kSatelliteBorder),
                     ),
                     alignment: Alignment.center,
-                    child: SizedBox(
-                      width: kIconSize,
-                      height: kIconSize,
-                      child: _adjusted(
-                        adj,
-                        Lottie.asset(
-                          t.asset,
-                          controller: _icons[t.key],
-                          fit: BoxFit.contain,
-                          onLoaded: (composition) {
-                            _durations[t.key] = composition.duration;
-                            _icons[t.key]!.duration = composition.duration;
-                          },
+                    // アイコンの見え方は通常タブの非アクティブと同じ(白50%)
+                    child: Opacity(
+                      opacity: 0.5,
+                      child: SizedBox(
+                        width: kIconSize,
+                        height: kIconSize,
+                        child: _adjusted(
+                          adj,
+                          Lottie.asset(
+                            t.asset,
+                            controller: _icons[t.key],
+                            fit: BoxFit.contain,
+                            onLoaded: (composition) {
+                              _durations[t.key] = composition.duration;
+                              _icons[t.key]!.duration = composition.duration;
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -443,6 +455,9 @@ class _TabBar260726State extends State<TabBar260726>
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
+        closeMore(); // 展開中にバーのタブを触ったら閉じる
+        // バーのタブを選んだら More の選択は解除(中央は通常の More に戻る)
+        if (_selectedMore != null) setState(() => _selectedMore = null);
         widget.onChanged(i);
         _play(t.key);
       },
@@ -481,7 +496,11 @@ class _TabBar260726State extends State<TabBar260726>
   }
 
   Widget _moreButton() {
-    final adj = kTabAdjust['more'] ?? const TabAdjust();
+    final selected = _selectedMore == null
+        ? null
+        : kMoreItems.firstWhere((t) => t.key == _selectedMore);
+    // 選択中 or 展開中は白背景。選択中はラベルも選んだ項目名 + 白100%
+    final white = _open || selected != null;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _toggleMore,
@@ -498,34 +517,61 @@ class _TabBar260726State extends State<TabBar260726>
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: _open ? Colors.white : kMoreCircleBg,
+                    color: white ? Colors.white : kMoreCircleBg,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _open ? Colors.transparent : kMoreCircleBorder,
+                      color: white ? Colors.transparent : kMoreCircleBorder,
                     ),
                   ),
                   alignment: Alignment.center,
-                  // 48x48 HANA flower; white@75% closed -> black open
-                  child: _adjusted(
-                    adj,
-                    SvgPicture.asset(
-                      'assets/tabbar/ic_hana.svg',
-                      width: 48,
-                      height: 48,
-                      colorFilter: ColorFilter.mode(
-                        _open
-                            ? Colors.black
-                            : Colors.white.withValues(alpha: 0.75),
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
+                  child: _centerIcon(selected),
                 ),
               ),
             ),
             const SizedBox(height: 2),
-            Text('More', style: _labelStyle(kTabInactive)),
+            Text(selected?.label ?? 'More',
+                style: _labelStyle(selected != null ? kTabActive : kTabInactive)),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 中央の中身 — 未選択なら HANA ロゴ、More を選択中ならその項目のアイコン(黒)。
+  Widget _centerIcon(TabSpec? selected) {
+    if (selected == null) {
+      final adj = kTabAdjust['more'] ?? const TabAdjust();
+      return _adjusted(
+        adj,
+        SvgPicture.asset(
+          'assets/tabbar/ic_hana.svg',
+          width: 48,
+          height: 48,
+          colorFilter: ColorFilter.mode(
+            _open ? Colors.black : Colors.white.withValues(alpha: 0.75),
+            BlendMode.srcIn,
+          ),
+        ),
+      );
+    }
+    final adj = kTabAdjust[selected.key] ?? const TabAdjust();
+    return SizedBox(
+      width: kIconSize,
+      height: kIconSize,
+      child: _adjusted(
+        adj,
+        ColorFiltered(
+          // Lottie の白ストロークを黒に(白背景の上なので反転させる)
+          colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+          child: Lottie.asset(
+            selected.asset,
+            controller: _icons[selected.key],
+            fit: BoxFit.contain,
+            onLoaded: (composition) {
+              _durations[selected.key] = composition.duration;
+              _icons[selected.key]!.duration = composition.duration;
+            },
+          ),
         ),
       ),
     );

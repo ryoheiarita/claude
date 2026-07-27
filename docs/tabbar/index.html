@@ -177,6 +177,22 @@
   .tab-item.is-center .ic-hana g{ transition:fill .25s ease, opacity .25s ease; }
   .tabbar.more-open .tab-item.is-center .ic-hana g{ fill:#000; opacity:1; }
 
+  /* ---- 追加分: Moreメニューの選択状態 ----
+     ・サテライト3つのアイコンは通常タブの非アクティブと同じ見え方(白50%)
+     ・どれかを選ぶと中央Moreが白背景になり、選んだアイコン(黒)とラベルに差し替わる */
+  .more-item .tab-item__lottie{ opacity:var(--tab-inactive-op,.5); }
+  .tab-item.is-center .more-selected{
+    position:absolute; left:50%; top:50%; width:24px; height:24px;
+    margin:-12px 0 0 -12px;              /* 中央寄せ(transformは微調整用に空ける) */
+    display:none; filter:invert(1);      /* Lottieの白ストローク -> 黒 */
+    transform:translate(var(--adj-x,0px),var(--adj-y,0px)) scale(var(--adj-s,1));
+  }
+  .tab-item.is-center .more-selected svg{ display:block; }
+  .tabbar.has-selection .tab-item.is-center .tab-item__icon{ background:#fff; border-color:transparent; }
+  .tabbar.has-selection .tab-item.is-center .ic-hana{ display:none; }
+  .tabbar.has-selection .tab-item.is-center .more-selected{ display:block; }
+  .tabbar.has-selection .tab-item.is-center{ color:var(--tab-active); }  /* ラベルも選択色 */
+
   /* ---- 追加分: more menu (satellites above the bar) ---- */
   .more-menu{
     position:absolute;left:50%;bottom:calc(100% + var(--more-gap));
@@ -329,6 +345,7 @@
                   <path d="M31.525 28.3205V26.3897C31.5782 25.9926 31.8481 25.954 31.8481 25.954C31.8481 25.954 31.6077 25.5422 31.525 24.9932V20.1333C31.525 18.9535 31.3322 18.8139 31.4399 18.4759L31.949 17.0238C31.4308 17.6137 29.9649 18.9716 29.449 19.0783C29.449 19.0783 30.2086 19.4935 30.2086 20.1333V25.0181C30.1565 25.0193 30.085 25.0147 30.017 24.992C29.8186 24.3965 29.6236 23.8451 29.4342 23.3403C29.3708 23.0953 29.5045 22.8854 29.5045 22.8854C29.5045 22.8854 29.2925 22.8037 29.1655 22.6415C28.6066 21.2246 28.1191 20.2229 27.7801 19.5887C27.7358 18.8979 27.6225 18.7527 27.712 18.4759L27.983 17.8088C27.4649 18.3987 26.237 18.9716 25.7211 19.0794C25.7211 19.0794 26.4807 19.4946 26.4807 20.1344V21.5672C26.4694 22.1514 26.1304 22.5099 26.1304 22.5099C26.1304 22.5099 26.4059 22.4589 26.4807 22.7572V25.4016C26.4807 25.5785 26.4853 25.7498 26.4921 25.9143C26.1825 25.405 25.9581 24.9875 25.9581 24.8446V24.4339C25.7392 24.983 25.4025 25.5127 25.373 26.1163C25.3435 26.7198 25.5601 27.0181 25.8231 27.4016C26.1803 27.9223 27.3469 29.4685 27.6395 29.9211C27.7846 30.1458 27.932 30.8355 27.9467 31C28.1803 30.2864 27.9172 29.591 28.0204 29.3358C28.1225 29.0794 28.2982 28.6404 28.2982 28.6404C28.2982 28.6404 28.0726 28.3182 27.7608 27.861C28.017 27.549 28.2687 27.2983 28.5556 27.2382C28.5556 27.2382 27.7959 26.0414 27.7959 25.4016V22.992C27.8515 23.0624 27.9082 23.1338 27.9683 23.2064C28.1168 23.439 28.0612 23.8043 28.0612 23.8043C28.0612 23.8043 28.3243 23.7464 28.4649 23.7918C28.8061 24.1832 29.1712 24.587 29.5147 24.9705C29.4909 25.2008 29.4127 25.3891 29.4127 25.3891C29.4127 25.3891 29.6395 25.3641 29.7857 25.5536C29.9479 26.0505 30.093 26.5156 30.2098 26.9081V28.3216C30.2098 29.5014 30.4025 29.6409 30.2948 29.979L30.0238 30.646C30.542 30.0561 31.7698 29.4832 32.2857 29.3755C32.2857 29.3755 31.5261 28.9603 31.5261 28.3205H31.525ZM27.7959 20.5428C27.8095 20.5644 27.8243 20.5859 27.8401 20.6097C27.8866 20.6801 27.9376 20.7663 27.9909 20.8673L27.9807 20.8616C28.1372 21.1667 28.0363 21.6194 28.0363 21.6194C28.0363 21.6194 28.2812 21.6194 28.432 21.8202C28.7234 22.5167 29.0476 23.3914 29.3515 24.266C28.7937 23.6545 28.2075 23.0488 27.7959 22.5791V20.5439V20.5428Z"/>
                 </g>
               </svg>
+              <span class="more-selected"></span><!-- Moreで選択したアイコン(黒)がここに入る -->
             </span>
             <span class="tab-item__label">More</span>
           </button>
@@ -431,7 +448,48 @@ window.Tabbar = (function(){
     });
   });
   function play(key){ const a = anims[key]; if(!a) return; a.goToAndPlay(starts[key] || 0, true); }
+
+  /* ---- Moreメニューの選択状態 ----
+     どれかを選ぶと中央Moreが「白背景 + 選んだアイコン(黒) + そのラベル」になる。
+     バーのタブを押すと解除して通常の More に戻る。 */
+  const centerBtn   = root.querySelector('.tab-item.is-center');
+  const centerLabel = centerBtn && centerBtn.querySelector('.tab-item__label');
+  const centerSlot  = centerBtn && centerBtn.querySelector('.more-selected');
+  const CENTER_LABEL_DEFAULT = centerLabel ? centerLabel.textContent : 'More';
+  let centerAnim = null, selectedKey = null;
+
+  function clearSelection(){
+    if (!selectedKey) return;
+    selectedKey = null;
+    root.classList.remove('has-selection');
+    if (centerLabel) centerLabel.textContent = CENTER_LABEL_DEFAULT;
+    if (centerAnim){ centerAnim.destroy(); centerAnim = null; }
+    if (centerSlot) centerSlot.innerHTML = '';
+  }
+  function selectMore(key){
+    const el = moreItems.find(e => e.dataset.key === key);
+    if (!el || !centerSlot) return;
+    selectedKey = key;
+    items.forEach(it => it.classList.remove('active'));   // バー側のタブは非アクティブへ
+    root.classList.add('has-selection');
+    if (centerLabel) centerLabel.textContent = el.querySelector('.more-item__label').textContent;
+    // 中央に選択アイコンを載せ替え(白ストロークは CSS の invert で黒くなる)
+    if (centerAnim) centerAnim.destroy();
+    centerSlot.innerHTML = '';
+    const adj = (window.TABBAR_ADJUST && window.TABBAR_ADJUST.items && window.TABBAR_ADJUST.items[key]) || {};
+    centerSlot.style.setProperty('--adj-x', (adj.dx || 0) + 'px');
+    centerSlot.style.setProperty('--adj-y', (adj.dy || 0) + 'px');
+    centerSlot.style.setProperty('--adj-s', (adj.s == null ? 1 : adj.s));
+    centerAnim = lottie.loadAnimation({
+      container: centerSlot, renderer:'svg', loop:false, autoplay:false,
+      animationData: window.TABBAR_ICONS[ICON_ALIAS[key] || key],
+    });
+    centerAnim.goToAndPlay(starts[key] || 0, true);      // 選択時に1回再生
+  }
+
   function setActive(i){
+    closeMore();        // 展開中にバーのタブを触ったら閉じる
+    clearSelection();   // バーのタブを選んだら More の選択は解除
     // center More keeps its checkin_motion look (label stays 50%) — never gets .active
     items.forEach((el, idx) => el.classList.toggle('active', idx === i && !el.classList.contains('is-center')));
     const key = items[i] && items[i].dataset.key;
@@ -505,11 +563,14 @@ window.Tabbar = (function(){
   }));
   moreItems.forEach(el => el.addEventListener('click', () => {
     if (isAdjusting()) return;
-    play(el.dataset.key);
-    // navigation would go here; keep the menu open for the prototype
+    selectMore(el.dataset.key);   // 中央Moreに反映(白背景+アイコン+ラベル)
+    closeMore();                  // 選んだらメニューを閉じる
+    // 実装時はここで画面遷移
   }));
   if (scrim) scrim.addEventListener('click', closeMore);
-  return { setActive, play, openMore, closeMore, toggleMore, applyAdjust, enter, ENTER, items, moreItems, anims };
+  return { setActive, play, openMore, closeMore, toggleMore, applyAdjust, enter, ENTER,
+           selectMore, clearSelection, get selected(){ return selectedKey; },
+           items, moreItems, anims };
 })();
 </script>
 </body>
