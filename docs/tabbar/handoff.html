@@ -149,6 +149,7 @@
     --tabbar-enter-dur:  .7s;
     --tabbar-enter-ease: cubic-bezier(.16,1,.3,1);/* ease-out(expo) */
     --tabbar-bg-blur:    32px;                    /* 展開時の背景blur(Figma Blur/32) */
+    --tabbar-bg-blur-fade: 20%;                   /* 上端の抜き幅。ここまでで blur 全開 */
   }
   .tabbar{
     position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
@@ -267,12 +268,14 @@
   }
   /* 上に向かって消えるblur。opacityでフェードすると合成レイヤー化でblurが飛ぶので、
      backdrop-filter の半径そのものを 0px -> 8px でアニメーションさせる。 */
+  /* マスクは「上端だけ柔らかく抜く」形。--tabbar-bg-blur-fade までで全開になるので、
+     上半分にもしっかり blur がかかる(全面 blur だと上端に境界線が出るため端だけ抜く)。 */
   .tabbar-bg__blur{
     position:absolute;inset:0;
     backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
     transition:backdrop-filter .3s ease,-webkit-backdrop-filter .3s ease;
-    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
-    mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 var(--tabbar-bg-blur-fade), #000 100%);
+    mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 var(--tabbar-bg-blur-fade), #000 100%);
   }
   .tabbar-bg.open .tabbar-bg__blur{
     backdrop-filter:blur(var(--tabbar-bg-blur));-webkit-backdrop-filter:blur(var(--tabbar-bg-blur));
@@ -462,20 +465,20 @@ flutter:
   <table>
     <tr><th>状態</th><th>値</th></tr>
     <tr><td>通常時 <span class="fig">261:414</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%)</code> / <b>blur なし</b></td></tr>
-    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)</code> (<b>真っ黒</b>)+ <b>background blur 32</b>(下記)</td></tr>
+    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)</code> (<b>真っ黒</b>)+ <b>background blur 32</b>(上端20%だけフェード / 下記)</td></tr>
     <tr><td>切替</td><td>色グラデは opacity クロスフェード <b>0.3s ease</b> / blur は<b>半径 0 → 32 をアニメーション</b></td></tr>
     <tr><td>重なり順</td><td>コンテンツ &lt; <b>①通常グラデ → ②blur層 → ③展開グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
   </table>
 
   <div class="warn"><b>展開時の blur は「上に向かって透明になる blur」。</b>
   Figma の background-blur は<b>レイヤー自身のアルファで変調される</b>ため、グラデが透明な
-  上側では blur も効かず、下へ行くほど強くかかる(上端 blur 0 → 下端 blur 32 の連続変化)。
+  上側では blur も効かない。ただし上端だけで抜くと上半分に blur が乗らないため、<b>上端 20% でフェードして以降は全開</b>にしている(上半分にもしっかりかかる)。
   一様な全面 blur にしないこと。
   <br><br>
   実装:<br>
   ・Flutter → blur 層を <code>ShaderMask</code>(<code>BlendMode.dstIn</code> + 縦グラデ
   transparent→black)で抜く。<code>TabBarBg260726</code> に実装済み。<br>
-  ・CSS → blur 層に <code>mask-image: linear-gradient(180deg, transparent 0%, #000 100%)</code>。<br>
+  ・CSS → blur 層に <code>mask-image: linear-gradient(180deg, transparent 0%, #000 20%, #000 100%)</code>(抜き幅は <code>--tabbar-bg-blur-fade</code>)。<br>
   ・フェードは <b>opacity ではなく blur 半径(sigma)をアニメーション</b>させる
   (opacity を動かすと合成レイヤー化して blur が一時的に消える)。</div>
 
