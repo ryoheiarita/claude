@@ -171,6 +171,24 @@ flutter:
     <tr><td>calendar</td><td>16 / 60 (30fps)</td><td>0.27</td><td>534ms</td></tr>
   </table>
 
+  <h4>出現アニメ(画面表示時)</h4>
+  <p class="note">タブバーは<b>画面下から遅れて ease-out でせり上がって出現</b>し、
+  到着に合わせて<b>初期状態のバー4アイコンを1回ずつ再生</b>する(中央 More は静的なので再生なし)。</p>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>遅れ(delay)</td><td><b>400ms</b> — 画面表示から動き出しまで</td></tr>
+    <tr><td>移動</td><td>画面外 <b>下 110px</b> → 定位置(bottom 24)</td></tr>
+    <tr><td>duration / easing</td><td><b>700ms</b> / <code>cubic-bezier(.16,1,.3,1)</code>(ease-out・expo系)</td></tr>
+    <tr><td>アイコン再生開始</td><td>動き出しから <b>+380ms</b>(バーがほぼ定位置に来た頃)</td></tr>
+    <tr><td>アイコンのずれ</td><td><b>70ms</b> ずつ Home → Poppin' → Shop → Mypage の順(0 にすると4つ同時)</td></tr>
+    <tr><td>実測(HTML)</td><td>bottom: 0–400ms は −110px 固定 → 900ms で 24px 到達 / アイコンは 812・872・932・1022ms に再生開始</td></tr>
+  </table>
+  <div class="warn"><b>移動は必ずレイアウトプロパティで。</b> CSS では <code>bottom</code> を
+  アニメーションさせること(<code>transform</code>/<code>opacity</code> で動かすと合成レイヤー化して
+  <b>動作中だけ blur が消える</b>)。Flutter は <code>Transform.translate</code> で問題なし
+  (<code>TabBar260726</code> に実装済み、<code>autoEnter</code> で自動再生 / <code>GlobalKey</code> 経由で
+  <code>enter()</code> を呼べば任意のタイミングで再生可)。</div>
+
   <h4>More メニュー展開</h4>
   <table>
     <tr><th>項目</th><th>値</th></tr>

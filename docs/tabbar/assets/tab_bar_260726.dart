@@ -31,6 +31,7 @@
 // and replace kMoreSpec / kTabAdjust below with the copied block.
 // ============================================================================
 
+import 'dart:async' show Timer;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -91,6 +92,17 @@ const Map<String, double> kIconStartFraction = {
   'calendar': 0.27,
 };
 
+/// 出現アニメ — 画面下から遅れて ease-out でせり上がり、到着に合わせて
+/// バーの4アイコンを1回ずつ再生する(HTML版 `Tabbar.ENTER` と同値)。
+const Duration kEnterDelay = Duration(milliseconds: 400); // 表示 -> 動き出しまでの遅れ
+const Duration kEnterDuration = Duration(milliseconds: 700);
+const Curve kEnterCurve = Cubic(0.16, 1, 0.3, 1); // CSS cubic-bezier(.16,1,.3,1)
+const double kEnterDistance = 110; // 出現前の待機位置(画面外へ 110px)
+const Duration kEnterIconLeadIn =
+    Duration(milliseconds: 380); // 動き出し -> アイコン再生開始
+const Duration kEnterIconStagger =
+    Duration(milliseconds: 70); // アイコン間のずれ(0で4つ同時)
+
 // ---- bar visual tokens (checkin_motion / bwu tabbar component) --------------
 
 const double kBarHeight = 64;
@@ -146,6 +158,7 @@ class TabBar260726 extends StatefulWidget {
     required this.onChanged,
     this.onMoreItem,
     this.onMoreOpenChanged,
+    this.autoEnter = true,
   });
 
   /// Active bar tab: 0=Home 1=Poppin' 2=Shop 3=Mypage (see [kTabs]).
@@ -158,6 +171,10 @@ class TabBar260726 extends StatefulWidget {
   /// More メニュー開閉の通知 — [TabBarBg260726] の open と同期させる。
   final ValueChanged<bool>? onMoreOpenChanged;
 
+  /// 初回表示時に出現アニメ(下からせり上がり + 4アイコン再生)を自動再生する。
+  /// false にすると最初から定位置。GlobalKey 経由で `enter()` を呼べば任意に再生できる。
+  final bool autoEnter;
+
   @override
   State<TabBar260726> createState() => _TabBar260726State();
 }
@@ -167,6 +184,8 @@ class _TabBar260726State extends State<TabBar260726>
   final Map<String, AnimationController> _icons = {};
   final Map<String, Duration> _durations = {};
   late final AnimationController _menu; // more menu open/close
+  late final AnimationController _enterCtl; // 出現アニメ
+  final List<Timer> _enterTimers = [];
 
   bool get _open => _menu.status == AnimationStatus.forward ||
       _menu.status == AnimationStatus.completed;
@@ -179,14 +198,43 @@ class _TabBar260726State extends State<TabBar260726>
     }
     _menu = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 320));
+    _enterCtl = AnimationController(vsync: this, duration: kEnterDuration);
+    if (widget.autoEnter) {
+      enter();
+    } else {
+      _enterCtl.value = 1;
+    }
+  }
+
+  /// 出現アニメを(再)実行する。画面下から遅れて ease-out でせり上がり、
+  /// 到着に合わせて初期状態の4アイコンを1回ずつ再生する。
+  void enter() {
+    for (final t in _enterTimers) {
+      t.cancel();
+    }
+    _enterTimers.clear();
+    _enterCtl.value = 0; // 画面外へ退避
+    _enterTimers.add(Timer(kEnterDelay, () {
+      if (!mounted) return;
+      _enterCtl.forward(from: 0);
+      for (var i = 0; i < kTabs.length; i++) {
+        _enterTimers.add(Timer(kEnterIconLeadIn + kEnterIconStagger * i, () {
+          if (mounted) _play(kTabs[i].key);
+        }));
+      }
+    }));
   }
 
   @override
   void dispose() {
+    for (final t in _enterTimers) {
+      t.cancel();
+    }
     for (final c in _icons.values) {
       c.dispose();
     }
     _menu.dispose();
+    _enterCtl.dispose();
     super.dispose();
   }
 
@@ -227,6 +275,18 @@ class _TabBar260726State extends State<TabBar260726>
 
   @override
   Widget build(BuildContext context) {
+    // 出現アニメ: 画面下(+kEnterDistance)から定位置(0)へ ease-out で移動
+    return AnimatedBuilder(
+      animation: _enterCtl,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, (1 - kEnterCurve.transform(_enterCtl.value)) * kEnterDistance),
+        child: child,
+      ),
+      child: _barWithMenu(),
+    );
+  }
+
+  Widget _barWithMenu() {
     final more = kMoreSpec;
     final menuHeight = more.circle + more.sideDrop + 2 + 15; // circle+drop+gap+label
     return Column(

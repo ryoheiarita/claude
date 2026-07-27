@@ -46,18 +46,22 @@
   }
   body.mobile #phone{border-radius:0;box-shadow:none;}
 
-  #docLink{
-    position:fixed;top:20px;right:24px;z-index:99;
+  #docLink,#replay{
+    position:fixed;top:20px;z-index:99;
     background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
     border:1px solid rgba(255,255,255,.15);border-radius:20px;
     padding:8px 16px;font-size:13px;font-family:inherit;cursor:pointer;
     backdrop-filter:blur(8px);transition:background .2s;text-decoration:none;
   }
-  #docLink:hover{background:rgba(255,255,255,.16);}
-  body.mobile #docLink{
-    top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;
+  #docLink{right:24px;}
+  #replay{left:24px;}
+  #docLink:hover,#replay:hover{background:rgba(255,255,255,.16);}
+  body.mobile #docLink,body.mobile #replay{
+    top:calc(env(safe-area-inset-top,0px) + 10px);
     padding:6px 12px;font-size:12px;
   }
+  body.mobile #docLink{right:12px;}
+  body.mobile #replay{left:12px;}
 
   /* ============ demo content (scrolls under the bar) ============ */
   #scroller{
@@ -116,13 +120,22 @@
     --more-item-bg:     rgba(0,0,0,0.65);      /* Figma 261:556: バーと同スタイル */
     --more-item-border: rgba(255,255,255,0.15);
     --more-item-blur:   16px;
+    /* 出現アニメ(画面下から遅れて ease-out でせり上がる) */
+    --tabbar-bottom:     24px;                    /* 定位置 */
+    --tabbar-enter-from: -110px;                  /* 出現前の待機位置(画面外) */
+    --tabbar-enter-dur:  .7s;
+    --tabbar-enter-ease: cubic-bezier(.16,1,.3,1);/* ease-out(expo) */
   }
   .tabbar{
-    position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:6;
+    position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
     height:64px;padding:7px 20px;border-radius:var(--tabbar-radius);
     display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-    transition:opacity .3s ease;
+    transition:opacity .3s ease,
+               bottom var(--tabbar-enter-dur) var(--tabbar-enter-ease);
   }
+  /* 出現前(画面下に退避)。⚠️ 移動は必ず bottom(レイアウトプロパティ)で。
+     transform/opacity で動かすと合成レイヤー化して blur が動作中だけ消える。 */
+  .tabbar.is-offscreen{ bottom:var(--tabbar-enter-from); transition:none; }
   .tabbar::before{
     content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;
     background:var(--tabbar-bg);border:1px solid var(--tabbar-border);
@@ -248,6 +261,7 @@
 </head>
 <body>
 
+<button id="replay" type="button">↺ 出現を再生</button>
 <a id="docLink" href="handoff.html">実装書 →</a>
 
 <div id="phoneWrap">
@@ -353,6 +367,17 @@
 </script>
 
 <script>
+/* 出現アニメ(画面下から遅れて ease-out + 4アイコン再生)をもう一度見るボタン */
+addEventListener('DOMContentLoaded', () => {
+  document.getElementById('replay').addEventListener('click', () => {
+    Tabbar.closeMore();
+    Tabbar.setActive(0);      // 初期状態(Home)に戻す
+    Tabbar.enter();
+  });
+});
+</script>
+
+<script>
 /* ===== TABBAR JS (verbatim from component) ===== */
 window.Tabbar = (function(){
   const root = document.getElementById('tabbar');
@@ -434,6 +459,29 @@ window.Tabbar = (function(){
     }
   }
   applyAdjust(window.TABBAR_ADJUST);
+
+  /* ---- 出現アニメ: 画面下から遅れて ease-out でせり上がり、
+          到着に合わせてバーの4アイコンを1回ずつ再生する ---- */
+  const ENTER = {
+    delay:      400,   // ページ表示 -> 動き出すまでの「遅れ」
+    iconLeadIn: 380,   // 動き出し -> アイコン再生開始(バーがほぼ定位置に来た頃)
+    iconStagger: 70,   // アイコン間のずれ(0 にすると4つ同時)
+  };
+  let enterTimers = [];
+  function enter(){
+    enterTimers.forEach(clearTimeout); enterTimers = [];
+    root.classList.add('is-offscreen');
+    void root.offsetWidth;                       // reflow: transition:none を確定させる
+    enterTimers.push(setTimeout(() => {
+      root.classList.remove('is-offscreen');     // bottom -110px -> 24px (ease-out)
+      // 到着に合わせて初期状態の4アイコンを1回再生(左から順)
+      items.filter(el => el.dataset.key && !el.classList.contains('is-center'))
+        .forEach((el, i) => enterTimers.push(setTimeout(
+          () => play(el.dataset.key), ENTER.iconLeadIn + i * ENTER.iconStagger)));
+    }, ENTER.delay));
+  }
+  enter();   // 読み込み時に自動再生
+
   const isAdjusting = () => document.body.classList.contains('adjusting');
   items.forEach((el, idx) => el.addEventListener('click', () => {
     if (el.classList.contains('is-center')) { toggleMore(); return; } // works in adjust mode too
@@ -446,7 +494,7 @@ window.Tabbar = (function(){
     // navigation would go here; keep the menu open for the prototype
   }));
   if (scrim) scrim.addEventListener('click', closeMore);
-  return { setActive, play, openMore, closeMore, toggleMore, applyAdjust, items, moreItems, anims };
+  return { setActive, play, openMore, closeMore, toggleMore, applyAdjust, enter, ENTER, items, moreItems, anims };
 })();
 </script>
 </body>
