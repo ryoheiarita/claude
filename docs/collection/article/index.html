@@ -248,7 +248,7 @@
       align-items: center;
       justify-content: center;
       height: 24px;
-      padding: 0 8px 2px;   /* 下に2px: 和文/欧文が中央より下に見えるのを光学補正 */
+      padding: 0 8px;   /* 縦中央化は font-spec.js の text-box(leading-trim) で共通適用 */
       border-radius: 24px;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(6px);
@@ -309,7 +309,7 @@
     .article-image {
       width: 100%;
       aspect-ratio: 382 / 240;
-      border-radius: 14px 14px 8px 8px;
+      border-radius: 14px;
       object-fit: cover;
     }
 
@@ -318,7 +318,7 @@
       position: relative;
       width: 100%;
       aspect-ratio: 382 / 240;
-      border-radius: 14px 14px 8px 8px;
+      border-radius: 14px;
       overflow: hidden;
     }
     .img-block-skeleton {
@@ -378,7 +378,7 @@
       position: relative;
       width: 100%;
       aspect-ratio: 9 / 16;
-      border-radius: 14px 14px 8px 8px;
+      border-radius: 14px;
       overflow: hidden;
       background: #000;
     }
@@ -612,7 +612,7 @@
     .sk-image {
       width: 100%;
       aspect-ratio: 382 / 240;
-      border-radius: 14px 14px 8px 8px;
+      border-radius: 14px;
     }
 
     /* H2: font 20px */

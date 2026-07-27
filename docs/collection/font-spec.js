@@ -37,7 +37,7 @@
     ".article-body,.desc-sheet .desc-body,.detail-body,.ls-detail .desc-body{line-height:32px;}",
     ".article-title,.desc-sheet .desc-title,.detail-sheet .desc-title,.ls-detail .desc-title{line-height:35.6px;}",
     ".article-h2,.article-h3{line-height:34px;}",
-    ".badge,.desc-sheet .desc-tag,.detail-sheet .desc-tag,.ls-detail .desc-tag{padding-bottom:2px;}", /* タグ内テキストを中央へ */
+    ".badge,.desc-sheet .desc-tag,.detail-sheet .desc-tag,.ls-detail .desc-tag{text-box:trim-both cap alphabetic;}", /* タグ内テキストを cap高さ/ベースライン基準で上下中央（固定pxの光学補正は iOS/WebKit で上寄りにズレるため text-box を使用）*/
     ".article-inner{gap:20px;}",                            /* 記事: タイトル↔タグ↔本文 +4 */
     ".article-meta{gap:8px;}",                              /* 記事: 日付↔タイトル +4 */
     ".desc-sheet .desc-head,.detail-sheet .desc-head,.ls-detail .desc-head{margin-bottom:8px;}",   /* 概要: +4 */

@@ -183,6 +183,7 @@
   <table>
     <tr><th>項目</th><th>値</th></tr>
     <tr><td>サイズ</td><td>高さ <code>24px</code>、左右 padding <code>8px</code>、角丸 <code>24px</code>（ピル）</td></tr>
+    <tr><td>文字の縦位置</td><td>cap高さ/ベースライン基準で上下中央（<code>text-box: trim-both cap alphabetic</code>）。固定pxの光学補正は使わない（iOS/WebKit で上下にズレるため）。Flutter は文字高に合わせた <code>Center</code> 配置で代替</td></tr>
     <tr><td>背景</td><td>white 15% + <code>backdrop-filter: blur(6px)</code></td></tr>
     <tr><td>並び</td><td>横並び gap <code>4px</code>、<code>Wrap</code> で折り返し</td></tr>
   </table>
@@ -197,7 +198,7 @@
   <table>
     <tr><th>項目</th><th>値</th></tr>
     <tr><td>アスペクト比</td><td><code>382 / 240</code>（≈1.592）幅いっぱい</td></tr>
-    <tr><td>角丸</td><td>上 <code>14px</code> / 下 <code>8px</code>（<code>border-radius: 14px 14px 8px 8px</code>）</td></tr>
+    <tr><td>角丸</td><td><code>14px</code>（4隅とも。<code>border-radius: 14px</code>）</td></tr>
     <tr><td>フィット</td><td>cover</td></tr>
     <tr><td>ローディング</td><td>各画像ブロックが<b>独立したシマースケルトン</b>を持つ（§6-C）。スケルトン中央に BWU ロゴ透かし（<code>loading-14-800.svg</code>、幅 80px、opacity 0.5、grayscale）</td></tr>
   </table>
@@ -206,7 +207,7 @@
   <table>
     <tr><th>項目</th><th>値</th></tr>
     <tr><td>アスペクト比</td><td><code>9 / 16</code>（縦型）幅いっぱい、背景 <code>#000</code></td></tr>
-    <tr><td>角丸</td><td>画像と同じ <code>14px 14px 8px 8px</code>（overflow hidden でクリップ）</td></tr>
+    <tr><td>角丸</td><td>画像と同じ <code>14px</code>（4隅とも。overflow hidden でクリップ）</td></tr>
     <tr><td>プレイヤー</td><td><b>Vimeo 標準コントローラーをそのまま使う</b>（自前オーバーレイなし）。埋め込み URL: <code>https://player.vimeo.com/video/{id}?title=0&amp;byline=0&amp;portrait=0&amp;dnt=1&amp;playsinline=1</code></td></tr>
     <tr><td>Flutter</td><td>WebView 埋め込み。詳細は <a href="../flutter-handoff/docs/VIMEO_PLAYER_FLUTTER.md" download>VIMEO_PLAYER_FLUTTER.md</a></td></tr>
   </table>

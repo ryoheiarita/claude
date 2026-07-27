@@ -82,7 +82,7 @@ Scaffold (背景 #101010)
 - **バッジ**: `padding: 2px 8px`、`borderRadius: 24`、背景 white15%。横並び、`gap 4`、`Wrap` で折り返し。
 - **本文段落**: 段落ごとに下マージン 24px（最後の段落は 0）。
 - **ハイライト**: 本文インラインの背景マーカー。Flutter では `RichText`/`Text.rich` の `WidgetSpan`（角丸背景）または `TextSpan` + `background: Paint()` で表現。`padding: 1px 5px`、`borderRadius: 3`。
-- **画像（メイン ④）**: `aspectRatio: 382/240 ≈ 1.592`、`borderRadius: 上14 / 下8`、`BoxFit.cover`。
+- **画像（メイン ④）**: `aspectRatio: 382/240 ≈ 1.592`、`borderRadius: 14`（4隅とも）、`BoxFit.cover`。
 - **箇条書きリスト**: 行頭に 5px の丸ドット（white35%）。テキストは左 indent 18px。
 - **H2 下線**: 文字の下に 1px ライン（width 100%）。`Border(bottom: ...)` + 上下 padding 10px。
 
