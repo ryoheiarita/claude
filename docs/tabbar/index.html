@@ -65,38 +65,62 @@
      (出現アニメをもう一度見たい場合はページを再読み込み) */
   body.mobile #docLink,body.mobile #replay{display:none;}
 
-  /* ============ demo content (scrolls under the bar) ============ */
+  /* ============ 画面上部: 記事画面(collection/article)と同じ nav-bar ============ */
+  .nav-bar{
+    position:absolute;top:0;left:0;width:100%;z-index:7;   /* タブバー(6)より上 */
+    background:linear-gradient(to bottom, rgba(0,0,0,0.58), transparent);
+    padding-bottom:8px;pointer-events:none;
+  }
+  .nav-bar a,.nav-bar button{pointer-events:auto;}
+  .status-bar{display:flex;align-items:center;justify-content:center;padding:11px 16px;gap:6px;}
+  .status-bar-time{flex:1;text-align:center;font-size:17px;font-weight:590;line-height:22px;padding-top:2px;}
+  .dynamic-island{width:125px;height:37px;border-radius:100px;flex-shrink:0;}
+  .status-icons{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding-top:1px;}
+  .toolbar{display:flex;align-items:center;height:40px;padding-left:12px;gap:4px;}
+  .toolbar-btn{
+    width:40px;height:40px;border-radius:42px;
+    background:rgba(0,0,0,0.3);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.08);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
+  }
+  .toolbar-btn svg{width:24px;height:24px;}
+
+  /* ============ demo content: 記事画面(collection/article と同じ体裁)============
+     バーの blur / 展開時の背景グラデが「効いているか」を判断できるよう、
+     写真と本文テキストが必ずバーの背後に来る画面にしている。 */
   #scroller{
     position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;
   }
   #scroller::-webkit-scrollbar{display:none;}
-  .feed{padding:24px 16px 160px;}
-  .feed h1{font-size:24px;font-weight:700;letter-spacing:-.4px;margin:8px 0 2px;}
-  .feed .sub{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;}
-  .hero{
-    position:relative;height:180px;border-radius:20px;margin-bottom:16px;overflow:hidden;
-    background:
-      radial-gradient(140px 120px at 22% 30%, #ff2d78cc, transparent 65%),
-      radial-gradient(180px 140px at 78% 22%, #2d8cffcc, transparent 65%),
-      radial-gradient(200px 160px at 55% 90%, #28e0a8b3, transparent 65%),
-      linear-gradient(135deg,#1b1b20,#101014);
+  .article{padding:120px 16px 180px;display:flex;flex-direction:column;gap:20px;}  /* 上=nav-bar分 */
+  .article-meta{display:flex;flex-direction:column;gap:8px;}
+  .article-date{font-size:14px;line-height:20px;color:rgba(255,255,255,0.5);}
+  .article-title{
+    font-size:24px;font-weight:600;line-height:35.6px;letter-spacing:-0.4px;color:#fff;margin:0;
   }
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .tile{
-    aspect-ratio:1/1.15;border-radius:16px;position:relative;overflow:hidden;
-    border:1px solid rgba(255,255,255,.07);
+  .badges{display:flex;flex-wrap:wrap;gap:8px;}
+  .badge{
+    display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 8px;
+    border-radius:24px;background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    font-size:14px;line-height:24px;color:rgba(255,255,255,0.85);white-space:nowrap;
   }
-  .tile::after{
-    content:"";position:absolute;left:12px;bottom:12px;right:40%;height:10px;border-radius:5px;
-    background:rgba(255,255,255,.22);
+  .article-body{font-size:16px;line-height:32px;color:rgba(255,255,255,0.7);}
+  .article-body p{margin:0 0 24px;}
+  .article-body p:last-child{margin-bottom:0;}
+  .article-h2{font-size:20px;font-weight:700;line-height:34px;color:#fff;margin:0;}
+  .article-image{
+    width:100%;aspect-ratio:382/240;border-radius:14px;object-fit:cover;display:block;
+    background:#1a1a1f;
   }
-  .t1{background:linear-gradient(160deg,#812DFF88,#1a1a1f 70%);}
-  .t2{background:linear-gradient(160deg,#FF673988,#1a1a1f 70%);}
-  .t3{background:linear-gradient(160deg,#2d8cff77,#1a1a1f 70%);}
-  .t4{background:linear-gradient(160deg,#ff2d7877,#1a1a1f 70%);}
-  .t5{background:linear-gradient(160deg,#28e0a877,#1a1a1f 70%);}
-  .t6{background:linear-gradient(160deg,#ffd36e66,#1a1a1f 70%);}
+  .article-figure{margin:0;display:flex;flex-direction:column;gap:8px;}
+  .article-figure figcaption{
+    font-size:13px;line-height:22px;color:rgba(255,255,255,0.45);
+  }
+  .highlight-mark{
+    background:rgba(255,179,71,0.22);padding:1px 5px;border-radius:3px;color:rgba(255,255,255,0.85);
+  }
 
   /* ===== TABBAR — spliced verbatim from components/tabbar-260726 ===== */
 /* checkin_motion は *{box-sizing:border-box} のグローバルリセット前提。
@@ -285,20 +309,91 @@
 <div id="phoneWrap">
   <div id="phone">
 
-    <!-- demo feed -->
-    <div id="scroller">
-      <div class="feed">
-        <h1>Tab Bar 260726</h1>
-        <div class="sub">More をタップ → メニュー展開(背景グラデ + 上に向かって消える blur)/ タブでアイコン再生</div>
-        <div class="hero"></div>
-        <div class="grid">
-          <div class="tile t1"></div><div class="tile t2"></div>
-          <div class="tile t3"></div><div class="tile t4"></div>
-          <div class="tile t5"></div><div class="tile t6"></div>
-          <div class="tile t2"></div><div class="tile t5"></div>
-          <div class="tile t4"></div><div class="tile t1"></div>
+    <!-- ============ 記事画面(collection/article のデザインルール)============
+         中身は「タブバーの実装仕様」そのもの。写真と本文がバーの背後に来るので、
+         バーの blur と展開時の背景グラデ/blur が効いているか判断できる。 -->
+    <!-- 画面上部(記事画面と同じ nav-bar / 戻るは claude のトップへ) -->
+    <div class="nav-bar">
+      <div class="status-bar">
+        <div class="status-bar-time">9:41</div>
+        <div class="dynamic-island"></div>
+        <div class="status-icons">
+          <svg width="19" height="12" viewBox="0 0 19 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="4" y="2" width="3" height="10" rx="1" fill="rgba(255,255,255,0.4)"/><rect x="8" y="1" width="3" height="11" rx="1" fill="white"/><rect x="12" y="0" width="3" height="12" rx="1" fill="white"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 2.5C10.4 2.5 12.1 3.3 13.3 4.5L14.7 3.1C13.1 1.5 10.9 0.5 8.5 0.5C6.1 0.5 3.9 1.5 2.3 3.1L3.7 4.5C4.9 3.3 6.6 2.5 8.5 2.5ZM8.5 6.5C9.6 6.5 10.6 6.9 11.3 7.6L12.7 6.2C11.6 5.1 10.1 4.5 8.5 4.5C6.9 4.5 5.4 5.1 4.3 6.2L5.7 7.6C6.4 6.9 7.4 6.5 8.5 6.5ZM10 10L8.5 8.5L7 10C7.4 10.4 7.9 10.5 8.5 10.5C9.1 10.5 9.6 10.4 10 10Z" fill="white"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="0" y="0.5" width="24" height="12" rx="3" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><rect x="1.5" y="2" width="21" height="9" rx="2" fill="white"/><rect x="25" y="4" width="2" height="5" rx="1" fill="rgba(255,255,255,0.4)"/></svg>
         </div>
       </div>
+      <div class="toolbar">
+        <a class="toolbar-btn" href="../" aria-label="戻る">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div id="scroller">
+      <article class="article">
+        <div class="article-meta">
+          <div class="article-date">2026.07.27</div>
+          <h1 class="article-title">タブバー 260726 の実装仕様——アニメアイコンと More 展開メニュー</h1>
+        </div>
+
+        <div class="badges">
+          <span class="badge">Spec</span>
+          <span class="badge">Tabbar</span>
+          <span class="badge">Lottie</span>
+          <span class="badge">Flutter</span>
+          <span class="badge">Design System V2</span>
+          <span class="badge">2026</span>
+        </div>
+
+        <div class="article-body">
+          <p>アプリ下部に浮かぶタブバーを刷新した。形は既存のタブバー(チェックイン画面と同一)をそのまま踏襲しつつ、5つのタブのうち4つのアイコンを <span class="highlight-mark">animated iconsax の Lottie</span> に差し替え、中央の More をタップすると3つのメニューが展開する構造を追加している。</p>
+          <p>バーは高さ64・角丸42、背景は黒65%に白15%の1pxボーダー、そして背面16pxのぼかし。中央の More ボタンだけは全高75あり、丸がバーの上端から10pxはみ出す。この「はみ出し」が既存タブバーの個性なので、実装時にクリッピングしないよう注意したい。</p>
+        </div>
+
+        <figure class="article-figure">
+          <img class="article-image" src="assets/shot-default.png" alt="通常時のタブバー — 中央 More の丸がバー上端から10pxはみ出す">
+          <figcaption>通常時。中央の More だけ丸がバーの上端からはみ出す。背面16pxのぼかしで、後ろの文字がやわらかく沈む。</figcaption>
+        </figure>
+
+        <h2 class="article-h2">出現は下から、遅れて</h2>
+        <div class="article-body">
+          <p>画面を開いた直後、タブバーは画面外(下110px)で待機している。<span class="highlight-mark">400ms 遅れて動き出し、700ms かけて ease-out</span> で定位置へせり上がる。到着に合わせてバーの4アイコンが70msずつずれて1回ずつ再生され、画面が「起動した」ことを伝える。</p>
+          <p>移動は必ず bottom などのレイアウトプロパティで行うこと。transform や opacity で動かすと合成レイヤーが作られ、動作中だけ背面ぼかしが消えてしまう。Flutter では Transform で問題ない。</p>
+        </div>
+
+        <h2 class="article-h2">More を押すと、背景が沈む</h2>
+        <div class="article-body">
+          <p>中央の More をタップすると、丸が白へ反転してロゴが黒くなり、バーの上に Check In / Gallery / Calendar の3つが弾むように展開する。同時に背景のグラデーションが切り替わり、下へ行くほど濃く、そして<span class="highlight-mark">上に向かって消えていくぼかし</span>がかかる。</p>
+          <p>このぼかしは一様な全面ぼかしではない。Figma の背景ぼかしはレイヤー自身のアルファで変調されるため、グラデーションが透明な上側ではぼかしも効かない。CSS では blur 層にマスクを掛けて、Flutter では ShaderMask で同じ勾配を与えて再現している。いま画面を下までスクロールしてから More を押すと、この文字の上でぼけ方が変わるのが分かるはずだ。</p>
+        </div>
+
+        <figure class="article-figure">
+          <img class="article-image" src="assets/shot-opened.png" alt="More 展開時 — 白丸反転と3つのサテライト、上に向かって消えるぼかし">
+          <figcaption>More 展開時。丸が白へ反転し3つが並ぶ。背景は下へ行くほど濃く、ぼかしは上に向かって消えていく。</figcaption>
+        </figure>
+
+        <h2 class="article-h2">選んだ項目は中央に残る</h2>
+        <div class="article-body">
+          <p>展開したメニューから項目を選ぶとメニューは閉じ、中央の More が<span class="highlight-mark">白背景 + 選んだアイコン(黒) + その項目名</span>に変わる。いま自分がどこにいるかを、中央のボタン自身が示す仕組みだ。メニュー内の3つのアイコンは、通常タブの非アクティブと同じ白50%で統一している。</p>
+          <p>閉じる操作は4通り。サテライトをタップする、バーの通常タブをタップする、More をもう一度押す、バーの外側をタップする。バーのタブを選んだ場合は中央の選択も解除され、通常の More に戻る。</p>
+        </div>
+
+        <figure class="article-figure">
+          <img class="article-image" src="assets/shot-selected.png" alt="選択中 — 中央 More が白背景 + Calendar アイコン(黒) + ラベル Calendar">
+          <figcaption>Calendar を選んだ状態。中央が白背景になり、選んだアイコン(黒)とその項目名に変わる。</figcaption>
+        </figure>
+
+        <h2 class="article-h2">アイコンは「動き出すところ」から再生</h2>
+        <div class="article-body">
+          <p>支給された Lottie には、冒頭に160〜534msの何も動かないフレームが焼き込まれている。そのまま再生するとタップしてから反応するまでが遅く感じられるため、各アイコンの最初のキーフレームを計測し、そこから再生を開始している。Flutter 側も同じ値を定数で持っているので、体感は完全に揃う。</p>
+          <p>アイコンの拡大率と位置は、デザイナー側の微調整ツールで確定した値を焼き込み済みだ。Lottie は元データに余白があり素のままでは小さく見えるため、1.30〜1.55倍に拡大している。24pxのボックス自体は変えず、中身だけを拡大する点に注意してほしい。</p>
+        </div>
+
+        <div class="article-body">
+          <p>詳細な数値、モーションのタイミング表、そして貼るだけで動く Dart とアセット一式は、実装指示ページにまとめてある。この記事はタブバーの背面がどう見えるかを確かめるためのサンプル画面も兼ねている——下までスクロールして、バーの後ろで文字がどのようにぼけるかを見てほしい。</p>
+        </div>
+      </article>
     </div>
 
     <!-- ===== TABBAR (verbatim from component) ===== -->

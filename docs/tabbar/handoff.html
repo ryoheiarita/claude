@@ -84,15 +84,27 @@
       margin: 0 auto; border-radius: 20px; overflow: hidden; background: #101010;
       border: 1px solid rgba(255,255,255,0.08);
     }
-    /* バーの blur / 背景グラデが分かるよう、下に薄いコンテンツを敷く */
+    /* バーの blur / 展開時の背景グラデ+blur が効いているか判断できるよう、
+       記事と同じ体裁の本文をバーの背後に敷く(文字はぼけ方が一番分かりやすい) */
     .tb-preview::before {
       content: ""; position: absolute; inset: 0;
       background:
         radial-gradient(130px 120px at 24% 30%, #ff2d78, transparent 62%),
         radial-gradient(150px 130px at 76% 24%, #2d8cff, transparent 62%),
-        radial-gradient(170px 150px at 52% 86%, #28e0a8, transparent 62%),
-        repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 8px, transparent 8px 16px);
-      opacity: .9;
+        radial-gradient(170px 150px at 52% 86%, #28e0a8, transparent 62%);
+      opacity: .55;
+    }
+    .tb-preview-text {
+      position: absolute; inset: 0; padding: 16px 16px 0;
+      font-size: 15px; line-height: 30px; color: rgba(255,255,255,0.72);
+      overflow: hidden; pointer-events: none;
+    }
+    .tb-preview-text h4 {
+      margin: 0 0 6px; font-size: 17px; font-weight: 700; line-height: 26px; color: #fff;
+    }
+    .tb-preview-text .mark {
+      background: rgba(255,179,71,0.22); padding: 1px 5px; border-radius: 3px;
+      color: rgba(255,255,255,0.9);
     }
     .tb-preview-cap {
       max-width: 420px; margin: 10px auto 0; text-align: center;
@@ -307,6 +319,12 @@
   <!-- ===== 上部プレビュー: タブバーのみ(実物・操作可) ===== -->
   <div class="tb-preview-wrap">
     <div class="tb-preview" id="tbPreview">
+      <div class="tb-preview-text">
+        <h4>More を押すと、背景が沈む</h4>
+        中央の More をタップすると丸が白へ反転し、バーの上に3つのメニューが展開する。
+        同時に背景のグラデーションが切り替わり、<span class="mark">上に向かって消えていくぼかし</span>がかかる。
+        この文字のぼけ方で、blur が効いているかを確認できる。
+      </div>
 <!-- TABBAR_PREVIEW:MARKUP -->
 <div class="tabbar-bg" id="tabbarBg"><div class="tabbar-bg__blur"></div></div>
   <div class="tabbar-scrim" id="tabbarScrim"></div>
