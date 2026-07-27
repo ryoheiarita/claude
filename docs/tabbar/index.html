@@ -44,7 +44,12 @@
     background:#101010;border-radius:47px;overflow:hidden;
     box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 40px 90px rgba(0,0,0,.8);
   }
-  body.mobile #phone{border-radius:0;box-shadow:none;}
+  /* 実機: ベゼル無しで画面いっぱい(レターボックスを作らない)。
+     100dvh = アドレスバーの伸縮に追従する実効の画面高さ */
+  body.mobile #phone{
+    border-radius:0;box-shadow:none;
+    width:100vw;height:100dvh;
+  }
 
   #docLink,#replay{
     position:fixed;top:20px;z-index:99;
@@ -56,12 +61,9 @@
   #docLink{right:24px;}
   #replay{left:24px;}
   #docLink:hover,#replay:hover{background:rgba(255,255,255,.16);}
-  body.mobile #docLink,body.mobile #replay{
-    top:calc(env(safe-area-inset-top,0px) + 10px);
-    padding:6px 12px;font-size:12px;
-  }
-  body.mobile #docLink{right:12px;}
-  body.mobile #replay{left:12px;}
+  /* 実機ではボタン類を出さず、画面全体をアプリの表示に使う
+     (出現アニメをもう一度見たい場合はページを再読み込み) */
+  body.mobile #docLink,body.mobile #replay{display:none;}
 
   /* ============ demo content (scrolls under the bar) ============ */
   #scroller{
@@ -348,17 +350,30 @@
 
 <script>
 /* ---------- phone frame fit ----------
-   desktop: 1:1(縮小しない = 定義値どおりの実寸で検証できる)
-   mobile : 実機画面にフィット(実機での見え方が正) */
+   desktop: 390x844 のフレームを 1:1(縮小しない = 定義値どおりの実寸で検証できる)
+   mobile : ボタン類を隠し、画面全体をそのままアプリの画面として使う(CSSの100vw/100dvh)。
+            極端に狭い端末(360px未満)だけ、タブバー(328px幅)が見切れないよう縮小する。 */
 (function(){
   const wrap = document.getElementById('phoneWrap');
+  const phone = document.getElementById('phone');
+  const MIN_W = 360;
   function fit(){
     const mobile = innerWidth <= 500;
     document.body.classList.toggle('mobile', mobile);
     if (mobile){
-      const s = Math.min(innerWidth / 390, innerHeight / 844);
-      wrap.style.transform = `scale(${s})`;
+      const s = Math.min(1, innerWidth / MIN_W);
+      if (s < 1){
+        phone.style.width = MIN_W + 'px';
+        phone.style.height = Math.round(innerHeight / s) + 'px';
+        wrap.style.transform = `scale(${s})`;
+      } else {
+        phone.style.width = '';        // CSS の 100vw / 100dvh に戻す
+        phone.style.height = '';
+        wrap.style.transform = 'none';
+      }
     } else {
+      phone.style.width = '';
+      phone.style.height = '';
       wrap.style.transform = 'none';
     }
   }
