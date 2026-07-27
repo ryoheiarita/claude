@@ -251,7 +251,7 @@
   }
   /* ---- 追加分: バー背景の黒透過グラデーション (322:1202 コンテナ背景の完全再現) ----
      通常時 (261:414): linear-gradient(transparent 52.404% -> rgba(0,0,0,0.6))、blurなし
-     展開時 (316:1059): linear-gradient(rgba(16,16,16,0) -> #101010) + background-blur 32px
+     展開時: linear-gradient(rgba(0,0,0,0) -> #000 真っ黒) + background-blur 32px
      ⚠️ 展開時のblurは「上に向かって透明になるblur」。Figmaのbackground-blurは
         レイヤー自身のアルファで変調される(グラデが透明な上側ではblurも効かない)ため、
         CSSでは blur層に同じアルファ勾配の mask を掛けて再現する。
@@ -277,9 +277,9 @@
   .tabbar-bg.open .tabbar-bg__blur{
     backdrop-filter:blur(var(--tabbar-bg-blur));-webkit-backdrop-filter:blur(var(--tabbar-bg-blur));
   }
-  .tabbar-bg::after{    /* Opened (316:1059) の色グラデ — blurの上に乗る */
+  .tabbar-bg::after{    /* Opened の色グラデ(真っ黒)— blurの上に乗る */
     content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%);
+    background:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
     opacity:0;transition:opacity .3s ease;
   }
   .tabbar-bg.open::before{opacity:0;}
@@ -462,7 +462,7 @@ flutter:
   <table>
     <tr><th>状態</th><th>値</th></tr>
     <tr><td>通常時 <span class="fig">261:414</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%)</code> / <b>blur なし</b></td></tr>
-    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%)</code> + <b>background blur 32</b>(下記)</td></tr>
+    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)</code> (<b>真っ黒</b>)+ <b>background blur 32</b>(下記)</td></tr>
     <tr><td>切替</td><td>色グラデは opacity クロスフェード <b>0.3s ease</b> / blur は<b>半径 0 → 32 をアニメーション</b></td></tr>
     <tr><td>重なり順</td><td>コンテンツ &lt; <b>①通常グラデ → ②blur層 → ③展開グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
   </table>

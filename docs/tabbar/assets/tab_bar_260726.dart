@@ -596,7 +596,7 @@ class _TabBar260726State extends State<TabBar260726>
 /// Stack 内で画面下端に Positioned(left:0, right:0, bottom:0) で置き、
 /// [open] を More メニューの開閉([TabBar260726.onMoreOpenChanged])と同期させる。
 ///   通常時 (261:414): transparent 52.404% → rgba(0,0,0,.6)、blurなし
-///   展開時 (316:1059): rgba(16,16,16,0) → #101010 +
+///   展開時: rgba(0,0,0,0) → #000(真っ黒)+
 ///     **上に向かって透明になる** background blur 32(Figma Blur/32)
 ///
 /// blur が上に向かって消えるのは Figma の background-blur がレイヤー自身のアルファで
@@ -660,7 +660,7 @@ class TabBarBg260726 extends StatelessWidget {
               },
             ),
 
-            // ③ Opened (316:1059) の #101010 グラデ(blur の上に乗る)
+            // ③ Opened の色グラデ(真っ黒 / blur の上に乗る)
             AnimatedOpacity(
               duration: duration,
               opacity: open ? 1 : 0,
@@ -669,7 +669,7 @@ class TabBarBg260726 extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x00101010), Color(0xFF101010)],
+                    colors: [Color(0x00000000), Color(0xFF000000)], // 真っ黒
                   ),
                 ),
               ),
