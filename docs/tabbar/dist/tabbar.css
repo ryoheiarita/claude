@@ -1,0 +1,178 @@
+/* tabbar 260726 — component CSS (generated from index.html / 編集しない) */
+/* checkin_motion は *{box-sizing:border-box} のグローバルリセット前提。
+     コンポーネント単体でも同じ計算になるようスコープ付きで持つ。
+     これが無いと bar が 64+14=78px に膨らみ、中央ボタンがはみ出さなくなる */
+  .tabbar, .tabbar *, .tabbar-scrim{ box-sizing:border-box; }
+  :root{
+    --ff:'Figtree',-apple-system,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    --tabbar-bg:        rgba(0,0,0,0.65);
+    --tabbar-border:    rgba(255,255,255,0.15);
+    --tabbar-blur:      16px;
+    --tabbar-radius:    42px;
+    --tab-inactive:     rgba(255,255,255,0.5);
+    --tab-active:       #ffffff;
+    --tab-more-bg:      rgba(255,255,255,0.25);
+    --tab-more-border:  rgba(255,255,255,0.15);
+    --tab-more-blur:    8px;
+    /* more menu (Tabbar_set 322:1202 / Opened) — 追加分 */
+    --more-circle:      56px;             /* satellite circle */
+    --more-pitch:       80px;             /* column pitch (circle 56 + gap 24) */
+    --more-drop:        32px;             /* side columns sit lower than center */
+    --more-gap:         12px;             /* menu bottom -> bar top */
+    --more-item-bg:     rgba(0,0,0,0.65);      /* Figma 261:556: バーと同スタイル */
+    --more-item-border: rgba(255,255,255,0.15);
+    --more-item-blur:   16px;
+    /* 出現アニメ(画面下から遅れて ease-out でせり上がる) */
+    --tabbar-bottom:     24px;                    /* 定位置 */
+    --tabbar-enter-from: -110px;                  /* 出現前の待機位置(画面外) */
+    --tabbar-enter-dur:  .7s;
+    --tabbar-enter-ease: cubic-bezier(.16,1,.3,1);/* ease-out(expo) */
+    --tabbar-bg-blur:    32px;                    /* 展開時の背景blur(Figma Blur/32) */
+  }
+  .tabbar{
+    position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
+    height:64px;padding:7px 20px;border-radius:var(--tabbar-radius);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    transition:opacity .3s ease,
+               bottom var(--tabbar-enter-dur) var(--tabbar-enter-ease);
+  }
+  /* 出現前(画面下に退避)。⚠️ 移動は必ず bottom(レイアウトプロパティ)で。
+     transform/opacity で動かすと合成レイヤー化して blur が動作中だけ消える。 */
+  .tabbar.is-offscreen{ bottom:var(--tabbar-enter-from); transition:none; }
+  .tabbar::before{
+    content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;
+    background:var(--tabbar-bg);border:1px solid var(--tabbar-border);
+    backdrop-filter:blur(var(--tabbar-blur));-webkit-backdrop-filter:blur(var(--tabbar-blur));
+  }
+  .tabbar__row{position:relative;z-index:1;display:flex;gap:12px;align-items:flex-end;justify-content:center;}
+  .tab-item{
+    width:48px;padding:4px 0 2px;border:0;background:none;cursor:pointer;
+    display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:flex-end;
+    color:var(--tab-inactive);font-family:var(--ff);
+  }
+  .tab-item svg{width:24px;height:24px;display:block;fill:currentColor;}
+  /* bar icons = animated iconsax Lottie(白ストローク焼き込み)。
+     形は checkin_motion のまま: 24px box、inactive は opacity で 50% */
+  .tabbar__row .tab-item__icon{width:24px;height:24px;position:relative;}
+  .tab-item .tab-item__lottie{
+    width:100%;height:100%;opacity:.5;transition:opacity .18s ease;
+  }
+  .tab-item.active .tab-item__lottie{opacity:1;}
+  .tab-item__label{
+    font-size:11px;line-height:15px;letter-spacing:0.11px;text-align:center;white-space:nowrap;
+    color:currentColor;text-shadow:0 0 4px rgba(0,0,0,0.25);
+  }
+  .tab-item.active{color:var(--tab-active);}
+  .tab-item.is-center{width:48px;height:75px;gap:2px;padding:0 0 2px;}
+  .tab-item.is-center .tab-item__icon{
+    width:48px;height:48px;border-radius:40px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--tab-more-bg);border:1px solid var(--tab-more-border);
+    backdrop-filter:blur(var(--tab-more-blur));-webkit-backdrop-filter:blur(var(--tab-more-blur));
+    transition:background .25s ease,border-color .25s ease;
+  }
+  .tab-item.is-center .ic-hana{width:48px;height:48px;}
+
+  /* ---- 追加分: More opened (322:1202) — 丸が白反転、ロゴ黒 ---- */
+  .tabbar.more-open .tab-item.is-center .tab-item__icon{ background:#fff; border-color:transparent; }
+  .tab-item.is-center .ic-hana g{ transition:fill .25s ease, opacity .25s ease; }
+  .tabbar.more-open .tab-item.is-center .ic-hana g{ fill:#000; opacity:1; }
+
+  /* ---- 追加分: Moreメニューの選択状態 ----
+     ・サテライト3つのアイコンは通常タブの非アクティブと同じ見え方(白50%)
+     ・どれかを選ぶと中央Moreが白背景になり、選んだアイコン(黒)とラベルに差し替わる */
+  .more-item .tab-item__lottie{ opacity:var(--tab-inactive-op,.5); }
+  .tab-item.is-center .more-selected{
+    position:absolute; left:50%; top:50%; width:24px; height:24px;
+    margin:-12px 0 0 -12px;              /* 中央寄せ(transformは微調整用に空ける) */
+    display:none; filter:invert(1);      /* Lottieの白ストローク -> 黒 */
+    transform:translate(var(--adj-x,0px),var(--adj-y,0px)) scale(var(--adj-s,1));
+  }
+  .tab-item.is-center .more-selected svg{ display:block; }
+  .tabbar.has-selection .tab-item.is-center .tab-item__icon{ background:#fff; border-color:transparent; }
+  .tabbar.has-selection .tab-item.is-center .ic-hana{ display:none; }
+  .tabbar.has-selection .tab-item.is-center .more-selected{ display:block; }
+  .tabbar.has-selection .tab-item.is-center{ color:var(--tab-active); }  /* ラベルも選択色 */
+
+  /* ---- 追加分: more menu (satellites above the bar) ---- */
+  .more-menu{
+    position:absolute;left:50%;bottom:calc(100% + var(--more-gap));
+    transform:translateX(-50%);z-index:1;
+    display:flex;align-items:flex-start;gap:calc(var(--more-pitch) - var(--more-circle));
+    pointer-events:none;
+  }
+  .tabbar.more-open .more-menu{pointer-events:auto;}
+  .more-item{
+    width:var(--more-circle);border:0;background:none;padding:0;cursor:pointer;
+    display:flex;flex-direction:column;gap:2px;align-items:center;
+    color:var(--tab-active);font-family:var(--ff);
+    opacity:0;transform:translateY(18px) scale(.55);transform-origin:50% 100%;
+    transition:opacity .22s ease, transform .32s cubic-bezier(.34,1.56,.64,1);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .more-item:not(.is-mid){margin-top:var(--more-drop);}
+  .tabbar.more-open .more-item{opacity:1;transform:translateY(0) scale(1);}
+  .tabbar.more-open .more-item:nth-child(1){transition-delay:.03s;}
+  .tabbar.more-open .more-item:nth-child(2){transition-delay:0s;}
+  .tabbar.more-open .more-item:nth-child(3){transition-delay:.06s;}
+  .more-item__circle{
+    width:var(--more-circle);height:var(--more-circle);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--more-item-bg);border:1px solid var(--more-item-border);
+    backdrop-filter:blur(var(--more-item-blur));-webkit-backdrop-filter:blur(var(--more-item-blur));
+  }
+  .more-item .tab-item__icon{width:24px;height:24px;position:relative;}
+  .more-item .tab-item__lottie{width:100%;height:100%;}
+  .more-item .tab-item__lottie svg{display:block;}
+  .more-item__label{
+    font-size:11px;line-height:15px;letter-spacing:0.11px;text-align:center;white-space:nowrap;
+    color:rgba(255,255,255,0.5);   /* Figma 261:558: white 50%, no shadow */
+  }
+  /* ---- 追加分: バー背景の黒透過グラデーション (322:1202 コンテナ背景の完全再現) ----
+     通常時 (261:414): linear-gradient(transparent 52.404% -> rgba(0,0,0,0.6))、blurなし
+     展開時 (316:1059): linear-gradient(rgba(16,16,16,0) -> #101010) + background-blur 32px
+     ⚠️ 展開時のblurは「上に向かって透明になるblur」。Figmaのbackground-blurは
+        レイヤー自身のアルファで変調される(グラデが透明な上側ではblurも効かない)ため、
+        CSSでは blur層に同じアルファ勾配の mask を掛けて再現する。
+     層構成(paint順): ::before=通常グラデ → __blur=マスク付きblur → ::after=展開グラデ */
+  .tabbar-bg{
+    position:absolute;left:0;right:0;bottom:0;height:268px;
+    pointer-events:none;z-index:4;   /* グラデ4 < スクリム5 < バー6 */
+  }
+  .tabbar-bg::before{   /* Default (261:414) */
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%);
+    opacity:1;transition:opacity .3s ease;
+  }
+  /* 上に向かって消えるblur。opacityでフェードすると合成レイヤー化でblurが飛ぶので、
+     backdrop-filter の半径そのものを 0px -> 8px でアニメーションさせる。 */
+  .tabbar-bg__blur{
+    position:absolute;inset:0;
+    backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+    transition:backdrop-filter .3s ease,-webkit-backdrop-filter .3s ease;
+    -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+    mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+  }
+  .tabbar-bg.open .tabbar-bg__blur{
+    backdrop-filter:blur(var(--tabbar-bg-blur));-webkit-backdrop-filter:blur(var(--tabbar-bg-blur));
+  }
+  .tabbar-bg::after{    /* Opened (316:1059) の色グラデ — blurの上に乗る */
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 100%);
+    opacity:0;transition:opacity .3s ease;
+  }
+  .tabbar-bg.open::before{opacity:0;}
+  .tabbar-bg.open::after{opacity:1;}
+
+  /* click-outside catcher while open (transparent, sits UNDER the bar: z 5 < 6) */
+  .tabbar-scrim{position:absolute;inset:0;z-index:5;display:none;}
+  .tabbar-scrim.on{display:block;}
+
+  /* per-icon fine-tune vars (set from JS; harmless defaults = 0/1) */
+  /* ⚠️ .tab-item__lottie は span — display:block が無いと transform が描画に一切効かない
+     (非置換インライン要素の transform は無視される。computed style には出るので気づきにくい) */
+  .tab-item__lottie{ display:block; }
+  .tab-item__icon > svg,
+  .tab-item__icon > .tab-item__lottie{
+    transform:translate(var(--adj-x,0px),var(--adj-y,0px)) scale(var(--adj-s,1));
+  }

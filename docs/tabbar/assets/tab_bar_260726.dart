@@ -597,19 +597,19 @@ class _TabBar260726State extends State<TabBar260726>
 /// [open] を More メニューの開閉([TabBar260726.onMoreOpenChanged])と同期させる。
 ///   通常時 (261:414): transparent 52.404% → rgba(0,0,0,.6)、blurなし
 ///   展開時 (316:1059): rgba(16,16,16,0) → #101010 +
-///     **上に向かって透明になる** background blur 8
+///     **上に向かって透明になる** background blur 32(Figma Blur/32)
 ///
 /// blur が上に向かって消えるのは Figma の background-blur がレイヤー自身のアルファで
 /// 変調されるため(グラデが透明な上側では blur も効かない)。Flutter では
 /// [ShaderMask] + [BlendMode.dstIn] で同じ縦アルファ勾配を blur 層に掛けて再現する。
-/// blur 半径は 0 → 8 を [TweenAnimationBuilder] でアニメーションさせる
+/// blur 半径は 0 → 32 を [TweenAnimationBuilder] でアニメーションさせる
 /// (Opacity でフェードすると合成レイヤー化で blur が飛ぶため)。
 class TabBarBg260726 extends StatelessWidget {
   const TabBarBg260726({super.key, required this.open});
   final bool open;
 
   static const double height = 268;
-  static const double blurSigma = 8;
+  static const double blurSigma = 32;
   static const Duration duration = Duration(milliseconds: 300);
 
   @override
@@ -636,7 +636,7 @@ class TabBarBg260726 extends StatelessWidget {
               ),
             ),
 
-            // ② 上に向かって消える blur(展開時のみ、半径を 0 → 8 でアニメ)
+            // ② 上に向かって消える blur(展開時のみ、半径を 0 → 32 でアニメ)
             TweenAnimationBuilder<double>(
               tween: Tween(end: open ? blurSigma : 0),
               duration: duration,
