@@ -203,8 +203,27 @@ Stack(children: [
 ])</code></pre>
   <p class="note">微調整値(<code>kMoreSpec</code> / <code>kTabAdjust</code>)はデザイナー側のツールから出力された
   ブロックをそのまま貼り替える運用。<b>デモページの表示は <code>tabbar-adjust.js</code>(確定値)と一致</b>しており、
-  Dart 側の定数もこれと同じ値に揃えてあるので、デモと実装が食い違うことはない。
-  現在は全てデフォルト(調整ゼロ / Moreメニューは circle 56・pitch 80・drop 32・gap 12)が正。</p>
+  Dart 側の定数もこれと同じ値に揃えてあるので、デモと実装が食い違うことはない。</p>
+
+  <h4>確定値(2026-07-27 — 配布 Dart に反映済み)</h4>
+  <p class="note">Lottie は元データに余白があり素のままだと Figma の静的アイコンより小さく見えるため、
+  <b>アイコンごとに拡大・位置補正をかけている</b>。これは<b>アイコン(24pxボックス内の中身)だけ</b>に効く指定で、
+  タブ幅・バー寸法・Moreメニューのレイアウトは変わらない。</p>
+  <table>
+    <tr><th>アイコン</th><th>dx</th><th>dy</th><th>scale</th><th>実描画サイズ</th></tr>
+    <tr><td>home</td><td>0.5</td><td>-0.6</td><td><b>1.30</b></td><td>31.2px</td></tr>
+    <tr><td>poppin</td><td>0</td><td>-0.4</td><td><b>1.55</b></td><td>37.2px</td></tr>
+    <tr><td>more(HANAロゴ)</td><td>0</td><td>0</td><td>1.00</td><td>48px(無補正)</td></tr>
+    <tr><td>shop</td><td>1.3</td><td>-2.1</td><td><b>1.45</b></td><td>34.8px</td></tr>
+    <tr><td>mypage</td><td>0</td><td>0</td><td><b>1.30</b></td><td>31.2px</td></tr>
+    <tr><td>checkin</td><td>0</td><td>-1.1</td><td><b>1.45</b></td><td>34.8px</td></tr>
+    <tr><td>gallery</td><td>0</td><td>-0.8</td><td><b>1.30</b></td><td>31.2px</td></tr>
+    <tr><td>calendar</td><td>0</td><td>-1.3</td><td><b>1.45</b></td><td>34.8px</td></tr>
+  </table>
+  <p class="note">Moreメニューのレイアウトは調整なし(circle 56・pitch 80・drop 32・gap 12)。
+  Flutter では <code>Transform.translate(dx,dy)</code> + <code>Transform.scale(scale)</code> を
+  24px ボックスの中身に適用(<code>tab_bar_260726.dart</code> に実装済み)。<b>24pxボックス自体は変えない</b>
+  (はみ出して描画されるのが正しい)。</p>
 
   <h3 class="section">5. 実装上の注意(ハマりどころ)</h3>
   <div class="warn"><b>① blur の入れ子:</b> バーの blur の内側に More 丸・サテライトの blur がある。

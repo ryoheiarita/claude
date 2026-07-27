@@ -67,14 +67,14 @@ const MoreSpec kMoreSpec = MoreSpec(
 );
 
 const Map<String, TabAdjust> kTabAdjust = {
-  'home': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'poppin': TabAdjust(dx: 0, dy: 0, scale: 1.00),
+  'home': TabAdjust(dx: 0.5, dy: -0.6, scale: 1.30),
+  'poppin': TabAdjust(dx: 0, dy: -0.4, scale: 1.55),
   'more': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'shop': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'mypage': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'checkin': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'gallery': TabAdjust(dx: 0, dy: 0, scale: 1.00),
-  'calendar': TabAdjust(dx: 0, dy: 0, scale: 1.00),
+  'shop': TabAdjust(dx: 1.3, dy: -2.1, scale: 1.45),
+  'mypage': TabAdjust(dx: 0, dy: 0, scale: 1.30),
+  'checkin': TabAdjust(dx: 0, dy: -1.1, scale: 1.45),
+  'gallery': TabAdjust(dx: 0, dy: -0.8, scale: 1.30),
+  'calendar': TabAdjust(dx: 0, dy: -1.3, scale: 1.45),
 };
 
 /// iconsax の Lottie は冒頭に 160〜534ms の無動作フレームが焼き込まれている。

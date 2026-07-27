@@ -17,16 +17,17 @@
      drop   = サイド列を中央より下げる量 / mgap = メニュー下端→バー上端
    items : アイコンごとの位置(dx,dy px)とスケール(s)
    ========================================================================== */
+/* 確定: 2026-07-27(Lottieの余白ぶんアイコンが小さく見えるため 1.30〜1.55 に拡大) */
 window.TABBAR_ADJUST = {
   global: { circle: 56, pitch: 80, drop: 32, mgap: 12 },
   items: {
-    home:     { dx: 0, dy: 0, s: 1 },
-    poppin:   { dx: 0, dy: 0, s: 1 },
-    more:     { dx: 0, dy: 0, s: 1 },
-    shop:     { dx: 0, dy: 0, s: 1 },
-    mypage:   { dx: 0, dy: 0, s: 1 },
-    checkin:  { dx: 0, dy: 0, s: 1 },
-    gallery:  { dx: 0, dy: 0, s: 1 },
-    calendar: { dx: 0, dy: 0, s: 1 },
+    home:     { dx: 0.5, dy: -0.6, s: 1.30 },
+    poppin:   { dx: 0,   dy: -0.4, s: 1.55 },
+    more:     { dx: 0,   dy: 0,    s: 1.00 },
+    shop:     { dx: 1.3, dy: -2.1, s: 1.45 },
+    mypage:   { dx: 0,   dy: 0,    s: 1.30 },
+    checkin:  { dx: 0,   dy: -1.1, s: 1.45 },
+    gallery:  { dx: 0,   dy: -0.8, s: 1.30 },
+    calendar: { dx: 0,   dy: -1.3, s: 1.45 },
   },
 };
