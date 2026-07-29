@@ -132,13 +132,16 @@
       <rect width="432" height="432" fill="url(#g)" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
       <image href="user-app/android/mipmap-xxxhdpi/ic_launcher_foreground.png" width="432" height="432"/>
       <rect x="72" y="72" width="288" height="288" fill="none" stroke="#4a9eff" stroke-width="2.5" stroke-dasharray="9 7" opacity="0.9"/>
-      <circle cx="216" cy="216" r="132" fill="none" stroke="#ff4d6d" stroke-width="2.5"/>
-      <text x="216" y="36" fill="#ff96a8" font-size="17" font-family="Menlo, monospace" text-anchor="middle">66dp safe circle</text>
-      <text x="216" y="410" fill="#8fc4ff" font-size="17" font-family="Menlo, monospace" text-anchor="middle">72dp viewport</text>
+      <circle cx="216" cy="216" r="144" fill="none" stroke="#4a9eff" stroke-width="2" opacity="0.55"/>
+      <circle cx="216" cy="216" r="140" fill="none" stroke="#ff4d6d" stroke-width="2.5"/>
+      <circle cx="216" cy="216" r="132" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.35"/>
+      <text x="216" y="34" fill="#ff96a8" font-size="16" font-family="Menlo, monospace" text-anchor="middle">Ø70dp reference</text>
+      <text x="216" y="408" fill="#8fc4ff" font-size="16" font-family="Menlo, monospace" text-anchor="middle">72dp viewport</text>
     </svg>
     <ul class="spec">
       <li><b>全プラットフォームで見た目のロゴサイズを統一</b>しています。iOS・Android・favicon・Web ホームアイコンで同じ倍率を適用。</li>
-      <li>基準は最も制約の厳しい <b>Android アダプティブアイコンのセーフ円 Ø66dp / 108dp（= 0.611）</b>。コンテンツのバウンディングボックス対角がこの円に内接する倍率を算出しています。</li>
+      <li>基準は Android アダプティブアイコンの 108dp レイヤー内に取る<b>参照円 Ø70dp（= 0.648）</b>。コンテンツのバウンディングボックス対角がこの円に内接する倍率を算出しています。</li>
+      <li>Android の規定値は「保証セーフ円 <b>Ø66dp</b>」と「可視ビューポート <b>72dp</b>」の 2 つ。Ø66dp 基準ではロゴが小さく見えたため <b>Ø70dp</b> を採用し（Ø66 比 <b>+6.1%</b>）、円マスクの実可視域 Ø72dp に対して <b>2dp のマージン</b>を残しています。</li>
       <li>背景は各アイコンとも<b>全面のまま</b>で、中央のロゴのみを拡縮。</li>
       <li>角丸は<b>焼き込んでいません</b>。iOS のスーパー楕円マスク、Android のランチャーマスクはシステムが適用します。</li>
       <li>すべてのサイズは 1024px マスターからの<b>等比縮小</b>のみ。サイズごとのデザイン差し替えはありません。</li>
@@ -147,15 +150,15 @@
 
   <div class="table-scroll" style="margin-top:24px">
     <table>
-      <thead><tr><th></th><th>デザイン</th><th class="mono">倍率</th><th class="mono">ロゴ幅（キャンバス比）</th><th class="mono">セーフ円内 最遠画素</th></tr></thead>
+      <thead><tr><th></th><th>デザイン</th><th class="mono">倍率</th><th class="mono">ロゴ幅（キャンバス比）</th><th class="mono">最遠画素 / Ø72dp 半径</th></tr></thead>
       <tbody>
-        <tr><td><img class="thumb rr" src="user-app/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>user-app</td><td class="mono">×0.8737</td><td class="mono">0.670 → 0.585</td><td class="mono">131.9 / 132.0 px</td></tr>
-        <tr><td><img class="thumb rr" src="web-home-icon/web-app-icon-192.png" alt=""></td><td>web-home-icon</td><td class="mono">×0.8737</td><td class="mono">0.670 → 0.585</td><td class="mono">155.7 / 204.8 px</td></tr>
-        <tr><td><img class="thumb rr" src="manager-cms/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>manager-cms</td><td class="mono">×0.8024</td><td class="mono">0.670 → 0.538</td><td class="mono">128.6 / 132.0 px</td></tr>
+        <tr><td><img class="thumb rr" src="user-app/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>user-app</td><td class="mono">×0.9266</td><td class="mono">0.670 → 0.621</td><td class="mono">139.2 / 144.0 px</td></tr>
+        <tr><td><img class="thumb rr" src="web-home-icon/web-app-icon-192.png" alt=""></td><td>web-home-icon</td><td class="mono">×0.9266</td><td class="mono">0.670 → 0.621</td><td class="mono">165.2 / 204.8 px</td></tr>
+        <tr><td><img class="thumb rr" src="manager-cms/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>manager-cms</td><td class="mono">×0.8510</td><td class="mono">0.670 → 0.570</td><td class="mono">136.2 / 144.0 px</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note" style="margin-top:14px">manager-cms のみ倍率が小さいのは、コンテンツに「Manager」の文字が加わって縦に高く＝対角が長くなるためです。BWU ロゴ単体ではなくブロック全体をセーフ円に収めています。「最遠画素」は 432px キャンバス（Web マスカブルのみ 512px）での実測値です。</p>
+  <p class="note" style="margin-top:14px">manager-cms のみ倍率が小さいのは、コンテンツに「Manager」の文字が加わって縦に高く＝対角が長くなるためです。BWU ロゴ単体ではなくブロック全体を参照円に収めています。「最遠画素」は 432px キャンバス（Web マスカブルのみ 512px・比較対象はマスカブルのセーフ円半径）での実測値で、いずれも可視域の内側です。</p>
 
   <!-- ============================================================ 02 -->
   <h2><span class="num">02</span>iOS 実装</h2>
@@ -228,7 +231,7 @@
     &lt;<span class="k">monochrome</span> android:drawable="@mipmap/ic_launcher_monochrome"/&gt;
 &lt;/<span class="k">adaptive-icon</span>&gt;</pre>
 
-  <p class="note">背景がグラデーション／白ベタのため、<code>values/ic_launcher_background.xml</code>（単色リソース）ではなく<b>ビットマップの背景レイヤー</b>を使っています。前景レイヤーのロゴは 66dp のセーフ円の内側に収まっているため、どのランチャーのマスク形状でも欠けません。</p>
+  <p class="note">背景がグラデーション／白ベタのため、<code>values/ic_launcher_background.xml</code>（単色リソース）ではなく<b>ビットマップの背景レイヤー</b>を使っています。前景レイヤーのロゴは Ø70dp 参照円に内接し、円マスクの実可視域 Ø72dp の内側に収まっているため、どのランチャーのマスク形状でも欠けません。</p>
 
   <div class="table-scroll" style="margin-top:24px">
     <table>
