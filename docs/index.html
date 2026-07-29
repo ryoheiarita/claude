@@ -97,6 +97,7 @@
     .card-icon.passportgen { background: linear-gradient(135deg, #16324F 0%, #4A90D9 100%); }
     .card-icon.checkin { background: linear-gradient(135deg, #812DFF 0%, #FF6739 100%); }
     .card-icon.appicon { background: linear-gradient(135deg, #3a3a3e 0%, #101010 100%); border: 1px solid rgba(255,255,255,0.12); }
+    .card-icon.appicons { background: linear-gradient(135deg, #656565 0%, #000000 100%); border: 1px solid rgba(255,255,255,0.12); }
     .card-icon.tabbar { background: linear-gradient(135deg, #FF2D78 0%, #2D8CFF 100%); }
     .card-body {
       flex: 1;
@@ -137,13 +138,23 @@
     <div class="section">
       <div class="section-title">アプリアイコン</div>
       <div class="cards">
+        <a class="card" href="app-icons/">
+          <div class="card-icon appicons">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2.4"/><rect x="13" y="3" width="8" height="8" rx="4"/><rect x="3" y="13" width="8" height="8" rx="2.4"/><rect x="13" y="13" width="8" height="8" rx="2.4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">BWU App Icons 実装ガイド（iOS / Android / Web）</div>
+            <div class="card-desc">Renewal_UI_Design 準拠 — ユーザーアプリ・Web ホームアイコン・Manager (CMS) の 3 種 × 全プラットフォーム素材、ロゴ倍率仕様、実装スニペット、ZIP</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
         <a class="card" href="appicon/">
           <div class="card-icon appicon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4.5"/><path d="M9 12.5c1-1.3 2-1.3 3 0s2 1.3 3 0"/></svg>
           </div>
           <div class="card-body">
-            <div class="card-title">BwU App Icon（iOS）仕様・素材</div>
-            <div class="card-desc">Apple HIG 準拠の AppIcon 一式 — #101010 背景・配置仕様・全17サイズ + iOS 18 Dark/Tinted・appiconset ZIP</div>
+            <div class="card-title">BwU App Icon（iOS）仕様・素材 <span style="font-size:11px;color:rgba(255,255,255,0.3)">旧版</span></div>
+            <div class="card-desc">Design_System_V2 ベース・#101010 背景の iOS 単体版 — 全17サイズ + iOS 18 Dark/Tinted・appiconset ZIP</div>
           </div>
           <div class="card-arrow">&rsaquo;</div>
         </a>
