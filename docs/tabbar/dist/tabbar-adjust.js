@@ -7,30 +7,25 @@
 
    更新手順:
      1) index.html で「微調整」ON → 調整
-     2) 「確定値をコピー」ボタン → このファイルを丸ごと置き換え
-     3) 「Flutterコードをコピー」ボタン → flutter/tab_bar_260726.dart の
-        kMoreSpec / kTabAdjust を置き換え(同じ値をDart側にも反映)
-     4) 公開ページへ反映: badge/docs/tabbar/ に本ファイルをコピー
+     2) 「① 確定値をコピー」ボタン → このファイルを丸ごと置き換え
+     3) 「② Flutterコードをコピー」→ flutter/tab_bar_260726.dart の
+        kMoreSpec / kTabAdjust / TabBarBg260726 の定数を置き換え
+     4) 公開ページへ反映: node components/tabbar-260726/build-docs.mjs
 
-   global: Moreメニューのレイアウト(px)
-     circle = サテライト丸の直径 / pitch = 列ピッチ
-     drop   = サイド列を中央より下げる量 / mgap = メニュー下端→バー上端
-   items : アイコンごとの位置(dx,dy px)とスケール(s)
+   generated: 2026-07-29
    ========================================================================== */
-/* 確定: 2026-07-27
-   Lottie は素材ごとに内側の余白が違うため、同じ scale でも絵の実寸が揃わない
-   (静止状態の等倍で 14.2〜17.4px とバラバラ)。バー4つの実寸 22.0px を正とし、
-   More メニューの3つもその実寸に合わせてある。scale の数値が不揃いなのはそのため。 */
 window.TABBAR_ADJUST = {
   global: { circle: 56, pitch: 80, drop: 32, mgap: 12 },
+  /* 展開時の背景: blur半径 / 効き始め% / 全開% / 黒の濃さ(40%地点, 70%地点) */
+  bg: { blur: 16, from: 0, to: 57, k1: 0.45, k2: 1 },
   items: {
-    home:     { dx: 0.5, dy: -0.6, s: 1.30 },
-    poppin:   { dx: 0,   dy: -0.4, s: 1.55 },
-    more:     { dx: 0,   dy: 0,    s: 1.00 },
-    shop:     { dx: 1.3, dy: -2.1, s: 1.45 },
-    mypage:   { dx: 0,   dy: 0,    s: 1.30 },
-    checkin:  { dx: 0,   dy: -1.1, s: 1.46 },
-    gallery:  { dx: 0,   dy: -0.8, s: 1.26 },
-    calendar: { dx: 0,   dy: -1.3, s: 1.37 },
+    home:      { dx: 0.5, dy: -0.6, s: 1.3 },
+    poppin:    { dx: 0, dy: -0.4, s: 1.55 },
+    more:      { dx: 0, dy: 0.4, s: 1 },
+    shop:      { dx: 1.3, dy: -2.1, s: 1.45 },
+    mypage:    { dx: 0, dy: 0, s: 1.3 },
+    checkin:   { dx: 0, dy: -1.1, s: 1.45 },
+    gallery:   { dx: 0, dy: -0.8, s: 1.3 },
+    calendar:  { dx: 0, dy: -1.3, s: 1.45 },
   },
 };

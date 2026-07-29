@@ -67,18 +67,17 @@ const MoreSpec kMoreSpec = MoreSpec(
   gapAboveBar: 12,
 );
 
-/// Lottie は素材ごとに内側の余白が違うため、同じ scale でも絵の実寸が揃わない。
-/// バー4つの実寸 22.0px を正とし、More メニューの3つも同じ実寸に合わせてある
-/// (数値が不揃いなのはそのため。勝手に丸めないこと)。
+/// デザイナー確定値(2026-07-29)。Lottie は素材ごとに内側の余白が違うため、
+/// 同じ scale でも絵の実寸は揃わない。数値は微調整ツールの出力をそのまま使うこと。
 const Map<String, TabAdjust> kTabAdjust = {
   'home': TabAdjust(dx: 0.5, dy: -0.6, scale: 1.30),
   'poppin': TabAdjust(dx: 0, dy: -0.4, scale: 1.55),
-  'more': TabAdjust(dx: 0, dy: 0, scale: 1.00),
+  'more': TabAdjust(dx: 0, dy: 0.4, scale: 1.00),
   'shop': TabAdjust(dx: 1.3, dy: -2.1, scale: 1.45),
   'mypage': TabAdjust(dx: 0, dy: 0, scale: 1.30),
-  'checkin': TabAdjust(dx: 0, dy: -1.1, scale: 1.46),
-  'gallery': TabAdjust(dx: 0, dy: -0.8, scale: 1.26),
-  'calendar': TabAdjust(dx: 0, dy: -1.3, scale: 1.37),
+  'checkin': TabAdjust(dx: 0, dy: -1.1, scale: 1.45),
+  'gallery': TabAdjust(dx: 0, dy: -0.8, scale: 1.30),
+  'calendar': TabAdjust(dx: 0, dy: -1.3, scale: 1.45),
 };
 
 /// iconsax の Lottie は冒頭に 160〜534ms の無動作フレームが焼き込まれている。
@@ -612,12 +611,12 @@ class TabBarBg260726 extends StatelessWidget {
   final bool open;
 
   static const double height = 268;
-  static const double blurSigma = 32;
+  static const double blurSigma = 16;
   /// blur の効き始め位置(0〜1)。0.4 ≒ 中央 Library ラベルのすぐ上。
   /// ここから下端へ向けて緩やかに強くなる(短い区間だと急変化に見える)。
-  static const double blurFadeStart = 0.38;
+  static const double blurFadeStart = 0.0;
   /// blur が全開になる位置。下げすぎると黒に隠れて blur が見えなくなる。
-  static const double blurFadeEnd = 0.70;
+  static const double blurFadeEnd = 0.57;
   static const Duration duration = Duration(milliseconds: 300);
 
   @override
@@ -680,7 +679,10 @@ class TabBarBg260726 extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x00000000), Color(0xFF000000)], // 真っ黒
+                    // 黒の濃さ(確定値): 40%地点 0.45 / 70%地点 1.0(以降は真っ黒)
+                    stops: [0, 0.40, 0.70, 1],
+                    colors: [Color(0x00000000), Color(0x73000000),
+                             Color(0xFF000000), Color(0xFF000000)],
                   ),
                 ),
               ),
