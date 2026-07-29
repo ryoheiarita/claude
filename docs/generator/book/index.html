@@ -24,12 +24,6 @@
     padding:12px 20px; border-bottom:1px solid #232328; flex-shrink:0;
   }
   header h1 { font-size:14px; font-weight:600; color:#fff; letter-spacing:.02em; }
-  .tabs { display:flex; background:#1a1a1f; border-radius:10px; padding:3px; gap:2px; }
-  .tabs button {
-    border:0; background:transparent; color:#9a9aa2; font:inherit; font-size:12px; font-weight:600;
-    padding:7px 16px; border-radius:8px; cursor:pointer; transition:.15s;
-  }
-  .tabs button.active { background:#3d3df5; color:#fff; }
   .spacer { flex:1; }
   .export-group { display:flex; align-items:center; gap:8px; }
   select, input[type="text"], textarea {
@@ -166,10 +160,6 @@
 <body>
 <header>
   <h1>Book UI ジェネレーター</h1>
-  <div class="tabs">
-    <button id="tabSingle" class="active">Book 1つ</button>
-    <button id="tabGrid">Book 6つ（UI）</button>
-  </div>
   <div class="spacer"></div>
   <div class="export-group">
     <select id="exTarget">
@@ -233,7 +223,6 @@
       <select id="badgeSel">
         <option value="">なし</option>
         <option value="NEW">NEW</option>
-        <option value="UPDATE">UPDATE</option>
         <option value="COMING SOON">COMING SOON（暗転表示）</option>
       </select>
     </div>
@@ -253,27 +242,20 @@ const LAYOUTS = {
       { y: 748, titleH: 16, cells: [{ x: 35, slot: 4 }, { x: 195, slot: 5 }], shelf: 'shelf2' },
     ],
   },
-  single: {
-    columns: [
-      { y: 360, titleH: 32, cells: [{ x: 115, slot: 6 }], shelf: 'shelf1' },
-    ],
-  },
 };
 // book pos in column: bx = cell.x+10, by = colY+titleH+8 ; shelf top = by+BH-12, svg drawn at (-20, top-16, 430,116)
 
 /* ================= state ================= */
 const slots = [
   { title: 'CLOUD NINE presents “Zipangu” JAPANESE MUSIC EVENT 2026', badge: 'NEW', src: 'assets/sample1.png' },
-  { title: 'COUNTDOWN JAPAN 25/26', badge: 'UPDATE', src: 'assets/sample2.png' },
+  { title: 'COUNTDOWN JAPAN 25/26', badge: '', src: 'assets/sample2.png' },
   { title: 'MUSIC EXPO LIVE 2025', badge: 'COMING SOON', src: 'assets/sample3.png' },
   { title: 'ドリームフェスティバル 2025', badge: '', src: 'assets/sample4.png' },
   { title: 'Spotify On Stage Tokyo 2025', badge: 'NEW', src: 'assets/sample5.png' },
   { title: 'JAPAN JAM 2025', badge: 'NEW', src: 'assets/sample6.png' },
-  { title: 'CLOUD NINE presents “Zipangu” JAPANESE MUSIC EVENT 2026', badge: 'NEW', src: 'assets/sample1.png' },
 ].map(s => ({ ...s, img: null, zoom: 1, ox: 0, oy: 0, free: false, trim: { t: 0, r: 0, b: 0, l: 0 } }));
 
-let mode = 'single';
-let selected = 6;
+let selected = 0;
 const slotEls = {}; // slot -> {book, cropImg, ph, badge, title}
 
 /* ================= assets ================= */
@@ -341,7 +323,7 @@ function setPanPx(s, nx, ny) {
   const { dw, dh } = cropRect(s);
   s.ox = nx - (BW - dw) / 2;
   s.oy = ny - (BH - dh) / 2;
-  if (!s.free) { // store the clamped value so toggling modes stays predictable
+  if (!s.free) { // store the clamped value so toggling 自由配置 stays predictable
     const r = cropRect(s);
     s.ox = r.x - (BW - dw) / 2;
     s.oy = r.y - (BH - dh) / 2;
@@ -354,7 +336,7 @@ const phone = document.getElementById('phone');
 function render() {
   phone.innerHTML = '';
   for (const k in slotEls) delete slotEls[k];
-  const L = LAYOUTS[mode];
+  const L = LAYOUTS.grid;
 
   for (const col of L.columns) {
     const by = col.y + col.titleH + 8;
@@ -541,8 +523,7 @@ const badgeSel = document.getElementById('badgeSel');
 const selInfo = document.getElementById('selInfo');
 
 function slotLabel(i) {
-  if (i === 6) return 'Book 1つ表示のブック';
-  return `6ブックUI — Book ${i + 1}`;
+  return `Book ${i + 1}`;
 }
 function updatePanel() {
   selInfo.textContent = slotLabel(selected);
@@ -623,17 +604,7 @@ document.getElementById('resetBtn').onclick = () => {
 titleInput.oninput = () => { slots[selected].title = titleInput.value; updateSlotDOM(selected); };
 badgeSel.onchange = () => { slots[selected].badge = badgeSel.value; updateSlotDOM(selected); };
 
-/* ================= tabs / scaling ================= */
-document.getElementById('tabSingle').onclick = () => setMode('single');
-document.getElementById('tabGrid').onclick = () => setMode('grid');
-function setMode(m) {
-  if (mode === m) return;
-  mode = m;
-  selected = m === 'single' ? 6 : 0;
-  document.getElementById('tabSingle').classList.toggle('active', m === 'single');
-  document.getElementById('tabGrid').classList.toggle('active', m === 'grid');
-  render();
-}
+/* ================= scaling ================= */
 function previewZoom() {
   const st = document.getElementById('stage');
   return Math.min(1, (st.clientHeight - 40) / H, (st.clientWidth - 40) / W);
@@ -767,7 +738,7 @@ function drawBook(ctx, s, bx, by) {
 function drawScene(ctx) {
   ctx.fillStyle = '#101010';
   ctx.fillRect(0, 0, W, H);
-  const L = LAYOUTS[mode];
+  const L = LAYOUTS.grid;
   for (const col of L.columns) {
     const by = col.y + col.titleH + 8;
     ctx.drawImage(A[col.shelf].img, -20, by + BH - 12 - 16, 430, 116);
@@ -870,13 +841,13 @@ document.getElementById('exportBtn').onclick = async () => {
     const r = cropRect(s);
     const { sx, sy, sw, sh } = srcRect(s);
     ctx.drawImage(s.img, sx, sy, sw, sh, r.x, r.y, r.dw, r.dh);
-    const slotName = selected === 6 ? 'single' : `book${selected + 1}`;
+    const slotName = `book${selected + 1}`;
     downloadCanvas(c, `book_cover_${slotName}_${k}x.png`);
   } else {
     c.width = W * k; c.height = H * k;
     ctx.scale(k, k);
     drawScene(ctx);
-    downloadCanvas(c, `book_ui_${mode === 'single' ? '1book' : '6books'}_${k}x.png`);
+    downloadCanvas(c, `book_ui_6books_${k}x.png`);
   }
 };
 
