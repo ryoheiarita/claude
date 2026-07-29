@@ -610,8 +610,9 @@ class TabBarBg260726 extends StatelessWidget {
 
   static const double height = 268;
   static const double blurSigma = 32;
-  /// 上端の抜き幅(0〜1)。ここまでで blur 全開になるので上半分にも効く。
-  static const double blurFadeEnd = 0.2;
+  /// blur の効き始め位置(0〜1)。0.4 ≒ 中央 Library ラベルのすぐ上。
+  /// ここから下端へ向けて緩やかに強くなる(短い区間だと急変化に見える)。
+  static const double blurFadeStart = 0.4;
   static const Duration duration = Duration(milliseconds: 300);
 
   @override
@@ -647,12 +648,12 @@ class TabBarBg260726 extends StatelessWidget {
                 if (sigma <= 0.01) return const SizedBox.expand();
                 return ShaderMask(
                   blendMode: BlendMode.dstIn,
-                  // 上端だけ柔らかく抜き、blurFadeEnd 以降は全開(上半分にも効かせる)
+                  // 上は素通し、blurFadeStart から下端へ緩やかに強くする
                   shaderCallback: (rect) => const LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    stops: [0, blurFadeEnd, 1],
-                    colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000)],
+                    stops: [0, blurFadeStart, 1],
+                    colors: [Color(0x00000000), Color(0x00000000), Color(0xFF000000)],
                   ).createShader(rect),
                   child: ClipRect(
                     child: BackdropFilter(
