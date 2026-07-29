@@ -679,10 +679,10 @@ class TabBarBg260726 extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    // 黒の濃さ(確定値): 40%地点 0.45 / 70%地点 1.0(以降は真っ黒)
+                    // 黒の濃さ(確定値): 40%地点 0.70 / 70%地点 0.50 / 下端 真っ黒
                     stops: [0, 0.40, 0.70, 1],
-                    colors: [Color(0x00000000), Color(0x73000000),
-                             Color(0xFF000000), Color(0xFF000000)],
+                    colors: [Color(0x00000000), Color(0xB3000000),
+                             Color(0x80000000), Color(0xFF000000)],
                   ),
                 ),
               ),

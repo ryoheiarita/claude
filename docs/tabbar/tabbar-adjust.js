@@ -17,7 +17,7 @@
 window.TABBAR_ADJUST = {
   global: { circle: 56, pitch: 80, drop: 32, mgap: 12 },
   /* 展開時の背景: blur半径 / 効き始め% / 全開% / 黒の濃さ(40%地点, 70%地点) */
-  bg: { blur: 16, from: 0, to: 57, k1: 0.45, k2: 1 },
+  bg: { blur: 16, from: 0, to: 57, k1: 0.7, k2: 0.5 },
   items: {
     home:      { dx: 0.5, dy: -0.6, s: 1.3 },
     poppin:    { dx: 0, dy: -0.4, s: 1.55 },
