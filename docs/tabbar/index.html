@@ -153,10 +153,10 @@
     --tabbar-enter-ease: cubic-bezier(.16,1,.3,1);/* ease-out(expo) */
     --tabbar-bg-blur:    32px;                    /* 展開時の背景blur(Figma Blur/32) */
     /* blur の効き始め/全開位置(背景グラデ領域=高さ268 の中での割合)。
-       40% ≒ 107px = 中央 Library ラベル(121〜136px)のすぐ上。
-       ここから下端にかけて緩やかに強くなる(短い区間で切り替えると急変化に見える) */
-    --tabbar-bg-blur-from: 40%;
-    --tabbar-bg-blur-to:  100%;
+       38% ≒ 102px = 中央 Library ラベル(121〜136px)のすぐ上から効き始め、
+       70% で全開。⚠️ 全開位置を下げすぎると、その頃には黒が濃くて blur が見えなくなる */
+    --tabbar-bg-blur-from: 38%;
+    --tabbar-bg-blur-to:   70%;
   }
   .tabbar{
     position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
@@ -292,7 +292,9 @@
   }
   .tabbar-bg::after{    /* Opened の色グラデ(真っ黒)— blurの上に乗る */
     content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+    /* 黒の濃度カーブ。上〜中盤を薄く保つことで blur が見える帯を作る(下端は真っ黒) */
+    background:linear-gradient(180deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 40%, rgba(0,0,0,0.5) 70%, #000 100%);
     opacity:0;transition:opacity .3s ease;
   }
   .tabbar-bg.open::before{opacity:0;}

@@ -150,10 +150,10 @@
     --tabbar-enter-ease: cubic-bezier(.16,1,.3,1);/* ease-out(expo) */
     --tabbar-bg-blur:    32px;                    /* 展開時の背景blur(Figma Blur/32) */
     /* blur の効き始め/全開位置(背景グラデ領域=高さ268 の中での割合)。
-       40% ≒ 107px = 中央 Library ラベル(121〜136px)のすぐ上。
-       ここから下端にかけて緩やかに強くなる(短い区間で切り替えると急変化に見える) */
-    --tabbar-bg-blur-from: 40%;
-    --tabbar-bg-blur-to:  100%;
+       38% ≒ 102px = 中央 Library ラベル(121〜136px)のすぐ上から効き始め、
+       70% で全開。⚠️ 全開位置を下げすぎると、その頃には黒が濃くて blur が見えなくなる */
+    --tabbar-bg-blur-from: 38%;
+    --tabbar-bg-blur-to:   70%;
   }
   .tabbar{
     position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
@@ -289,7 +289,9 @@
   }
   .tabbar-bg::after{    /* Opened の色グラデ(真っ黒)— blurの上に乗る */
     content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%);
+    /* 黒の濃度カーブ。上〜中盤を薄く保つことで blur が見える帯を作る(下端は真っ黒) */
+    background:linear-gradient(180deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 40%, rgba(0,0,0,0.5) 70%, #000 100%);
     opacity:0;transition:opacity .3s ease;
   }
   .tabbar-bg.open::before{opacity:0;}
@@ -472,20 +474,20 @@ flutter:
   <table>
     <tr><th>状態</th><th>値</th></tr>
     <tr><td>通常時 <span class="fig">261:414</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 52.404%, rgba(0,0,0,0.6) 100%)</code> / <b>blur なし</b></td></tr>
-    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)</code> (<b>真っ黒</b>)+ <b>background blur 32</b>(40%地点から下端へ緩やかに / 下記)</td></tr>
+    <tr><td>展開時 <span class="fig">316:1059</span></td><td><code>linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)</code> (<b>真っ黒</b>)+ <b>background blur 32</b>(38%→70%で緩やかに / 下記)</td></tr>
     <tr><td>切替</td><td>色グラデは opacity クロスフェード <b>0.3s ease</b> / blur は<b>半径 0 → 32 をアニメーション</b></td></tr>
     <tr><td>重なり順</td><td>コンテンツ &lt; <b>①通常グラデ → ②blur層 → ③展開グラデ</b> &lt; スクリム &lt; バー/メニュー</td></tr>
   </table>
 
   <div class="warn"><b>展開時の blur は「上に向かって透明になる blur」。</b>
   Figma の background-blur は<b>レイヤー自身のアルファで変調される</b>ため、グラデが透明な
-  上側では blur も効かない。立ち上がりが短いと境界が線に見えて急変化するため、<b>中央 Library ラベルのすぐ上(領域の 40%)から下端にかけて緩やかに強くする</b>。
+  上側では blur も効かない。立ち上がりが短いと境界が線に見えて急変化するため、<b>中央 Library ラベルのすぐ上(領域の 38%)から 70% にかけて緩やかに強くする</b>。全開位置を下げすぎると、その頃には黒が濃くて blur が見えなくなるので注意。
   一様な全面 blur にしないこと。
   <br><br>
   実装:<br>
   ・Flutter → blur 層を <code>ShaderMask</code>(<code>BlendMode.dstIn</code> + 縦グラデ
   transparent→black)で抜く。<code>TabBarBg260726</code> に実装済み。<br>
-  ・CSS → blur 層に <code>mask-image: linear-gradient(180deg, transparent 0%, transparent 40%, #000 100%)</code>(位置は <code>--tabbar-bg-blur-from</code> / <code>--tabbar-bg-blur-to</code>)。<br>
+  ・CSS → blur 層に <code>mask-image: linear-gradient(180deg, transparent 0%, transparent 38%, #000 70%)</code>(位置は <code>--tabbar-bg-blur-from</code> / <code>--tabbar-bg-blur-to</code>)。<br>
   ・フェードは <b>opacity ではなく blur 半径(sigma)をアニメーション</b>させる
   (opacity を動かすと合成レイヤー化して blur が一時的に消える)。</div>
 
