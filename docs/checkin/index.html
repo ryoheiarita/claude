@@ -16,13 +16,16 @@
     --grad-orange:#FF6739;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html,body{min-height:100%;}
   body{
     background:#050505;
-    display:flex;align-items:center;justify-content:center;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:24px 0;overflow:auto;
     font-family:var(--ff);-webkit-font-smoothing:antialiased;color:#fff;
-    overflow:hidden;
   }
+  /* 実機はベゼル無しで画面いっぱい */
+  body.mobile{padding:0;overflow:hidden;align-items:center;}
+  #phoneWrap{margin:auto;}   /* 収まる時は中央、溢れる時は上詰め */
 
   /* ============ phone frame ============ */
   #phoneWrap{position:relative;}
@@ -500,10 +503,15 @@
   function fit(){
     const mobile = innerWidth <= 500;
     document.body.classList.toggle('mobile', mobile);
-    const s = mobile
-      ? Math.min(innerWidth / 390, innerHeight / 844)   // fullscreen, no bezel
-      : Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
-    $('#phoneWrap').style.transform = `scale(${s})`;
+    // PCは縮小しない(1:1)。タブバーを components/tabbar-260726 と同じ実寸で表示するため。
+    // 縮小すると 328px のバーが 322px 等になり、コンポーネントと見た目が食い違う。
+    // 実機のみ画面にフィットさせる。
+    if (mobile) {
+      const s = Math.min(innerWidth / 390, innerHeight / 844);
+      $('#phoneWrap').style.transform = `scale(${s})`;
+    } else {
+      $('#phoneWrap').style.transform = 'none';
+    }
   }
   addEventListener('resize', fit); fit();
 

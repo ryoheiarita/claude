@@ -67,15 +67,18 @@ const MoreSpec kMoreSpec = MoreSpec(
   gapAboveBar: 12,
 );
 
+/// Lottie は素材ごとに内側の余白が違うため、同じ scale でも絵の実寸が揃わない。
+/// バー4つの実寸 22.0px を正とし、More メニューの3つも同じ実寸に合わせてある
+/// (数値が不揃いなのはそのため。勝手に丸めないこと)。
 const Map<String, TabAdjust> kTabAdjust = {
   'home': TabAdjust(dx: 0.5, dy: -0.6, scale: 1.30),
   'poppin': TabAdjust(dx: 0, dy: -0.4, scale: 1.55),
   'more': TabAdjust(dx: 0, dy: 0, scale: 1.00),
   'shop': TabAdjust(dx: 1.3, dy: -2.1, scale: 1.45),
   'mypage': TabAdjust(dx: 0, dy: 0, scale: 1.30),
-  'checkin': TabAdjust(dx: 0, dy: -1.1, scale: 1.45),
-  'gallery': TabAdjust(dx: 0, dy: -0.8, scale: 1.30),
-  'calendar': TabAdjust(dx: 0, dy: -1.3, scale: 1.45),
+  'checkin': TabAdjust(dx: 0, dy: -1.1, scale: 1.46),
+  'gallery': TabAdjust(dx: 0, dy: -0.8, scale: 1.26),
+  'calendar': TabAdjust(dx: 0, dy: -1.3, scale: 1.37),
 };
 
 /// iconsax の Lottie は冒頭に 160〜534ms の無動作フレームが焼き込まれている。

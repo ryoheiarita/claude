@@ -109,6 +109,14 @@ window.Tabbar = (function(){
       if (g.drop   != null) r.setProperty('--more-drop',   g.drop   + 'px');
       if (g.mgap   != null) r.setProperty('--more-gap',    g.mgap   + 'px');
     }
+    if (a.bg){   /* 展開時の背景(blurの効き方 / 黒の濃さ) */
+      const b = a.bg, r = document.documentElement.style;
+      if (b.blur != null) r.setProperty('--tabbar-bg-blur', b.blur + 'px');
+      if (b.from != null) r.setProperty('--tabbar-bg-blur-from', b.from + '%');
+      if (b.to   != null) r.setProperty('--tabbar-bg-blur-to',   b.to   + '%');
+      if (b.k1   != null) r.setProperty('--tabbar-bg-k1', b.k1);
+      if (b.k2   != null) r.setProperty('--tabbar-bg-k2', b.k2);
+    }
     if (a.items){
       Object.keys(a.items).forEach(key => {
         const v = a.items[key];

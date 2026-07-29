@@ -33,6 +33,10 @@
        70% で全開。⚠️ 全開位置を下げすぎると、その頃には黒が濃くて blur が見えなくなる */
     --tabbar-bg-blur-from: 38%;
     --tabbar-bg-blur-to:   70%;
+    /* 黒グラデの濃度(40%地点 / 70%地点)。下げると背後が見え、上げると沈む。
+       Library ラベルの読みやすさとのバランスをここで取る */
+    --tabbar-bg-k1: 0.08;
+    --tabbar-bg-k2: 0.5;
   }
   .tabbar{
     position:absolute;left:50%;bottom:var(--tabbar-bottom);transform:translateX(-50%);z-index:6;
@@ -170,7 +174,8 @@
     content:"";position:absolute;inset:0;
     /* 黒の濃度カーブ。上〜中盤を薄く保つことで blur が見える帯を作る(下端は真っ黒) */
     background:linear-gradient(180deg,
-      rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 40%, rgba(0,0,0,0.5) 70%, #000 100%);
+      rgba(0,0,0,0) 0%, rgba(0,0,0,var(--tabbar-bg-k1)) 40%,
+      rgba(0,0,0,var(--tabbar-bg-k2)) 70%, #000 100%);
     opacity:0;transition:opacity .3s ease;
   }
   .tabbar-bg.open::before{opacity:0;}
