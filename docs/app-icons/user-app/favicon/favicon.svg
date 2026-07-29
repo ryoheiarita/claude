@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
   <defs>
-    <linearGradient id="bwuBg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="179.6" y2="179.6">
+    <linearGradient id="bwuBg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="256" y2="256">
       <stop offset="0" stop-color="#656565"/>
       <stop offset="1" stop-color="#000000"/>
     </linearGradient>

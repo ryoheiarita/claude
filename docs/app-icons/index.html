@@ -125,7 +125,7 @@
   <div class="scale-wrap">
     <svg width="300" height="300" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="303" y2="303" gradientUnits="userSpaceOnUse">
+        <linearGradient id="g" x1="0" y1="0" x2="432" y2="432" gradientUnits="userSpaceOnUse">
           <stop offset="0" stop-color="#656565"/><stop offset="1" stop-color="#000"/>
         </linearGradient>
       </defs>
@@ -141,7 +141,8 @@
     <ul class="spec">
       <li><b>全プラットフォームで見た目のロゴサイズを統一</b>しています。iOS・Android・favicon・Web ホームアイコンで同じ倍率を適用。</li>
       <li>基準は Android アダプティブアイコンの 108dp レイヤー内に取る<b>参照円 Ø70dp（= 0.648）</b>。コンテンツのバウンディングボックス対角がこの円に内接する倍率を算出しています。</li>
-      <li>Android の規定値は「保証セーフ円 <b>Ø66dp</b>」と「可視ビューポート <b>72dp</b>」の 2 つ。Ø66dp 基準ではロゴが小さく見えたため <b>Ø70dp</b> を採用し（Ø66 比 <b>+6.1%</b>）、円マスクの実可視域 Ø72dp に対して <b>2dp のマージン</b>を残しています。</li>
+      <li>Android の規定値は「保証セーフ円 <b>Ø66dp</b>」と「可視ビューポート <b>72dp</b>」の 2 つ。Ø66dp 基準ではロゴが小さく見えたため <b>Ø70dp</b> を採用しています（Ø66 比 <b>+6.1%</b>）。Ø72dp は円マスクの実可視域＝絶対に超えられない上限です。</li>
+      <li>BWU ワードマークの原寸は 3 デザインとも同一（キャンバス比 0.669）なので、<b>同じ倍率＝同じ見た目サイズ</b>になります。</li>
       <li>背景は各アイコンとも<b>全面のまま</b>で、中央のロゴのみを拡縮。</li>
       <li>角丸は<b>焼き込んでいません</b>。iOS のスーパー楕円マスク、Android のランチャーマスクはシステムが適用します。</li>
       <li>すべてのサイズは 1024px マスターからの<b>等比縮小</b>のみ。サイズごとのデザイン差し替えはありません。</li>
@@ -150,15 +151,19 @@
 
   <div class="table-scroll" style="margin-top:24px">
     <table>
-      <thead><tr><th></th><th>デザイン</th><th class="mono">倍率</th><th class="mono">ロゴ幅（キャンバス比）</th><th class="mono">最遠画素 / Ø72dp 半径</th></tr></thead>
+      <thead><tr><th></th><th>デザイン</th><th class="mono">倍率</th><th class="mono">BWU ロゴ幅</th><th class="mono">実測半径 / Ø72dp</th></tr></thead>
       <tbody>
-        <tr><td><img class="thumb rr" src="user-app/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>user-app</td><td class="mono">×0.9266</td><td class="mono">0.670 → 0.621</td><td class="mono">139.2 / 144.0 px</td></tr>
-        <tr><td><img class="thumb rr" src="web-home-icon/web-app-icon-192.png" alt=""></td><td>web-home-icon</td><td class="mono">×0.9266</td><td class="mono">0.670 → 0.621</td><td class="mono">165.2 / 204.8 px</td></tr>
-        <tr><td><img class="thumb rr" src="manager-cms/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>manager-cms</td><td class="mono">×0.8510</td><td class="mono">0.670 → 0.570</td><td class="mono">136.2 / 144.0 px</td></tr>
+        <tr><td><img class="thumb rr" src="user-app/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>user-app</td><td class="mono">×0.9266</td><td class="mono">0.6199</td><td class="mono">139.4 / 144.0 px</td></tr>
+        <tr><td><img class="thumb rr" src="web-home-icon/web-app-icon-192.png" alt=""></td><td>web-home-icon</td><td class="mono">×0.9266</td><td class="mono">0.6199</td><td class="mono">139.4 / 144.0 px</td></tr>
+        <tr><td><img class="thumb rr" src="manager-cms/ios/AppIcon.appiconset/AppIcon-120.png" alt=""></td><td>manager-cms</td><td class="mono">×0.9034</td><td class="mono">0.6043</td><td class="mono">144.0 / 144.0 px</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note" style="margin-top:14px">manager-cms のみ倍率が小さいのは、コンテンツに「Manager」の文字が加わって縦に高く＝対角が長くなるためです。BWU ロゴ単体ではなくブロック全体を参照円に収めています。「最遠画素」は 432px キャンバス（Web マスカブルのみ 512px・比較対象はマスカブルのセーフ円半径）での実測値で、いずれも可視域の内側です。</p>
+  <p class="note" style="margin-top:14px"><b>manager-cms だけ倍率が異なる理由：</b>「Manager」の文字を含むぶんコンテンツブロックが縦に高く、user-app と同じ ×0.9266 では外接円の半径が 147.7px となり Ø72dp ビューポート（半径 144.0px）を 3.7px はみ出して円マスクで角が欠けます。BWU ロゴ幅を揃えることを優先しつつ、<b>円マスクの限界いっぱい（半径 144.0px ちょうど）まで寄せた ×0.9034</b> としています。BWU ロゴ幅の差は user-app 比 <b>−2.5%</b> で実用上は判別できません。<br>
+  外接円の判定には bbox 対角ではなく<b>実測の最遠画素距離</b>を使用（manager-cms は下段の「Manager」が上段の BWU より狭く、bbox 対角では過大評価になるため）。数値は 432px キャンバスでの実測値です。</p>
+
+  <h3>背景グラデーション（user-app）</h3>
+  <p class="note">Figma 原本はグラデーションの終端ハンドルが対角 68.8% の位置にあり、<b>右下 31.2% がフラットな純黒</b>になって段差が見える状態でした。終端をキャンバス右下隅に合わせ、<code>#656565</code>（左上）→ <code>#000000</code>（右下隅）の全面連続ランプに作り直しています。<code>favicon.svg</code> の <code>linearGradient</code> も同じ座標に揃えてあります。</p>
 
   <!-- ============================================================ 02 -->
   <h2><span class="num">02</span>iOS 実装</h2>
@@ -231,7 +236,7 @@
     &lt;<span class="k">monochrome</span> android:drawable="@mipmap/ic_launcher_monochrome"/&gt;
 &lt;/<span class="k">adaptive-icon</span>&gt;</pre>
 
-  <p class="note">背景がグラデーション／白ベタのため、<code>values/ic_launcher_background.xml</code>（単色リソース）ではなく<b>ビットマップの背景レイヤー</b>を使っています。前景レイヤーのロゴは Ø70dp 参照円に内接し、円マスクの実可視域 Ø72dp の内側に収まっているため、どのランチャーのマスク形状でも欠けません。</p>
+  <p class="note">背景がグラデーション／白ベタのため、<code>values/ic_launcher_background.xml</code>（単色リソース）ではなく<b>ビットマップの背景レイヤー</b>を使っています。前景レイヤーのロゴは円マスクの実可視域 Ø72dp の内側に収まっているため、どのランチャーのマスク形状でも欠けません。</p>
 
   <div class="table-scroll" style="margin-top:24px">
     <table>
