@@ -335,7 +335,7 @@
   <!-- TABBAR — bar verbatim from checkin_motion, Home active, center = More -->
   <nav class="tabbar" id="tabbar">
 
-    <!-- 追加分: more menu (322:1202 Opened) : Check In / Gallery / Calendar -->
+    <!-- 追加分: more menu (322:1202 Opened) : Check In / Library / Calendar -->
     <div class="more-menu" id="moreMenu">
       <button class="more-item" data-key="checkin">
         <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
@@ -343,7 +343,7 @@
       </button>
       <button class="more-item is-mid" data-key="gallery">
         <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
-        <span class="more-item__label">Gallery</span>
+        <span class="more-item__label">Library</span>
       </button>
       <button class="more-item" data-key="calendar">
         <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
@@ -440,14 +440,14 @@ flutter:
   <table>
     <tr><th>項目</th><th>値</th></tr>
     <tr><td>丸</td><td><b>56×56</b>(アイコン 24 中央)/ bg <code>rgba(0,0,0,0.65)</code> + border white15 + <b>blur 16</b>(バーと同スタイル)</td></tr>
-    <tr><td>配置</td><td>列ピッチ <b>80</b>(丸間隔 24)/ 中央 Gallery が最上・左右(Check In / Calendar)は <b>+32px 下げ</b> / メニュー下端はバー上端の <b>12px 上</b></td></tr>
+    <tr><td>配置</td><td>列ピッチ <b>80</b>(丸間隔 24)/ 中央 Library が最上・左右(Check In / Calendar)は <b>+32px 下げ</b> / メニュー下端はバー上端の <b>12px 上</b></td></tr>
     <tr><td>アイコン色</td><td><b>通常タブの非アクティブと同じ</b> — 白 Lottie を <b>opacity 0.5</b>(バーの非アクティブと完全一致)</td></tr>
     <tr><td>ラベル</td><td>11px / <code>rgba(255,255,255,0.5)</code> / 丸の 2px 下(シャドウ無し)</td></tr>
     <tr><td>閉じる操作</td><td><b>サテライトをタップ</b> / <b>バーの通常タブ(Home 等)をタップ</b> / More 再タップ / バー外タップ(透明スクリム)</td></tr>
   </table>
 
   <h4>More の選択状態(中央ボタンへの反映)</h4>
-  <p class="note">サテライト(Check In / Gallery / Calendar)を選ぶと<b>メニューは閉じ</b>、
+  <p class="note">サテライト(Check In / Library / Calendar)を選ぶと<b>メニューは閉じ</b>、
   中央の More ボタンが<b>白背景 + 選んだアイコン(黒) + 選んだラベル</b>に変わる
   (= 現在地がその項目であることを示す)。</p>
   <table>
@@ -521,7 +521,7 @@ flutter:
   <table>
     <tr><th>項目</th><th>値</th></tr>
     <tr><td>サテライト入場</td><td>scale 0.55 → 1 + translateY 18 → 0(origin: 下端中央)/ <b>0.32s cubic-bezier(.34,1.56,.64,1)</b>(easeOutBack相当)+ opacity 0.22s ease</td></tr>
-    <tr><td>スタッガー</td><td>中央 Gallery <b>0ms</b> → Check In <b>+30ms</b> → Calendar <b>+60ms</b>(各自の入場に合わせて Lottie も再生)</td></tr>
+    <tr><td>スタッガー</td><td>中央 Library <b>0ms</b> → Check In <b>+30ms</b> → Calendar <b>+60ms</b>(各自の入場に合わせて Lottie も再生)</td></tr>
     <tr><td>中央丸の反転</td><td>bg/border/ロゴ色 0.25s ease</td></tr>
     <tr><td>背景グラデ</td><td>上記クロスフェード 0.3s と同時進行</td></tr>
   </table>

@@ -4,7 +4,7 @@
   Source of truth: bwu/components/tabbar-260726 (BASELINE 2026-07-26)
     - 形 = checkin_motion のタブバー verbatim(中央HANA丸がバー上端から10pxはみ出す)
     - バー4アイコン + Moreメニュー3アイコン = animated iconsax Lottie
-    - More タップ → Tabbar_set 322:1202 Opened: 白丸反転 + Check In / Gallery / Calendar 展開
+    - More タップ → Tabbar_set 322:1202 Opened: 白丸反転 + Check In / Library / Calendar 展開
     - 背景グラデ完全再現: 通常時 transparent 52.404%→rgba(0,0,0,.6) /
       展開時 #101010グラデ + 上に向かって消える background-blur 8px
   TABBAR CSS / MARKUP / JS はコンポーネントから verbatim スプライス。
@@ -368,7 +368,7 @@
 
         <h2 class="article-h2">More を押すと、背景が沈む</h2>
         <div class="article-body">
-          <p>中央の More をタップすると、丸が白へ反転してロゴが黒くなり、バーの上に Check In / Gallery / Calendar の3つが弾むように展開する。同時に背景のグラデーションが切り替わり、下へ行くほど濃く、そして<span class="highlight-mark">上に向かって消えていくぼかし</span>がかかる。</p>
+          <p>中央の More をタップすると、丸が白へ反転してロゴが黒くなり、バーの上に Check In / Library / Calendar の3つが弾むように展開する。同時に背景のグラデーションが切り替わり、下へ行くほど濃く、そして<span class="highlight-mark">上に向かって消えていくぼかし</span>がかかる。</p>
           <p>このぼかしは一様な全面ぼかしではない。Figma の背景ぼかしはレイヤー自身のアルファで変調されるため、グラデーションが透明な上側ではぼかしも効かない。CSS では blur 層にマスクを掛けて、Flutter では ShaderMask で同じ勾配を与えて再現している。いま画面を下までスクロールしてから More を押すと、この文字の上でぼけ方が変わるのが分かるはずだ。</p>
         </div>
 
@@ -406,7 +406,7 @@
       <!-- TABBAR — bar verbatim from checkin_motion, Home active, center = More -->
       <nav class="tabbar" id="tabbar">
     
-        <!-- 追加分: more menu (322:1202 Opened) : Check In / Gallery / Calendar -->
+        <!-- 追加分: more menu (322:1202 Opened) : Check In / Library / Calendar -->
         <div class="more-menu" id="moreMenu">
           <button class="more-item" data-key="checkin">
             <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
@@ -414,7 +414,7 @@
           </button>
           <button class="more-item is-mid" data-key="gallery">
             <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
-            <span class="more-item__label">Gallery</span>
+            <span class="more-item__label">Library</span>
           </button>
           <button class="more-item" data-key="calendar">
             <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>

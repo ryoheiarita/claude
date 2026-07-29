@@ -8,7 +8,7 @@
 //   inactive = opacity 50%、タップでアクティブ化+1回再生。
 // More menu = Design_System_V2 "Tabbar_set" node 322:1202 (variant Opened):
 //   More タップ -> 丸が白反転(ロゴ黒)、バーの上に3つのサテライトが展開
-//   Check In (location) / Gallery (gallery) / Calendar — こちらも Lottie。
+//   Check In (location) / Library (gallery) / Calendar — こちらも Lottie。
 //   実測: 丸56(アイコン24中央) / 列ピッチ80(間隔24) / サイド+32px下げ / バー上12px。
 //
 // Dependencies (pubspec.yaml):
@@ -23,7 +23,7 @@
 //       - assets/tabbar/shop.json       # bar  > Shop
 //       - assets/tabbar/mypage.json     # bar  > Mypage
 //       - assets/tabbar/checkin.json    # More > Check In
-//       - assets/tabbar/gallery.json    # More > Gallery
+//       - assets/tabbar/gallery.json    # More > Library(key/アセット名は gallery のまま)
 //       - assets/tabbar/calendar.json   # More > Calendar
 //       - assets/tabbar/ic_hana.svg     # 48x48 HANA flower (center More, ../assets/svg/)
 //
@@ -137,10 +137,10 @@ const List<TabSpec> kTabs = [
   TabSpec('mypage', 'Mypage', 'assets/tabbar/mypage.json'),
 ];
 
-/// More-menu satellites: Check In / Gallery / Calendar (order = left, center, right).
+/// More-menu satellites: Check In / Library / Calendar (order = left, center, right).
 const List<TabSpec> kMoreItems = [
   TabSpec('checkin', 'Check In', 'assets/tabbar/checkin.json'),
-  TabSpec('gallery', 'Gallery', 'assets/tabbar/gallery.json'),
+  TabSpec('gallery', 'Library', 'assets/tabbar/gallery.json'),
   TabSpec('calendar', 'Calendar', 'assets/tabbar/calendar.json'),
 ];
 
