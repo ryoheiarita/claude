@@ -1,1 +1,4 @@
 .claude/
+
+# tabbar コンポーネントの生成物(配布は docs/tabbar/dist を使う)
+components/tabbar-260726/dist/
