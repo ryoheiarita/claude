@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../gate.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Home Guide — BwU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --jp:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    --ff:'Figtree', var(--jp);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:#050505;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--ff);-webkit-font-smoothing:antialiased;color:#fff;
+    overflow:hidden;
+  }
+
+  /* ============ phone frame ============ */
+  #phoneWrap{position:relative;}
+  #phone{
+    position:relative;width:390px;height:844px;
+    background:#101010;border-radius:47px;overflow:hidden;
+    box-shadow:0 0 0 10px #1c1c1e,0 0 0 12px #3a3a3c,0 40px 90px rgba(0,0,0,.8);
+  }
+  /* on a real phone: no bezel, fill the screen */
+  body.mobile #phone{border-radius:0;box-shadow:none;}
+
+  /* ============ background (static image) ============ */
+  #bg{position:absolute;inset:0;}
+  #bg img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* ============ guide overlay ============ */
+  /* figma 6239:26911 — top scrim: black -> transparent, h339 */
+  .scrim-top{
+    position:absolute;left:0;top:0;width:390px;height:339px;
+    background:linear-gradient(180deg,#000 0%,rgba(0,0,0,0) 100%);
+  }
+  /* figma 6239:26902 — bottom scrim: transparent -> black, top505 h339 */
+  .scrim-bottom{
+    position:absolute;left:0;top:505px;width:390px;height:339px;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 0%,#000 100%);
+  }
+
+  /* guide column: pill / icon / label (gap 8) */
+  .guide{
+    position:absolute;display:flex;flex-direction:column;gap:8px;align-items:center;
+  }
+  /* figma 6239:26913 — 下スワイプ column */
+  .guide.top{left:92px;top:42px;width:207px;}
+  /* figma 6239:26904 — 上スワイプ column */
+  .guide.bottom{left:99px;top:684px;width:192px;}
+
+  .guide .pill{
+    background:#fff;border-radius:30px;padding:6px 16px;
+    font-weight:600;font-size:14px;line-height:20px;color:#101010;text-align:center;
+    white-space:nowrap;
+  }
+  .guide .label{
+    font-weight:600;font-size:16px;line-height:22px;color:#fff;text-align:center;
+    white-space:nowrap;
+  }
+
+  /* ============ animated icon (arrow + hand) ============ */
+  .gicon{position:relative;width:76px;height:59px;}
+  .gicon svg{position:absolute;inset:0;overflow:visible;display:block;}
+
+  /* --- swipe DOWN (top guide) --- */
+  /* arrow: draws downward (reveal top -> bottom), then fades */
+  .gicon.down .arr{animation:arrDown 2.4s cubic-bezier(.4,0,.2,1) infinite;}
+  @keyframes arrDown{
+    0%   {clip-path:inset(0 0 100% 0);opacity:1;}
+    14%  {clip-path:inset(0 0 100% 0);opacity:1;}
+    50%  {clip-path:inset(0 0 0% 0);opacity:1;}
+    74%  {clip-path:inset(0 0 0% 0);opacity:1;}
+    88%  {clip-path:inset(0 0 0% 0);opacity:0;}
+    100% {clip-path:inset(0 0 0% 0);opacity:0;}
+  }
+  /* hand: presses in, drags down, releases */
+  .gicon.down .hand{animation:handDown 2.4s ease-in-out infinite;}
+  @keyframes handDown{
+    0%   {transform:translateY(-10px);opacity:0;}
+    12%  {transform:translateY(-10px);opacity:1;animation-timing-function:cubic-bezier(.3,.7,.2,1);}
+    52%  {transform:translateY(8px);opacity:1;}
+    74%  {transform:translateY(8px);opacity:1;}
+    88%  {transform:translateY(8px);opacity:0;}
+    100% {transform:translateY(8px);opacity:0;}
+  }
+
+  /* --- swipe UP (bottom guide) --- */
+  .gicon.up .arr{animation:arrUp 2.4s cubic-bezier(.4,0,.2,1) infinite;}
+  @keyframes arrUp{
+    0%   {clip-path:inset(100% 0 0 0);opacity:1;}
+    14%  {clip-path:inset(100% 0 0 0);opacity:1;}
+    50%  {clip-path:inset(0% 0 0 0);opacity:1;}
+    74%  {clip-path:inset(0% 0 0 0);opacity:1;}
+    88%  {clip-path:inset(0% 0 0 0);opacity:0;}
+    100% {clip-path:inset(0% 0 0 0);opacity:0;}
+  }
+  .gicon.up .hand{animation:handUp 2.4s ease-in-out infinite;}
+  @keyframes handUp{
+    0%   {transform:translateY(10px);opacity:0;}
+    12%  {transform:translateY(10px);opacity:1;animation-timing-function:cubic-bezier(.3,.7,.2,1);}
+    52%  {transform:translateY(-8px);opacity:1;}
+    74%  {transform:translateY(-8px);opacity:1;}
+    88%  {transform:translateY(-8px);opacity:0;}
+    100% {transform:translateY(-8px);opacity:0;}
+  }
+
+  /* ============ home indicator ============ */
+  #homeIndicator{
+    position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+    width:134px;height:5px;border-radius:100px;background:#fff;z-index:9;
+  }
+
+  /* ============ entrance ============ */
+  #guideLayer{opacity:0;transition:opacity .5s ease;}
+  #guideLayer.in{opacity:1;}
+</style>
+</head>
+<body>
+<div id="phoneWrap">
+  <div id="phone">
+
+    <div id="bg"><img src="assets/bg_home.png" alt=""></div>
+
+    <div id="guideLayer">
+      <div class="scrim-top"></div>
+      <div class="scrim-bottom"></div>
+
+      <!-- 下スワイプ → ファンクラブ一覧 (figma 6239:26913) -->
+      <div class="guide top">
+        <div class="pill">下スワイプ</div>
+        <div class="gicon down">
+          <svg class="arr" width="76" height="59" viewBox="0 0 76 59" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.9393 54.0607C14.5251 54.6464 15.4749 54.6464 16.0607 54.0607L25.6066 44.5147C26.1924 43.9289 26.1924 42.9792 25.6066 42.3934C25.0208 41.8076 24.0711 41.8076 23.4853 42.3934L15 50.8787L6.51472 42.3934C5.92893 41.8076 4.97919 41.8076 4.3934 42.3934C3.80761 42.9792 3.80761 43.9289 4.3934 44.5147L13.9393 54.0607ZM16.5 25C16.5 24.1716 15.8284 23.5 15 23.5C14.1716 23.5 13.5 24.1716 13.5 25L15 25L16.5 25ZM15 53L16.5 53L16.5 25L15 25L13.5 25L13.5 53L15 53Z" fill="white"/>
+          </svg>
+          <svg class="hand" width="76" height="59" viewBox="0 0 76 59" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M51.5657 51.065L54.7124 54.2116C55.0249 54.5242 55.4488 54.6998 55.8909 54.6998C56.3329 54.6998 56.7568 54.5242 57.0694 54.2116C57.3819 53.899 57.5575 53.4751 57.5575 53.0331C57.5575 52.5911 57.3819 52.1671 57.0694 51.8546L53.5338 48.319C53.2789 48.0641 52.948 47.8986 52.591 47.8476L46.5453 46.9873C45.4743 46.8343 44.4818 46.3381 43.7169 45.5731L37.5886 39.4449C36.9334 38.7878 36.4739 37.9614 36.2616 37.0581C36.0493 36.1548 36.0925 35.2102 36.3865 34.3301L36.5869 33.7291L45.2843 42.4265C45.5968 42.7391 46.0208 42.9146 46.4628 42.9146C46.9048 42.9146 47.3287 42.7391 47.6413 42.4265C47.9539 42.1139 48.1294 41.69 48.1294 41.248C48.1294 40.806 47.9539 40.382 47.6413 40.0695L28.1959 20.624C27.727 20.1552 27.4636 19.5193 27.4636 18.8563C27.4636 18.1932 27.727 17.5573 28.1959 17.0885C28.6647 16.6197 29.3006 16.3563 29.9636 16.3563C30.6267 16.3563 31.2626 16.6197 31.7314 17.0885L41.7487 27.1058C42.0145 27.3849 42.3688 27.5633 42.7513 27.6106C43.1337 27.6578 43.5208 27.5711 43.8465 27.3651L52.2964 21.9793C53.2517 21.371 54.3852 21.1051 55.5113 21.2249C56.6375 21.3448 57.6896 21.8435 58.4954 22.6393L61.312 25.4559C62.1116 26.2594 62.6144 27.3108 62.738 28.4376L63.6573 36.7107C63.6989 37.0901 63.8694 37.4437 64.1405 37.7124L67.676 41.248C67.9885 41.5605 68.4125 41.7361 68.8545 41.7361C69.2965 41.7361 69.7204 41.5605 70.033 41.248C70.3456 40.9354 70.5212 40.5115 70.5212 40.0695C70.5212 39.6274 70.3456 39.2035 70.033 38.891L66.91 35.7679L66.0496 28.0722C65.8434 26.1924 65.0039 24.4385 63.669 23.0989L60.8524 20.2823C59.5106 18.9415 57.7516 18.0987 55.8659 17.893C53.9802 17.6872 52.0808 18.131 50.4815 19.1509L43.163 23.806L34.0884 14.7315C32.9945 13.6375 31.5107 13.0229 29.9636 13.0229C28.4165 13.0229 26.9328 13.6375 25.8388 14.7315C24.7449 15.8254 24.1303 17.3092 24.1303 18.8563C24.1303 20.4034 24.7449 21.8871 25.8388 22.9811L33.947 31.0892L33.2163 33.2812C32.7286 34.7486 32.6588 36.3228 33.0147 37.8276C33.3706 39.3324 34.1382 40.7084 35.2316 41.8019L41.348 47.9184C42.623 49.1933 44.2771 50.0204 46.0621 50.2754L51.5657 51.065Z" fill="white"/>
+          </svg>
+        </div>
+        <div class="label">ファンクラブ一覧</div>
+      </div>
+
+      <!-- 上スワイプ → 最新コンテンツ (figma 6239:26904) -->
+      <div class="guide bottom">
+        <div class="pill">上スワイプ</div>
+        <div class="gicon up">
+          <svg class="arr" width="76" height="59" viewBox="0 0 76 59" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.5 53C13.5 53.8284 14.1716 54.5 15 54.5C15.8284 54.5 16.5 53.8284 16.5 53L15 53L13.5 53ZM16.0607 23.9393C15.4749 23.3536 14.5251 23.3536 13.9393 23.9393L4.3934 33.4853C3.80761 34.0711 3.80761 35.0208 4.3934 35.6066C4.97919 36.1924 5.92893 36.1924 6.51472 35.6066L15 27.1213L23.4853 35.6066C24.0711 36.1924 25.0208 36.1924 25.6066 35.6066C26.1924 35.0208 26.1924 34.0711 25.6066 33.4853L16.0607 23.9393ZM15 53L16.5 53L16.5 25L15 25L13.5 25L13.5 53L15 53Z" fill="white"/>
+          </svg>
+          <svg class="hand" width="76" height="59" viewBox="0 0 76 59" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M51.5657 51.065L54.7124 54.2116C55.0249 54.5242 55.4488 54.6998 55.8909 54.6998C56.3329 54.6998 56.7568 54.5242 57.0694 54.2116C57.3819 53.899 57.5575 53.4751 57.5575 53.0331C57.5575 52.5911 57.3819 52.1671 57.0694 51.8546L53.5338 48.319C53.2789 48.0641 52.948 47.8986 52.591 47.8476L46.5453 46.9873C45.4743 46.8343 44.4818 46.3381 43.7169 45.5731L37.5886 39.4449C36.9334 38.7878 36.4739 37.9614 36.2616 37.0581C36.0493 36.1548 36.0925 35.2102 36.3865 34.3301L36.5869 33.7291L45.2843 42.4265C45.5968 42.7391 46.0208 42.9146 46.4628 42.9146C46.9048 42.9146 47.3287 42.7391 47.6413 42.4265C47.9539 42.1139 48.1294 41.69 48.1294 41.248C48.1294 40.806 47.9539 40.382 47.6413 40.0695L28.1959 20.624C27.727 20.1552 27.4636 19.5193 27.4636 18.8563C27.4636 18.1932 27.727 17.5573 28.1959 17.0885C28.6647 16.6197 29.3006 16.3563 29.9636 16.3563C30.6267 16.3563 31.2626 16.6197 31.7314 17.0885L41.7487 27.1058C42.0145 27.3849 42.3688 27.5633 42.7513 27.6106C43.1337 27.6578 43.5208 27.5711 43.8465 27.3651L52.2964 21.9793C53.2517 21.371 54.3852 21.1051 55.5113 21.2249C56.6375 21.3448 57.6896 21.8435 58.4954 22.6393L61.312 25.4559C62.1116 26.2594 62.6144 27.3108 62.738 28.4376L63.6573 36.7107C63.6989 37.0901 63.8694 37.4437 64.1405 37.7124L67.676 41.248C67.9885 41.5605 68.4125 41.7361 68.8545 41.7361C69.2965 41.7361 69.7204 41.5605 70.033 41.248C70.3456 40.9354 70.5212 40.5115 70.5212 40.0695C70.5212 39.6274 70.3456 39.2035 70.033 38.891L66.91 35.7679L66.0496 28.0722C65.8434 26.1924 65.0039 24.4385 63.669 23.0989L60.8524 20.2823C59.5106 18.9415 57.7516 18.0987 55.8659 17.893C53.9802 17.6872 52.0808 18.131 50.4815 19.1509L43.163 23.806L34.0884 14.7315C32.9945 13.6375 31.5107 13.0229 29.9636 13.0229C28.4165 13.0229 26.9328 13.6375 25.8388 14.7315C24.7449 15.8254 24.1303 17.3092 24.1303 18.8563C24.1303 20.4034 24.7449 21.8871 25.8388 22.9811L33.947 31.0892L33.2163 33.2812C32.7286 34.7486 32.6588 36.3228 33.0147 37.8276C33.3706 39.3324 34.1382 40.7084 35.2316 41.8019L41.348 47.9184C42.623 49.1933 44.2771 50.0204 46.0621 50.2754L51.5657 51.065Z" fill="white"/>
+          </svg>
+        </div>
+        <div class="label">最新コンテンツ</div>
+      </div>
+
+      <div id="homeIndicator"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+  /* ---------- fit phone to viewport (same as checkin_motion) ---------- */
+  function fit(){
+    const mobile = innerWidth <= 500;
+    document.body.classList.toggle('mobile', mobile);
+    const s = mobile
+      ? Math.min(innerWidth / 390, innerHeight / 844)   // fullscreen, no bezel
+      : Math.min((innerHeight - 48) / 868, (innerWidth - 48) / 414, 1.15);
+    document.getElementById('phoneWrap').style.transform = `scale(${s})`;
+  }
+  addEventListener('resize', fit); fit();
+
+  /* ---------- entrance: guide fades in over the home screen ---------- */
+  setTimeout(() => document.getElementById('guideLayer').classList.add('in'), 300);
+})();
+</script>
+</body>
+</html>

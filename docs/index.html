@@ -99,6 +99,7 @@
     .card-icon.appicon { background: linear-gradient(135deg, #3a3a3e 0%, #101010 100%); border: 1px solid rgba(255,255,255,0.12); }
     .card-icon.appicons { background: linear-gradient(135deg, #656565 0%, #000000 100%); border: 1px solid rgba(255,255,255,0.12); }
     .card-icon.tabbar { background: linear-gradient(135deg, #FF2D78 0%, #2D8CFF 100%); }
+    .card-icon.homeguide { background: linear-gradient(135deg, #2DD4BF 0%, #2D8CFF 100%); }
     .card-body {
       flex: 1;
       min-width: 0;
@@ -201,6 +202,32 @@
           <div class="card-body">
             <div class="card-title">スプラッシュ（ログイン済み）遷移 実装指示</div>
             <div class="card-desc">Letter-window mask &amp; zoom — レイヤー構成・タイムライン・くり抜きパス実装（Flutter向け）</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ホーム</div>
+      <div class="cards">
+        <a class="card" href="home_guide/">
+          <div class="card-icon homeguide">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"/><polyline points="8 8 12 4 16 8"/><polyline points="8 16 12 20 16 16"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">ホーム初回スワイプガイド</div>
+            <div class="card-desc">初回訪問時のオーバーレイ — 下スワイプ(ファンクラブ一覧)・上スワイプ(最新コンテンツ)を指+矢印の無限ループアニメで案内</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+        <a class="card" href="home_guide/handoff.html">
+          <div class="card-icon handoff">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">スワイプガイド Flutter 実装指示</div>
+            <div class="card-desc">コピペで使える Dart 1ファイル（スクリム・ガイド2組・clip reveal 矢印 + 手の 2.4s ループ）＋タイムライン / スタイル値・SVG アセット</div>
           </div>
           <div class="card-arrow">&rsaquo;</div>
         </a>

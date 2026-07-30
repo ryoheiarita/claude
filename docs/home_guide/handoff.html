@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ホーム初回スワイプガイド Flutter 実装指示 — BWITHU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Figtree', -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #0a0a0a; color: #fff; min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      font-size: 13px; font-weight: 500; margin-bottom: 32px;
+    }
+    .back:hover { color: #fff; }
+    .header h1 {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px;
+    }
+    .header h2 { font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+    .header p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.55); }
+    .header p b { color: rgba(255,255,255,0.85); }
+    .header p a { color: #8fa0ff; }
+    .header p .fig {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    h3.section {
+      margin: 56px 0 16px; font-size: 20px; font-weight: 700;
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .lead { font-size: 13.5px; line-height: 1.7; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+    .lead code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+
+    /* ── ライブプレビュー（本物のプロトタイプを埋め込み） ── */
+    .preview-stage {
+      margin-top: 20px; display: flex; justify-content: center;
+      padding: 32px 20px; border-radius: 16px; background: #101010;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .proto-frame {
+      width: 234px; height: 506.4px; overflow: hidden; border-radius: 28px;
+      outline: 1px solid rgba(255,255,255,0.12);
+    }
+    .proto-frame iframe {
+      width: 390px; height: 844px; border: 0;
+      transform: scale(0.6); transform-origin: top left;
+      pointer-events: auto;
+    }
+    .preview-cap { margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; }
+    .preview-cap a { color: #8fa0ff; }
+
+    /* ── コードブロック ── */
+    .code {
+      margin-top: 16px; border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08); background: #0d0d0f;
+    }
+    .code-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 12px; color: rgba(255,255,255,0.5); font-family: ui-monospace, monospace;
+    }
+    .code-copy {
+      cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: transparent;
+      color: #fff; font: inherit; font-size: 11px; padding: 4px 10px; border-radius: 6px;
+    }
+    .code-copy:hover { background: rgba(255,255,255,0.08); }
+    .code pre { margin: 0; padding: 16px; overflow: auto; max-height: 480px; }
+    .code code {
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      font-size: 12px; line-height: 1.65; color: #e8e8ea; white-space: pre;
+    }
+
+    /* ── note / table ── */
+    .note {
+      margin-top: 16px; padding: 20px 24px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.6);
+    }
+    .note b { color: rgba(255,255,255,0.85); font-weight: 600; }
+    .note code {
+      font-family: ui-monospace, monospace; font-size: 12px;
+      background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px;
+    }
+    .note ul { margin: 8px 0 0 18px; }
+    .note li { margin-bottom: 6px; }
+    .note a { color: #8fa0ff; }
+
+    table { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 12.5px; line-height: 1.5; }
+    th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); vertical-align: top; }
+    th { color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
+    td { color: rgba(255,255,255,0.72); }
+    td code, th code {
+      font-family: ui-monospace, monospace; font-size: 11.5px;
+      background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px;
+    }
+    .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid rgba(255,255,255,0.15); }
+    .table-wrap { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../index.html">&lsaquo; Prototypes に戻る</a>
+
+    <div class="header">
+      <h1>Handoff for Flutter</h1>
+      <h2>ホーム初回スワイプガイド 実装指示</h2>
+      <p>ホーム画面に初めて訪れた人へのスワイプガイド（Figma <span class="fig">Renewal_UI_Design 6226:26122</span>）の Flutter 実装一式です。<b>上下のスクリム + 「下スワイプ／上スワイプ」の2ガイド</b>を1枚のオーバーレイとして実装し、指と矢印のアイコンは<b>スワイプ方向に合わせて 2.4s の無限ループ</b>でアニメーションします。<b>コピペで使える Dart 1ファイル</b>（+ SVG アセット3点、<code style="font-family:ui-monospace;font-size:12px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px">flutter_svg</code> のみ使用）。動きの正解は<a href="./">プロトタイプ</a>を参照してください。</p>
+    </div>
+
+    <!-- ════════ プレビュー ════════ -->
+    <h3 class="section">動きの正解（ライブ）</h3>
+    <p class="lead">下は本物のプロトタイプの埋め込みです。指と矢印がスワイプ方向に無限ループします。</p>
+    <div class="preview-stage">
+      <div class="proto-frame"><iframe src="./" title="home guide prototype"></iframe></div>
+    </div>
+    <p class="preview-cap">フルサイズは <a href="./">home_guide/</a>（スマホで開くと全画面）。</p>
+
+    <!-- ════════ タイムライン ════════ -->
+    <h3 class="section">タイムライン</h3>
+    <p class="lead">オーバーレイ表示を 0ms とした流れ。アイコンのループは 2400ms 周期（t = 0〜100%）で、数値はすべて下の Dart コードと一致しています。</p>
+    <div class="table-wrap"><table>
+      <tr><th>時刻</th><th>イベント</th><th>時間 / イージング</th></tr>
+      <tr><td>+300ms</td><td>オーバーレイ全体がフェードイン（スクリム + ガイド2組）</td><td>0.5s / easeOut</td></tr>
+      <tr><td colspan="3" style="color:rgba(255,255,255,.4)">── 以下、アイコンの無限ループ（2400ms 周期）。上下のガイドは同位相 ──</td></tr>
+      <tr><td>t=0%</td><td>手: 開始位置（スワイプと逆側に 10px オフセット）で透明</td><td>—</td></tr>
+      <tr><td>t=0→12%（0〜288ms）</td><td>手 フェードイン</td><td>linear</td></tr>
+      <tr><td>t=12→52%（288〜1248ms）</td><td>手がスワイプ方向へ 18px 移動（下ガイド: −10→+8 / 上ガイド: +10→−8）</td><td><code>Cubic(0.3, 0.7, 0.2, 1)</code></td></tr>
+      <tr><td>t=14→50%（336〜1200ms）</td><td>矢印がスワイプ方向へ「描画」される（clip reveal。下ガイドは上から下へ、上ガイドは下から上へ）</td><td><code>Cubic(0.4, 0, 0.2, 1)</code></td></tr>
+      <tr><td>t=52→74%（〜1776ms）</td><td>ホールド（完成形を見せる）</td><td>—</td></tr>
+      <tr><td>t=74→88%（1776〜2112ms）</td><td>矢印 + 手 が同時フェードアウト</td><td>linear</td></tr>
+      <tr><td>t=88→100%（〜2400ms）</td><td>休符 → ループ先頭へ</td><td>—</td></tr>
+    </table></div>
+
+    <!-- ════════ スタイル値 ════════ -->
+    <h3 class="section">スタイル値</h3>
+    <p class="lead">レイアウトは 390×844（iPhone 13/14）基準。Figma の絶対座標をそのまま使っています。</p>
+    <div class="table-wrap"><table>
+      <tr><th>要素</th><th>値</th></tr>
+      <tr><td>背景</td><td>実際のホーム画面をそのまま後ろに敷く（プロトタイプでは静止画像で代用）。ガイドは<b>全画面オーバーレイ1枚</b></td></tr>
+      <tr><td>上スクリム</td><td>h339 / 縦グラデ <span class="swatch" style="background:#000"></span>黒 100% → 透明（Figma 6239:26911）</td></tr>
+      <tr><td>下スクリム</td><td>h339・画面下端に接地 / 縦グラデ 透明 → <span class="swatch" style="background:#000"></span>黒 100%（Figma 6239:26902）</td></tr>
+      <tr><td>ガイド列（共通）</td><td>縦積み・中央揃え・gap 8：白ピル → アイコン(76×59) → ラベル。列の高さ 129</td></tr>
+      <tr><td>下スワイプ列</td><td>画面<b>上端から 42</b>・水平中央（Figma 6239:26913）</td></tr>
+      <tr><td>上スワイプ列</td><td>画面<b>下端から 31</b>・水平中央（= top 684。Figma 6239:26904）</td></tr>
+      <tr><td>白ピル</td><td><span class="swatch" style="background:#fff"></span>白 / radius 30 / padding 16×6 / Figtree SemiBold 14 (lh20) <code>#101010</code></td></tr>
+      <tr><td>ラベル</td><td>Figtree SemiBold 16 (lh22) 白（「ファンクラブ一覧」「最新コンテンツ」）</td></tr>
+      <tr><td>アイコン</td><td>76×59 の中に <b>矢印（左端 30×59）+ 手（キャンバス右側）</b> の2レイヤー。SVG 3点（下の アセット 参照）</td></tr>
+    </table></div>
+
+    <!-- ════════ コード ════════ -->
+    <h3 class="section">① ガイドオーバーレイ本体</h3>
+    <p class="lead">スクリム・ガイド2組・アイコンの無限ループまで全部入りの1ファイル。CSS の <code>clip-path: inset()</code> による矢印の「描画」は <code>ClipRect</code> + <code>Align(heightFactor)</code> で同じ見た目になります。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>home_swipe_guide.dart</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>// BwU 初回ホーム スワイプガイド オーバーレイ
+// Figma: Renewal_UI_Design 6226:26122「iPhone 13 &amp; 14 - 133」
+//
+// 使い方:
+//   Stack(children: [ HomeScreen(), if (showGuide) HomeSwipeGuide(onDismiss: ...) ])
+//
+// pubspec:
+//   flutter_svg: ^2.0.0
+//   assets: guide_arrow_up.svg / guide_arrow_down.svg / guide_hand.svg
+//
+// 数値はすべてプロトタイプ (docs/home_guide/) の CSS keyframes と一致。
+
+import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:flutter_svg/flutter_svg.dart&#x27;;
+
+enum SwipeGuideDirection { up, down }
+
+/// ホーム最前面に重ねる全画面オーバーレイ。
+/// 背景(実際のホーム画面)はこのウィジェットの後ろにそのまま置く。
+class HomeSwipeGuide extends StatefulWidget {
+  const HomeSwipeGuide({super.key, this.onDismiss});
+
+  /// 画面タップ時(ガイドを閉じる)。初回のみ表示の管理は呼び出し側で行う。
+  final VoidCallback? onDismiss;
+
+  @override
+  State&lt;HomeSwipeGuide&gt; createState() =&gt; _HomeSwipeGuideState();
+}
+
+class _HomeSwipeGuideState extends State&lt;HomeSwipeGuide&gt;
+    with SingleTickerProviderStateMixin {
+  // 出現: 500ms フェードイン (CSS: opacity transition .5s ease)
+  late final AnimationController _fade = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  )..forward();
+
+  @override
+  void dispose() {
+    _fade.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onDismiss,
+        child: Stack(
+          children: [
+            // ── 上スクリム: 黒 → 透明 (デザイン h339 / 844)
+            const Positioned(
+              top: 0, left: 0, right: 0, height: 339,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.black, Colors.transparent],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // ── 下スクリム: 透明 → 黒 (デザイン top505 h339 = 画面下端まで)
+            const Positioned(
+              bottom: 0, left: 0, right: 0, height: 339,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // ── 下スワイプ → ファンクラブ一覧 (デザイン: 上端から 42)
+            const Positioned(
+              top: 42, left: 0, right: 0,
+              child: _GuideColumn(
+                pillText: &#x27;下スワイプ&#x27;,
+                labelText: &#x27;ファンクラブ一覧&#x27;,
+                direction: SwipeGuideDirection.down,
+              ),
+            ),
+            // ── 上スワイプ → 最新コンテンツ (デザイン: 下端から 31 = 844-684-129)
+            const Positioned(
+              bottom: 31, left: 0, right: 0,
+              child: _GuideColumn(
+                pillText: &#x27;上スワイプ&#x27;,
+                labelText: &#x27;最新コンテンツ&#x27;,
+                direction: SwipeGuideDirection.up,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ピル + アニメーションアイコン + ラベル の縦積み (gap 8)
+class _GuideColumn extends StatelessWidget {
+  const _GuideColumn({
+    required this.pillText,
+    required this.labelText,
+    required this.direction,
+  });
+
+  final String pillText;
+  final String labelText;
+  final SwipeGuideDirection direction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 白ピル: radius30 / padding 16x6 / Figtree SemiBold 14 (lh20) #101010
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Text(
+            pillText,
+            style: const TextStyle(
+              fontFamily: &#x27;Figtree&#x27;,
+              fontFamilyFallback: [&#x27;Hiragino Sans&#x27;, &#x27;Noto Sans JP&#x27;],
+              fontSize: 14,
+              height: 20 / 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF101010),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _SwipeIcon(direction: direction),
+        const SizedBox(height: 8),
+        // ラベル: Figtree SemiBold 16 (lh22) 白
+        Text(
+          labelText,
+          style: const TextStyle(
+            fontFamily: &#x27;Figtree&#x27;,
+            fontFamilyFallback: [&#x27;Hiragino Sans&#x27;, &#x27;Noto Sans JP&#x27;],
+            fontSize: 16,
+            height: 22 / 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 矢印(描画リビール) + 手(スワイプ移動) の 2.4s 無限ループ。
+/// キーフレーム (t = 0..1):
+///   手   :  0%→12% フェードイン / 12%→52% 移動 (down: -10→+8, up: +10→-8)
+///   矢印 : 14%→50% スワイプ方向へ描画 (clip reveal)
+///   両方 : 74%→88% フェードアウト、100% でループ
+class _SwipeIcon extends StatefulWidget {
+  const _SwipeIcon({required this.direction});
+
+  final SwipeGuideDirection direction;
+
+  @override
+  State&lt;_SwipeIcon&gt; createState() =&gt; _SwipeIconState();
+}
+
+class _SwipeIconState extends State&lt;_SwipeIcon&gt;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  )..repeat();
+
+  // CSS: cubic-bezier(.3,.7,.2,1) — 手のスワイプ
+  static const Curve _swipeCurve = Cubic(0.3, 0.7, 0.2, 1);
+  // CSS: cubic-bezier(.4,0,.2,1) — 矢印の描画
+  static const Curve _drawCurve = Cubic(0.4, 0, 0.2, 1);
+
+  static const Curve _handMove =
+      Interval(0.12, 0.52, curve: _swipeCurve);
+  static const Curve _arrowDraw =
+      Interval(0.14, 0.50, curve: _drawCurve);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool down = widget.direction == SwipeGuideDirection.down;
+    return SizedBox(
+      width: 76,
+      height: 59,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          final double t = _c.value;
+          // 74%→88% で全体フェードアウト
+          final double fadeOut =
+              t &lt;= 0.74 ? 1 : (t &gt;= 0.88 ? 0 : 1 - (t - 0.74) / 0.14);
+          // 手: 0%→12% フェードイン
+          final double handIn = (t / 0.12).clamp(0.0, 1.0);
+          final double move = _handMove.transform(t);
+          final double handDy =
+              down ? (-10 + 18 * move) : (10 - 18 * move);
+          final double draw = _arrowDraw.transform(t);
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // 矢印 (左端 30x59)。down は上から、up は下から描画される
+              Positioned(
+                left: 0,
+                top: down ? 0 : null,
+                bottom: down ? null : 0,
+                child: Opacity(
+                  opacity: fadeOut,
+                  child: ClipRect(
+                    child: Align(
+                      alignment: down
+                          ? Alignment.topCenter
+                          : Alignment.bottomCenter,
+                      heightFactor: draw.clamp(0.0, 1.0),
+                      child: SvgPicture.asset(
+                        down
+                            ? &#x27;assets/guide/guide_arrow_down.svg&#x27;
+                            : &#x27;assets/guide/guide_arrow_up.svg&#x27;,
+                        width: 30,
+                        height: 59,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // 手 (76x59 キャンバス全体、右側に描かれている)
+              Positioned(
+                left: 0,
+                top: 0,
+                child: Opacity(
+                  opacity: handIn &lt; fadeOut ? handIn : fadeOut,
+                  child: Transform.translate(
+                    offset: Offset(0, handDy),
+                    child: SvgPicture.asset(
+                      &#x27;assets/guide/guide_hand.svg&#x27;,
+                      width: 76,
+                      height: 59,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}</code></pre>
+    </div>
+
+    <h3 class="section">② 表示制御（初回のみ）サンプル</h3>
+    <p class="lead">ホーム画面側の配線例。初回起動のみ表示し、タップで閉じます。</p>
+    <div class="code">
+      <div class="code-head">
+        <span>home_screen 側の組み込み例</span>
+        <button class="code-copy">Dart をコピー</button>
+      </div>
+      <pre><code>// ホーム画面側の組み込み例（初回のみ表示 / shared_preferences 使用）
+import &#x27;package:flutter/material.dart&#x27;;
+import &#x27;package:shared_preferences/shared_preferences.dart&#x27;;
+
+import &#x27;home_swipe_guide.dart&#x27;;
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State&lt;HomeScreen&gt; createState() =&gt; _HomeScreenState();
+}
+
+class _HomeScreenState extends State&lt;HomeScreen&gt; {
+  bool _showGuide = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      if (!(prefs.getBool(&#x27;home_guide_shown&#x27;) ?? false) &amp;&amp; mounted) {
+        setState(() =&gt; _showGuide = true);
+      }
+    });
+  }
+
+  void _dismissGuide() {
+    setState(() =&gt; _showGuide = false);
+    SharedPreferences.getInstance()
+        .then((prefs) =&gt; prefs.setBool(&#x27;home_guide_shown&#x27;, true));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // ここに実際のホーム画面
+        const Placeholder(),
+        // 最前面にガイド（初回のみ）。タップ or スワイプ検知で _dismissGuide()
+        if (_showGuide) HomeSwipeGuide(onDismiss: _dismissGuide),
+      ],
+    );
+  }
+}</code></pre>
+    </div>
+
+    <!-- ════════ アセット ════════ -->
+    <h3 class="section">アセット</h3>
+    <div class="note">
+      <ul>
+        <li><a href="assets/guide_arrow_down.svg" download>guide_arrow_down.svg</a> — 下向き矢印（30×59・白）。下スワイプガイド用</li>
+        <li><a href="assets/guide_arrow_up.svg" download>guide_arrow_up.svg</a> — 上向き矢印（30×59・白）。上スワイプガイド用</li>
+        <li><a href="assets/guide_hand.svg" download>guide_hand.svg</a> — 指アイコン（76×59・白）。矢印と同じキャンバスサイズなので<b>左上を揃えて重ねるだけ</b>で位置が合う</li>
+        <li><a href="assets/home_swipe_guide.dart" download>home_swipe_guide.dart</a> — 上の Dart ファイルそのもの</li>
+      </ul>
+      <p style="margin-top:12px">pubspec への登録例：</p>
+      <ul>
+        <li><code>flutter_svg: ^2.0.0</code>（タブバー実装と同じ依存）</li>
+        <li><code>assets/guide/</code> 配下に SVG 3点を配置（コード内のパスと合わせる）</li>
+      </ul>
+    </div>
+
+    <!-- ════════ 実装ノート ════════ -->
+    <h3 class="section">実装ノート（CSS → Flutter 対応）</h3>
+    <div class="note">
+      <ul>
+        <li><b>矢印の「描画」リビール</b> — CSS は <code>clip-path: inset(0 0 100% 0) → inset(0)</code>。Flutter は <code>ClipRect(child: Align(heightFactor: t))</code> で再現。<b>下向きは <code>Alignment.topCenter</code> + <code>Positioned(top: 0)</code>、上向きは <code>Alignment.bottomCenter</code> + <code>Positioned(bottom: 0)</code></b>（アンカーを揃えないと描画方向が逆になるので注意）</li>
+        <li><b>イージング</b> — CSS の <code>cubic-bezier(a,b,c,d)</code> は Flutter の <code>Cubic(a,b,c,d)</code> と完全互換。キーフレームの区間は <code>Interval(begin, end, curve: ...)</code> で表現</li>
+        <li><b>手の移動</b> — <code>Transform.translate</code>（描画のみの移動でレイアウト不変。CSS transform と同じ）</li>
+        <li><b>上下のガイドは同位相</b> — コントローラは各アイコンが持つが、同時に <code>repeat()</code> を始めるためズレは実質ゼロ。厳密に揃えたい場合はコントローラを1本にして2つの <code>_SwipeIcon</code> に渡す形に変えても良い</li>
+        <li><b>レイアウト基準</b> — 390×844 の絶対値（上 42 / 下 31）。実機で画面が縦に伸びた場合も「上端・下端からの距離」で自然にスケールする設計。スクリム h339 は固定で OK</li>
+        <li><b>ステータスバー</b> — デザインの通り上スクリムがステータスバー裏まで届くよう、オーバーレイは <code>SafeArea の外</code>（画面全体）に重ねる</li>
+        <li><b>フォント</b> — Figtree + 日本語フォールバック（タブバー実装 <code>tab_bar_260726.dart</code> と同じ指定）。アプリ合成フォント FigtreeJP を導入済みならそちらを指定</li>
+        <li><b>閉じ方</b> — プロトタイプは無限ループ表示のみ。実装では<b>画面タップ or 実際にスワイプが発生したら</b> <code>onDismiss</code> を呼んで消す（②参照）。消えるときは 300ms 程度のフェードアウト推奨</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script>
+    // コピーボタン
+    document.querySelectorAll('.code').forEach(block => {
+      const btn = block.querySelector('.code-copy');
+      const code = block.querySelector('code');
+      btn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(code.textContent);
+        const t = btn.textContent; btn.textContent = 'コピーしました';
+        setTimeout(() => btn.textContent = t, 1400);
+      });
+    });
+  </script>
+</body>
+</html>
