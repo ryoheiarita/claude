@@ -85,12 +85,12 @@
 
   <div class="tag">開発共有用</div>
   <h1>Flutter実装指示書 — collection 全画面</h1>
-  <p class="sub">更新: 2026-07-04 ／ 対象: 記事一覧・通常記事・縦/横 動画・縦/横 LIVE (Ph.2/Ph.3) ＋ 共通コンポーネント</p>
+  <p class="sub">更新: 2026-08-01 ／ 対象: 記事一覧・通常記事・縦/横 動画・縦/横 LIVE (Ph.2/Ph.3) ＋ 共通コンポーネント</p>
 
   <div class="dl-hero">
     <div class="info">
       <div class="t">引き渡しパッケージ（一括）</div>
-      <div class="d">指示書md ×7・Lottie素材 ×5・Dartサンプル ×2・共通コンポーネントJS ×5・動作リファレンスHTML（全画面）・画像アセット</div>
+      <div class="d">指示書md ×7・<b>アクションレール実装仕様 RAIL_SPEC.html</b>・Lottie素材 ×5・Dartサンプル ×2・共通コンポーネントJS ×5・動作リファレンスHTML（全画面）・画像アセット</div>
     </div>
     <a class="btn" href="flutter-collection-handoff.zip" download>
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -104,6 +104,7 @@
   <table>
     <tr><th>順</th><th>ドキュメント</th><th>内容</th></tr>
     <tr><td>①</td><td><a href="docs/COMPONENTS_HANDOFF.md" download>COMPONENTS_HANDOFF.md</a></td><td><b>共通コンポーネント指示書</b>。rail / bar / vimeo-controls / Lottie♥🔖 / シート引き下げ閉じ。<b>まずこれを読む</b></td></tr>
+    <tr><td>①-b</td><td><a href="rail/">アクションレール実装仕様（実寸）</a></td><td><b>縦動画の右側ボタンの正仕様</b>。実寸カンプ＋アイコンの実測サイズ＋配置数値。rail を実装する人はこれ</td></tr>
     <tr><td>②</td><td><a href="docs/VIMEO_PLAYER_SPEC.md" download>VIMEO_PLAYER_SPEC.md</a></td><td>Vimeoプレイヤー挙動仕様（プラットフォーム非依存）</td></tr>
     <tr><td>③</td><td><a href="docs/VIMEO_PLAYER_FLUTTER.md" download>VIMEO_PLAYER_FLUTTER.md</a></td><td>Flutter実装ガイド（WebView+Stack フルコード・対応表）</td></tr>
     <tr><td>④</td><td><a href="docs/VIDEO_SCREEN.md" download>VIDEO_SCREEN.md</a> / <a href="docs/LIVE_UI_HANDOFF.md" download>LIVE_UI_HANDOFF.md</a></td><td>動画/LIVE 画面の状態遷移・レイアウト仕様</td></tr>
@@ -127,7 +128,7 @@
   <h2><span class="no">3</span>共通コンポーネント（1回作って全画面で流用）</h2>
   <table>
     <tr><th>コンポーネント</th><th>種別</th><th>使用画面</th><th>参照JS</th></tr>
-    <tr><td><code>&lt;bwu-action-rail&gt;</code></td><td>縦動画 右側の縦並び5ボタン（♥🔖💬📄⛶）</td><td>縦動画・縦LIVE</td><td><a href="../bwu-action-rail.js" download>bwu-action-rail.js</a></td></tr>
+    <tr><td><code>&lt;bwu-action-rail&gt;</code></td><td>縦動画 右側の縦並び<b>4ボタン</b>（♥🔖💬📄）／<a href="rail/">実装仕様（実寸）</a></td><td>縦動画・縦LIVE</td><td><a href="../bwu-action-rail.js" download>bwu-action-rail.js</a></td></tr>
     <tr><td><code>&lt;bwu-action-bar&gt;</code></td><td>横モード下部の浮遊バー（コメントピル＋♥🔖）</td><td>横動画・横LIVE・<b>通常記事</b></td><td><a href="../bwu-action-bar.js" download>bwu-action-bar.js</a></td></tr>
     <tr><td>vimeo-controls</td><td>Vimeo標準UIを隠し自前 再生/シーク/全画面</td><td>全Vimeo画面</td><td><a href="../bwu-vimeo-controls.js" download>bwu-vimeo-controls.js</a></td></tr>
     <tr><td>Lottie ♥/🔖</td><td>記事画面と同一のLottieトグルボタン</td><td>全画面（rail/bar内）</td><td><a href="../lottie-data.js" download>lottie-data.js</a></td></tr>
@@ -141,7 +142,7 @@
     <tr><td>ボタン円（fab）</td><td><code>48×48</code> / radius 42（実質フル円）</td></tr>
     <tr><td>rail ボタン背景</td><td><code>rgba(0,0,0,0.55)</code> + blur20 + border <code>rgba(255,255,255,0.15)</code></td></tr>
     <tr><td>ピル背景（bar）</td><td><code>#303030</code> + blur10 + border <code>rgba(255,255,255,0.15)</code></td></tr>
-    <tr><td>アイコン</td><td><code>24×24</code>、線 white</td></tr>
+    <tr><td>アイコン（見かけ）</td><td><b><code>18×18</code> 相当に統一</b>、線 white（素材ごとの実測値・スケールは <a href="rail/">rail 実装仕様</a>）。静的SVGフォールバックのみ <code>24×24</code> 枠 / <code>stroke 1.6</code></td></tr>
     <tr><td><b>コメントボタン アイコン↔ラベル gap</b></td><td><b><code>4px</code></b>（Figma 10121-28405。コメントシートヘッダーの見出しも同じ 4px）</td></tr>
     <tr><td>標準モーションカーブ</td><td><code>cubic-bezier(0.22, 0.61, 0.36, 1)</code> / 0.42s（シート開閉・動画サイズ遷移）</td></tr>
     <tr><td>♥ ON ボーダー</td><td><code>rgba(255,62,62,0.6)</code> = <code>0x99FF3E3E</code></td></tr>
@@ -157,8 +158,8 @@
     <li>ルートは <code>overflow: clip</code>（hidden不可。画面外シートでコンテナがスクロールし bottom:0 が崩れる）</li>
     <li>高さは <code>100dvh</code> 基準（固定844pxではない）</li>
     <li>ボタンは複製せず1セットを移動（<code>AnimatedPositioned</code> 等）。Lottie二重生成を避ける</li>
-    <li>Lottie ♥🔖 フレーム: <code>LIKE_START=17 / FILLED=90 / UNLIKE_START=105</code>、アニメ中は連打ガード</li>
-    <li>全画面は Vimeo Player SDK の <code>player.requestFullscreen()</code>（iframeのfullscreenは別挙動）</li>
+    <li>Lottie ♥🔖 フレーム: <code>LIKE_START=0 / FILLED=73 / UNLIKE_START=92</code>、アニメ中は連打ガード</li>
+    <li>全画面は Vimeo Player SDK の <code>player.requestFullscreen()</code>（iframeのfullscreenは別挙動）。<b>rail に全画面ボタンは無い</b>（プレイヤー側コントローラーに一本化）</li>
     <li>iOS 初回muted対策: 再生タップのジェスチャ内で <code>setMuted(false)</code> → 再生後に再アサート</li>
     <li>横展開時、既存の戻るボタンは削除して Vimeo 側に一本化（縦の rail は維持）</li>
   </ul>

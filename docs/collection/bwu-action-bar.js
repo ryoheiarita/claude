@@ -115,7 +115,7 @@
         try { data.layers[0].shapes[1].c.k = [1,1,1,1]; data.layers[2].shapes[1].c.k = [1,1,1,1]; } catch (e) {}
         const anim = window.lottie.loadAnimation({ container: root.getElementById(holderId), renderer: 'svg', loop: false, autoplay: false, animationData: data });
         anim.goToAndStop(0, true);
-        const LIKE_START = 17, FILLED = 90, UNLIKE_START = 105;
+        const LIKE_START = 0, FILLED = 73, UNLIKE_START = 92;
         let busy = false;
         btn.addEventListener('click', (e) => {
           e.stopPropagation();

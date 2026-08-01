@@ -4,9 +4,9 @@ import 'package:lottie/lottie.dart';
 /// ハート / ブックマークの「いいね」風トグルボタン。
 ///
 /// heart-like.json / bookmark-like.json はどちらも同じフレーム構成です:
-///   - 60fps / 全 181 フレーム
-///   - フレーム  17〜90  : ON アニメーション（枠線 → 塗りつぶし + バースト）
-///   - フレーム 105〜181 : OFF アニメーション（塗りつぶし → 枠線）
+///   - 60fps / 全 164 フレーム（2026-08-01 に頭の無動作17フレームを削除して再タイム）
+///   - フレーム   0〜73  : ON アニメーション（枠線 → 塗りつぶし + バースト）
+///   - フレーム  92〜164 : OFF アニメーション（塗りつぶし → 枠線）
 ///   - フレーム   0       : 初期状態（枠線のみ）
 ///
 /// 枠線の色は配布 JSON に「白」を焼き込み済みです。色を変えたい場合は
@@ -54,11 +54,11 @@ class _LikeButtonState extends State<LikeButton>
 
   // JSON のフレーム定義（heart-like / bookmark-like 共通）。
   static const double _fps = 60;
-  static const double _total = 181;
-  static const double _likeStart = 17;
-  static const double _likeEnd = 90;
-  static const double _unlikeStart = 105;
-  static const double _unlikeEnd = 181;
+  static const double _total = 164;
+  static const double _likeStart = 0;
+  static const double _likeEnd = 73;
+  static const double _unlikeStart = 92;
+  static const double _unlikeEnd = 164;
 
   bool _active = false;
   bool _animating = false;

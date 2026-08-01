@@ -8,6 +8,7 @@
 | ファイル | 内容 |
 |---|---|
 | [`COMPONENTS_HANDOFF.md`](COMPONENTS_HANDOFF.md) | **共通コンポーネント指示書**。rail / bar / vimeo-controls / Lottie♥🔖 / シート引き下げ閉じ など、画面をまたいで使い回す部品と共通挙動。まずこれを読む |
+| [アクションレール実装仕様（実寸）](../rail/) | **縦動画の右側ボタンの正仕様**（Webページ）。実寸カンプ＋アイコンの実測サイズ＋配置数値。rail を実装する人はこれを見る |
 | [`VIMEO_PLAYER_SPEC.md`](VIMEO_PLAYER_SPEC.md) | **挙動仕様（プラットフォーム非依存）**。全Vimeo画面で守るUI/操作仕様 |
 | [`VIMEO_PLAYER_FLUTTER.md`](VIMEO_PLAYER_FLUTTER.md) | **Flutter実装ガイド**。WebView+Stack構成のフルコード・対応表・注意点 |
 

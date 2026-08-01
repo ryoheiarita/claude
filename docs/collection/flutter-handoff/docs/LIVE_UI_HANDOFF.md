@@ -32,7 +32,7 @@
 2. **ステータスバー非表示 ＋ 戻るボタン**（`--top-inset = env(safe-area-inset-top) + 16px`）。
 3. **右側アクションボタン3つ**（ハート/ブックマーク＝Lottie、コメント＝アイコン）。
    - Lottieは `lottie-data.js` を `<script src>` で読む（`fetch` は file:// でCORS失敗するため不可）。
-   - 押下/解除のフレーム: `LIKE_START=17 / FILLED=90 / UNLIKE_START=105`、アウトライン白塗り、連打ガード。
+   - 押下/解除のフレーム: `LIKE_START=0 / FILLED=73 / UNLIKE_START=92`、アウトライン白塗り、連打ガード。
 4. **ボトムシート機構**（コメント欄）
    - `bottom:0` アンカー＋`transform: translateY()` で開閉、`0.42s cubic-bezier(.22,.61,.36,1)`。
    - **シート外タップで閉じる**（`phone` の click で `commentSheet`/`actions` 外を判定）。
@@ -50,27 +50,28 @@ Shadow DOM でスタイル隔離。`window.lottie` + `lottie-data.js`（`HEART_L
 
 | ファイル | タグ | 中身 | 主なイベント / API |
 | --- | --- | --- | --- |
-| `bwu-action-rail.js` | `<bwu-action-rail>` | 縦動画の**右側5ボタン**（♥/🔖/💬/📄概要/⛶全画面） | events: `heart`/`bookmark`（`detail.on`）, `comment`, `detail`, `fullscreen`／method: `setActive(name,on)`, **`setCommentArtists(urls)`**／attr: `buttons="…"`（選択・並べ替え可）, `comment-artists="url1,url2,url3"` |
+| `bwu-action-rail.js` | `<bwu-action-rail>` | 縦動画の**右側4ボタン**（♥/🔖/💬/📄概要）※正仕様は [rail 実装仕様](../rail/) | events: `heart`/`bookmark`（`detail.on`）, `comment`, `detail`／method: `setActive(name,on)`, **`setCommentArtists(urls)`**／attr: `buttons="…"`（選択・並べ替え可）, `comment-artists="url1,url2,url3"` |
 | `bwu-action-bar.js` | `<bwu-action-bar>` | **横モード下部の浮遊バー**（コメントピル＋♥🔖、Figma 9448-27814/27815/27824） | events: `comment`, `heart`, `bookmark`／attr: `label`, `avatars` |
 
-使い方（右側5ボタン）:
+使い方（右側4ボタン）:
 ```html
 <script src="./lottie-data.js"></script>
+<script src="./rail-icons.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <script src="./bwu-action-rail.js"></script>
 ...
-<bwu-action-rail id="rail"></bwu-action-rail>
+<bwu-action-rail id="rail" buttons="heart,bookmark,comment,detail"></bwu-action-rail>
 <script>
-  rail.addEventListener('comment',    () => openComments());
-  rail.addEventListener('detail',     () => openDetail());
-  rail.addEventListener('fullscreen', () => vimeoPlayer.requestFullscreen()); // Vimeo SDK で標準全画面
+  rail.addEventListener('comment', () => openComments());
+  rail.addEventListener('detail',  () => openDetail());
   rail.setActive('comment', true);  // シートが開いている間は枠を表示
 </script>
 ```
 - 配置は呼び出し側（`position:absolute; right:16px; top:…`）。`:host` が縦並び(flex column gap8)。
-- ♥/🔖 はコンポーネント内でトグル＋Lottie完結。`comment`/`detail`/`fullscreen` は通知のみ（挙動はホスト側）。
+- ♥/🔖 はコンポーネント内でトグル＋Lottie完結。`comment`/`detail` は通知のみ（挙動はホスト側）。
+- アイコンの見かけは **18×18 相当に統一**（素材ごとの実測値・スケールは [rail 実装仕様](../rail/)）。
 - **アーティストコメント時のアイコン巡回**（2026-07-03）: `rail.setCommentArtists([url1,url2,url3])` で、コメントボタンの中身が `吹き出し→①→②→③→吹き出し…` と巡回（アバター各1s、吹き出しに戻ると5s待機）。`scale` の「ポワン」切替。空配列で通常アイコンに戻る。仕様は `VIDEO_SCREEN.md §5.1`。
-- 全画面を「Vimeo標準ボタンと同じ挙動」にするには **Vimeo Player SDK**（`player.js`）の `player.requestFullscreen()` を `fullscreen` イベントで呼ぶ（`iframe.requestFullscreen` は別挙動なので不可）。
+- **⛶ 全画面ボタンはレールから廃止**（2026-07-04）。全画面はプレイヤー側コントローラーに一本化（`VIMEO_PLAYER_SPEC.md`）。
 
 ## 2. レイアウトの数式（CSS変数）
 

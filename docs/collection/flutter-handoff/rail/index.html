@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script src="../../../gate.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>アクションレール 実装仕様（実寸） — BWU collection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d; --card: #1a1a1a; --card2: #232323;
+      --tx: #f2f2f2; --tx2: rgba(255,255,255,0.62); --tx3: rgba(255,255,255,0.38);
+      --line: rgba(255,255,255,0.12); --acc: #3ad17a; --warn: #ffd133;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--tx);
+      font-family: 'Figtree','Noto Sans JP',sans-serif;
+      line-height: 1.7; font-size: 14px;
+      padding: 32px 20px 80px;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    .back { display: inline-flex; align-items: center; gap: 6px; color: var(--tx2); text-decoration: none; font-size: 14px; margin-bottom: 24px; }
+    .back:hover { color: var(--tx); }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: .01em; margin-bottom: 6px; }
+    .lead { color: var(--tx2); font-size: 13.5px; margin-bottom: 8px; }
+    .meta { color: var(--tx3); font-size: 12px; margin-bottom: 28px; }
+    h2 { font-size: 18px; font-weight: 700; margin: 44px 0 4px; padding-top: 20px; border-top: 1px solid var(--line); }
+    h2 .num { color: var(--acc); margin-right: 8px; }
+    h3 { font-size: 15px; font-weight: 700; margin: 24px 0 6px; }
+    p { color: var(--tx2); margin: 8px 0; }
+    code { font-family: 'SFMono-Regular',Menlo,monospace; font-size: 12.5px; background: var(--card2); padding: 1px 6px; border-radius: 4px; color: #e6e6e6; }
+    b, strong { color: var(--tx); }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 8px; font-size: 13px; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--tx3); font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; background: var(--card); }
+    td:first-child { color: var(--tx); white-space: nowrap; }
+    .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    ul { margin: 8px 0 8px 18px; color: var(--tx2); }
+    li { margin: 4px 0; }
+    .note { background: var(--card); border-left: 3px solid var(--warn); padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px; color: var(--tx2); }
+    .note b { color: var(--warn); }
+
+    /* ── 実寸カンプ ── */
+    .stage-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin: 18px 0 4px; }
+    .stage {
+      position: relative; width: 240px; height: 300px; flex: none;
+      border-radius: 14px; overflow: hidden;
+      background: linear-gradient(150deg,#3c4a3a,#26301f 60%,#161c12);
+      border: 1px solid var(--line);
+    }
+    .stage bwu-action-rail { position: absolute; right: 16px; top: 24px; }
+    .stage .cap { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: rgba(255,255,255,0.6); }
+    .specbox { flex: 1; min-width: 260px; }
+    .swatch { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--tx2); }
+    .swatch b { color: var(--tx); min-width: 92px; display: inline-block; }
+    .swatch .val { margin-left: auto; font-family: 'SFMono-Regular',Menlo,monospace; font-size: 12.5px; color: var(--acc); }
+
+    .files { display: grid; gap: 8px; margin: 14px 0; }
+    .file { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; text-decoration: none; color: var(--tx); }
+    .file:hover { border-color: rgba(255,255,255,0.28); }
+    .file .ic { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none; background: #2a3a2f; color: var(--acc); }
+    .file .nm { font-size: 13.5px; font-weight: 600; }
+    .file .ds { font-size: 12px; color: var(--tx3); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← Flutter実装指示書トップ</a>
+
+  <h1>アクションレール（縦動画 右側ボタン）実装仕様</h1>
+  <p class="lead">
+    縦動画 <code>video-tate ph2 / ph3</code> に<b>現在実装されている状態が正</b>。この 1 枚がレールの唯一の正仕様です。<br>
+    数値はすべて実装プロトタイプ（375×812 / DPR1）からの実測値。px = dp として読んでください。
+  </p>
+  <p class="meta">更新 2026-08-01 ／ 参照実装 <code>collection/bwu-action-rail.js</code>（Web Components・Shadow DOM）</p>
+
+  <h2><span class="num">1</span>実寸カンプ</h2>
+  <p>下は<b>実装コンポーネントそのもの</b>を等倍で埋め込んだもの。♥🔖はタップでトグル、💬📄はタップで1回再生します。</p>
+
+  <div class="stage-row">
+    <div class="stage">
+      <bwu-action-rail id="railDemo" buttons="heart,bookmark,comment,detail"></bwu-action-rail>
+      <span class="cap">実寸（等倍）・既定の4ボタン</span>
+    </div>
+    <div class="specbox">
+      <div class="swatch"><b>ボタン</b><span>円 48×48（border込みの実寸）</span><span class="val">48</span></div>
+      <div class="swatch"><b>角丸</b><span>実質フル円</span><span class="val">42</span></div>
+      <div class="swatch"><b>背景</b><span>黒 55% + blur</span><span class="val">rgba(0,0,0,.55) / blur(20)</span></div>
+      <div class="swatch"><b>ボーダー</b><span>白 15%</span><span class="val">1px rgba(255,255,255,.15)</span></div>
+      <div class="swatch"><b>縦の間隔</b><span>gap</span><span class="val">8</span></div>
+      <div class="swatch"><b>群の高さ</b><span>48×4 + 8×3</span><span class="val">216</span></div>
+      <div class="swatch"><b>アイコン</b><span>見かけの大きさ（下表）</span><span class="val">18 基準</span></div>
+    </div>
+  </div>
+
+  <h2><span class="num">2</span>構成（上→下）</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>順</th><th>ボタン</th><th>種別</th><th>タップ</th></tr>
+    <tr><td>1</td><td>♥ いいね</td><td>Lottie トグル</td><td>ON/OFF。ONでボーダー <code>rgba(255,62,62,0.6)</code></td></tr>
+    <tr><td>2</td><td>🔖 保存</td><td>Lottie トグル</td><td>ON/OFF。ONでボーダー <code>rgba(255,209,51,0.6)</code></td></tr>
+    <tr><td>3</td><td>💬 コメント</td><td>Lottie ワンショット</td><td>コメントシート開閉。開いている間ボーダー <code>rgba(255,255,255,0.6)</code></td></tr>
+    <tr><td>4</td><td>📄 概要</td><td>Lottie ワンショット</td><td>概要シート開閉。開いている間ボーダー <code>rgba(255,255,255,0.6)</code></td></tr>
+  </table>
+  </div>
+  <div class="note" style="border-left-color:#3ad17a">
+    <b style="color:#3ad17a">💬 と 📄 のアクティブ（白枠）は排他・トグル。</b>
+    どちらかをタップするとそれがアクティブ（ボーダー white60%）になり、もう一方は解除される（同時に2つ点かない）。
+    <b>アクティブなものをもう一度タップすると通常に戻る</b>（シートも閉じる）。♥🔖 の ON/OFF とは独立。
+  </div>
+  <div class="note">
+    <b>⛶ 全画面ボタンは無し（2026-07-04 変更）。</b>
+    以前の指示書にあった 5 ボタン構成は廃止し、レールは <b>4 ボタン</b>。全画面はプレイヤー側コントローラーに一本化しました。
+    （コンポーネントには <code>fullscreen</code> の実装が残っていますが、縦動画では<b>使いません</b>。）
+  </div>
+
+  <h2><span class="num">3</span>アイコンの大きさ（調整済み・ここが要点）</h2>
+  <p>
+    ボタンは 48 で共通ですが、<b>中のアイコンは素材ごとに実寸がバラつく</b>ため、
+    見かけの大きさが <b>18px 相当</b>で揃うように調整済みです。以下が現物の実測値（停止状態）。
+  </p>
+  <div class="scroll">
+  <table>
+    <tr><th>アイコン</th><th>見かけサイズ（実測）</th><th>ホルダー</th><th>適用スケール</th><th>備考</th></tr>
+    <tr><td>♥ heart</td><td><b>21.6 × 18.2</b></td><td>72×72</td><td>1.0（素材のまま）</td><td>高さ約18が全体の基準</td></tr>
+    <tr><td>🔖 bookmark</td><td><b>11.9 × 16.8</b></td><td>72×72</td><td>1.0（素材のまま）</td><td>縦長の素材。高さで揃う</td></tr>
+    <tr><td>💬 comment</td><td><b>18.0 × 18.0</b></td><td>24×24</td><td>×1.272</td><td>長辺18・中央に正規化</td></tr>
+    <tr><td>📄 detail</td><td><b>18.0 × 18.0</b></td><td>24×24</td><td>×1.049</td><td>同上</td></tr>
+    <tr><td>（⛶ fullscreen）</td><td>18.0 × 18.0</td><td>24×24</td><td>×1.274</td><td>縦動画では未使用</td></tr>
+  </table>
+  </div>
+  <ul>
+    <li><b>♥🔖</b>：Lottie を <code>72×72</code> のキャンバスに置いて<b>素材原寸のまま</b>表示（バースト粒子がボタン外へ出るため大きめの箱が必要）。</li>
+    <li><b>💬📄</b>：Lottie を <code>24×24</code> のホルダーに置き、読み込み後に<b>中身の長辺 = 18px・中心をボタン中央</b>に合わせて拡縮（参照実装の <code>_fitOnce()</code>）。</li>
+    <li><b>Flutter では動的計算は不要</b>。上表の「適用スケール」を素材ごとに<b>固定値として焼き込んで</b>ください（結果は 💬📄⛶ とも見かけ 18×18）。</li>
+    <li>Lottie が使えない環境の静的SVGフォールバックは <code>24×24</code> の枠・<code>stroke 1.6</code>・white。</li>
+  </ul>
+
+  <h2><span class="num">4</span>配置と状態遷移（縦動画）</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>状態</th><th>位置</th><th>備考</th></tr>
+    <tr><td>通常</td><td><code>right: 16</code> ／ <b>ボタン群の下端＝動画下端の 48px 上</b></td><td>動画は画面内で縦中央寄せ。レールもそれに追従（<code>top = 動画top + 動画h − 216 − 48</code>）</td></tr>
+    <tr><td>コメント開</td><td><code>right: 16</code> ／ <code>top = safe-area-top + 16</code></td><td>戻るボタンと上揃え</td></tr>
+    <tr><td>概要開</td><td>同上</td><td>コメント時と同じ（＝上揃え）</td></tr>
+  </table>
+  </div>
+  <ul>
+    <li>遷移は <code>top</code> / <code>right</code> を <b>0.42s <code>cubic-bezier(0.22, 0.61, 0.36, 1)</code></b> で補間（動画サイズ・シート開閉と同じ共通カーブ）。</li>
+    <li>重なり順：動画・プレイヤーコントロールより<b>上</b>、ボトムシートより<b>下</b>（<code>z-index 55</code>）。</li>
+    <li>ボタンは<b>複製せず同一ウィジェットを移動</b>（Lottie インスタンスの二重生成を避ける）。Flutter は <code>AnimatedPositioned</code> 等で 1 セットを動かす。</li>
+  </ul>
+
+  <h2><span class="num">5</span>アニメーション</h2>
+  <div class="note" style="border-left-color:#3ad17a">
+    <b style="color:#3ad17a">タップ＝即動く。素材データ側で対応済み（2026-08-01）。</b>
+    元の Lottie は冒頭に「何も動かないフレーム」が焼き込まれており、0 から再生すると<b>タップしてから動き出すまで待たされて見えた</b>。
+    <b>♥🔖・💬📄⛶ とも素材データの頭を詰めて、動き出し＝frame 0 に統一</b>。
+    実装側は<b>ただ frame 0 から再生すればよく、開始位置の補正は不要</b>です（同梱の JSON をそのまま使ってください）。
+  </div>
+  <div class="scroll">
+  <table>
+    <tr><th>アイコン</th><th>再生範囲（再タイム後）</th><th>全長</th><th>削った頭</th></tr>
+    <tr><td>♥ / 🔖 押下</td><td><code>0</code> → <code>73</code> で停止</td><td rowspan="2">164f / 60fps</td><td rowspan="2">17f＝<b>283ms</b>（解除の遅れ <b>67ms</b> も解消）</td></tr>
+    <tr><td>♥ / 🔖 解除</td><td><code>92</code> → 終端 <code>164</code> → <code>0</code></td></tr>
+    <tr><td>💬 comment</td><td><code>0</code> → 終端で1回</td><td>53f / 29.97fps</td><td>5.994f＝<b>200ms</b></td></tr>
+    <tr><td>📄 detail</td><td><code>0</code> → 終端で1回</td><td>54f / 29.97fps</td><td>4.795f＝<b>160ms</b></td></tr>
+    <tr><td>（⛶ fullscreen）</td><td><code>0</code> → 終端で1回</td><td>45f / 29.97fps</td><td>14.385f＝480ms（未使用）</td></tr>
+  </table>
+  </div>
+  <ul>
+    <li><b>♥🔖（トグル）</b>：ON = フレーム <code>0 → 73</code> で停止、OFF = <code>92 → 終端(164) → 0</code>。60fps・全 <b>164</b> フレーム。<b>アニメ中の連打は無視</b>。素材のアウトライン系レイヤーは白に差し替え（<code>layers[0].shapes[1].c.k = [1,1,1,1]</code> / 同 <code>layers[2]</code>）。記事画面の <code>LikeButton</code> と同一素材。</li>
+    <li><b>💬📄（ワンショット）</b>：タップごとに<b>頭から1回</b>再生。開閉自体は画面側の責務。</li>
+    <li>参照実装には「最初に動き出すフレーム」を自動計測する保険（<code>firstMotionFrame()</code>）が残っていますが、<b>再タイム済みの素材では 0 を返す</b>ので実質何もしません。素材を差し替えるときの安全網です。</li>
+    <li><b>💬 アーティストコメント巡回</b>：吹き出し → アーティスト①②③ → 吹き出し…（最大3人）。アバター各 <b>1.0s</b>、吹き出しに戻ったら <b>5.0s</b> 待機。初回は表示から <b>1.0s</b> で開始。切替は scale の「ポワン」（入り <code>0.40s cubic-bezier(0.34,1.56,0.64,1)</code>＋opacity 0.26s／抜け <code>0.28s cubic-bezier(0.4,0,1,1)</code>＋opacity 0.18s、入り抜け同時）。アバターは <b>30×30</b> 円・<code>cover</code>・白 <b>1.5px</b> リング（<code>rgba(255,255,255,0.85)</code>）。詳細は <a href="../docs/VIDEO_SCREEN.md" style="color:var(--acc)">VIDEO_SCREEN.md §5.1</a>。</li>
+  </ul>
+
+  <h2><span class="num">6</span>コンポーネント API（参照実装）</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>種別</th><th>名前</th><th>内容</th></tr>
+    <tr><td>event</td><td><code>heart</code> / <code>bookmark</code></td><td>トグル。<code>detail.on</code> に on/off</td></tr>
+    <tr><td>event</td><td><code>comment</code> / <code>detail</code></td><td>タップ通知のみ（シート開閉は画面側）</td></tr>
+    <tr><td>method</td><td><code>setActive(name, on)</code></td><td>シートが開いている間ボーダーを白60%に</td></tr>
+    <tr><td>method</td><td><code>setCommentArtists(urls)</code></td><td>アーティスト巡回の開始／空配列で通常アイコンへ</td></tr>
+    <tr><td>attr</td><td><code>buttons="heart,bookmark,comment,detail"</code></td><td>表示するボタンと並び順（＝縦動画の既定）</td></tr>
+  </table>
+  </div>
+
+  <h2><span class="num">7</span>ファイル</h2>
+  <div class="files">
+    <a class="file" href="../../bwu-action-rail.js" download><span class="ic">JS</span><span><span class="nm">bwu-action-rail.js</span><br><span class="ds">レール本体（この仕様の参照実装）</span></span></a>
+    <a class="file" href="../../lottie-data.js" download><span class="ic">JS</span><span><span class="nm">lottie-data.js</span><br><span class="ds">♥🔖 の Lottie データ（記事画面と共通素材）</span></span></a>
+    <a class="file" href="../../rail-icons.js" download><span class="ic">JS</span><span><span class="nm">rail-icons.js</span><br><span class="ds">💬📄⛶ の Lottie データ</span></span></a>
+    <a class="file" href="../../video-tate-ph3/"><span class="ic">▶</span><span><span class="nm">縦動画 ph3（実装プロトタイプ）</span><br><span class="ds">この仕様の出どころ。実機で挙動を確認する用</span></span></a>
+  </div>
+</div>
+
+<script src="../../lottie-data.js"></script>
+<script src="../../rail-icons.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+<script src="../../bwu-action-rail.js"></script>
+</body>
+</html>

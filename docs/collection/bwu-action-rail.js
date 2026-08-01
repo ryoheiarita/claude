@@ -34,6 +34,25 @@
     fullscreen: `<svg class="ico" viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   };
 
+  /* Lottie の「最初に動き出すフレーム」を実測する。
+     iconsax 系の素材は冒頭に無動作フレームが焼き込まれていることがあり（対処前は 💬200ms / 📄160ms / ⛶480ms）、
+     0 から再生するとタップしてから動き出すまで待たされて見える。
+     ※ 2026-08-01 に rail-icons.js / lottie-data.js は素材データ側で頭を詰めたので、現在この値は 0 を返す。
+        差し替え素材で頭に無動作が入っていても遅れないようにするための保険として残している。
+     ※ tabbar-260726 と同一手法（同コンポーネントの firstMotionFrame / Flutter は kIconStartFraction）。 */
+  function firstMotionFrame(data) {
+    let min = Infinity;
+    (function walk(o) {
+      if (Array.isArray(o)) { o.forEach(walk); return; }
+      if (o && typeof o === 'object') {
+        if (o.a === 1 && Array.isArray(o.k) && o.k.length && typeof o.k[0].t === 'number')
+          min = Math.min(min, o.k[0].t);
+        for (const k in o) walk(o[k]);
+      }
+    })(data);
+    return isFinite(min) ? min : 0;
+  }
+
   // mode: 'toggle' = ♥🔖（on/off）, 'once' = 💬📄⛶（タップで1回再生）
   const CONFIG = {
     heart:      { global: 'HEART_LOTTIE',      mode: 'toggle', color: 'rgba(255,62,62,0.6)' },
@@ -136,7 +155,7 @@
         try { data.layers[0].shapes[1].c.k = [1,1,1,1]; data.layers[2].shapes[1].c.k = [1,1,1,1]; } catch (e) {}
         const anim = window.lottie.loadAnimation({ container: holder, renderer: 'svg', loop: false, autoplay: false, animationData: data });
         anim.goToAndStop(0, true);
-        const LIKE = 17, FILLED = 90, UNLIKE = 105;
+        const LIKE = 0, FILLED = 73, UNLIKE = 92;
         let busy = false;
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -176,12 +195,14 @@
           container: holder, renderer: 'svg', loop: false, autoplay: false,
           animationData: JSON.parse(JSON.stringify(rawData)),
         });
-        anim.goToAndStop(0, true);
+        // 冒頭の無動作フレームはスキップ（タップ後の「もっさり」を消す）。静止画としての見た目は 0 と同じ。
+        const start = firstMotionFrame(rawData);
+        anim.goToAndStop(start, true);
         // Lottie 各素材で中身のサイズ/中心がバラつくので 18px・中央に正規化（♥🔖の余白感に合わせる）
         requestAnimationFrame(() => this._fitOnce(holder));
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          anim.goToAndPlay(0, true);   // タップごとに頭から1回
+          anim.goToAndPlay(start, true);   // タップごとに「動き出す位置」から1回
           emit();
         });
       } else {
