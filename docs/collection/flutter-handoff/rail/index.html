@@ -52,7 +52,8 @@
       border: 1px solid var(--line);
     }
     .stage bwu-action-rail { position: absolute; right: 16px; top: 24px; }
-    .stage .cap { position: absolute; left: 12px; bottom: 10px; font-size: 11px; color: rgba(255,255,255,0.6); }
+    .stage.sm { width: 236px; height: 152px; }   /* §6 の単ボタンデモ用 */
+    .stage .cap { position: absolute; left: 12px; right: 12px; bottom: 10px; font-size: 11px; line-height: 1.45; color: rgba(255,255,255,0.6); }
     .specbox { flex: 1; min-width: 260px; }
     .swatch { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--tx2); }
     .swatch b { color: var(--tx); min-width: 92px; display: inline-block; }
@@ -83,7 +84,7 @@
   <div class="stage-row">
     <div class="stage">
       <bwu-action-rail id="railDemo" buttons="heart,bookmark,comment,detail"></bwu-action-rail>
-      <span class="cap">実寸（等倍）・既定の4ボタン</span>
+      <span class="cap">実寸（等倍）・既定の4ボタン<br><b style="color:#3ad17a">💬 はアーティストコメント有りの状態（§6の巡回が動いています）</b></span>
     </div>
     <div class="specbox">
       <div class="swatch"><b>ボタン</b><span>円 48×48（border込みの実寸）</span><span class="val">48</span></div>
@@ -102,7 +103,7 @@
     <tr><th>順</th><th>ボタン</th><th>種別</th><th>タップ</th></tr>
     <tr><td>1</td><td>♥ いいね</td><td>Lottie トグル</td><td>ON/OFF。ONでボーダー <code>rgba(255,62,62,0.6)</code></td></tr>
     <tr><td>2</td><td>🔖 保存</td><td>Lottie トグル</td><td>ON/OFF。ONでボーダー <code>rgba(255,209,51,0.6)</code></td></tr>
-    <tr><td>3</td><td>💬 コメント</td><td>Lottie ワンショット</td><td>コメントシート開閉。開いている間ボーダー <code>rgba(255,255,255,0.6)</code></td></tr>
+    <tr><td>3</td><td>💬 コメント</td><td>Lottie ワンショット<br><b>＋ アイコン巡回（条件付き）</b></td><td>コメントシート開閉。開いている間ボーダー <code>rgba(255,255,255,0.6)</code>。<br><b>アーティスト本人のコメントが付いているコンテンツでは、中のアイコンが吹き出し⇄アーティストのアバターに巡回する（→ <a href="#artist" style="color:var(--acc)">§6</a>）</b></td></tr>
     <tr><td>4</td><td>📄 概要</td><td>Lottie ワンショット</td><td>概要シート開閉。開いている間ボーダー <code>rgba(255,255,255,0.6)</code></td></tr>
   </table>
   </div>
@@ -175,10 +176,56 @@
     <li><b>♥🔖（トグル）</b>：ON = フレーム <code>0 → 73</code> で停止、OFF = <code>92 → 終端(164) → 0</code>。60fps・全 <b>164</b> フレーム。<b>アニメ中の連打は無視</b>。素材のアウトライン系レイヤーは白に差し替え（<code>layers[0].shapes[1].c.k = [1,1,1,1]</code> / 同 <code>layers[2]</code>）。記事画面の <code>LikeButton</code> と同一素材。</li>
     <li><b>💬📄（ワンショット）</b>：タップごとに<b>頭から1回</b>再生。開閉自体は画面側の責務。</li>
     <li>参照実装には「最初に動き出すフレーム」を自動計測する保険（<code>firstMotionFrame()</code>）が残っていますが、<b>再タイム済みの素材では 0 を返す</b>ので実質何もしません。素材を差し替えるときの安全網です。</li>
-    <li><b>💬 アーティストコメント巡回</b>：吹き出し → アーティスト①②③ → 吹き出し…（最大3人）。アバター各 <b>1.0s</b>、吹き出しに戻ったら <b>5.0s</b> 待機。初回は表示から <b>1.0s</b> で開始。切替は scale の「ポワン」（入り <code>0.40s cubic-bezier(0.34,1.56,0.64,1)</code>＋opacity 0.26s／抜け <code>0.28s cubic-bezier(0.4,0,1,1)</code>＋opacity 0.18s、入り抜け同時）。アバターは <b>30×30</b> 円・<code>cover</code>・白 <b>1.5px</b> リング（<code>rgba(255,255,255,0.85)</code>）。詳細は <a href="../docs/VIDEO_SCREEN.md" style="color:var(--acc)">VIDEO_SCREEN.md §5.1</a>。</li>
+    <li><b>💬 のアイコン巡回</b>はアーティストコメントがある時だけ動く別挙動 → <a href="#artist" style="color:var(--acc)">§6</a>。</li>
   </ul>
 
-  <h2><span class="num">6</span>コンポーネント API（参照実装）</h2>
+  <h2 id="artist"><span class="num">6</span>💬 コメントボタンのアイコン巡回（アーティストコメントがある時）</h2>
+  <p>
+    そのコンテンツに<b>アーティスト本人のコメントが付いている場合だけ</b>、コメントボタンの中身が
+    <b>吹き出しアイコン ⇄ アーティストのアバター</b>に「ポワン」と切り替わりながら巡回します。
+    「アーティストが喋っている」ことをレール上で気づかせるための表現で、<b>ボタンの背景ピル（円・blur・ボーダー）はそのまま</b>、中身だけが差し替わります。
+  </p>
+
+  <div class="stage-row">
+    <div class="stage sm">
+      <bwu-action-rail id="railArtist" buttons="comment"></bwu-action-rail>
+      <span class="cap">アーティスト3人の場合（実物・等倍）<br>吹き出し → ① → ② → ③ → 吹き出し…</span>
+    </div>
+    <div class="stage sm">
+      <bwu-action-rail id="railNoArtist" buttons="comment"></bwu-action-rail>
+      <span class="cap">アーティストコメントが無い場合<br>巡回しない（吹き出し固定）</span>
+    </div>
+    <div class="specbox">
+      <div class="swatch"><b>発火条件</b><span>アーティスト本人のコメントが有る</span><span class="val">setCommentArtists(urls)</span></div>
+      <div class="swatch"><b>人数</b><span>最大3人（4人目以降は出さない）</span><span class="val">≤ 3</span></div>
+      <div class="swatch"><b>アバター保持</b><span>1面あたり</span><span class="val">1.0s</span></div>
+      <div class="swatch"><b>吹き出し保持</b><span>1周して戻った時の休止</span><span class="val">5.0s</span></div>
+      <div class="swatch"><b>初回開始</b><span>画面表示から</span><span class="val">1.0s</span></div>
+      <div class="swatch"><b>アバター</b><span>円・cover・白リング</span><span class="val">30 / 1.5px 85%</span></div>
+    </div>
+  </div>
+
+  <div class="scroll">
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>巡回順</td><td><code>吹き出し → アーティスト① → ② → ③ → 吹き出し …</code>（無限ループ）</td></tr>
+    <tr><td>保持時間</td><td>アーティストは<b>各 1.0s</b>。1周して吹き出しに戻ったら<b>5.0s 待機</b>してから次の周へ（＝吹き出しが基準・休止点）。<b>等間隔ではない可変ディレイ</b>（index 0 に戻ったら 5s、それ以外は 1s）</td></tr>
+    <tr><td>初回</td><td>画面表示から <b>1.0s</b> 後に最初の切替が始まる</td></tr>
+    <tr><td>切替アニメ（入り）</td><td><code>scale 0→1</code> / <b>0.40s <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code></b>（オーバーシュートで弾む）＋ <code>opacity 0→1 / 0.26s</code></td></tr>
+    <tr><td>切替アニメ（抜け）</td><td><code>scale 1→0</code> / <b>0.28s <code>cubic-bezier(0.4, 0, 1, 1)</code></b>（素早く縮む）＋ <code>opacity 1→0 / 0.18s</code></td></tr>
+    <tr><td>入り・抜けの関係</td><td><b>同時進行</b>（前の面が縮みながら次の面が弾んで出る）＝「ポワン」</td></tr>
+    <tr><td>アバターの見た目</td><td><b>30×30</b> 円 / <code>object-fit: cover</code> / <b>白 1.5px リング</b> <code>box-shadow 0 0 0 1.5px rgba(255,255,255,0.85)</code>（アーティストと分かる縁取り）</td></tr>
+    <tr><td>アーティストコメントが無い時</td><td><b>巡回しない</b>。通常の吹き出しアイコンで固定（API 的には <code>setCommentArtists([])</code>）</td></tr>
+    <tr><td>シート開閉との関係</td><td>独立。巡回中でもタップでコメントシートが開き、アクティブ白枠も通常どおり付く</td></tr>
+  </table>
+  </div>
+  <ul>
+    <li><b>Flutter 実装方針</b>：コメントボタンを <code>Stack</code> + <code>AnimatedScale</code>/<code>AnimatedOpacity</code>（または <code>AnimatedSwitcher</code>）で。子 = <code>[吹き出し, avatar①, avatar②, avatar③]</code> を index で切替。タイマは「index が 0 に戻ったら 5s、それ以外は 1s」の可変ディレイ。カーブは入り <code>Curves.easeOutBack</code> 相当、抜け <code>Curves.easeIn</code> 相当。</li>
+    <li>参照実装: <code>bwu-action-rail.js</code> の <code>setCommentArtists(urls)</code>（アバターURL配列・最大3を渡すと開始、空配列で通常アイコンへ）。属性でも指定可 <code>comment-artists="url1,url2,url3"</code>。</li>
+    <li>プロトタイプでの配線例は <a href="../../video-tate-ph3/">縦動画 ph3</a>（アバターは仮のグラデ画像。本番はアーティストのアバターURLを渡す）。</li>
+  </ul>
+
+  <h2><span class="num">7</span>コンポーネント API（参照実装）</h2>
   <div class="scroll">
   <table>
     <tr><th>種別</th><th>名前</th><th>内容</th></tr>
@@ -190,7 +237,7 @@
   </table>
   </div>
 
-  <h2><span class="num">7</span>ファイル</h2>
+  <h2><span class="num">8</span>ファイル</h2>
   <div class="files">
     <a class="file" href="../../bwu-action-rail.js" download><span class="ic">JS</span><span><span class="nm">bwu-action-rail.js</span><br><span class="ds">レール本体（この仕様の参照実装）</span></span></a>
     <a class="file" href="../../lottie-data.js" download><span class="ic">JS</span><span><span class="nm">lottie-data.js</span><br><span class="ds">♥🔖 の Lottie データ（記事画面と共通素材）</span></span></a>
@@ -202,6 +249,28 @@
 <script src="../../lottie-data.js"></script>
 <script src="../../rail-icons.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+<script>
+  /* §1・§6 のデモ：アーティストコメントがある状態を再現して巡回を実際に見せる。
+     アバターは縦動画プロトタイプと同じ「仮のグラデ画像」（data URL なのでオフライン・ZIP内でも動く）。 */
+  (function () {
+    const AV_COLORS = [['#7b5cff','#42d2ff'], ['#ff7a59','#ffcf5c'], ['#3ad17a','#0fb2c9']];
+    const avatar = i => {
+      const [a, b] = AV_COLORS[i % AV_COLORS.length];
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${a}'/><stop offset='1' stop-color='${b}'/></linearGradient></defs><rect width='80' height='80' fill='url(%23g)'/></svg>`;
+      return 'data:image/svg+xml;utf8,' + svg.replace(/#/g, '%23');
+    };
+    const artists = [avatar(0), avatar(1), avatar(2)];
+    const start = () => {
+      ['railDemo', 'railArtist'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.setCommentArtists) el.setCommentArtists(artists);   // アーティストコメント有り
+      });
+      // railNoArtist は何も渡さない ＝ 巡回しない（吹き出し固定）状態の比較用
+    };
+    if (customElements.get('bwu-action-rail')) start();
+    else customElements.whenDefined('bwu-action-rail').then(start);
+  })();
+</script>
 <script src="../../bwu-action-rail.js"></script>
 </body>
 </html>
