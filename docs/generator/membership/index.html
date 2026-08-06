@@ -227,6 +227,30 @@
   .posin { width:70px; padding:6px 8px; }
   .poslb { font-size:11px; color:#8a8a92; }
   input[type=checkbox] { accent-color:#3d3df5; width:16px; height:16px; }
+
+  /* ---------- 変換プログレス ---------- */
+  #convOverlay {
+    position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+    background:rgba(6,6,8,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
+  .conv-box {
+    width:340px; background:#141419; border:1px solid #2c2c33; border-radius:14px;
+    padding:20px; display:flex; flex-direction:column; gap:12px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);
+  }
+  .conv-title { font-size:13px; font-weight:600; color:#fff; }
+  .conv-track { height:6px; border-radius:6px; background:#26262d; overflow:hidden; }
+  .conv-fill {
+    display:block; height:100%; width:0; border-radius:6px;
+    background:linear-gradient(90deg,#3d3df5,#7b7bff);
+    transition:width .35s cubic-bezier(.4,0,.2,1);
+  }
+  .conv-note { font-size:11px; color:#8a8a92; line-height:1.6; min-height:18px; }
+  .conv-note.err { color:#ff8080; }
+  .conv-pct { font-size:11px; color:#6e6e76; font-variant-numeric:tabular-nums; }
+  .conv-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  #convStatus { font-size:11px; color:#7b7bff; line-height:1.6; }
+  #convStatus.err { color:#ff8080; }
 </style>
 </head>
 <body>
@@ -256,7 +280,8 @@
     <div class="sec">
       <label>画像</label>
       <button class="btn" id="pickBtn">画像を選択…</button>
-      <div class="hint">会員証に画像ファイルをドロップしても差し替えられます。同じ画像が会員証フレーム・カード背景（ブラー）・ページ上部背景（ブラー）に反映されます。</div>
+      <div id="convStatus" hidden></div>
+      <div class="hint">会員証に画像ファイルをドロップしても差し替えられます。同じ画像が会員証フレーム・カード背景（ブラー）・ページ上部背景（ブラー）に反映されます。<br>TIFF は自動で PNG（長辺1600px・5MB以下）に変換して読み込みます。</div>
     </div>
     <div class="sec">
       <label>クロップ</label>
@@ -306,7 +331,18 @@
     </div>
   </aside>
 </main>
-<input type="file" id="fileInput" accept="image/*" hidden>
+<input type="file" id="fileInput" accept="image/*,.tif,.tiff" hidden>
+
+<div id="convOverlay" hidden>
+  <div class="conv-box">
+    <div class="conv-row">
+      <span class="conv-title" id="convTitle">TIFF を PNG に変換中…</span>
+      <span class="conv-pct" id="convPct">0%</span>
+    </div>
+    <div class="conv-track"><i class="conv-fill" id="convFill"></i></div>
+    <div class="conv-note" id="convNote">ファイルを読み込み中…</div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -321,7 +357,7 @@ const RADII_IMG = [20, 20, 12, 12];       // 画像フレーム角丸: 上20 / �
 
 /* ================= state ================= */
 const state = {
-  img: null, zoom: 1, ox: 0, oy: 0, free: false,
+  img: null, imgUrl: null, zoom: 1, ox: 0, oy: 0, free: false,
   trim: { t: 0, r: 0, b: 0, l: 0 },
   artist: 'Artist・FCname', nick: 'Nickname', prof: 'Nickname', id: '123456789',
 };
@@ -640,19 +676,164 @@ function bindCard() {
   card.addEventListener('drop', e => {
     e.preventDefault();
     const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f && f.type.startsWith('image/')) loadUserImage(f);
+    if (f && (f.type.startsWith('image/') || isTiffFile(f))) loadUserImage(f);
   });
 }
 
-function loadUserImage(file) {
-  const url = URL.createObjectURL(file);
-  loadImg(url).then(img => {
-    state.img = img;
-    state.zoom = Math.max(minZoom(), 1); state.ox = 0; state.oy = 0;
-    state.trim = { t: 0, r: 0, b: 0, l: 0 };
-    updateImages();
-    syncZoomUI();
+/* ================= TIFF → PNG 変換 ================= */
+const TIFF_OPTS = { maxEdge: 1600, maxBytes: 5 * 1024 * 1024 };
+
+function isTiffFile(f) {
+  return /tiff?$/i.test(f.type || '') || /\.tiff?$/i.test(f.name || '');
+}
+function fmtMB(b) { return (b / 1048576).toFixed(1) + 'MB'; }
+function nextFrame() { return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); }
+
+/* --- プログレス表示（実処理の谷間でも止まって見えないよう、目標値へ滑らかに近づける） --- */
+const convOverlay = $('convOverlay'), convFill = $('convFill'), convNote = $('convNote'),
+      convPct = $('convPct'), convTitle = $('convTitle'), convStatus = $('convStatus');
+let convCur = 0, convGoal = 0, convTimer = null;
+
+function convRender() {
+  convFill.style.width = (convCur * 100).toFixed(1) + '%';
+  convPct.textContent = Math.round(convCur * 100) + '%';
+}
+function convShow(title) {
+  convTitle.textContent = title;
+  convNote.textContent = 'ファイルを読み込み中…';
+  convNote.classList.remove('err');
+  convCur = 0; convGoal = 0;
+  convRender();
+  convOverlay.hidden = false;
+  clearInterval(convTimer);
+  convTimer = setInterval(() => {
+    if (convCur >= convGoal - 0.001) return;
+    convCur += (convGoal - convCur) * 0.18;   // 目標へじわじわ寄せる
+    convRender();
+  }, 90);
+}
+function convSet(p, label) {
+  convGoal = Math.max(convGoal, Math.min(1, p));
+  if (label) convNote.textContent = label;
+}
+function convHide() { clearInterval(convTimer); convTimer = null; convOverlay.hidden = true; }
+function convDone() {
+  convGoal = convCur = 1;
+  convRender();
+  return new Promise(r => setTimeout(() => { convHide(); r(); }, 260));
+}
+function setStatus(text, isErr) {
+  convStatus.hidden = !text;
+  convStatus.textContent = text || '';
+  convStatus.classList.toggle('err', !!isErr);
+}
+
+function readArrayBuffer(file, onProgress) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => rej(new Error('ファイルを読み込めませんでした'));
+    fr.readAsArrayBuffer(file);
   });
+}
+
+/* ワーカーで変換。生成できない環境（file:// など）や読み込み失敗時は reject してフォールバックへ */
+function convertViaWorker(buffer) {
+  return new Promise((res, rej) => {
+    let w;
+    try { w = new Worker('assets/tiff-worker.js'); }
+    catch (e) { rej(e); return; }
+    let ready = false, sent = false;
+    const bail = e => { clearTimeout(t); w.terminate(); rej(e instanceof Error ? e : new Error('worker error')); };
+    const t = setTimeout(() => { if (!ready) bail(new Error('worker timeout')); }, 4000);
+    w.onerror = ev => { ev.preventDefault(); (sent ? rej : bail)(new Error(ev.message || 'worker error')); };
+    w.onmessage = e => {
+      const m = e.data;
+      if (m.type === 'ready') {
+        ready = true; clearTimeout(t); sent = true;
+        w.postMessage({ buffer, opts: TIFF_OPTS }, [buffer]);   // 転送して丸ごとコピーを避ける
+      } else if (m.type === 'progress') {
+        convSet(m.p, m.label);
+      } else if (m.type === 'done') {
+        w.terminate(); res(m);
+      } else if (m.type === 'error') {
+        w.terminate(); rej(new Error(m.message));
+      }
+    };
+  });
+}
+
+/* フォールバック: メインスレッドで変換（UI は各ステップ間の yield で描画させる） */
+const loadedScripts = {};
+function loadScriptOnce(src) {
+  if (loadedScripts[src]) return loadedScripts[src];
+  loadedScripts[src] = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => rej(new Error(src + ' を読み込めませんでした'));
+    document.head.appendChild(s);
+  });
+  return loadedScripts[src];
+}
+function convertOnMainThread(buffer) {
+  return loadScriptOnce('assets/pako.min.js')
+    .then(() => loadScriptOnce('assets/utif.js'))
+    .then(() => loadScriptOnce('assets/tiff-convert.js'))
+    .then(() => TiffConvert.run(buffer,
+      { maxEdge: TIFF_OPTS.maxEdge, maxBytes: TIFF_OPTS.maxBytes, 'yield': nextFrame },
+      (p, label) => convSet(p, label)));
+}
+
+async function tiffToPngFile(file) {
+  convShow('TIFF を PNG に変換中…');
+  await nextFrame();
+  const buffer = await readArrayBuffer(file, p => {
+    convSet(0.02 + p * 0.22, `ファイルを読み込み中… ${Math.round(p * 100)}%`);
+  });
+  convSet(0.25, 'TIFF を解析中…');
+  let r;
+  try {
+    r = await convertViaWorker(buffer);
+  } catch (e) {
+    if (!buffer.byteLength) throw e;           // 転送済みで再利用できない場合は諦める
+    console.warn('[tiff] ワーカーを使えないためメインスレッドで変換します:', e.message);
+    r = await convertOnMainThread(buffer);
+  }
+  await convDone();
+  return r;
+}
+
+/* ================= 画像の読み込み ================= */
+function applyImage(img, url) {
+  if (state.imgUrl && state.imgUrl !== url && state.imgUrl.startsWith('blob:')) URL.revokeObjectURL(state.imgUrl);
+  state.img = img;
+  state.imgUrl = url;
+  state.zoom = Math.max(minZoom(), 1); state.ox = 0; state.oy = 0;
+  state.trim = { t: 0, r: 0, b: 0, l: 0 };
+  updateImages();
+  syncZoomUI();
+}
+
+async function loadUserImage(file) {
+  try {
+    if (isTiffFile(file)) {
+      const r = await tiffToPngFile(file);
+      const url = URL.createObjectURL(r.blob);
+      applyImage(await loadImg(url), url);
+      setStatus(`TIFF（${r.source.w}×${r.source.h} / ${fmtMB(file.size)}）を ` +
+                `PNG ${r.width}×${r.height} / ${fmtMB(r.blob.size)} に変換して読み込みました。`);
+    } else {
+      const url = URL.createObjectURL(file);
+      applyImage(await loadImg(url), url);
+      setStatus('');
+    }
+  } catch (err) {
+    convHide();
+    console.error(err);
+    setStatus('画像を読み込めませんでした: ' + ((err && err.message) || err), true);
+  }
 }
 
 /* ================= panel ================= */
