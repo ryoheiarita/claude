@@ -3,7 +3,8 @@
 <head>
   <script src="../../gate.js"></script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- interactive-widget=resizes-visual：キーボード表示で dvh を変えない（＝動画サイズを変えない） -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
   <title>縦動画 Ph.2 — 挙動イメージ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +37,9 @@
       --c-comment-bg: #1a1a1a;
       --c-chip: #2c2c2e;
       --c-input: #2a2a2c;
+
+      /* ソフトキーボードの高さ（JS が visualViewport から設定。出ていない時は 0） */
+      --kb: 0px;
     }
 
     html, body {
@@ -278,9 +282,12 @@
     /* ════════════ ② コメント欄ボトムシート（568px） ════════════ */
     .comment-sheet {
       position: absolute;
-      left: 0; bottom: 0;
+      left: 0;
+      /* キーボード表示時：下辺をキーボードの上に載せ、その分だけ高さを詰める＝上辺は動かない
+         （＝動画の位置・サイズはキーボードの有無に関わらず不変） */
+      bottom: var(--kb);
       width: 100%;
-      height: var(--comment-sheet-h);
+      height: max(168px, calc(var(--comment-sheet-h) - var(--kb)));
       background: var(--c-comment-bg);
       border-radius: 16px 16px 0 0;
       z-index: 70;
@@ -407,23 +414,42 @@
     /* ── コメント入力エリア ── */
     .cs-input {
       flex-shrink: 0;
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: flex-end; gap: 10px;
       padding: 10px 20px 20px;
       border-top: 1px solid rgba(255,255,255,0.08);
     }
+    /* キーボード表示中は下の余白（ホームインジケータ用）とグラバーを詰めて、
+       残りの高さをコメント一覧に回す（＝動画への被りを最小化） */
+    .phone.kb-open .cs-input { padding-bottom: 10px; }
+    .phone.kb-open .cs-grabber { display: none; }
     .cs-input .avatar { width: 36px; height: 36px; }
+    /* 実入力欄（textarea）。1行=40px、入力に応じて最大 4行まで伸びる */
     .cs-input .field {
-      flex: 1; height: 40px; border-radius: 20px;
+      flex: 1; min-width: 0;
+      height: 40px; min-height: 40px; max-height: 100px;
+      border-radius: 20px; border: 0; outline: none; resize: none;
       background: var(--c-input);
-      display: flex; align-items: center; padding: 0 14px;
-      font-size: 14px; color: rgba(255,255,255,0.4);
+      padding: 10px 14px;
+      font-family: inherit; font-size: 14px; line-height: 20px;
+      color: #fff;
+      overflow-y: auto;
+      -webkit-appearance: none;
+      transition: height .12s ease;
     }
+    .cs-input .field::placeholder { color: rgba(255,255,255,0.4); }
+    .cs-input .field::-webkit-scrollbar { width: 0; }
     .cs-send {
       width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,0.16);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background .18s ease;
+      cursor: pointer;
     }
     .cs-send svg { width: 20px; height: 20px; }
+    .cs-send svg path { transition: stroke .18s ease; }
+    /* 入力があるときだけ送信ボタンをアクティブ表示 */
+    .cs-send.on { background: #fff; }
+    .cs-send.on svg path { stroke: #000; }
 
     /* ════════════════════════════════════════════════════════════
        縦動画 / 横動画 トグル ＋ 横動画(16:9)モード（live の横モード準拠）
@@ -481,7 +507,7 @@
     /* ── コメントシート：16:9直下まで立ち上がる（詳細と同じ高さ）。✕で閉じる ──
        transform は base(translateY100%)→.s-comment(translateY0) が制御＝下から立ち上がる */
     .phone.vid-landscape .comment-sheet {
-      top: calc(100vw * 9 / 16); bottom: 0; left: 0; width: 100%;
+      top: calc(100vw * 9 / 16); bottom: var(--kb); left: 0; width: 100%;
       height: auto; border-radius: 16px 16px 0 0; z-index: 70;
     }
     .phone.vid-landscape .cs-grabber { display: none !important; }
@@ -720,8 +746,9 @@
       <div class="cs-list" id="csList"></div>
       <div class="cs-input">
         <img class="avatar" src="" data-avatar="9" alt="">
-        <div class="field">コメントを追加...</div>
-        <div class="cs-send">
+        <textarea class="field" id="csField" rows="1" placeholder="コメントを追加..."
+                  enterkeyhint="send" autocomplete="off" autocapitalize="sentences"></textarea>
+        <div class="cs-send" id="csSend">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
@@ -911,7 +938,11 @@
     const actionRail = document.getElementById('actionRail');
 
     function openComment()  { phone.classList.add('s-comment'); actionRail.setActive('comment', true); closeDetail(); }
-    function closeComment() { phone.classList.remove('s-comment'); actionRail.setActive('comment', false); }
+    function closeComment() {
+      phone.classList.remove('s-comment'); actionRail.setActive('comment', false);
+      const f = document.getElementById('csField');
+      if (f) f.blur();   // 閉じたらキーボードも下げる
+    }
     function openDetail()   { phone.classList.add('s-detail'); actionRail.setActive('detail', true); closeComment(); }
     function closeDetail()  { phone.classList.remove('s-detail'); actionRail.setActive('detail', false); }
 
@@ -956,6 +987,74 @@
     }
     orientTabs.querySelectorAll('.orient-tab').forEach(t =>
       t.addEventListener('click', () => setOrient(t.dataset.orient)));
+
+    /* ════════ コメント入力（実入力＋ソフトキーボード追従） ════════
+       方針：動画（.video-stage）のサイズ・位置はキーボードの有無で一切変えない。
+             キーボード分（--kb）だけシートの下辺を持ち上げ、その分シートを縮める＝上辺は不動。 */
+    (function initCommentInput(){
+      const field = document.getElementById('csField');
+      const send  = document.getElementById('csSend');
+      const countEl = document.querySelector('.cs-count');
+
+      /* ── 入力に応じて高さを伸ばす（1行40px 〜 最大100px） ── */
+      function autoGrow() {
+        field.style.height = 'auto';
+        field.style.height = Math.min(field.scrollHeight, 100) + 'px';
+      }
+      function syncSend() {
+        send.classList.toggle('on', field.value.trim().length > 0);
+      }
+      field.addEventListener('input', () => { autoGrow(); syncSend(); });
+
+      /* ── 送信：一覧の末尾に自分のコメントを追加 ── */
+      function postComment() {
+        const text = field.value.trim();
+        if (!text) return;
+        const el = document.createElement('div');
+        el.className = 'comment';
+        el.innerHTML = `
+          <img class="avatar" src="${avatarDataURL(9)}" alt="">
+          <div class="c-body">
+            <div class="c-row1">
+              <span class="c-name">あなた</span>
+              <span class="c-time">たった今</span>
+              <span class="c-more">⋮</span>
+            </div>
+            <div class="c-text"></div>
+            <div class="c-reacts"><span class="react add">${moodSVG}</span></div>
+          </div>`;
+        el.querySelector('.c-text').textContent = text;   // 入力はテキストとして挿入（HTML化しない）
+        csList.appendChild(el);
+        if (countEl) {
+          const n = parseInt(String(countEl.textContent).replace(/[^\d]/g, ''), 10) || 0;
+          countEl.textContent = (n + 1).toLocaleString('en-US');
+        }
+        field.value = '';
+        autoGrow(); syncSend();
+        csList.scrollTop = csList.scrollHeight;           // 追加したコメントまでスクロール
+      }
+      send.addEventListener('click', postComment);
+      // Enter=送信（Shift+Enter は改行）。スマホの改行キーは enterkeyhint="send"
+      field.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); postComment(); }
+      });
+
+      /* ── ソフトキーボードの高さを --kb に反映（visualViewport） ── */
+      const vv = window.visualViewport;
+      function syncKb() {
+        const kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+        document.documentElement.style.setProperty('--kb', kb + 'px');
+        phone.classList.toggle('kb-open', kb > 0);
+        // iOS はフォーカス時にレイアウトビューポートごとスクロールさせるので押し戻す
+        if (kb > 0 && window.scrollY !== 0) window.scrollTo(0, 0);
+      }
+      if (vv) {
+        vv.addEventListener('resize', syncKb);
+        vv.addEventListener('scroll', syncKb);
+      }
+      field.addEventListener('focus', () => { setTimeout(syncKb, 60); setTimeout(syncKb, 320); });
+      field.addEventListener('blur',  () => { setTimeout(syncKb, 60); setTimeout(syncKb, 320); });
+    })();
   </script>
 
   <!-- ════ 前画面ローディング → ドミノ blurReveal（article と同一仕様） ════ -->
@@ -1033,6 +1132,8 @@
       var startY = 0, dy = 0, dragging = false, pulling = false, baseTx = 0;
       sheet.addEventListener('touchstart', function (e) {
         if (e.touches.length !== 1) { dragging = false; return; }
+        /* 入力エリア上のドラッグでは閉じない（テキスト選択/キャレット操作を優先） */
+        if (e.target.closest && e.target.closest('.cs-input')) { dragging = false; return; }
         startY = e.touches[0].clientY; dy = 0; pulling = false;
         dragging = (!scrollEl || scrollEl.scrollTop <= 0);   /* 最上部からのみ */
         try { baseTx = new DOMMatrixReadOnly(getComputedStyle(sheet).transform).m41; } catch (_) { baseTx = 0; }
