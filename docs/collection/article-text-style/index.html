@@ -4,7 +4,7 @@
   <meta name="robots" content="noindex, nofollow">
   <script src="../../gate.js"></script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>Article — 文字スタイル検証</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
       font-family: 'Figtree', 'Noto Sans JP', sans-serif;
       background: #101010;
       color: #fff;
-      max-width: 390px;
+      max-width: 100%;   /* 検証ページ: 端末幅いっぱいに表示 */
       margin: 0 auto;
       min-height: 100dvh;
       position: relative;
@@ -113,7 +113,7 @@
       top: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 390px;
+      width: 100%;   /* 検証ページ: 端末幅いっぱいに表示 */
       background: linear-gradient(to bottom, rgba(0,0,0,0.58), transparent);
       z-index: 100;
       padding-bottom: 8px;
@@ -684,7 +684,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      max-width: 390px;
+      max-width: 100%;
       width: 100%;
       margin: 0 auto;
     }
