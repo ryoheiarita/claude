@@ -692,7 +692,7 @@
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255,255,255,0.6);   /* 0.45 だと #0A0A0A 上で 4.48:1 と AA 未達 */
       width: 40px;
       flex-shrink: 0;
     }
@@ -791,15 +791,15 @@
   <div class="ts-panel" id="tsPanel">
     <div class="ts-row">
       <span class="ts-label">COLOR</span>
-      <div class="ts-swatches" id="tsSwatches"></div>
+      <div class="ts-swatches" id="tsSwatches" role="radiogroup" aria-label="文字カラー"></div>
       <span class="ts-hex" id="tsHex">#FF606B</span>
     </div>
     <div class="ts-row">
       <span class="ts-label">STYLE</span>
       <div class="ts-chips">
-        <button class="ts-chip on" data-style="color" type="button">文字色</button>
-        <button class="ts-chip" data-style="underline" type="button">下線</button>
-        <button class="ts-chip" data-style="highlight" type="button">ハイライト</button>
+        <button class="ts-chip on" data-style="color" type="button" aria-pressed="true">文字色</button>
+        <button class="ts-chip" data-style="underline" type="button" aria-pressed="false">下線</button>
+        <button class="ts-chip" data-style="highlight" type="button" aria-pressed="false">ハイライト</button>
       </div>
       <button class="ts-reset" id="tsReset" type="button">リセット</button>
     </div>
@@ -1367,7 +1367,8 @@
       { c: '#FF606B', h: '#5D2B2A' },
       { c: '#7C9AFF', h: '#2A365D' },
       { c: '#FFB53D', h: '#5D502A' },
-      { c: '#49C668', h: '#3B5D2A' },
+      /* 緑は元の #49C668/#3B5D2A から色相を +23° 寄せた（D型色覚で #FF606B と同色に潰れるため） */
+      { c: '#49C698', h: '#2A5D4A' },
       { c: '#F56D40', h: '#5D3B2A' },
     ];
 
@@ -1388,6 +1389,7 @@
       b.className = 'ts-sw';
       b.style.setProperty('--c', p.c);
       b.style.setProperty('--h', p.h);
+      b.setAttribute('role', 'radio');
       b.setAttribute('aria-label', p.c);
       b.addEventListener('click', () => { colorIndex = i; apply(); });
       wrap.appendChild(b);
@@ -1416,8 +1418,14 @@
       target.classList.toggle('is-underline', on.underline);
       target.classList.toggle('is-highlight', on.highlight);
 
-      swatches.forEach((el, i) => el.classList.toggle('selected', i === colorIndex));
-      chips.forEach((chip) => chip.classList.toggle('on', on[chip.dataset.style]));
+      swatches.forEach((el, i) => {
+        el.classList.toggle('selected', i === colorIndex);
+        el.setAttribute('aria-checked', String(i === colorIndex));
+      });
+      chips.forEach((chip) => {
+        chip.classList.toggle('on', on[chip.dataset.style]);
+        chip.setAttribute('aria-pressed', String(on[chip.dataset.style]));
+      });
       panel.classList.toggle('hl-mode', on.highlight);
 
       hexEl.textContent = on.highlight ? (p.h + ' / #FFFFFF') : p.c;
