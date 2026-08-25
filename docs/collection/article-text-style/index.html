@@ -783,6 +783,56 @@
     }
     .ts-target.is-highlight.is-underline { text-decoration-color: #fff; }
 
+
+    /* ══════════════════════════════════════════
+       PC表示: 筐体（iPhone フレーム）にはめる
+       checkin/index.html と同じ 390x844 / 角丸47 / 2重リング
+       ── 501px 未満（実機）はフレーム無しで画面いっぱいのまま
+       ══════════════════════════════════════════ */
+    @media (min-width: 501px) {
+      html {
+        background: #050505;
+        min-height: 100vh;
+        /* body の overflow:hidden がビューポートへ伝播するのを止める
+           （root が visible のままだと body 自身がクリップしない） */
+        overflow: auto;
+        display: flex;
+        align-items: flex-start;   /* 収まらない時は上詰め（body の margin:auto で中央寄せ） */
+        justify-content: center;
+        padding: 24px 0;
+      }
+
+      body {
+        flex: 0 0 auto;
+        margin: auto;
+        width: 390px;
+        max-width: 390px;
+        height: 844px;
+        min-height: 0;
+        padding-bottom: 0;
+        border-radius: 47px;
+        overflow: hidden;
+        box-shadow: 0 0 0 10px #1c1c1e, 0 0 0 12px #3a3a3c, 0 40px 90px rgba(0,0,0,0.8);
+        /* position:fixed の子（nav-bar / ts-panel / シート類 / 合成トグル）を
+           ビューポートではなく筐体の中に閉じ込めるための包含ブロック生成 */
+        transform: translate(0);
+      }
+
+      /* 筐体内スクロール: window ではなく .scroll-area がスクローラーになる */
+      .scroll-area {
+        position: absolute;
+        inset: 0;
+        min-height: 0;
+        border-radius: 0;
+        padding-bottom: calc(var(--ts-panel-h) + 40px);
+        overscroll-behavior: contain;
+        scrollbar-width: none;          /* 実機同様スクロールバーは出さない */
+      }
+      .scroll-area::-webkit-scrollbar { width: 0; height: 0; }
+
+      .nav-bar { width: 390px; }
+      .ts-row  { max-width: 390px; }
+    }
   </style>
 </head>
 <body>
