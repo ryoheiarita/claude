@@ -662,7 +662,15 @@
     /* ══════════════════════════════════════════
        文字スタイル検証UI（このページ専用の追加分）
        ══════════════════════════════════════════ */
-    :root { --ts-panel-h: 128px; }
+    :root {
+      --ts-panel-h: 128px;
+      /* リンクは装飾状態に関わらず一律この色 + 下線（Figma 14190-72853） */
+      --link-color: #4D92FF;
+      /* 下線メトリクス: .ts-target の下線とリンクの下線を完全に重ねるため共有する。
+         ずらすと親(span)から伝播する下線とリンク自身の下線が二重線になる。 */
+      --ul-thickness: 1.5px;
+      --ul-offset: 5px;
+    }
 
     body { padding-bottom: var(--ts-panel-h); }
 
@@ -771,8 +779,8 @@
     .ts-target.is-color { color: var(--ts-color); }
     .ts-target.is-underline {
       text-decoration: underline;
-      text-decoration-thickness: 1.5px;
-      text-underline-offset: 5px;
+      text-decoration-thickness: var(--ul-thickness);
+      text-underline-offset: var(--ul-offset);
       text-decoration-color: var(--ts-color);
       text-decoration-skip-ink: auto;
     }
@@ -782,6 +790,23 @@
       padding: 2px 5px;
     }
     .ts-target.is-highlight.is-underline { text-decoration-color: #fff; }
+
+    /* ── 本文中リンク ──
+       文字色/下線/ハイライトのどの状態でも色は一律 var(--link-color) + 下線。
+       .ts-target からの color 継承より要素自身の指定が勝つので上書き不要。
+       親 span の text-decoration は子へ伝播して打ち消せないため、
+       オフセット/太さを共有して線をぴったり重ねている。 */
+    .article-link {
+      color: var(--link-color);
+      text-decoration: underline;
+      text-decoration-color: var(--link-color);
+      text-decoration-thickness: var(--ul-thickness);
+      text-underline-offset: var(--ul-offset);
+      text-decoration-skip-ink: auto;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+    .article-link:active { opacity: 0.6; }
 
 
     /* ══════════════════════════════════════════
@@ -957,8 +982,8 @@
           <span class="badge">音楽</span>
         </div>
         <div class="article-body reveal-item" data-reveal="2">
-          <p>2021年の設立から4年。BMSG（B'z Music and Street Giga）は、日本の音楽シーンに一石を投じ続けている。SKY-HIが自ら立ち上げたこのレーベルは、既存の芸能事務所モデルとは一線を画す思想で運営されており、その動向は業界関係者だけでなく、多くのファンからも強い関心を集めている。</p>
-          <p><span class="ts-target" id="tsTarget">「アーティストが主体であること」——この一言がBMSGのすべての判断軸になっている。契約のあり方、収益の分配、プロモーションの手法。どれをとっても、従来の「事務所ありき」の構造とは異なるアプローチが貫かれている。</span></p>
+          <p>2021年の設立から4年。BMSG（B'z Music and Street Giga）は、日本の音楽シーンに一石を投じ続けている。<a class="article-link" href="#">SKY-HI</a>が自ら立ち上げたこのレーベルは、既存の芸能事務所モデルとは一線を画す思想で運営されており、その動向は業界関係者だけでなく、多くのファンからも強い関心を集めている。</p>
+          <p><span class="ts-target" id="tsTarget">「アーティストが主体であること」——この一言がBMSGのすべての判断軸になっている。契約のあり方、収益の分配、<a class="article-link" href="#">プロモーションの手法</a>。どれをとっても、従来の「事務所ありき」の構造とは異なるアプローチが貫かれている。</span></p>
         </div>
         <img class="article-image reveal-item" data-reveal="3" src="assets/photo.png" alt="BE:FIRST at SUMMER SONIC 2025">
 
@@ -1412,6 +1437,11 @@
   <!-- ══ 文字スタイル検証パネルの制御 ══ -->
   <script>
   (function () {
+    /* 検証用ダミーリンク: 遷移させない */
+    document.querySelectorAll('.article-link').forEach((a) => {
+      a.addEventListener('click', (e) => e.preventDefault());
+    });
+
     /* 文字色 ⇄ ハイライト背景色の対応（ハイライト時の文字色は #FFF 100%） */
     const PALETTE = [
       { c: '#FF606B', h: '#5D2B2A' },
