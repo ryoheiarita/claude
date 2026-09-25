@@ -1,0 +1,378 @@
+/* =====================================================================
+   BMSG SHOP マイページ (/account)  レイアウト再設計
+   カラーはDesign_System_V2 (Figma) のトークン準拠:
+     Surface/Primary  rgba(255,255,255,.08)
+     Divider/White    rgba(255,255,255,.15)
+     Text/Primary     #FFFFFF
+     Text/Secondary   rgba(255,255,255,.75)
+     Text/Tertiary    rgba(255,255,255,.50)
+     color/live       #FF3E55
+     radius 12px / padding 16px / Figtree
+   ===================================================================== */
+
+.mp {
+  --mp-surface: rgba(255, 255, 255, 0.08);
+  --mp-surface-2: rgba(255, 255, 255, 0.04);
+  --mp-surface-hover: rgba(255, 255, 255, 0.12);
+  --mp-divider: rgba(255, 255, 255, 0.15);
+  --mp-text: #ffffff;
+  --mp-text-2: rgba(255, 255, 255, 0.75);
+  --mp-text-3: rgba(255, 255, 255, 0.5);
+  --mp-accent: #ff3e55;
+  --mp-radius: 12px;
+  --mp-font: Figtree, "游ゴシック", YuGothic, "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", Meiryo, sans-serif;
+
+  box-sizing: border-box;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 56px 0 96px;
+  color: var(--mp-text);
+  font-family: var(--mp-font);
+  -webkit-font-smoothing: antialiased;
+}
+.mp *, .mp *::before, .mp *::after { box-sizing: border-box; }
+
+/* テーマ側の既存スタイル(Prestige)のリセット */
+.mp ul, .mp ol { list-style: none; margin: 0; padding: 0; }
+.mp table { background: transparent; border: 0; }
+.mp .PageHeader, .mp .SectionHeader { margin: 0; padding: 0; text-align: left; }
+.mp .Segment__ButtonWrapper { margin: 0; }
+.mp #logout_btn .cf-edit-account-link,
+.mp #logout_btn .cf-edit-account-link-spacer { display: none !important; }
+
+/* ---------- セクション ---------- */
+.mp-section { margin: 0 0 56px; }
+.mp-section:last-child { margin-bottom: 0; }
+
+.mp-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 16px;
+}
+.mp-section__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  color: var(--mp-text);
+}
+.mp-section__sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mp-text-3);
+}
+.mp-section__note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--mp-text-3);
+}
+.mp-subtitle {
+  margin: 32px 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--mp-text-2);
+}
+
+/* ---------- カード ---------- */
+.mp-card {
+  background: var(--mp-surface);
+  border-radius: var(--mp-radius);
+  overflow: hidden;
+}
+
+/* ---------- 基本情報リスト (dl) ---------- */
+.mp-dl { margin: 0; }
+.mp-dl__row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 16px 20px;
+  border-bottom: 0.5px solid var(--mp-divider);
+}
+.mp-dl__row:last-child { border-bottom: 0; }
+.mp-dl__label {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--mp-text-3);
+}
+.mp-dl__value {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mp-text);
+  word-break: break-all;
+}
+.mp-dl__value--empty { color: var(--mp-text-3); }
+
+/* ---------- 住所カード ---------- */
+.mp-addr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.mp-addr {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  min-height: 190px;
+}
+.mp-addr__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mp-addr__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mp-addr__body {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--mp-text-2);
+}
+.mp-addr__body strong {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--mp-text);
+}
+.mp-addr__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--mp-divider);
+}
+.mp-addr--empty {
+  background: transparent;
+  border: 1px dashed var(--mp-divider);
+}
+.mp-addr--empty .mp-addr__body {
+  display: flex;
+  align-items: center;
+  color: var(--mp-text-3);
+}
+
+/* テキストリンク (編集 ›) */
+.mp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mp-text);
+  text-decoration: none;
+}
+.mp-link::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-top: -1px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.mp-link:hover { color: var(--mp-text-2); }
+
+/* ---------- 一覧テーブル (加入済み / 注文履歴) ---------- */
+.mp-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+}
+.mp-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--mp-text-3);
+  background: var(--mp-surface-2);
+  border-bottom: 1px solid var(--mp-divider);
+}
+.mp-table td {
+  padding: 14px 16px;
+  line-height: 1.5;
+  vertical-align: middle;
+  color: var(--mp-text-2);
+  border-bottom: 0.5px solid var(--mp-divider);
+}
+.mp-table tbody tr:last-child td { border-bottom: 0; }
+.mp-table tbody tr:hover td { background: var(--mp-surface-2); }
+.mp-table th:first-child,
+.mp-table td:first-child { width: 30%; }
+.mp-table td:empty::after {
+  content: "—";
+  color: var(--mp-text-3);
+}
+.mp-table .fanclub-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mp-text);
+}
+.mp-table .fanclub-name p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--mp-text-3);
+}
+.mp-table .mp-num { font-variant-numeric: tabular-nums; }
+
+.info-icon {
+  display: inline-block;
+  margin-left: 4px;
+  cursor: pointer;
+  color: var(--mp-text-3);
+  font-weight: 400;
+}
+.info-icon:hover { color: var(--mp-text); }
+
+/* 空状態 */
+.mp-empty {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--mp-text-3);
+}
+
+/* ---------- ボタン (リスト直下・リストと同じ幅) ---------- */
+.mp .Button {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 14px 24px;
+  text-align: center;
+}
+.mp .Button,
+.mp .Button--primary,
+.mp .Button--secondary {
+  background: transparent;
+  color: var(--mp-text);
+  border: 1px solid var(--mp-text);
+  transition: background 0.15s;
+}
+/* テーマ(Prestige)の ::before 白塗りを無効化 */
+.mp .Button::before,
+.mp .Button:hover::before {
+  background: transparent;
+  border-radius: 10px;
+}
+.mp .Button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--mp-text);
+}
+.mp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+.mp-logout { margin-top: 64px; }
+
+/* ---------- 情報モーダル (既存JSのDOMを流用) ---------- */
+.info-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+.info-modal-overlay.active { display: flex; }
+.info-modal {
+  position: relative;
+  max-width: min(90%, 420px);
+  padding: 28px 24px;
+  border-radius: var(--mp-radius);
+  background: #262626;
+  color: var(--mp-text-2);
+  font-size: 14px;
+  line-height: 1.7;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.info-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--mp-text-3);
+}
+
+/* =====================================================================
+   スマホ (〜767px)
+   ===================================================================== */
+@media screen and (max-width: 767px) {
+  .mp { padding: 32px 16px 72px; }
+  .mp-section { margin-bottom: 44px; }
+  .mp-section__title { font-size: 19px; }
+
+  /* 基本情報: ラベル上・値下 */
+  .mp-dl__row { grid-template-columns: 1fr; gap: 4px; padding: 14px 16px; }
+  .mp-dl__label { font-size: 12px; }
+  .mp-dl__value { font-size: 15px; }
+
+  /* 住所カード: 縦積み */
+  .mp-addr-grid { grid-template-columns: 1fr; }
+  .mp-addr { padding: 16px; min-height: 0; }
+
+  /* 一覧: テーブル → カードリスト */
+  .mp-card--table { background: transparent; border-radius: 0; overflow: visible; }
+  .mp-table,
+  .mp-table tbody,
+  .mp-table tr,
+  .mp-table td { display: block; width: auto; }
+  .mp-table thead { display: none; }
+  .mp-table tr {
+    margin-bottom: 12px;
+    padding: 6px 16px 10px;
+    border-radius: var(--mp-radius);
+    background: var(--mp-surface);
+  }
+  .mp-table tr:last-child { margin-bottom: 0; }
+  .mp-table tbody tr:hover td { background: transparent; }
+  .mp-table td {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 12px;
+    padding: 7px 0;
+    border: 0;
+    font-size: 13px;
+  }
+  .mp-table td:not(.fanclub-name)::before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--mp-text-3);
+  }
+  .mp-table th:first-child,
+  .mp-table td:first-child { width: auto; }
+  .mp-table td.fanclub-name {
+    display: block;
+    padding: 10px 0 12px;
+    margin-bottom: 4px;
+    border-bottom: 0.5px solid var(--mp-divider);
+  }
+  .mp-table td.fanclub-name p { margin-top: 2px; }
+
+  .mp-logout { margin-top: 48px; }
+}

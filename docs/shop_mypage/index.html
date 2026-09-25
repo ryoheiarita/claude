@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<script src="../gate.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMSG SHOP マイページ リデザイン</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-mypage.css">
+<style>
+  /* ---- サイト側の見た目を模したスタブ (header/footer/Button はテーマ側のまま) ---- */
+  body{margin:0;background:#181818;color:#fff;font-family:"游ゴシック",YuGothic,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;font-size:14px}
+  .stub-header{height:52px;background:#000;display:flex;align-items:center;justify-content:center;font-family:Figtree,sans-serif;font-weight:700;letter-spacing:.1em;border-bottom:1px solid #222}
+  .stub-header span{border:1.5px solid #fff;padding:2px 6px;font-size:12px}
+  .stub-footer{margin-top:80px;height:120px;background:#000;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px}
+  .Container{padding:0 80px}
+  @media (max-width:767px){.Container{padding:0}}
+  /* Prestige テーマの .Button 再現 */
+  .Button{position:relative;display:inline-block;padding:14px 28px;line-height:normal;border:1px solid transparent;border-radius:12px;font-weight:700;font-size:18px;letter-spacing:.2em;text-decoration:none;text-transform:uppercase;text-align:center;cursor:pointer;background:transparent;color:#000;overflow:hidden;z-index:1}
+  .Button::before{content:"";position:absolute;inset:0;background:#fff;z-index:-1;border-radius:12px}
+  .Button--primary{color:#000;border-color:#fff}
+  .Button--secondary{color:#fff;border-color:rgba(255,255,255,.4)}
+  .Button--secondary::before{background:transparent}
+</style>
+</head>
+<body>
+<div class="stub-header"><span>BMSG</span></div>
+
+<main id="main">
+<div class="shopify-section">
+<div class="Container">
+<div class="mp">
+
+  <!-- ===== アカウント基本情報 ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h1 class="mp-section__title">アカウント基本情報</h1>
+    </div>
+    <div class="mp-card">
+      <dl class="mp-dl">
+        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">有田 亮平</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">メールアドレス</dt><dd class="mp-dl__value">r.arita@hut.co.jp</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">性別</dt><dd class="mp-dl__value">男性</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">生年月日</dt><dd class="mp-dl__value">1995/12/04</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value">+81 90-0000-0000</dd></div>
+      </dl>
+    </div>
+    <div class="mp-actions">
+      <a href="#" class="Button Button--primary cf-edit-account-link">アカウント編集</a>
+    </div>
+  </section>
+
+  <!-- ===== 登録住所 ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <div>
+        <h2 class="mp-section__title">登録住所</h2>
+        <p class="mp-section__sub">チケット先行の当選通知・配送に使用する住所です。</p>
+      </div>
+    </div>
+    <div class="mp-addr-grid">
+      <div class="mp-card mp-addr">
+        <div class="mp-addr__head">
+          <h3 class="mp-addr__title">チケット先行用住所</h3>
+        </div>
+        <p class="mp-addr__body">
+          〒100-0001<br>
+          東京都 千代田区<br>
+          千代田1-1-1 サンプルマンション101
+          <strong>有田 亮平</strong>
+          090-0000-0000
+        </p>
+        <div class="mp-addr__foot"><a href="#" class="mp-link">編集</a></div>
+      </div>
+      <div class="mp-card mp-addr">
+        <div class="mp-addr__head">
+          <h3 class="mp-addr__title">配送用住所</h3>
+        </div>
+        <p class="mp-addr__body">
+          〒100-0001<br>
+          東京都 千代田区<br>
+          千代田1-1-1 サンプルマンション101
+          <strong>有田 亮平</strong>
+          090-0000-0000
+        </p>
+        <div class="mp-addr__foot"><a href="#" class="mp-link">編集</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 支払い方法・変更確認 ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h2 class="mp-section__title">支払い方法・変更確認</h2>
+    </div>
+    <p class="mp-subtitle">加入済み</p>
+    <div class="mp-card mp-card--table">
+      <table class="mp-table">
+        <thead>
+          <tr>
+            <th>ファンクラブ</th>
+            <th>加入月 <span class="info-icon" data-info="join">ⓘ</span></th>
+            <th>加入累計 <span class="info-icon" data-info="total">ⓘ</span></th>
+            <th>周期</th>
+            <th>次回更新</th>
+            <th>支払方法</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fanclub-name">BE:FIRST<p>BESTY</p></td>
+            <td data-label="加入月" class="mp-num">2023/04</td>
+            <td data-label="加入累計" class="mp-num">30ヶ月</td>
+            <td data-label="周期">年額</td>
+            <td data-label="次回更新" class="mp-num">2026/04/01</td>
+            <td data-label="支払方法">クレジットカード</td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">MAZZEL<p>MUZEUM</p></td>
+            <td data-label="加入月" class="mp-num">2024/09</td>
+            <td data-label="加入累計" class="mp-num">13ヶ月</td>
+            <td data-label="周期">年額</td>
+            <td data-label="次回更新" class="mp-num">2026/09/15</td>
+            <td data-label="支払方法">キャリア決済</td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">Aile The Shota<p>fanclub</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">Ayumu Imazu<p>Official Fan Club</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">edhiii boi<p>Official Fan Club</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">SKY-HI<p>FLYERS</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">ふみの<p>Official Fan Club</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">HANA<p>Official Fan Club</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">Novel Core<p>CORE HOUSE</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">REIKO<p>Official Fanclub</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">STARGLOW<p>Official Fan Club</p></td>
+            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mp-actions">
+      <a href="#" class="Button Button--primary">加入プランの管理</a>
+    </div>
+    <p class="mp-section__note">※加入中のB-Townのプランもこちらからご確認いただけます。</p>
+  </section>
+
+  <!-- ===== 注文履歴 ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h2 class="mp-section__title">注文履歴</h2>
+    </div>
+    <div class="mp-card">
+      <p class="mp-empty">まだ注文していません</p>
+    </div>
+  </section>
+
+  <div class="mp-logout" id="logout_btn">
+    <a href="#" class="Button Button--secondary">ログアウト</a>
+  </div>
+
+</div>
+</div>
+</div>
+</main>
+
+<div class="stub-footer">footer (テーマのまま)</div>
+</body>
+</html>
