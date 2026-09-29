@@ -1,0 +1,8 @@
+<svg viewBox="0 0 278 62" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(180 139 31)">
+<path d="M262 0C262 8.69844 268.941 15.776 277.587 15.9951L278 16V38C278 51.2548 267.255 62 254 62H24C10.7452 62 1.22148e-05 51.2548 0 38V16C8.69845 16 15.776 9.05873 15.9951 0.413086L16 0H262Z" fill="url(#g8)"/>
+</g>
+<defs><linearGradient id="g8" x1="278" y1="62" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0.9"/><stop offset="1" stop-color="white" stop-opacity="0.8"/>
+</linearGradient></defs>
+</svg>

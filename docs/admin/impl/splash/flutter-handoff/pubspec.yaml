@@ -1,0 +1,17 @@
+name: bwu_splash
+description: BWU splash motion reference (HTML prototype port)
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  lottie: ^3.1.2
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/lottie/

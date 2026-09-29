@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 278 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-16" y="-16" width="310" height="94"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(8px);clip-path:url(#bgblur_0_0_8_clip_path);height:100%;width:100%"></div></foreignObject><path id="Subtract" data-figma-bg-blur-radius="16" d="M262 0C262 8.69844 268.941 15.776 277.587 15.9951L278 16V38C278 51.2548 267.255 62 254 62H24C10.7452 62 1.22148e-05 51.2548 0 38V16C8.69845 16 15.776 9.05873 15.9951 0.413086L16 0H262Z" fill="url(#paint0_linear_0_8)"/>
+<defs>
+<clipPath id="bgblur_0_0_8_clip_path" transform="translate(16 16)"><path d="M262 0C262 8.69844 268.941 15.776 277.587 15.9951L278 16V38C278 51.2548 267.255 62 254 62H24C10.7452 62 1.22148e-05 51.2548 0 38V16C8.69845 16 15.776 9.05873 15.9951 0.413086L16 0H262Z"/>
+</clipPath><linearGradient id="paint0_linear_0_8" x1="278" y1="62" x2="3.32221e-07" y2="-1.48964e-06" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0.9"/>
+<stop offset="1" stop-color="white" stop-opacity="0.8"/>
+</linearGradient>
+</defs>
+</svg>

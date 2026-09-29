@@ -201,6 +201,13 @@ figcaption{color:var(--muted);font-size:12px;padding:10px 16px 14px;border-top:1
 .hdoc .ic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
 .hdoc .t{font-weight:500;color:var(--fg)}.hdoc .m{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
 .hdoc a.open{font-size:12px;color:var(--accent);white-space:nowrap}
+.hdoc.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.hdoc{cursor:pointer}
+.implview{margin-top:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#101010}
+.implview .bar{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--raised);font-size:12px;color:var(--muted)}
+.implview .bar .t{color:var(--fg);font-weight:500}
+.implview .bar a{margin-left:auto;color:var(--accent)}
+.implview iframe{display:block;width:100%;height:78vh;min-height:560px;border:0;background:#101010}
 .tree .kids .sub{font-size:10.5px;color:var(--muted);letter-spacing:.05em;padding:6px 8px 2px;font-weight:600}
 .callout{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:10px 14px;font-size:12.5px;background:var(--raised);margin:12px 0}
 
@@ -458,7 +465,7 @@ figcaption{color:var(--muted);font-size:12px;padding:10px 16px 14px;border-top:1
   <div class="eyebrow" style="margin-bottom:10px">4つのモジュール</div>
   <div class="grid g4">
     <div class="card mod"><div class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 18.5h4"/></svg></div><h3>Prototypes</h3><p>要件定義と動くプロトタイプの置き場所。1件 = Notion チケット1件。</p><ul><li>要件定義と HTML・動画・Figma を1画面で</li><li>v1, v2… の履歴とレビュー状態</li><li>URL を Notion に自動で書き戻す</li></ul><a class="link" href="#prototypes">一覧を見る →</a></div>
-    <div class="card mod"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 4.5h11.5A2.5 2.5 0 0 1 18 7v13H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 4.5V22"/></svg></div><h3>Wiki</h3><p>要件定義された仕様を誰もが確認する場所。1 機能 = 1 フォルダで、中が「機能仕様」と「実装仕様」に分かれる。</p><ul><li>機能仕様：要件定義と Figma から。画面・状態・挙動</li><li>実装仕様：これまでの実装指示書と Git の実装済みコードから</li><li>使う部品・関連チケットへリンク</li></ul><a class="link" href="#wiki">Wiki を開く →</a></div>
+    <div class="card mod"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 4.5h11.5A2.5 2.5 0 0 1 18 7v13H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 4.5V22"/></svg></div><h3>Wiki</h3><p>要件定義された仕様を誰もが確認する場所。1 機能 = 1 フォルダで、中が「機能仕様」と「実装仕様」に分かれる。</p><ul><li>機能仕様：要件定義と Figma から。画面・状態・挙動</li><li>実装仕様：実装指示書を付属物ごと同梱。Git の実装済みコードも</li><li>使う部品・関連チケットへリンク</li></ul><a class="link" href="#wiki">Wiki を開く →</a></div>
     <div class="card mod"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></div><h3>Components</h3><p>UI に当たるものは全てここ。Figma 部品・プロト用 HTML・本番 Flutter を 1 行で対応付ける。</p><ul><li>Design_System_V2 の部品と 1:1</li><li>所在（Figma key / repo パス）</li><li>どの機能で使われているか逆引き</li></ul><a class="link" href="#components">カタログ →</a></div>
     <div class="card mod"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg></div><h3>Artist CMS</h3><p>アーティストごとに使う入稿物を管理。規格チェックと差し替え履歴。</p><ul><li>KV / アイコン / バナー / 動画</li><li>サイズ・形式のバリデーション</li><li>Git の assets へ PR</li></ul><a class="link" href="#cms">CMS →</a></div>
   </div>
@@ -602,37 +609,37 @@ const FEATURES=[
  {id:'webview',name:'Web view',figma:'8649:37113',s:'本番',desc:'アプリ内 Web view（ログイン）。',pages:[['ログイン','11908:34442']],comps:[],tickets:[]},
 ];
 const WS={'本番':'ok','提案中':'warn','作業中':'acc'};
-/* 実装仕様：これまで git の claude リポジトリ（docs/）に作ってきた実装指示書（handoff）を紐づける */
-const HB=(location.pathname.includes('/admin/')&&!/claude\.ai$/.test(location.hostname))?'../':'https://ryoheiarita.github.io/claude/';
+/* 実装仕様：これまで作ってきた実装指示書（handoff）と付属アセット・動くプロトを admin/impl/ に同梱して埋め込み表示する */
 const IMPL={
- apptop:{docs:[['スプラッシュ アニメーション素材 引き渡し','splash/handoff.html','Flutter'],['スプラッシュ（ログイン済み）素材 引き渡し','splash_logined/handoff.html','Flutter'],['ホーム ガイド 実装指示','home_guide/handoff.html','Flutter']],paths:['lib/features/splash/','lib/features/home/'],notes:['スプラッシュは Lottie / 連番 PNG を書き出し済み。再生時間と切り替えタイミングは指示書のタイムラインを正とする。']},
- tabbar:{docs:[['タブバー 260726（アニメアイコン + More 展開メニュー）','tabbar/handoff.html','Flutter']],paths:['lib/components/tabbar/','components/tabbar-260726/dist/'],notes:['バーは box-sizing: border-box 必須。無いと高さが 78px 化し、中央ボタンのはみ出しが消える。','微調整値は localStorage ではなく tabbar-adjust.js に焼き込む。','Figtree と Noto の合成フォントでは英数字が Noto 字形に化けるため locl の扱いに注意。']},
- checkin:{docs:[['チェックイン完了モーション 実装指示','checkin/handoff.html','Flutter'],['パスポート（チェックイン証）ジェネレーター 実装指示','generator/passport/handoff.html','Flutter']],paths:['lib/features/checkin/','badge/loading_icon.dart'],notes:['① チェックイン可能ピル → ② ピンの液体フィル → ③ 完了画面（紙吹雪 + ドミノ出現）の 3 段。タイムラインは指示書を正とする。','ローディングアイコンは Dart 版（loading_icon.dart）を同梱。']},
+ apptop:{docs:[['スプラッシュ アニメーション素材 引き渡し','impl/splash/handoff.html','Flutter'],['スプラッシュ（ログイン済み）素材 引き渡し','impl/splash_logined/handoff.html','Flutter'],['ホーム ガイド 実装指示','impl/home_guide/handoff.html','Flutter']],paths:['lib/features/splash/','lib/features/home/'],notes:['スプラッシュは Lottie / 連番 PNG を書き出し済み。再生時間と切り替えタイミングは指示書のタイムラインを正とする。']},
+ tabbar:{docs:[['タブバー 260726（アニメアイコン + More 展開メニュー）','impl/tabbar/handoff.html','Flutter']],paths:['lib/components/tabbar/','components/tabbar-260726/dist/'],notes:['バーは box-sizing: border-box 必須。無いと高さが 78px 化し、中央ボタンのはみ出しが消える。','微調整値は localStorage ではなく tabbar-adjust.js に焼き込む。','Figtree と Noto の合成フォントでは英数字が Noto 字形に化けるため locl の扱いに注意。']},
+ checkin:{docs:[['チェックイン完了モーション 実装指示','impl/checkin/handoff.html','Flutter'],['パスポート（チェックイン証）ジェネレーター 実装指示','impl/passport/handoff.html','Flutter']],paths:['lib/features/checkin/','badge/loading_icon.dart'],notes:['① チェックイン可能ピル → ② ピンの液体フィル → ③ 完了画面（紙吹雪 + ドミノ出現）の 3 段。タイムラインは指示書を正とする。','ローディングアイコンは Dart 版（loading_icon.dart）を同梱。']},
  artisttop:{docs:[],paths:['lib/features/artist_top/','new_app_top/'],notes:['sticky 日付見出しは Chrome が grid エリアを sticky 境界にしないため、繰り上がり見出しを flex アイテムで包む（BWU-142 v2）。']},
  talk:{docs:[],paths:['lib/features/talk/'],notes:[]},
  calendar:{docs:[],paths:['lib/features/calendar/'],notes:['予定の並び順はカテゴリ優先 → 開始時間 → 終了時間 null → 終了時間。日跨ぎは運用側でレコード分割。']},
  gallery:{docs:[],paths:['lib/features/gallery/'],notes:[]},
  video:{docs:[],paths:['lib/features/video/'],notes:[]},
- contents:{docs:[['アニメーション素材 引き渡し（記事・コレクション共通）','handoff.html','Flutter']],paths:['lib/features/contents/','page_curl_proto/'],notes:['ページめくり演出はプロト段階。Flutter 側は CustomPainter での再現を想定。']},
- mypage:{docs:[['会員証ジェネレーター 実装指示','generator/membership/handoff.html','Flutter']],paths:['lib/features/mypage/','lib/components/member_card/'],notes:['会員証の表 / 裏はジェネレーターで生成した PNG を正とし、QR タップで拡大。']},
- shop:{docs:[['BMSG SHOP マイページ 実装指示（Shopify）','shop_mypage/handoff.html','Shopify']],paths:['shopify/sections/mypage.liquid','shop_mypage/'],notes:['Shopify 側は Liquid + CSS を指示書に全文掲載。データ結線は要確認項目あり。']},
+ contents:{docs:[['アニメーション素材 引き渡し（記事・コレクション共通）','impl/common/handoff.html','Flutter']],paths:['lib/features/contents/','page_curl_proto/'],notes:['ページめくり演出はプロト段階。Flutter 側は CustomPainter での再現を想定。']},
+ mypage:{docs:[['会員証ジェネレーター 実装指示','impl/membership/handoff.html','Flutter']],paths:['lib/features/mypage/','lib/components/member_card/'],notes:['会員証の表 / 裏はジェネレーターで生成した PNG を正とし、QR タップで拡大。']},
+ shop:{docs:[['BMSG SHOP マイページ 実装指示（Shopify）','impl/shop_mypage/handoff.html','Shopify']],paths:['shopify/sections/mypage.liquid','shop_mypage/'],notes:['Shopify 側は Liquid + CSS を指示書に全文掲載。データ結線は要確認項目あり。']},
  onboarding:{docs:[],paths:['lib/features/onboarding/'],notes:[]},
  errors:{docs:[],paths:['lib/components/dialog/'],notes:[]},
  webview:{docs:[],paths:['lib/features/webview/'],notes:[]},
 };
 const IMPL_SECTIONS=['アセット','レイアウト / スタイル値','アニメーション仕様','Flutter 組み込み','実装上の注意（ハマりどころ）','リファレンス'];
-let wikiTab='func';
+let wikiTab='func',implDoc=0;
 const tree=document.getElementById('wiki-tree');
 tree.innerHTML=`<div class="grp">機能ディレクトリ · Figma 最新</div>`+FEATURES.map((f,i)=>{const im=IMPL[f.id]||{docs:[]};return `<div class="f ${i===2?'open on':''}" data-f="${f.id}"><svg class="tri" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>${f.name}<span class="cnt">${f.pages.length}/${im.docs.length}</span></div><div class="kids"><div class="sub">機能仕様</div>${f.pages.map((p,j)=>`<a href="#wiki" data-f="${f.id}" data-p="${j}">${p[0]}</a>`).join('')||'<a href="#wiki" data-f="'+f.id+'" data-p="-1" style="color:var(--muted)">（画面未登録）</a>'}<div class="sub">実装仕様</div>${im.docs.map((d,j)=>`<a href="#wiki" data-f="${f.id}" data-d="${j}">${d[0]}</a>`).join('')||'<a href="#wiki" data-f="'+f.id+'" data-d="-1" style="color:var(--muted)">（指示書なし）</a>'}</div>`}).join('');
 tree.addEventListener('click',e=>{const f=e.target.closest('.f');const a=e.target.closest('a');
- if(f){const wasOn=f.classList.contains('on');if(!wasOn||f.classList.contains('open'))f.classList.toggle('open',!wasOn||!f.classList.contains('open'));tree.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));f.classList.add('on');renderFeature(f.dataset.f);return}
+ if(f){const wasOn=f.classList.contains('on');if(!wasOn||f.classList.contains('open'))f.classList.toggle('open',!wasOn||!f.classList.contains('open'));tree.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));f.classList.add('on');implDoc=0;renderFeature(f.dataset.f);return}
  if(a){e.preventDefault();tree.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));a.classList.add('on');
-  if(a.dataset.d!==undefined){wikiTab='impl';renderFeature(a.dataset.f)}else if(+a.dataset.p>=0)renderPage(a.dataset.f,+a.dataset.p);else{wikiTab='func';renderFeature(a.dataset.f)}}});
+  if(a.dataset.d!==undefined){wikiTab='impl';implDoc=Math.max(0,+a.dataset.d);renderFeature(a.dataset.f)}else if(+a.dataset.p>=0)renderPage(a.dataset.f,+a.dataset.p);else{wikiTab='func';renderFeature(a.dataset.f)}}});
 const compsChips=list=>list.length?`<div class="chips">${list.map(c=>`<a href="#components">${c}</a>`).join('')}</div>`:'<p>—</p>';
 const ticketChips=list=>list.length?`<ul>${list.map(k=>{const p=PROTOS.find(x=>x.key===k);return `<li><code>${k}</code> ${p?p.title+'（'+p.status+'）':''}</li>`}).join('')}</ul>`:'<p>—</p>';
 function figA(id,label){return `<a class="figlink" href="${fig(id)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>${label||'Figma で開く'}</a>`}
 const docIcon='<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
 function setTab(t,id){wikiTab=t;renderFeature(id)}
+function selDoc(id,j){implDoc=j;wikiTab='impl';selFeature(id)}
 function renderFeature(id){const f=FEATURES.find(x=>x.id===id);const im=IMPL[id]||{docs:[],paths:[],notes:[]};
  const tabs=`<div class="dtabs"><button class="${wikiTab==='func'?'on':''}" onclick="setTab('func','${id}')">機能仕様<span class="pill ${f.spec?'ok':'mute'}">${f.pages.length} 画面</span></button><button class="${wikiTab==='impl'?'on':''}" onclick="setTab('impl','${id}')">実装仕様<span class="pill ${im.docs.length?'ok':'mute'}">${im.docs.length?im.docs.length+' 指示書':'未作成'}</span></button></div>`;
  let body;
@@ -644,8 +651,8 @@ function renderFeature(id){const f=FEATURES.find(x=>x.id===id);const im=IMPL[id]
  <h2>関連チケット</h2>${ticketChips(f.tickets)}
  ${f.spec||`<h2>仕様</h2><div class="empty" style="padding:20px">この機能の機能仕様はまだ書かれていません。<br><button class="btn sm" style="margin-top:10px" onclick="toast('要件定義と Figma から機能仕様のドラフトを生成（ダミー）')">AI でドラフトを作る</button></div>`}`;
  }else{
-  body=`<p style="margin-top:12px;font-size:12.5px;color:var(--muted)">どう作るか。これまで git の claude リポジトリに作ってきた実装指示書（handoff）と、実装済みコード（Git）から取り込む。</p>
- <h2>実装指示書</h2>${im.docs.length?im.docs.map(d=>`<div class="hdoc"><div class="ic">${docIcon}</div><div><div class="t">${d[0]}</div><div class="m">claude/docs/${d[1]} · ${d[2]}</div></div><a class="open" href="${HB}${d[1]}" target="_blank" rel="noopener">開く ↗</a></div>`).join(''):`<div class="empty" style="padding:20px">この機能の実装指示書はまだありません。<br><div style="display:flex;gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" onclick="toast('Git の実装済みコードから実装仕様を抽出（ダミー）')">Git から取り込む</button><button class="btn sm" onclick="toast('プロトと機能仕様から実装指示書のドラフトを生成（ダミー）')">AI で指示書ドラフトを作る</button></div></div>`}
+  body=`<p style="margin-top:12px;font-size:12.5px;color:var(--muted)">どう作るか。これまで作ってきた実装指示書（handoff）を付属アセット・動くプロトごと admin に同梱し、実装済みコード（Git）と合わせて置く。</p>
+ <h2>実装指示書</h2>${im.docs.length?im.docs.map((d,j)=>`<div class="hdoc ${j===implDoc?'on':''}" onclick="implDoc=${j};setTab('impl','${id}')"><div class="ic">${docIcon}</div><div><div class="t">${d[0]}</div><div class="m">admin/${d[1]} · ${d[2]}</div></div><a class="open" href="${d[1]}" target="_blank" rel="noopener" onclick="event.stopPropagation()">別タブで開く ↗</a></div>`).join('')+`<div class="implview"><div class="bar"><span class="t">${im.docs[implDoc]?im.docs[implDoc][0]:''}</span><span>付属アセット・動くプロトも同梱</span><a href="${im.docs[implDoc]?im.docs[implDoc][1]:'#'}" target="_blank" rel="noopener">別タブで開く ↗</a></div><iframe src="${im.docs[implDoc]?im.docs[implDoc][1]:''}" title="実装指示書" loading="lazy"></iframe></div>`:`<div class="empty" style="padding:20px">この機能の実装指示書はまだありません。<br><div style="display:flex;gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" onclick="toast('Git の実装済みコードから実装仕様を抽出（ダミー）')">Git から取り込む</button><button class="btn sm" onclick="toast('プロトと機能仕様から実装指示書のドラフトを生成（ダミー）')">AI で指示書ドラフトを作る</button></div></div>`}
  <h2>実装済みコードの所在</h2>${im.paths.length?`<ul>${im.paths.map(x=>`<li><code>${x}</code></li>`).join('')}</ul>`:'<p>—</p>'}
  <h2>構成（指示書の共通見出し）</h2><div class="dir" style="grid-template-columns:1fr auto"><div class="h">セクション</div><div class="h">状態</div>${IMPL_SECTIONS.map((sec,i)=>`<div>${i+1}. ${sec}</div><div>${im.docs.length?'<span class="pill ok" style="height:16px;font-size:10px">指示書に記載</span>':'<span class="pill mute" style="height:16px;font-size:10px">未記載</span>'}</div>`).join('')}</div>
  <h2>実装上の注意（ハマりどころ）</h2>${im.notes.length?`<ul>${im.notes.map(n=>`<li>${n}</li>`).join('')}</ul>`:'<p>—</p>'}
@@ -721,7 +728,7 @@ const SUGG=['タブバーの中央ボタンとMoreの挙動は？','チェック
 const strip=h=>h.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 function buildContext(){
  const wiki=FEATURES.map(f=>`- [Wiki: ${f.name}] 状態=${f.s} / Figma=${f.figma} / 概要: ${f.desc} / 画面: ${f.pages.map(p=>p[0]).join('、')||'なし'} / 使用コンポーネント: ${f.comps.join('、')||'なし'} / 関連チケット: ${f.tickets.join('、')||'なし'}`).join('\n');
- const docs=FEATURES.filter(f=>f.spec).map(f=>`### [Wiki: ${f.name}] 機能仕様 本文\n${strip(f.spec)}`).join('\n\n')+'\n\n'+FEATURES.map(f=>{const im=IMPL[f.id]||{docs:[],paths:[],notes:[]};return `### [Wiki: ${f.name}] 実装仕様\n実装指示書: ${im.docs.map(d=>d[0]+'（claude/docs/'+d[1]+'）').join('、')||'なし'} / コード所在: ${im.paths.join('、')||'—'} / 注意: ${im.notes.join(' ')||'—'}`}).join('\n\n');
+ const docs=FEATURES.filter(f=>f.spec).map(f=>`### [Wiki: ${f.name}] 機能仕様 本文\n${strip(f.spec)}`).join('\n\n')+'\n\n'+FEATURES.map(f=>{const im=IMPL[f.id]||{docs:[],paths:[],notes:[]};return `### [Wiki: ${f.name}] 実装仕様\n実装指示書: ${im.docs.map(d=>d[0]+'（admin/'+d[1]+'）').join('、')||'なし'} / コード所在: ${im.paths.join('、')||'—'} / 注意: ${im.notes.join(' ')||'—'}`}).join('\n\n');
  const protos=PROTOS.map(p=>`- [${p.key}] ${p.title} / 種別=${p.type} / 状態=${p.status} / ${p.ver} (${p.date})${p.note?' / メモ: '+p.note:''} / 履歴: ${p.hist.map(h=>h[0]+' '+h[1]+' '+h[2]).join('; ')}`).join('\n');
  const comps=COMPS.map(c=>`- [Component: ${c.n}] 分類=${c.cat} / 状態=${c.s} / ${c.d} / Figma=${c.key==='—'?'未登録':'Design_System_V2 '+c.key} / HTML=${c.html} / Flutter=${c.fl} / 使用機能: ${usedBy(c.n).join('、')||'なし'}`).join('\n');
  const cms=ARTISTS.map(a=>`- [CMS: ${a.n}] `+a.assets.map(x=>`${x[1]} ${x[0]} ${x[2]} → ${AS[x[3]]}`).join('; ')).join('\n');
@@ -734,7 +741,7 @@ const SYS=`あなたは bwu app（BMSG のファンアプリ）のインナー�
 - 箇条書きは「- 」、強調は使わない。全体で 300 字以内を目安。`;
 const DEMO=[[/タブバー|tabbar|中央|More/i,'タブバーは 5 タブ構成で、中央がチェックインの強調ボタン（checkin_motion によるモーション付き）、右端の More は上方向に展開してサブメニューを出します [Wiki: タブバー]。この挙動は BWU-138 の v3 で Flutter 引き渡し用に調整値を焼き込み済みで、状態は「開発可」です [BWU-138]。'],
  [/142|sticky|見出し/i,'BWU-142 の v1 は grid で実装しており Chrome で崩れていました。Chrome は grid エリアを sticky 境界にしないため、v2 で繰り上がり見出しを flex アイテムで包む修正を入れています [BWU-142] [Wiki: アーティストTOP（スケジュール）]。'],
- [/指示書|handoff|実装/i,'チェックインの実装指示書は 2 本あります。「チェックイン完了モーション 実装指示」（claude/docs/checkin/handoff.html）と「パスポート（チェックイン証）ジェネレーター 実装指示」（claude/docs/generator/passport/handoff.html）で、①チェックイン可能ピル → ②ピンの液体フィル → ③完了画面の 3 段のタイムラインとスタイル値が載っています [Wiki: チェックイン]。'],
+ [/指示書|handoff|実装/i,'チェックインの実装指示書は 2 本あります。「チェックイン完了モーション 実装指示」（admin/impl/checkin/handoff.html）と「パスポート（チェックイン証）ジェネレーター 実装指示」（admin/impl/passport/handoff.html）で、①チェックイン可能ピル → ②ピンの液体フィル → ③完了画面の 3 段のタイムラインとスタイル値が載っています [Wiki: チェックイン]。'],
  [/カレンダー|並び順|優先/i,'カレンダーの予定はカテゴリ優先順（BIRTHDAY / TV / RADIO / MAGAZINE / WEB / RELEASE / LIVE / TICKET / OTHER）→ 開始時間が早い順 → 終了時間 null → 終了時間が早い順で並びます。初期表示は当日起点、読み込みは月単位、過去は 1 ヶ月前まで閲覧可です [Wiki: カレンダー]。'],
  [/ライトトーク|トーク|ライト投稿|画面/i,'ライトトークには入室まで、ルーム、新しいメッセージ、バブルの種類、コメント / リプライ、アーティストからのリプライ、リアクション、ピン / ピン一覧、翻訳 ON/OFF、ボイスメッセージ、PPV イメージ、無料ユーザー / 有料ルーム、Empty / 読み込みエラーの 13 画面があります [Wiki: ライトトーク（ライト投稿）]。'],
  [/本番|反映|プロト/i,'本番反映済みでないコンポーネントは次の 2 つで、どちらも Figma の Design_System_V2 に未登録です。\n- sticky date header：プロト [Component: sticky date header]\n- page curl：プロト [Component: page curl]'],

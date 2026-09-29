@@ -1,0 +1,211 @@
+{%- comment -%}
+  =====================================================================
+  BMSG SHOP マイページ (/account) 本文
+  既存 sections/main-account.liquid (template--xxx__main) 内の
+  <div class="btown-section"> 〜 #logout_btn までを、このマークアップで置き換える。
+  ・ヘッダー/フッターはテーマのまま
+  ・CSS は assets/account-mypage.css (theme.liquid か本セクション先頭で読み込み)
+  ・既存の <style> (.fanclub-wrap 系) は削除する
+  ・ⓘ モーダル (#infoModal) の JS/DOM は既存のまま流用
+  =====================================================================
+{%- endcomment -%}
+{{ 'account-mypage.css' | asset_url | stylesheet_tag }}
+
+{%- comment -%} ---- 住所の取得 ----
+  配送用     : customer.default_address (初期登録の住所をそのまま表示)
+  チケット先行用: ★要確認★ 現状どこに保存しているか (customer metafield / 別addressのタグ等)。
+               下記は例として metafield  customer.metafields.custom.ticket_address (JSON or 複数行) を想定。
+{%- endcomment -%}
+{%- assign shipping_address = customer.default_address -%}
+{%- assign ticket_address = customer.metafields.custom.ticket_address -%}
+
+<div class="mp">
+
+  {%- comment -%} ===== アカウント基本情報 ===== {%- endcomment -%}
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h1 class="mp-section__title">アカウント基本情報</h1>
+    </div>
+    <div class="mp-card">
+      <dl class="mp-dl">
+        <div class="mp-dl__row">
+          <dt class="mp-dl__label">氏名</dt>
+          <dd class="mp-dl__value">{{ customer.last_name }} {{ customer.first_name }}</dd>
+        </div>
+        <div class="mp-dl__row">
+          <dt class="mp-dl__label">メールアドレス</dt>
+          <dd class="mp-dl__value">{{ customer.email }}</dd>
+        </div>
+        <div class="mp-dl__row">
+          <dt class="mp-dl__label">性別</dt>
+          {%- assign gender = customer.metafields.custom.gender -%}
+          <dd class="mp-dl__value{% if gender == blank %} mp-dl__value--empty{% endif %}">{{ gender | default: '未設定' }}</dd>
+        </div>
+        <div class="mp-dl__row">
+          <dt class="mp-dl__label">生年月日</dt>
+          {%- assign birthday = customer.metafields.custom.birthday -%}
+          <dd class="mp-dl__value{% if birthday == blank %} mp-dl__value--empty{% endif %}">{{ birthday | default: '未設定' }}</dd>
+        </div>
+        <div class="mp-dl__row">
+          <dt class="mp-dl__label">電話番号</dt>
+          <dd class="mp-dl__value{% if customer.phone == blank %} mp-dl__value--empty{% endif %}">{{ customer.phone | default: '未設定' }}</dd>
+        </div>
+      </dl>
+    </div>
+    <div class="mp-actions">
+      {%- comment -%} Customer Fields 編集リンク: 既存の href をそのまま使う {%- endcomment -%}
+      <a href="{{ customer_fields_edit_url | default: '/account/edit' }}" class="Button Button--primary cf-edit-account-link">アカウント編集</a>
+    </div>
+  </section>
+
+  {%- comment -%} ===== 登録住所 (チケット先行用 / 配送用) ===== {%- endcomment -%}
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <div>
+        <h2 class="mp-section__title">登録住所</h2>
+        <p class="mp-section__sub">チケット先行の当選通知・配送に使用する住所です。</p>
+      </div>
+    </div>
+    <div class="mp-addr-grid">
+
+      {%- comment -%} チケット先行用 {%- endcomment -%}
+      {%- if ticket_address != blank -%}
+        <div class="mp-card mp-addr">
+          <div class="mp-addr__head">
+            <h3 class="mp-addr__title">チケット先行用住所</h3>
+          </div>
+          <p class="mp-addr__body">
+            {%- comment -%} 保存形式に合わせて整形する {%- endcomment -%}
+            {{ ticket_address | newline_to_br }}
+          </p>
+          <div class="mp-addr__foot"><a href="{{ ticket_address_edit_url | default: '/account/edit' }}" class="mp-link">編集</a></div>
+        </div>
+      {%- else -%}
+        <div class="mp-card mp-addr mp-addr--empty">
+          <div class="mp-addr__head">
+            <h3 class="mp-addr__title">チケット先行用住所</h3>
+          </div>
+          <p class="mp-addr__body">チケット先行用住所は未登録です。</p>
+          <div class="mp-addr__foot"><a href="{{ ticket_address_edit_url | default: '/account/edit' }}" class="mp-link">住所を登録</a></div>
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} 配送用 {%- endcomment -%}
+      {%- if shipping_address -%}
+        <div class="mp-card mp-addr">
+          <div class="mp-addr__head">
+            <h3 class="mp-addr__title">配送用住所</h3>
+          </div>
+          <p class="mp-addr__body">
+            〒{{ shipping_address.zip }}<br>
+            {{ shipping_address.province }} {{ shipping_address.city }}<br>
+            {{ shipping_address.address1 }} {{ shipping_address.address2 }}
+            <strong>{{ shipping_address.last_name }} {{ shipping_address.first_name }}</strong>
+            {{ shipping_address.phone }}
+          </p>
+          <div class="mp-addr__foot"><a href="{{ routes.account_addresses_url }}" class="mp-link">編集</a></div>
+        </div>
+      {%- else -%}
+        <div class="mp-card mp-addr mp-addr--empty">
+          <div class="mp-addr__head">
+            <h3 class="mp-addr__title">配送用住所</h3>
+          </div>
+          <p class="mp-addr__body">配送用住所は未登録です。</p>
+          <div class="mp-addr__foot"><a href="{{ routes.account_addresses_url }}" class="mp-link">住所を登録</a></div>
+        </div>
+      {%- endif -%}
+
+    </div>
+  </section>
+
+  {%- comment -%} ===== 支払い方法・変更確認 ===== {%- endcomment -%}
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h2 class="mp-section__title">支払い方法・変更確認</h2>
+    </div>
+    <p class="mp-subtitle">加入済み</p>
+    <div class="mp-card mp-card--table">
+      <table class="mp-table">
+        <thead>
+          <tr>
+            <th>ファンクラブ</th>
+            <th>加入月 <span class="info-icon" data-info="join">ⓘ</span></th>
+            <th>加入累計 <span class="info-icon" data-info="total">ⓘ</span></th>
+            <th>周期</th>
+            <th>次回更新</th>
+            <th>支払方法</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%- comment -%}
+            ★ 既存のファンクラブ行ループをここに移植する。
+            各 td に data-label を付けるとスマホでカード表示のラベルになる。
+            値が空の td は自動で「—」表示。
+          {%- endcomment -%}
+          {%- for fc in fanclubs -%}
+          <tr>
+            <td class="fanclub-name">{{ fc.artist }}<p>{{ fc.name }}</p></td>
+            <td data-label="加入月" class="mp-num">{{ fc.joined_month }}</td>
+            <td data-label="加入累計" class="mp-num">{{ fc.total_months }}</td>
+            <td data-label="周期">{{ fc.cycle }}</td>
+            <td data-label="次回更新" class="mp-num">{{ fc.next_renewal }}</td>
+            <td data-label="支払方法">{{ fc.payment_method }}</td>
+          </tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+    <div class="mp-actions">
+      <a href="{{ plan_manage_url }}" class="Button Button--primary">加入プランの管理</a>
+    </div>
+    <p class="mp-section__note">※加入中のB-Townのプランもこちらからご確認いただけます。</p>
+  </section>
+
+  {%- comment -%} ===== 注文履歴 ===== {%- endcomment -%}
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h2 class="mp-section__title">注文履歴</h2>
+    </div>
+    <div class="mp-card mp-card--table">
+      {%- if customer.orders.size > 0 -%}
+        <table class="mp-table">
+          <thead>
+            <tr>
+              <th>注文番号</th>
+              <th>注文日</th>
+              <th>支払状況</th>
+              <th>配送状況</th>
+              <th>合計</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%- for order in customer.orders -%}
+            <tr>
+              <td class="fanclub-name"><a href="{{ order.customer_url }}" class="mp-link">{{ order.name }}</a></td>
+              <td data-label="注文日" class="mp-num">{{ order.created_at | date: '%Y/%m/%d' }}</td>
+              <td data-label="支払状況">{{ order.financial_status_label }}</td>
+              <td data-label="配送状況">{{ order.fulfillment_status_label }}</td>
+              <td data-label="合計" class="mp-num">{{ order.total_price | money }}</td>
+            </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      {%- else -%}
+        <p class="mp-empty">まだ注文していません</p>
+      {%- endif -%}
+    </div>
+  </section>
+
+  <div class="mp-logout" id="logout_btn">
+    <a href="{{ routes.account_logout_url }}" class="Button Button--secondary">ログアウト</a>
+  </div>
+
+</div>
+
+{%- comment -%} 情報モーダル: 既存の DOM / script をそのまま残す {%- endcomment -%}
+<div class="info-modal-overlay" id="infoModal">
+  <div class="info-modal">
+    <span class="info-modal-close">×</span>
+    <div id="infoModalContent"></div>
+  </div>
+</div>

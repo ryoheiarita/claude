@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BwU チェックインパスポート — ブック開きアニメ ジェネレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ===== generator-driven vars ===== */
+    --cover:        #16324f;
+    --cover-dark:   #0e2137;   /* spine / inside face (JS-computed) */
+    --cover-light:  #2a4a6b;   /* highlight (JS-computed) */
+    --page:         #ebebe8;
+    --dot:          #c9c9c4;
+    --radius:       18px;
+    --r-spine:      4px;       /* 帯（背表紙）側の角丸はほぼ無し */
+    --r-page:       calc(var(--radius) - var(--frame)*.6);
+    --spine-w:      28px;
+    --tape:         #f2f4f6;   /* 背のクロステープ色 (JS-computed: coverを80%白寄せ) */
+    --frame:        10px;
+    --closed-scale: .62;
+    --dur-in:       420ms;
+    --dur-open:     600ms;
+    --dur-zoom:     800ms;
+    --dur-flip:     620ms;     /* ページめくり */
+    --ease-open:    cubic-bezier(.35,0,.15,1);
+    --open-rot:     -176deg;   /* 左開き */
+    --tilt:         20deg;     /* book body tilt while opening */
+    --cover-text:   #ffffff;
+    /* 帯のハイライト（テープ輝度に応じてJSが更新: 暗い帯では白を抑える） */
+    --sp-edge:      rgba(255,255,255,.55);
+    --sp-sheen:     rgba(255,255,255,.30);
+    --sp-glow:      rgba(255,255,255,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    background:#101014;color:#e8e8ec;display:flex;overflow:hidden;
+  }
+
+  /* ================= layout ================= */
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;
+    background:radial-gradient(1200px 800px at 50% 30%,#1a1a22 0%,#101014 70%);}
+  .panel{width:320px;flex-shrink:0;background:#17171c;border-left:1px solid #26262e;
+    overflow-y:auto;padding:20px 18px 40px;}
+
+  /* ================= phone ================= */
+  .phone{width:390px;height:844px;border-radius:44px;overflow:hidden;position:relative;
+    box-shadow:0 0 0 10px #232329,0 30px 80px rgba(0,0,0,.6);
+    transform:scale(var(--phone-scale,1));flex-shrink:0;}
+  .screen{position:absolute;inset:0;background:#0c0c0e;overflow:hidden;}
+
+  /* --- check-in screen (Figma 9044-41658 準拠, ベース: ui_video/checkin) --- */
+  .screen{font-family:'Figtree',-apple-system,'Hiragino Sans','Noto Sans JP',sans-serif;}
+  #map{position:absolute;left:-58px;top:-26px;width:451px;height:898px;object-fit:cover;
+    pointer-events:none;}
+  #nav-grad{position:absolute;left:0;top:0;width:390px;height:163px;z-index:1;
+    background:linear-gradient(180deg,rgba(0,0,0,.65) 50%,rgba(0,0,0,0) 100%);}
+  #bottom-rect{position:absolute;left:0;bottom:0;width:390px;height:215px;z-index:1;
+    background:linear-gradient(0deg,rgba(0,0,0,.94) 0%,rgba(0,0,0,.72) 40%,rgba(0,0,0,0) 100%);}
+  #tab-grad{position:absolute;left:0;bottom:0;width:390px;height:268px;z-index:3;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 52.4%,rgba(0,0,0,.6) 100%);}
+
+  #pins{position:absolute;inset:0;z-index:2;pointer-events:none;}
+  .pin{position:absolute;width:48px;height:48px;}
+  .pin img{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    height:48px;width:auto;filter:drop-shadow(0 6px 7px rgba(0,0,0,.45));}
+
+  #pill{position:absolute;left:171px;top:468px;width:48px;height:28px;z-index:2;
+    display:flex;align-items:center;justify-content:center;gap:2px;
+    background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.14);border-radius:999px;
+    font-size:13px;font-weight:600;letter-spacing:-.2px;color:#fff;}
+  #pill .sl{opacity:.55;margin:0 1px;}
+
+  /* ---- status bar ---- */
+  .statusbar{position:absolute;top:0;left:0;width:390px;height:54px;z-index:40;
+    display:flex;align-items:center;justify-content:space-between;padding:0 28px 0 27px;}
+  .sb-time{font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;
+    font-size:17px;font-weight:600;color:#fff;padding-top:2px;letter-spacing:.2px;}
+  .sb-icons{display:flex;align-items:center;gap:7px;padding-top:1px;}
+  .sb-icons img{display:block;}
+  .ic-cell{width:19.2px;height:12.23px;}
+  .ic-wifi{width:17.14px;height:12.33px;}
+  .ic-batt{width:27.33px;height:13px;}
+
+  /* ---- header chrome ---- */
+  .hdr{position:absolute;z-index:40;}
+  #h-passport{left:-1px;top:64px;height:48px;display:flex;align-items:center;gap:8px;
+    padding:0 20px 0 16px;background:rgba(0,0,0,.65);cursor:pointer;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.15);border-left:none;
+    border-radius:0 999px 999px 0;
+    transition:background-color .3s ease,border-color .3s ease;}
+  #h-passport .pp-logo{width:28px;height:28px;display:block;}
+  #h-passport .pp-txt{display:flex;flex-direction:column;justify-content:center;line-height:1;
+    text-align:left;}
+  #h-passport .pp-1{font-size:11px;line-height:15px;color:rgba(255,255,255,.75);
+    transition:color .3s ease;}
+  #h-passport .pp-2{font-size:14px;font-weight:600;color:#fff;transition:color .3s ease;}
+  /* 選択中（パスポートを開いている間）は dark/light 反転。アイコンはそのまま */
+  #h-passport.pp-open{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.15);}
+  #h-passport.pp-open .pp-1{color:rgba(0,0,0,.6);}
+  #h-passport.pp-open .pp-2{color:#111;}
+  #h-counter{left:155px;top:66px;display:flex;flex-direction:column;
+    align-items:flex-start;letter-spacing:-.24px;white-space:nowrap;}
+  #h-counter .cnt-row{display:flex;align-items:baseline;gap:4px;color:#fff;}
+  #h-counter .cnt-num{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;}
+  #h-counter .cnt-times{font-size:14px;font-weight:700;}
+  #h-counter .cnt-sub{font-size:11px;font-weight:500;color:#9f9f9f;}
+  #h-help{right:16px;top:64px;width:48px;height:48px;display:flex;
+    align-items:center;justify-content:center;background:rgba(0,0,0,.65);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15);border-radius:999px;overflow:hidden;}
+  #h-help img{width:24px;height:24px;display:block;}
+
+  /* ---- tickets (Figma 9044-41747: 斜めストライプの新デザイン) ---- */
+  #tickets{position:absolute;left:0;top:504px;width:390px;height:210px;z-index:2;
+    filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));}
+  .ticket{position:absolute;top:0;width:278px;height:210px;}
+  .tk-top{position:relative;width:278px;height:62px;}
+  .tk-top .tk-shape{position:absolute;inset:0;width:100%;height:100%;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    -webkit-mask:url(assets/ticket_top_rot.svg) 0 0/100% 100%;
+    mask:url(assets/ticket_top_rot.svg) 0 0/100% 100%;
+    background:
+      repeating-linear-gradient(139deg,rgba(0,0,0,.05) 0 7.27px,rgba(0,0,0,0) 7.27px 14.71px),
+      linear-gradient(315deg,rgba(255,255,255,.9),rgba(255,255,255,.8));}
+  .tk-top-row{position:absolute;left:24px;top:21.5px;width:230px;height:20px;
+    display:flex;align-items:center;justify-content:space-between;}
+  .tk-logo{width:56px;height:17px;display:block;object-fit:contain;object-position:left center;}
+  .tk-date{font-size:16px;line-height:20px;color:#393939;letter-spacing:-.8px;text-align:right;}
+  .tk-body{position:relative;width:278px;height:149px;margin-top:-1px;}
+  .tk-body .tk-shape{position:absolute;inset:0;width:100%;height:100%;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    -webkit-mask:url(assets/ticket_body_shape.svg) 0 0/100% 100%;
+    mask:url(assets/ticket_body_shape.svg) 0 0/100% 100%;
+    background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.75));}
+  .tk-content{position:absolute;left:24px;top:20px;width:230px;}
+  .tk-event{font-size:12px;line-height:15px;color:#838383;letter-spacing:-.6px;margin-bottom:4px;}
+  .tk-name{font-size:20px;font-weight:700;color:#191919;line-height:1.3;letter-spacing:-1px;}
+  .tk-stamp{position:absolute;right:2px;top:12px;width:126px;height:126px;opacity:.92;
+    object-fit:contain;pointer-events:none;}
+
+  /* ---- tabbar (Figma component: Tabbar_set) ---- */
+  #tabbar{position:absolute;left:0;right:0;bottom:24px;z-index:30;
+    display:flex;justify-content:center;}
+  .tb-pill{display:flex;align-items:flex-end;justify-content:center;gap:12px;
+    height:64px;padding:7px 20px;background:rgba(0,0,0,.65);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15);border-radius:42px;}
+  .tb-item{position:relative;width:48px;display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-end;gap:4px;padding:4px 0 2px;}
+  .tb-item img{width:24px;height:24px;display:block;}
+  .tb-badge{position:absolute;left:28px;top:5px;width:12px;height:12px;border-radius:50%;
+    background:#FF006A;}
+  .tb-label{font-size:11px;line-height:15px;letter-spacing:.11px;
+    color:rgba(255,255,255,.5);text-align:center;
+    text-shadow:0 0 4px rgba(0,0,0,.25);}
+  .tb-center{width:48px;height:75px;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;gap:2px;padding-bottom:2px;background:none;border:none;}
+  .tb-center .tb-label{color:#fff;}
+  .tb-circle{width:48px;height:48px;border-radius:40px;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.35);}
+  .tb-circle img{width:22px;height:22px;display:block;}
+
+  /* ================= passport overlay ================= */
+  .passport{position:absolute;inset:0;z-index:35;visibility:hidden;}
+  .passport.show{visibility:visible;}
+  .backdrop{position:absolute;inset:0;background:rgba(8,8,10,0);backdrop-filter:blur(0px);
+    transition:background var(--dur-in) ease,backdrop-filter var(--dur-in) ease;}
+  .show .backdrop{background:rgba(8,8,10,.72);backdrop-filter:blur(10px);}
+  .zoom .backdrop{background:rgba(8,8,10,.95);}
+
+  /* book final rect = full-bleed page area (Figma: 382x677, below header) */
+  /* 出現/退場は book-scene をチップ(左上のブックアイコン)基点でスケールさせ、
+     チップから湧き出す→定位置へ広がる。ブック自体の開き/ズーム回転は中央基準のまま。 */
+  .book-scene{position:absolute;left:4px;right:4px;top:118px;bottom:14px;
+    perspective:1600px;perspective-origin:50% 42%;
+    transform-origin:26px -30px; /* = チップのブックアイコン中心(screen 30,88) */
+    transition:transform var(--dur-in) cubic-bezier(.22,1,.36,1),opacity var(--dur-in) ease;}
+  .passport:not(.show) .book-scene{transform:scale(.03);opacity:0;} /* チップの中に畳まれた状態 */
+  .book{position:absolute;inset:0;transform-style:preserve-3d;
+    transform:scale(var(--closed-scale));
+    transition:transform var(--dur-open) var(--ease-open);}
+  .open .book{transform:scale(var(--closed-scale)) rotateY(var(--tilt));
+    transition-duration:var(--dur-open);}
+  .zoom .book{transform:scale(1) rotateY(0deg);transition-duration:var(--dur-zoom);}
+
+  .book-shadow{position:absolute;left:6%;right:6%;top:8%;bottom:-2%;border-radius:40px;
+    background:rgba(0,0,0,.55);filter:blur(34px);transform:scale(var(--closed-scale)) translateY(4%);
+    transition:opacity var(--dur-zoom) ease,transform var(--dur-open) var(--ease-open);}
+  .zoom .book-shadow{opacity:0;}
+
+  /* ---- exit: 出現の逆再生（チップの中へ畳まれて消える）---- */
+  .bye .book-scene{transform:scale(.03);opacity:0;
+    transition:transform var(--dur-in) cubic-bezier(.55,0,.85,.36),
+               opacity calc(var(--dur-in)*.85) cubic-bezier(.6,.05,.9,.4);}
+  .bye .backdrop{background:rgba(8,8,10,0);backdrop-filter:blur(0px);
+    transition:background var(--dur-in) ease,backdrop-filter var(--dur-in) ease;}
+
+  /* spine-side corners are nearly square, free-edge corners rounded (Paper) */
+  [data-dir="right"] .cover-back,[data-dir="right"] .face{
+    border-radius:var(--radius) var(--r-spine) var(--r-spine) var(--radius);}
+  [data-dir="left"] .cover-back,[data-dir="left"] .face{
+    border-radius:var(--r-spine) var(--radius) var(--radius) var(--r-spine);}
+  [data-dir="right"] .page,[data-dir="right"] .page-shade{
+    border-radius:var(--r-page) 3px 3px var(--r-page);}
+  [data-dir="left"] .page,[data-dir="left"] .page-shade{
+    border-radius:3px var(--r-page) var(--r-page) 3px;}
+
+  /* ---- back cover: the base. Its color IS the frame color around the page ---- */
+  .cover-back{position:absolute;inset:0;border-radius:var(--radius);background:var(--cover);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 2px 6px rgba(255,255,255,.05),
+      inset 0 -3px 10px rgba(0,0,0,.25);
+    transform:translateZ(-2px);}
+  .cover-back .grain{border-radius:var(--radius);}
+
+  /* stamp page inset inside back cover -> cover-colored frame */
+  .page{position:absolute;inset:var(--frame);border-radius:var(--r-page);
+    background:var(--page);overflow:hidden;transform:translateZ(0.5px);
+    box-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .page .dots{position:absolute;inset:0;
+    background-image:radial-gradient(var(--dot) 1.1px,transparent 1.1px);
+    background-size:17px 17px;background-position:8px 8px;}
+  .page-shade{position:absolute;inset:var(--frame);border-radius:var(--r-page);
+    pointer-events:none;transform:translateZ(1px);opacity:1;
+    transition:opacity calc(var(--dur-open)*.9) var(--ease-open);}
+  [data-dir="right"] .page-shade{background:linear-gradient(270deg,rgba(0,0,0,.28),transparent 45%);}
+  [data-dir="left"]  .page-shade{background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 45%);}
+  .open .page-shade,.zoom .page-shade{opacity:0;}
+
+  .stamps{position:absolute;inset:0;}
+  .stamp{position:absolute;mix-blend-mode:multiply;opacity:.88;}
+  .stamp text{font-family:Georgia,"Times New Roman",serif;}
+  /* pagenation (Figma 1088:10685): 枠(表紙色)からページ内側に余白を取って配置 */
+  .pagenum{position:absolute;top:20px;right:20px;height:28px;display:flex;align-items:center;
+    justify-content:center;gap:2px;padding:4px 12px;box-sizing:border-box;
+    background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.15);border-radius:99px;
+    backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+    font-family:'Figtree',sans-serif;font-size:14px;font-weight:400;line-height:20px;color:#fff;}
+  .pagenum .dim{color:rgba(255,255,255,.5);}
+
+  /* ---- front cover (two faces) ---- */
+  .cover{position:absolute;inset:0;transform-style:preserve-3d;
+    transition:transform var(--dur-open) var(--ease-open);z-index:2;}
+  [data-dir="right"] .cover{transform-origin:100% 50%;}
+  [data-dir="left"]  .cover{transform-origin:0% 50%;}
+  .open .cover,.zoom .cover{transform:rotateY(var(--open-rot));}
+  .zoom .cover{transition:transform var(--dur-zoom) var(--ease-open);}
+
+  .face{position:absolute;inset:0;border-radius:var(--radius);backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;overflow:hidden;}
+  .face.front{background:var(--cover);}
+  /* アップロードされた表紙PNG（全面）。帯・環境光・グレインはこの上に重なる */
+  /* 表紙PNG: background-size を元画像実寸から計算（縮小時も元データを切り捨てない） */
+  .cover-img{position:absolute;inset:0;background-size:cover;background-position:center;
+    background-repeat:no-repeat;display:none;}
+  .face.front.has-img .cover-img{display:block;}
+  .face.front.has-img .cover-art,.face.front.has-img .cover-frame{display:none;}
+  /* アーティストロゴ: 帯(テープ)を除いた面積の中央から4px上に配置・サイズ可変 */
+  .cover-logo{position:absolute;top:0;bottom:0;display:none;background-repeat:no-repeat;
+    background-position:center calc(50% - 4px);background-size:var(--logo-size,44%) auto;}
+  [data-dir="left"]  .cover-logo{left:var(--spine-w);right:0;}
+  [data-dir="right"] .cover-logo{left:0;right:var(--spine-w);}
+  .face.front.has-logo .cover-logo{display:block;}
+  .face.front.has-logo .cover-art,.face.front.has-logo .cover-frame{display:none;}
+  .face.front.has-img .cover-logo{display:none;}
+  /* paper-like lighting on the cover */
+  .face.front .light{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 26%),
+               linear-gradient(0deg,rgba(0,0,0,.14),rgba(0,0,0,0) 22%);}
+  /* spine band + crease highlight, mirrored by direction */
+  /* Paper "sinta" 再現: 背のクロステープ + 細いエッジライン + 折り溝
+     layers(上→下): ①エッジの細線 ②テープ先の溝 ③テープの丸み陰影 ④テープ地色 */
+  .face.front .spine{position:absolute;top:0;bottom:0;width:calc(var(--spine-w)*1.5);}
+  [data-dir="right"] .face.front .spine{right:0;background:
+    linear-gradient(270deg,
+      rgba(0,0,0,.22) 0 1.5px,var(--sp-edge) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
+      rgba(0,0,0,.05) 13px 14px,transparent 14px),
+    linear-gradient(270deg,
+      transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
+      rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
+      var(--sp-glow) calc(var(--spine-w) + 11px),transparent 100%),
+    linear-gradient(270deg,
+      rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
+      var(--sp-sheen) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
+    linear-gradient(270deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
+  [data-dir="left"] .face.front .spine{left:0;background:
+    linear-gradient(90deg,
+      rgba(0,0,0,.22) 0 1.5px,var(--sp-edge) 1.5px 3px,rgba(0,0,0,.10) 3px 4px,
+      transparent 4px 9px,rgba(0,0,0,.06) 9px 10px,transparent 10px 13px,
+      rgba(0,0,0,.05) 13px 14px,transparent 14px),
+    linear-gradient(90deg,
+      transparent 0 var(--spine-w),rgba(0,0,0,.16) calc(var(--spine-w) + 1px),
+      rgba(0,0,0,.05) calc(var(--spine-w) + 6px),
+      var(--sp-glow) calc(var(--spine-w) + 11px),transparent 100%),
+    linear-gradient(90deg,
+      rgba(0,0,0,.13) 0,transparent calc(var(--spine-w)*.35),
+      var(--sp-sheen) calc(var(--spine-w)*.6),transparent calc(var(--spine-w)*.85),
+      rgba(0,0,0,.10) calc(var(--spine-w) - 1px),transparent var(--spine-w)),
+    linear-gradient(90deg,var(--tape) 0 var(--spine-w),transparent var(--spine-w));}
+  /* free-edge shading */
+  [data-dir="right"] .face.front{box-shadow:inset 3px 0 6px -2px rgba(255,255,255,.14),inset -1px 0 0 rgba(0,0,0,.2);}
+  [data-dir="left"]  .face.front{box-shadow:inset -3px 0 6px -2px rgba(255,255,255,.14),inset 1px 0 0 rgba(0,0,0,.2);}
+
+  .cover-art{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:18px;color:var(--cover-text);}
+  .cover-art .ring{width:74px;height:74px;border-radius:50%;border:2px solid currentColor;opacity:.85;
+    display:flex;align-items:center;justify-content:center;font-size:30px;}
+  .cover-art .t1{font-size:11px;letter-spacing:.42em;font-weight:600;opacity:.8;margin-right:-.42em;}
+  .cover-art .t2{font-family:Georgia,serif;font-size:26px;letter-spacing:.24em;font-weight:600;margin-right:-.24em;}
+  .cover-frame{position:absolute;inset:16px;border:1.5px solid currentColor;opacity:.35;
+    border-radius:calc(var(--radius) - 8px);color:var(--cover-text);}
+  [data-dir="right"] .cover-frame{right:calc(var(--spine-w) + 14px);}
+  [data-dir="left"]  .cover-frame{left:calc(var(--spine-w) + 14px);}
+  [data-dir="right"] .cover-art{padding-right:var(--spine-w);}
+  [data-dir="left"]  .cover-art{padding-left:var(--spine-w);}
+
+  .face.back{background:var(--cover-dark);transform:rotateY(180deg);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
+  .face.back .light{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),transparent 30%),
+               radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.18) 100%);}
+
+  .grain{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+  /* 戻る (Figma 1088:11236: 20,762 92x48) / ページ送り (2887:17662: 282,762 88x48) */
+  .pp-ctl{position:absolute;bottom:34px;z-index:50;height:48px;display:flex;align-items:center;
+    background:#fff;border:none;border-radius:999px;cursor:pointer;box-sizing:border-box;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transform:translateY(14px);
+    transition:opacity .35s ease,transform .35s ease;}
+  .zoom .pp-ctl{opacity:1;pointer-events:auto;transform:none;}
+  .back-btn{left:20px;gap:4px;padding:0 24px 0 16px;
+    font-family:'Figtree',sans-serif;font-size:14px;font-weight:600;line-height:20px;color:#000;}
+  .back-btn img{width:20px;height:20px;display:block;}
+  .page-nav{right:20px;gap:16px;padding:0 16px;}
+  .page-nav .pn{background:none;border:none;padding:0;cursor:pointer;display:flex;
+    transition:opacity .2s ease;}
+  .page-nav .pn:disabled{opacity:.3;cursor:default;}
+  .page-nav img{width:20px;height:20px;display:block;}
+
+  /* ---- page flip (ページ送り: 背表紙軸でめくれるリーフ) ---- */
+  .flip-layer{position:absolute;inset:var(--frame);perspective:2000px;pointer-events:none;
+    transform:translateZ(2px);}
+  .leaf{position:absolute;inset:0;transform-style:preserve-3d;}
+  [data-dir="left"] .leaf{transform-origin:0% 50%;}
+  [data-dir="right"] .leaf{transform-origin:100% 50%;}
+  .leaf .lf{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    overflow:hidden;background:var(--page);}
+  [data-dir="left"] .leaf .lf{border-radius:3px var(--r-page) var(--r-page) 3px;
+    box-shadow:inset 2px 0 4px -2px rgba(0,0,0,.25);}
+  [data-dir="right"] .leaf .lf{border-radius:var(--r-page) 3px 3px var(--r-page);
+    box-shadow:inset -2px 0 4px -2px rgba(0,0,0,.25);}
+  .leaf .lf.back{transform:rotateY(180deg);filter:brightness(.96);}
+  .leaf.fwd{transform:rotateY(0deg);}
+  .leaf.fwd.go{transform:rotateY(-178deg);opacity:0;
+    transition:transform var(--dur-flip) cubic-bezier(.45,.05,.35,1),
+               opacity .18s linear calc(var(--dur-flip) - .18s);}
+  .leaf.bwd{transform:rotateY(-178deg);opacity:0;}
+  .leaf.bwd.go{transform:rotateY(0deg);opacity:1;
+    transition:transform var(--dur-flip) cubic-bezier(.45,.05,.35,1),opacity .18s linear;}
+
+  /* ================= control panel ================= */
+  h1{font-size:14px;font-weight:700;margin-bottom:2px;}
+  .sub{font-size:11px;color:#8a8a95;margin-bottom:18px;}
+  fieldset{border:none;margin-bottom:20px;}
+  legend{font-size:11px;font-weight:700;color:#a0a0ac;letter-spacing:.08em;margin-bottom:10px;
+    text-transform:uppercase;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .row label{font-size:12px;color:#c9c9d2;flex-shrink:0;}
+  .row output{font-size:11px;color:#8a8a95;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;}
+  input[type="range"]{flex:1;accent-color:#7c6cf5;min-width:0;}
+  input[type="color"]{width:40px;height:28px;border:none;background:none;cursor:pointer;padding:0;}
+  select{background:#222229;color:#e8e8ec;border:1px solid #333;border-radius:8px;padding:5px 8px;
+    font-size:12px;max-width:170px;}
+  .auto-chk{display:flex;align-items:center;gap:5px;font-size:11px;color:#8a8a95;
+    margin-left:auto;cursor:pointer;}
+  .auto-chk input{accent-color:#7c6cf5;}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .sw{width:30px;height:30px;border-radius:9px;cursor:pointer;border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
+  .sw.sel{border-color:#7c6cf5;}
+  .seg{display:flex;background:#222229;border-radius:9px;padding:3px;gap:3px;}
+  .seg button{flex:1;border:none;background:none;color:#8a8a95;font-size:12px;padding:6px 0;
+    border-radius:7px;cursor:pointer;font-weight:600;}
+  .seg button.sel{background:#7c6cf5;color:#fff;}
+  .btns{display:flex;gap:8px;margin-bottom:20px;}
+  .btn{flex:1;border:none;border-radius:10px;padding:11px 0;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn.play{background:#7c6cf5;color:#fff;}
+  .btn.ghost{background:#26262e;color:#c9c9d2;}
+  .btn.copy{background:#26262e;color:#c9c9d2;font-size:12px;padding:9px 0;}
+  .file-btn{text-align:center;cursor:pointer;}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:-8px 0 20px;cursor:pointer;}
+  .switch-row>span:first-child{font-size:12px;color:#c9c9d2;}
+  .switch-row small{display:block;font-size:10px;color:#6d6d78;margin-top:2px;}
+  .sw-toggle{position:relative;width:40px;height:24px;flex-shrink:0;}
+  .sw-toggle input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;}
+  .sw-toggle i{position:absolute;inset:0;background:#33333d;border-radius:12px;
+    transition:background .2s ease;pointer-events:none;}
+  .sw-toggle i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;
+    border-radius:50%;background:#fff;transition:transform .2s ease;}
+  .sw-toggle input:checked + i{background:#7c6cf5;}
+  .sw-toggle input:checked + i::after{transform:translateX(16px);}
+  .btn.copy.ok{background:#2c6e49;color:#fff;}
+  textarea.code{width:100%;height:150px;background:#101015;color:#9fd0a0;border:1px solid #2b2b33;
+    border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:10px;padding:10px;
+    resize:vertical;white-space:pre;margin-bottom:8px;}
+  .hint{font-size:10px;color:#6d6d78;line-height:1.5;margin-top:6px;}
+
+  @media (max-height:900px){ .phone{--phone-scale:min(1,calc((100vh - 40px)/844));} }
+</style>
+</head>
+<body>
+
+<main class="stage">
+  <div class="phone">
+    <div class="screen">
+      <!-- check-in screen (Figma 7150-30328) -->
+      <img id="map" src="assets/map_new.png" alt="">
+      <div id="nav-grad"></div>
+      <div id="bottom-rect"></div>
+
+      <!-- pins (6: 5 gray + 1 pink active) -->
+      <div id="pins"></div>
+      <div id="pill">1<span class="sl">/</span>6</div>
+
+      <!-- tickets (BℓℓU 統一デザイン) -->
+      <div id="tickets">
+        <div class="ticket" style="left:-239px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
+        </div>
+        <div class="ticket" style="left:56px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
+        </div>
+        <div class="ticket" style="left:351px">
+          <div class="tk-top"><div class="tk-shape"></div>
+            <div class="tk-top-row"><img class="tk-logo" src="assets/ticket_logo_bwu.svg"><span class="tk-date">2026.08.05</span></div></div>
+          <div class="tk-body"><div class="tk-shape"></div>
+            <div class="tk-content"><div class="tk-event">EVENT</div><div class="tk-name">B with U Release Party 2026 @Tokyo</div></div>
+            <img class="tk-stamp" src="assets/ticket_stamp_new.png"></div>
+        </div>
+      </div>
+
+      <div id="tab-grad"></div>
+
+      <!-- status bar -->
+      <div class="statusbar">
+        <div class="sb-time">9:18</div>
+        <div class="sb-icons">
+          <img class="ic-cell" src="assets/sb_cellular.svg">
+          <img class="ic-wifi" src="assets/sb_wifi.svg">
+          <img class="ic-batt" src="assets/sb_battery.svg">
+        </div>
+      </div>
+
+      <!-- header -->
+      <button id="h-passport" class="hdr" title="チェックインパスポートを開く">
+        <img class="pp-logo" src="assets/logo_passport.svg">
+        <span class="pp-txt"><span class="pp-1">B with U</span><span class="pp-2">PASSPORT</span></span>
+      </button>
+      <div id="h-counter" class="hdr">
+        <div class="cnt-row"><span class="cnt-num">6</span><span class="cnt-times">Times!</span></div>
+        <div class="cnt-sub">Thanks for checking in</div>
+      </div>
+      <div id="h-help" class="hdr"><img src="assets/help.svg"></div>
+
+      <!-- tabbar (component: Tabbar_set) -->
+      <div id="tabbar">
+        <div class="tb-pill">
+          <a class="tb-item"><img src="assets/tab_home.svg"><span class="tb-label">Home</span></a>
+          <a class="tb-item"><img src="assets/tab_poppin.svg"><span class="tb-badge"></span><span class="tb-label">Poppin’</span></a>
+          <button class="tb-center"><span class="tb-circle"><img src="assets/tab_checkin.svg"></span><span class="tb-label">Check In</span></button>
+          <a class="tb-item"><img src="assets/tab_shop.svg"><span class="tb-label">Shop</span></a>
+          <a class="tb-item"><img src="assets/tab_mypage.svg"><span class="tb-label">Mypage</span></a>
+        </div>
+      </div>
+
+      <!-- passport book overlay -->
+      <div class="passport" id="passport" data-dir="left">
+        <div class="backdrop"></div>
+        <div class="book-scene">
+          <div class="book-shadow"></div>
+          <div class="book" id="book">
+            <div class="cover-back">
+              <div class="grain"></div>
+              <div class="page">
+                <div class="dots"></div>
+                <div class="stamps" id="pageStamps">
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:150px;left:8%;top:6%;transform:rotate(-8deg);color:#c04a2b">
+                    <defs><path id="cp1" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="3.5" stroke-dasharray="2 3"/>
+                    <circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                    <text fill="currentColor" font-size="13" font-weight="bold" letter-spacing="3"><textPath href="#cp1">PARIS ★ FRANCE ★</textPath></text>
+                    <text fill="currentColor" x="60" y="65" text-anchor="middle" font-size="11" font-weight="bold">DEC 4 1965</text>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:145px;right:6%;top:16%;transform:rotate(6deg);color:#6b7029">
+                    <defs><path id="cp2" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="2.5"/>
+                    <circle cx="60" cy="60" r="48" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <text fill="currentColor" font-size="14" font-weight="bold" letter-spacing="4"><textPath href="#cp2">CAIRO ✳ EGYPT ✳</textPath></text>
+                    <path d="M60 40 L78 74 L42 74 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:160px;left:14%;top:44%;transform:rotate(-4deg);color:#b8273d">
+                    <defs><path id="cp3" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs>
+                    <circle cx="60" cy="60" r="53" fill="none" stroke="currentColor" stroke-width="3"/>
+                    <text fill="currentColor" font-size="12" font-weight="bold" letter-spacing="3"><textPath href="#cp3">HUNGARY · 12/03 1954</textPath></text>
+                    <text fill="currentColor" x="60" y="66" text-anchor="middle" font-size="15" font-weight="bold" letter-spacing="1">BUDAPEST</text>
+                  </svg>
+                  <svg class="stamp" viewBox="0 0 120 120" style="width:140px;right:10%;bottom:8%;transform:rotate(9deg);color:#8a7a1e">
+                    <defs><path id="cp4" d="M60,60 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0"/></defs>
+                    <path d="M60 8 l10 14 17-6-2 18 17 6-13 12 8 16-18 1-5 17-14-11-14 11-5-17-18-1 8-16-13-12 17-6-2-18 17 6z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <text fill="currentColor" font-size="12" font-weight="bold" letter-spacing="2"><textPath href="#cp4" startOffset="14">DUBLIN · IRELAND</textPath></text>
+                    <text fill="currentColor" x="60" y="70" text-anchor="middle" font-size="20" font-weight="bold">1923</text>
+                  </svg>
+                </div>
+                <div class="grain"></div>
+              </div>
+              <div class="flip-layer" id="flipLayer"></div>
+              <div class="pagenum"><span id="pageNum">1</span><span class="dim">/</span><span class="dim">10</span></div>
+              <div class="page-shade"></div>
+            </div>
+            <div class="cover" id="cover">
+              <div class="face front" id="faceFront">
+                <div class="cover-img" id="coverImg"></div>
+                <div class="cover-logo" id="coverLogo"></div>
+                <div class="light"></div>
+                <div class="cover-frame"></div>
+                <div class="cover-art">
+                  <div class="ring">✦</div>
+                  <div>
+                    <div class="t1" style="text-align:center">ARTIST_NAME</div>
+                    <div class="t2">PASSPORT</div>
+                  </div>
+                </div>
+                <div class="spine"></div>
+                <div class="grain"></div>
+              </div>
+              <div class="face back">
+                <div class="light"></div>
+                <div class="grain"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="pp-ctl back-btn" id="backBtn"><img src="assets/chevron_left_back.svg" alt="">戻る</button>
+        <div class="pp-ctl page-nav">
+          <button class="pn" id="pnPrev" disabled title="前のページ"><img src="assets/chevron_left_back.svg" alt="前へ"></button>
+          <button class="pn" id="pnNext" title="次のページ"><img src="assets/chevron_right.svg" alt="次へ"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="panel">
+  <h1>ブック開きアニメ ジェネレーター</h1>
+  <div class="sub">BwU チェックインパスポート / Paper風質感</div>
+
+  <div class="btns">
+    <button class="btn play" id="playBtn">▶ 再生</button>
+    <button class="btn ghost" id="resetBtn">リセット</button>
+  </div>
+  <label class="switch-row">
+    <span>表紙で停止<small>入場後、開かずに表紙を表示したまま止める</small></span>
+    <span class="sw-toggle"><input type="checkbox" id="holdCover"><i></i></span>
+  </label>
+
+  <fieldset>
+    <legend>カラー</legend>
+    <div class="row"><label>表紙の色（= 枠の色）</label><input type="color" id="coverColor" value="#16324f"></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="row" style="margin-top:12px"><label>帯（背）の色</label>
+      <label class="auto-chk"><input type="checkbox" id="tapeAuto" checked>自動</label>
+      <input type="color" id="tapeColor" value="#d0d6dc">
+    </div>
+    <div class="row"><label>ページの色</label><input type="color" id="pageColor" value="#ebebe8"></div>
+  </fieldset>
+
+  <fieldset>
+    <legend>アーティスト</legend>
+    <div class="row"><label>アーティスト</label>
+      <select id="artistSel">
+        <option value="">なし（デフォルト）</option>
+      </select>
+    </div>
+    <div class="row"><label>ロゴの色</label>
+      <div class="seg" id="logoModeSeg">
+        <button data-mode="light" class="sel">Light（白）</button>
+        <button data-mode="dark">Dark（黒）</button>
+      </div>
+    </div>
+    <div class="row"><label>ロゴサイズ</label>
+      <input type="range" id="logoSize" min="20" max="80" value="44" disabled><output>44%</output></div>
+    <div class="hint">ロゴは表紙中央に配置。Light=白ロゴ（濃い表紙向き）/ Dark=黒ロゴ（淡い表紙向き）。</div>
+  </fieldset>
+
+  <fieldset>
+    <legend>表紙デザイン（画像）</legend>
+    <div class="btns" style="margin-bottom:0">
+      <label class="btn ghost file-btn" for="coverFile">PNG をアップロード</label>
+      <button class="btn ghost" id="coverImgClear" disabled>クリア</button>
+    </div>
+    <input type="file" id="coverFile" accept="image/png,image/jpeg,image/webp" hidden>
+    <div class="row" style="margin-top:12px"><label>サイズ</label>
+      <input type="range" id="imgScale" min="50" max="200" value="100" disabled><output>100%</output></div>
+    <div class="hint">画像をアップすると表紙全面に表示（アーティストロゴより優先）。帯・環境光・グレインはその上に重なります。</div>
+  </fieldset>
+
+  <fieldset>
+    <legend>閉じたブックを書き出し</legend>
+    <div class="btns" style="margin-bottom:8px">
+      <button class="btn copy" id="exportBookPng">ブックPNG（透過）を保存</button>
+    </div>
+    <div class="row"><label>解像度</label>
+      <select id="bookPngScale">
+        <option value="2">2x</option>
+        <option value="3" selected>3x</option>
+        <option value="4">4x</option>
+      </select>
+    </div>
+    <div class="hint">閉じた状態のブック部分のみを透過PNGで書き出します（背景・端末なし）。現在の表紙色・帯・ロゴ／画像を反映。BWUのブック素材として使用可。</div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Flutter エクスポート</legend>
+    <div class="btns" style="margin-bottom:8px">
+      <button class="btn copy" id="copyDart">Dart をコピー</button>
+      <button class="btn copy" id="copyJson">JSON をコピー</button>
+    </div>
+    <textarea class="code" id="codeOut" readonly></textarea>
+    <div class="hint">Transform + Matrix4（perspective 0.0015, alignment: 背表紙側）で実装。イージングは Cubic(x1,y1,x2,y2) にそのまま対応します。回転方向が逆に見える場合は角度の符号を反転してください。</div>
+  </fieldset>
+</aside>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const root = document.documentElement.style;
+  const passport = $('#passport');
+
+  const cfg = {
+    cover: '#16324f', page: '#ebebe8',
+    tapeMode: 'auto', tapeCustom: '#d0d6dc',
+    dir: 'left', // 左開き固定（背表紙=左端）
+    radius: 18, spine: 28, frame: 10, closedScale: .62,
+    durIn: 420, durOpen: 600, durZoom: 800,
+    ease: [.35, 0, .15, 1],
+    tilt: 20, openAngle: 176,
+    holdCover: false, // 表紙で停止（入場後、開かない）
+  };
+  let coverImgSet = false;
+  let coverImgScale = 1;
+
+  // アーティスト（Figma Design_System_V2 521:583）。Light=白ロゴ / Dark=黒ロゴ
+  const ARTISTS = [
+    { id:'bwu',       name:'BWU（ロゴ）' },
+    { id:'skyhi',     name:'SKY-HI' },
+    { id:'befirst',   name:'BE:FIRST' },
+    { id:'novelcore', name:'Novel Core' },
+    { id:'mazzel',    name:'MAZZEL' },
+    { id:'aile',      name:'Aile The Shota' },
+    { id:'edhiiiboi', name:'edhiii boi' },
+    { id:'reiko',     name:'Reiko' },
+    { id:'hana',      name:'HANA' },
+    { id:'starglow',  name:'STARGLOW' },
+    { id:'fumino',    name:'Fumino' },
+    { id:'ayumu',     name:'Ayumu Imazu' },
+    { id:'btown',     name:'B-town' },
+  ];
+  let artist = '', logoMode = 'light', logoSize = 44;
+
+  /* ---------- color utils ---------- */
+  const hex2rgb = h => [1,3,5].map(i => parseInt(h.slice(i, i+2), 16));
+  const rgb2hex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2,'0')).join('');
+  const shade = (h, f) => rgb2hex(hex2rgb(h).map(v => f < 0 ? v * (1+f) : v + (255-v)*f));
+  const lum = h => { const [r,g,b] = hex2rgb(h); return (r*.299 + g*.587 + b*.114) / 255; };
+  const tapeHex = () => cfg.tapeMode === 'auto' ? shade(cfg.cover, .8) : cfg.tapeCustom;
+
+  function apply() {
+    root.setProperty('--cover', cfg.cover);
+    root.setProperty('--cover-dark', shade(cfg.cover, -.28));
+    root.setProperty('--cover-light', shade(cfg.cover, .2));
+    root.setProperty('--cover-text', lum(cfg.cover) > .62 ? 'rgba(20,20,25,.85)' : '#ffffff');
+    root.setProperty('--tape', tapeHex()); // 背のクロステープ（自動 = 表紙色を白寄せ / カスタム）
+    if (cfg.tapeMode === 'auto') $('#tapeColor').value = tapeHex();
+    // 帯のハイライト: テープが暗いほど白を抑える（黒帯で影が白浮きしないように）
+    const hf = .2 + .8 * lum(tapeHex());
+    root.setProperty('--sp-edge', `rgba(255,255,255,${(.55 * hf).toFixed(3)})`);
+    root.setProperty('--sp-sheen', `rgba(255,255,255,${(.3 * hf).toFixed(3)})`);
+    root.setProperty('--sp-glow', `rgba(255,255,255,${(.1 * hf).toFixed(3)})`);
+    root.setProperty('--page', cfg.page);
+    root.setProperty('--dot', shade(cfg.page, -.14));
+    root.setProperty('--radius', cfg.radius + 'px');
+    root.setProperty('--spine-w', cfg.spine + 'px');
+    root.setProperty('--frame', cfg.frame + 'px');
+    root.setProperty('--closed-scale', cfg.closedScale);
+    root.setProperty('--dur-in', cfg.durIn + 'ms');
+    root.setProperty('--dur-open', cfg.durOpen + 'ms');
+    root.setProperty('--dur-zoom', cfg.durZoom + 'ms');
+    root.setProperty('--ease-open', `cubic-bezier(${cfg.ease.join(',')})`);
+    root.setProperty('--open-rot', (cfg.dir === 'right' ? 1 : -1) * cfg.openAngle + 'deg');
+    root.setProperty('--tilt', (cfg.dir === 'right' ? -1 : 1) * cfg.tilt + 'deg');
+    passport.dataset.dir = cfg.dir;
+    genCode();
+  }
+
+  /* ---------- animation sequence ---------- */
+  let timers = [];
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+  const chip = document.getElementById('h-passport');
+  function play() {
+    reset();
+    if (typeof curPage !== 'undefined' && curPage !== 1) { curPage = 1; renderPage(1); updateNav(); }
+    // force reflow so transitions restart cleanly
+    void passport.offsetWidth;
+    passport.classList.add('show');
+    chip.classList.add('pp-open'); // 開いている間はチップを反転
+    if (cfg.holdCover) return; // 表紙で停止: 入場のみで止める
+    later(() => passport.classList.add('open'), cfg.durIn + 160);
+    later(() => passport.classList.add('zoom'), cfg.durIn + 160 + cfg.durOpen * .72);
+  }
+  function reset() {
+    clearTimers();
+    passport.classList.remove('show', 'open', 'zoom', 'bye');
+    chip.classList.remove('pp-open');
+  }
+  function close() {
+    clearTimers();
+    chip.classList.remove('pp-open');
+    // 表紙で停止中など、既に閉じているフェーズはスキップして退場する
+    const wasZoom = passport.classList.contains('zoom');
+    const wasOpen = passport.classList.contains('open');
+    passport.classList.remove('zoom');                               // 1. 閉時サイズへ戻す
+    const t1 = wasZoom ? cfg.durZoom * .55 : 0;
+    later(() => passport.classList.remove('open'), t1);              // 2. 表紙を閉じる
+    const t2 = t1 + (wasOpen ? cfg.durOpen * .9 : 0);
+    later(() => passport.classList.add('bye'), t2);                  // 3. 縮小+フェードで退場
+    later(() => passport.classList.remove('show', 'bye'), t2 + cfg.durIn + 80); // 4. 完全に消えてから非表示
+  }
+
+  // パスポートチップ: 閉→開く / 開いている間は「戻る」と同じ挙動で閉じる
+  $('#h-passport').addEventListener('click', () => {
+    const isOpen = passport.classList.contains('show') && !passport.classList.contains('bye');
+    isOpen ? close() : play();
+  });
+  $('#playBtn').addEventListener('click', play);
+  $('#resetBtn').addEventListener('click', reset);
+  $('#backBtn').addEventListener('click', close);
+
+  /* ---------- page flip (ページ送り) ---------- */
+  const TOTAL_PAGES = 10;
+  let curPage = 1, flipping = false;
+  const stampsBox = $('#pageStamps');
+  // 1ページ目のスタンプ4種をテンプレートとして保持（d: デザイン番号）
+  const STAMP_TPLS = [...stampsBox.children].map(el => el.outerHTML);
+  const STAMP_COLORS = [...stampsBox.children].map(el => el.style.color);
+  // 2ページ目以降のレイアウト（l/t: %位置, r0: 回転, w: 幅px）
+  const PAGE_LAYOUTS = {
+    2: [{d:1,l:8,t:8,r0:-6,w:145},{d:3,l:48,t:40,r0:8,w:150}],
+    3: [{d:2,l:10,t:12,r0:5,w:150},{d:0,l:46,t:58,r0:-8,w:140},{d:3,l:6,t:52,r0:4,w:118}],
+    4: [{d:0,l:40,t:10,r0:7,w:150}],
+    5: [{d:3,l:10,t:10,r0:-5,w:150},{d:1,l:46,t:52,r0:6,w:150}],
+    6: [{d:2,l:34,t:32,r0:-7,w:160}],
+    7: [{d:1,l:8,t:12,r0:6,w:140},{d:0,l:48,t:42,r0:-6,w:150},{d:2,l:12,t:64,r0:3,w:128}],
+    8: [{d:3,l:42,t:12,r0:-8,w:140},{d:2,l:8,t:46,r0:5,w:150}],
+    9: [],
+    10: [{d:0,l:26,t:30,r0:-5,w:170}],
+  };
+  function stampsHTML(page) {
+    if (page === 1) return STAMP_TPLS.join('');
+    return (PAGE_LAYOUTS[page] || []).map(p => {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = STAMP_TPLS[p.d];
+      const el = tmp.firstElementChild;
+      el.setAttribute('style',
+        `width:${p.w}px;left:${p.l}%;top:${p.t}%;transform:rotate(${p.r0}deg);color:${STAMP_COLORS[p.d]}`);
+      return el.outerHTML;
+    }).join('');
+  }
+  function renderPage(p) { stampsBox.innerHTML = stampsHTML(p); }
+  function updateNav() {
+    $('#pnPrev').disabled = curPage <= 1;
+    $('#pnNext').disabled = curPage >= TOTAL_PAGES;
+    $('#pageNum').textContent = curPage;
+  }
+  function makeLeaf(contentHTML) {
+    const leaf = document.createElement('div');
+    leaf.innerHTML =
+      `<div class="lf front"><div class="dots"></div><div class="stamps">${contentHTML}</div><div class="grain"></div></div>` +
+      `<div class="lf back"><div class="dots"></div></div>`;
+    leaf.className = 'leaf';
+    return leaf;
+  }
+  function flip(dir) { // +1 次へ / -1 前へ
+    if (flipping) return;
+    const target = curPage + dir;
+    if (target < 1 || target > TOTAL_PAGES) return;
+    flipping = true;
+    let leaf;
+    if (dir > 0) {
+      // 現ページをリーフにして左へめくり、下から次ページが現れる
+      leaf = makeLeaf(stampsHTML(curPage));
+      leaf.classList.add('fwd');
+      renderPage(target);
+    } else {
+      // 前ページのリーフが左（背表紙側）から戻ってくる
+      leaf = makeLeaf(stampsHTML(target));
+      leaf.classList.add('bwd');
+    }
+    $('#flipLayer').appendChild(leaf);
+    curPage = target;
+    updateNav();
+    void leaf.offsetWidth; // 初期transformを確定させてからtransition開始
+    leaf.classList.add('go');
+    setTimeout(() => {
+      if (dir < 0) renderPage(target);
+      leaf.remove();
+      flipping = false;
+    }, 660);
+  }
+  $('#pnNext').addEventListener('click', () => flip(1));
+  $('#pnPrev').addEventListener('click', () => flip(-1));
+  updateNav();
+
+  /* ---------- panel bindings ---------- */
+  $('#holdCover').addEventListener('change', e => {
+    cfg.holdCover = e.target.checked;
+    const st = passport.classList;
+    if (!st.contains('show') || st.contains('bye')) return;
+    clearTimers();
+    if (cfg.holdCover) {
+      // 開いていたら表紙まで巻き戻して停止
+      const wasZoom = st.contains('zoom');
+      st.remove('zoom');
+      later(() => st.remove('open'), wasZoom ? cfg.durZoom * .55 : 0);
+    } else {
+      // 停止解除: 続きから開く
+      later(() => st.add('open'), 160);
+      later(() => st.add('zoom'), 160 + cfg.durOpen * .72);
+    }
+  });
+
+  $('#coverColor').addEventListener('input', e => { cfg.cover = e.target.value; selSwatch(null); apply(); });
+  $('#pageColor').addEventListener('input', e => { cfg.page = e.target.value; apply(); });
+  $('#tapeColor').addEventListener('input', e => {
+    cfg.tapeCustom = e.target.value; cfg.tapeMode = 'custom';
+    $('#tapeAuto').checked = false; apply();
+  });
+  $('#tapeAuto').addEventListener('change', e => {
+    cfg.tapeMode = e.target.checked ? 'auto' : 'custom';
+    if (!e.target.checked) cfg.tapeCustom = $('#tapeColor').value;
+    apply();
+  });
+  /* ---------- artist logo ---------- */
+  const faceFront = $('#faceFront');
+  const artistSel = $('#artistSel');
+  ARTISTS.forEach(a => {
+    const o = document.createElement('option'); o.value = a.id; o.textContent = a.name;
+    artistSel.appendChild(o);
+  });
+  function applyArtist() {
+    const el = $('#coverLogo');
+    if (artist) {
+      el.style.backgroundImage = `url(assets/artists/${artist}_${logoMode}.svg)`;
+      faceFront.classList.add('has-logo');
+    } else {
+      el.style.backgroundImage = '';
+      faceFront.classList.remove('has-logo');
+    }
+    root.setProperty('--logo-size', logoSize + '%');
+    $('#logoSize').disabled = !artist;
+    genCode();
+  }
+  artistSel.addEventListener('change', e => { artist = e.target.value; applyArtist(); });
+  $('#logoModeSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    logoMode = b.dataset.mode;
+    document.querySelectorAll('#logoModeSeg button').forEach(x => x.classList.toggle('sel', x === b));
+    applyArtist();
+  });
+  $('#logoSize').addEventListener('input', e => {
+    logoSize = +e.target.value; e.target.nextElementSibling.textContent = logoSize + '%';
+    root.setProperty('--logo-size', logoSize + '%'); genCode();
+  });
+
+  /* ---------- cover image upload ---------- */
+  let coverImgNatural = null; // 元画像の実寸（切り抜き前のデータを保持）
+  let coverImgEl = null;      // canvas書き出し用に保持する Image
+  // cover フィット基準サイズ × scale を background-size に反映。
+  // scale < 1 では元画像のより広い範囲が現れる（切り抜いた結果を縮めない）
+  function applyImgSize() {
+    const el = $('#coverImg');
+    if (!coverImgNatural) { el.style.backgroundSize = ''; return; }
+    const fw = el.clientWidth || 382, fh = el.clientHeight || 712;
+    const s0 = Math.max(fw / coverImgNatural.w, fh / coverImgNatural.h);
+    el.style.backgroundSize =
+      `${(coverImgNatural.w * s0 * coverImgScale).toFixed(1)}px ` +
+      `${(coverImgNatural.h * s0 * coverImgScale).toFixed(1)}px`;
+  }
+  $('#coverFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        coverImgNatural = { w: im.naturalWidth, h: im.naturalHeight };
+        coverImgEl = im;
+        $('#coverImg').style.backgroundImage = `url(${r.result})`;
+        applyImgSize();
+        faceFront.classList.add('has-img');
+        coverImgSet = true;
+        $('#coverImgClear').disabled = false;
+        $('#imgScale').disabled = false;
+        genCode();
+      };
+      im.src = r.result;
+    };
+    r.readAsDataURL(f);
+  });
+  $('#coverImgClear').addEventListener('click', () => {
+    faceFront.classList.remove('has-img');
+    $('#coverImg').style.backgroundImage = '';
+    $('#coverFile').value = '';
+    coverImgSet = false;
+    coverImgNatural = null;
+    $('#coverImgClear').disabled = true;
+    const sc = $('#imgScale');
+    sc.disabled = true; sc.value = 100; sc.nextElementSibling.textContent = '100%';
+    coverImgScale = 1;
+    applyImgSize();
+    genCode();
+  });
+  $('#imgScale').addEventListener('input', e => {
+    coverImgScale = +e.target.value / 100;
+    e.target.nextElementSibling.textContent = e.target.value + '%';
+    applyImgSize();
+    genCode();
+  });
+
+  // BwU-ish presets: black / navy / bordeaux / green / ivory / pink
+  const presets = ['#1a1a1e', '#16324f', '#6d1f2c', '#1e5c43', '#e8e2d5', '#d9376e', '#3f2d7a', '#c0492b'];
+  const swBox = $('#swatches');
+  presets.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'sw'; d.style.background = c; d.dataset.c = c;
+    d.addEventListener('click', () => { cfg.cover = c; $('#coverColor').value = c; selSwatch(d); apply(); });
+    swBox.appendChild(d);
+  });
+  const selSwatch = el => document.querySelectorAll('.sw').forEach(x => x.classList.toggle('sel', x === el));
+  selSwatch(swBox.children[1]);
+
+  /* ---------- 閉じたブックの PNG 書き出し（透過・端末なし） ---------- */
+  // book-scene と同じ寸法比（382×712）で描画。CSSの表紙/帯/ロゴを canvas で再現。
+  function roundRectPath(ctx, x, y, w, h, r) {
+    // r = [tl, tr, br, bl]
+    const [tl, tr, br, bl] = r;
+    ctx.beginPath();
+    ctx.moveTo(x + tl, y);
+    ctx.lineTo(x + w - tr, y);
+    ctx.arcTo(x + w, y, x + w, y + tr, tr);
+    ctx.lineTo(x + w, y + h - br);
+    ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+    ctx.lineTo(x + bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - bl, bl);
+    ctx.lineTo(x, y + tl);
+    ctx.arcTo(x, y, x + tl, y, tl);
+    ctx.closePath();
+  }
+  function loadImg(src) {
+    return new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src;
+    });
+  }
+  async function renderClosedBook(scale) {
+    const W = 382, H = 712;              // book-scene 論理サイズ
+    const S = scale;
+    const cv = document.createElement('canvas'); cv.width = W * S; cv.height = H * S;
+    const ctx = cv.getContext('2d'); ctx.scale(S, S);
+    const rad = cfg.radius, rsp = 4, spW = cfg.spine; // 左開き: 背表紙=左端
+    const rTL = rsp, rTR = rad, rBR = rad, rBL = rsp;
+    // 影（下）
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 34; ctx.shadowOffsetY = 20;
+    roundRectPath(ctx, 0, 0, W, H, [rTL, rTR, rBR, rBL]);
+    ctx.fillStyle = cfg.cover; ctx.fill();
+    ctx.restore();
+    // clip to cover
+    roundRectPath(ctx, 0, 0, W, H, [rTL, rTR, rBR, rBL]);
+    ctx.save(); ctx.clip();
+    // ベース表紙色
+    ctx.fillStyle = cfg.cover; ctx.fillRect(0, 0, W, H);
+    // 表紙デザイン: 画像優先、なければアーティストロゴ
+    if (coverImgSet && coverImgEl) {
+      const s0 = Math.max(W / coverImgNatural.w, H / coverImgNatural.h) * coverImgScale;
+      const dw = coverImgNatural.w * s0, dh = coverImgNatural.h * s0;
+      ctx.drawImage(coverImgEl, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    } else if (artist) {
+      const logo = await loadImg(`assets/artists/${artist}_${logoMode}.svg`);
+      const lw = W * (logoSize / 100), lh = lw * (logo.naturalHeight / logo.naturalWidth);
+      // 帯を除いた面積の中央から4px上（左開き=左に帯）
+      const cx = spW + (W - spW) / 2, cy = H / 2 - 4;
+      ctx.drawImage(logo, cx - lw / 2, cy - lh / 2, lw, lh);
+    }
+    // クロステープ（帯）: 地色 + エッジ/シーン/折り溝
+    const tape = tapeHex();
+    ctx.fillStyle = tape; ctx.fillRect(0, 0, spW, H);
+    const hf = .2 + .8 * lum(tape);
+    const tg = ctx.createLinearGradient(0, 0, spW * 1.5, 0);
+    tg.addColorStop(0, `rgba(0,0,0,.13)`);
+    tg.addColorStop(spW * .6 / (spW * 1.5), `rgba(255,255,255,${.30 * hf})`);
+    tg.addColorStop((spW - 1) / (spW * 1.5), `rgba(0,0,0,.10)`);
+    tg.addColorStop(spW / (spW * 1.5), `rgba(0,0,0,0)`);
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, spW * 1.5, H);
+    // テープ外端のエッジ線
+    ctx.fillStyle = `rgba(255,255,255,${.55 * hf})`; ctx.fillRect(spW - 2.5, 0, 1.5, H);
+    ctx.fillStyle = `rgba(0,0,0,.16)`; ctx.fillRect(spW, 0, 1, H);
+    // 環境光（上）＋ 落ち影（下）
+    const lg = ctx.createLinearGradient(0, 0, 0, H);
+    lg.addColorStop(0, 'rgba(255,255,255,.10)');
+    lg.addColorStop(.26, 'rgba(255,255,255,0)');
+    lg.addColorStop(.80, 'rgba(0,0,0,0)');
+    lg.addColorStop(1, 'rgba(0,0,0,.14)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    return cv;
+  }
+  $('#exportBookPng').addEventListener('click', async e => {
+    const btn = e.target; const label = btn.textContent;
+    btn.textContent = '書き出し中…';
+    try {
+      const scale = +$('#bookPngScale').value;
+      const cv = await renderClosedBook(scale);
+      const url = cv.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.download = `passport_book_${artist || 'plain'}_${logoMode}.png`;
+      a.href = url; a.click();
+      btn.classList.add('ok'); btn.textContent = '✓ 保存しました';
+    } catch (err) {
+      btn.textContent = '✗ 失敗（consoleを確認）'; console.error(err);
+    }
+    setTimeout(() => { btn.classList.remove('ok'); btn.textContent = label; }, 1500);
+  });
+
+  /* ---------- flutter export ---------- */
+  function genDart() {
+    const e = cfg.ease;
+    const hex = c => '0xFF' + c.slice(1).toUpperCase();
+    // テープのグラデ stop を実寸(px)から 0..1 に正規化して焼き込む
+    const S = cfg.spine, W = S * 1.5;
+    const n = v => +(Math.min(v, W) / W).toFixed(3);
+    const spineStops = [0, n(1.5), n(1.5), n(3), n(3), n(4), n(4),
+      n(S * .6), n(S * .85), n(S - 1), n(S), n(S + 6), n(Math.min(S + 11, W - .5)), 1].join(', ');
+    // 帯ハイライト: テープ輝度連動（暗い帯で白浮きさせない）
+    const hf = .2 + .8 * lum(tapeHex());
+    const aEdge = (.55 * hf).toFixed(3), aSheen = (.3 * hf).toFixed(3), aGlow = (.1 * hf).toFixed(3);
+    return `// Generated by BwU checkin-passport book generator
+// 開閉の見え方は同梱の index.html と見比べて調整してください。
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+class PassportBookSpec {
+  static const coverColor = Color(${hex(cfg.cover)});
+  // 開いた時にページの外周に見える「枠」= 表紙(裏表紙)そのもの。coverColor と必ず同色。
+  static const insideCoverColor = Color(${hex(shade(cfg.cover, -.28))}); // 表紙裏面（開く途中に見える面）
+  static const pageColor = Color(${hex(cfg.page)});
+  static const tapeColor = Color(${hex(tapeHex())}); // 背のクロステープ（${cfg.tapeMode === 'auto' ? '自動: 表紙色を80%白寄せ' : 'カスタム指定'}）
+  static const cornerRadius = ${cfg.radius}.0;
+  static const spineCornerRadius = 4.0; // 帯（背表紙）側の角丸はほぼ無し
+  static const coverImageScale = ${coverImgScale}; // 表紙PNGの拡大率（1.0 = cover fill）
+  static const artist = ${artist ? `'${artist}'` : 'null'}; // アーティストID（ロゴを表紙中央に配置）
+  static const logoColorMode = '${logoMode}'; // 'light'=白ロゴ / 'dark'=黒ロゴ
+  static const logoSizeFraction = ${(logoSize/100).toFixed(2)}; // 表紙幅に対するロゴ幅の比率
+  // ロゴ配置: 帯(spineWidth)を除いた面積の中央から 4px 上（背表紙側を除外して中央寄せ）
+  static const logoOffsetY = -4.0;
+  static const spineWidth = ${cfg.spine}.0;
+  static const pageFrameInset = ${cfg.frame}.0; // ページを inset して表紙色の枠を見せる
+  static const closedScale = ${cfg.closedScale};
+  static const hingeRight = false; // 左開き固定: 背表紙=左端, 表紙は左端を軸に開く
+  static const openDuration = Duration(milliseconds: ${cfg.durOpen});
+  static const zoomDuration = Duration(milliseconds: ${cfg.durZoom});
+  static const entranceDuration = Duration(milliseconds: ${cfg.durIn});
+  static const exitDuration = Duration(milliseconds: ${cfg.durIn});
+  static const openCurve = Cubic(${e[0]}, ${e[1]}, ${e[2]}, ${e[3]});
+  // 退場: 出現の逆再生。縮小(scale 1→0.18)+上方向へ移動しつつ ease-in で加速フェード
+  static const exitCurve = Cubic(0.55, 0, 0.85, 0.36);
+
+  // 背表紙側の角丸だけ小さくする（Paper の帯の見た目）
+  static BorderRadius get coverRadius => hingeRight
+      ? const BorderRadius.horizontal(
+          left: Radius.circular(cornerRadius),
+          right: Radius.circular(spineCornerRadius))
+      : const BorderRadius.horizontal(
+          left: Radius.circular(spineCornerRadius),
+          right: Radius.circular(cornerRadius));
+  static const bodyTiltDeg = ${cfg.tilt}.0; // 開いてる間の本体の傾き（奥行き表現）
+  static const coverOpenDeg = ${cfg.openAngle}.0;
+}
+
+/// 表紙が開くパスポートブック。
+/// [progress] 0.0=閉 → 1.0=全開。AnimationController + openCurve で駆動する。
+/// [zoom] 0.0=閉時サイズ → 1.0=画面いっぱい（ページビュー）。
+class PassportBook extends StatelessWidget {
+  const PassportBook({
+    super.key,
+    required this.progress,
+    required this.zoom,
+    required this.pageChild,
+    this.coverChild,
+  });
+
+  final double progress;
+  final double zoom;
+  final Widget pageChild;
+  /// 表紙デザイン(PNG)。元画像を切り捨てず coverImageScale で拡縮する:
+  ///   base = 表紙を覆う cover fill サイズ（= max(coverW/imgW, coverH/imgH) × 元実寸）
+  ///   描画サイズ = base × coverImageScale を中央配置し、表紙矩形で clip、背後は coverColor
+  /// scale >= 1 は溢れて crop、scale < 1 は元画像全体が見えて余白に表紙色。
+  /// 実装は FittedBox(fit: cover) を SizedBox(base × scale) に入れて Stack 中央寄せ、
+  /// もしくは Image を width/height 指定 + Alignment.center（Transform.scale は不可:
+  /// cover で切り抜いた結果を縮めると初期 crop のまま残る）。
+  /// 帯・環境光はその上に重なる。_CoverFront の child に渡す。
+  final Widget? coverChild;
+
+  @override
+  Widget build(BuildContext context) {
+    const s = PassportBookSpec;
+    final hinge = PassportBookSpec.hingeRight;
+    final coverAngle =
+        progress * PassportBookSpec.coverOpenDeg * math.pi / 180 * (hinge ? 1 : -1);
+    // 開いてる最中だけ本体を少し傾け、開き切ったら戻す
+    final tilt = math.sin(progress * math.pi) *
+        PassportBookSpec.bodyTiltDeg * math.pi / 180 * (hinge ? -1 : 1);
+    final scale = PassportBookSpec.closedScale +
+        (1 - PassportBookSpec.closedScale) * zoom;
+
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.0015)
+        ..scale(scale)
+        ..rotateY(tilt),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ---- 裏表紙 = 開いた時の外枠。表紙と同色 ----
+          Container(
+            decoration: BoxDecoration(
+              color: PassportBookSpec.coverColor,
+              borderRadius: PassportBookSpec.coverRadius,
+            ),
+          ),
+          // ---- スタンプページ（inset して枠を見せる）----
+          Padding(
+            padding: const EdgeInsets.all(PassportBookSpec.pageFrameInset),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                  PassportBookSpec.cornerRadius -
+                      PassportBookSpec.pageFrameInset * .6),
+              child: ColoredBox(
+                color: PassportBookSpec.pageColor,
+                child: pageChild,
+              ),
+            ),
+          ),
+          // ---- 表紙（背表紙側の端を軸に回転）----
+          Transform(
+            alignment:
+                hinge ? Alignment.centerRight : Alignment.centerLeft,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0015)
+              ..rotateY(coverAngle),
+            child: coverAngle.abs() < math.pi / 2
+                ? _CoverFront(child: coverChild) // 表面
+                : Transform( // 90°越えたら裏面（少し暗い表紙色）
+                    alignment: Alignment.center,
+                    transform: Matrix4.rotationY(math.pi),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: PassportBookSpec.insideCoverColor,
+                        borderRadius: PassportBookSpec.coverRadius,
+                      ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoverFront extends StatelessWidget {
+  const _CoverFront({this.child});
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final hinge = PassportBookSpec.hingeRight;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: PassportBookSpec.coverColor,
+        borderRadius: PassportBookSpec.coverRadius,
+      ),
+      child: Stack(fit: StackFit.expand, children: [
+        // 背のクロステープ（Paper "sinta" 風）:
+        // 地色(tapeColor) + 丸み陰影/折り溝/エッジの細線をグラデーションで近似。
+        // 見た目の正解は index.html の .spine レイヤーと見比べること。
+        Align(
+          alignment:
+              hinge ? Alignment.centerRight : Alignment.centerLeft,
+          child: SizedBox(
+            width: PassportBookSpec.spineWidth * 1.5,
+            child: Stack(fit: StackFit.expand, children: [
+              Align(
+                alignment: hinge
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  width: PassportBookSpec.spineWidth,
+                  color: PassportBookSpec.tapeColor,
+                ),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: hinge
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    end: hinge
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    stops: const [${spineStops}],
+                    // 白ハイライトはテープ輝度に連動（暗い帯で白浮きしない値を焼き込み済み）
+                    colors: [
+                      Colors.black.withValues(alpha: .22), // 外端のエッジ線
+                      Colors.black.withValues(alpha: .22),
+                      Colors.white.withValues(alpha: ${aEdge}), // 紙の切り口ハイライト
+                      Colors.white.withValues(alpha: ${aEdge}),
+                      Colors.black.withValues(alpha: .10),
+                      Colors.black.withValues(alpha: .10),
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: ${aSheen}), // テープの丸み（シーン）
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: .10),
+                      Colors.black.withValues(alpha: .16), // テープ先の折り溝
+                      Colors.black.withValues(alpha: .05),
+                      Colors.white.withValues(alpha: ${aGlow}),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
+        // 上からの環境光
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: const [0, .26, .78, 1],
+              colors: [
+                Colors.white.withValues(alpha: .10),
+                Colors.transparent,
+                Colors.transparent,
+                Colors.black.withValues(alpha: .14),
+              ],
+            ),
+          ),
+        ),
+        if (child != null) child!,
+      ]),
+    );
+  }
+}`;
+  }
+
+  function genJson() {
+    return JSON.stringify({
+      coverColor: cfg.cover,
+      frameColor: cfg.cover,            // 開いた時の外枠 = 表紙と同色（仕様）
+      insideCoverColor: shade(cfg.cover, -.28),
+      tapeColor: tapeHex(),
+      tapeColorMode: cfg.tapeMode,       // "auto" = 表紙色を80%白寄せ / "custom" = 個別指定
+      pageColor: cfg.page,
+      hinge: cfg.dir,                    // "right" = 右開き
+      cornerRadius: cfg.radius,
+      spineCornerRadius: 4,              // 帯側の角丸はほぼ無し
+      spineWidth: cfg.spine,
+      pageFrameInset: cfg.frame,
+      closedScale: cfg.closedScale,
+      openDurationMs: cfg.durOpen,
+      zoomDurationMs: cfg.durZoom,
+      openCurve: { type: 'cubic-bezier', value: cfg.ease },
+      coverImage: coverImgSet,           // 表紙PNG使用の有無（画像自体はアプリ側で供給）
+      coverImageScale: coverImgScale,    // 表紙PNGの拡大率（cover fill 基準、中央原点）
+      artist: artist || null,            // アーティストID（ロゴを表紙中央に配置）
+      logoColorMode: logoMode,           // "light"=白ロゴ / "dark"=黒ロゴ
+      logoSizeFraction: +(logoSize/100).toFixed(2), // 表紙幅に対するロゴ幅の比率
+      logoAlign: 'center-minus-spine', // 帯を除いた面積の中央
+      logoOffsetY: -4,                 // px, 中央から上方向
+      spineHighlightAlphas: {            // 帯の白ハイライト（テープ輝度連動）
+        edge: +(.55 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+        sheen: +(.3 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+        glow: +(.1 * (.2 + .8 * lum(tapeHex()))).toFixed(3),
+      },
+      entranceDurationMs: cfg.durIn,
+      exitDurationMs: cfg.durIn,         // 退場は出現の逆再生（scale 1→0.18 + フェード）
+      exitCurve: { type: 'cubic-bezier', value: [0.55, 0, 0.85, 0.36] },
+      pageFlipDurationMs: 620,           // ページ送り: 背表紙軸のリーフめくり
+      pageFlipCurve: { type: 'cubic-bezier', value: [0.45, 0.05, 0.35, 1] },
+      bodyTiltDeg: cfg.tilt,
+      coverOpenDeg: cfg.openAngle,
+    }, null, 2);
+  }
+
+  function genCode() { $('#codeOut').value = genDart(); }
+
+  const copy = (btn, text) => navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('ok'); const t = btn.textContent;
+    btn.textContent = '✓ コピーしました';
+    setTimeout(() => { btn.classList.remove('ok'); btn.textContent = t; }, 1400);
+  });
+  $('#copyDart').addEventListener('click', e => copy(e.target, genDart()));
+  $('#copyJson').addEventListener('click', e => copy(e.target, genJson()));
+
+  /* ---------- check-in map pins (Figma 7150-30328: 5 gray + 1 pink) ---------- */
+  const PINS = [
+    {x:81,  y:175, pink:false},
+    {x:271, y:279, pink:false},
+    {x:152, y:328, pink:false},
+    {x:155, y:382, pink:false},
+    {x:125, y:388, pink:false},
+    {x:177, y:280, pink:true},
+  ];
+  const pinsRoot = $('#pins');
+  PINS.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'pin'; d.style.left = p.x + 'px'; d.style.top = p.y + 'px';
+    if (p.pink) d.style.zIndex = 2;
+    const im = document.createElement('img');
+    im.src = 'assets/' + (p.pink ? 'pin_pink.svg?v=2' : 'pin_gray.svg');
+    d.appendChild(im); pinsRoot.appendChild(d);
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>
