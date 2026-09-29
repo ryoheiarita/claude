@@ -14,8 +14,8 @@
     --bg:#101010;
     --status-h:59px;        /* fixed status bar (image) */
     --mh-top:59px;          /* month header "2026.09" sticks right under the status bar */
-    --mh-h:48px;            /* 24 + 16 + 8 (Figma Header) */
-    --day-top:107px;        /* day + weekday sticks here = mh-top + mh-h */
+    --mh-h:56px;            /* 24 + 24 (16px text, lh 1.5 = event title) + 8 */
+    --day-top:115px;        /* day + weekday sticks here = mh-top + mh-h */
     --day-h:43px;           /* day 29 + weekday 14 */
     --ff:"Figtree","Noto Sans JP",system-ui,sans-serif;
   }
@@ -50,7 +50,7 @@
     display:flex;align-items:flex-end;
     height:var(--mh-h);padding:24px 16px 8px;
     background:var(--bg);
-    font-weight:600;font-size:14px;line-height:16px;color:#fff;
+    font-weight:600;font-size:16px;line-height:1.5;color:#fff; /* same as event title */
   }
   .rows{padding:0 16px;}
   .row{display:flex;gap:8px;align-items:stretch;}
@@ -92,7 +92,7 @@
   }
   .time{font-weight:400;font-size:13px;color:rgba(255,255,255,.5);white-space:nowrap;}
   .right{display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0;}
-  .performer{font-weight:500;font-size:14px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .performer{font-weight:400;font-size:13px;color:rgba(255,255,255,.5); /* same as .time */white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .ext{flex:none;}
   .ext{width:16px;height:16px;display:block;}
   .title{
@@ -114,8 +114,8 @@
   <div class="statusbar"></div>
   <div class="guides" id="guides">
     <i style="top:59px" data-l="status 59"></i>
-    <i style="top:107px" data-l="day 107"></i>
-    <i style="top:150px" data-l="day bottom 150"></i>
+    <i style="top:115px" data-l="day 115"></i>
+    <i style="top:158px" data-l="day bottom 158"></i>
   </div>
   <div class="screen" id="screen">
     <img class="hero" src="assets/top.png" width="390" height="647" alt="">
