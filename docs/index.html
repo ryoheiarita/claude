@@ -102,6 +102,7 @@
     .card-icon.tabbar { background: linear-gradient(135deg, #FF2D78 0%, #2D8CFF 100%); }
     .card-icon.shopmypage { background: linear-gradient(135deg, #FF3E55 0%, #6C2BD9 100%); }
     .card-icon.newapptop { background: linear-gradient(135deg, #E60076 0%, #101010 100%); }
+    .card-icon.admin { background: linear-gradient(135deg, #2aa7ff 0%, #101010 100%); border: 1px solid rgba(255,255,255,0.12); }
     .card-icon.homeguide { background: linear-gradient(135deg, #2DD4BF 0%, #2D8CFF 100%); }
     .card-body {
       flex: 1;
@@ -401,6 +402,22 @@
           <div class="card-body">
             <div class="card-title">スケジュール sticky 日付プロトタイプ</div>
             <div class="card-desc">スクロールで下から出るスケジュール — 年月ヘッダー固定・日付＋曜日が次の日付とぶつかると繰り上がる動き。データは calendar-bmsg.tokyo の実データ（2026-09-29〜11-30）。ヒーロー部分は Figma 画像</div>
+          </div>
+          <div class="card-arrow">&rsaquo;</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">bwu_admin（インナー管理画面・構想）</div>
+      <div class="cards">
+        <a class="card" href="admin/">
+          <div class="card-icon admin">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">bwu_admin 俯瞰図 + ダミープロトタイプ</div>
+            <div class="card-desc">要件定義・確定仕様・動くプロトタイプを一括管理するインナー管理画面の構想。俯瞰図（Notion / Figma / Git ↔ admin）、機能ディレクトリ型 Wiki、Design_System_V2 準拠の Components、Artist CMS（BMSG 14 組）、仕様に質問する AI チャット（この静的版はデモ応答）</div>
           </div>
           <div class="card-arrow">&rsaquo;</div>
         </a>
