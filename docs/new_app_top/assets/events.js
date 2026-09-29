@@ -14,6 +14,19 @@ window.EVENTS = [
  },
  {
   "date": "2026-09-29",
+  "start": "12:00",
+  "end": "",
+  "allDay": false,
+  "cat": "ライブ先行",
+  "artists": [
+   "BE:FIRST"
+  ],
+  "title": "BE:FIRST ARENA TOUR 2027 -Prism- FC最速先行 受付開始",
+  "link": "https://example.com/befirst-presale",
+  "fictional": true
+ },
+ {
+  "date": "2026-09-29",
   "start": "21:00",
   "end": "21:30",
   "allDay": false,
@@ -49,6 +62,32 @@ window.EVENTS = [
   "link": "https://www.ntv.co.jp/tokyo-midnight-music/"
  },
  {
+  "date": "2026-09-30",
+  "start": "18:00",
+  "end": "",
+  "allDay": false,
+  "cat": "FC新規開設",
+  "artists": [
+   "STARGLOW"
+  ],
+  "title": "STARGLOW OFFICIAL FAN CLUB 開設・入会受付開始",
+  "link": "https://example.com/starglow-fc",
+  "fictional": true
+ },
+ {
+  "date": "2026-10-01",
+  "start": "19:00",
+  "end": "21:00",
+  "allDay": false,
+  "cat": "PPV",
+  "artists": [
+   "Novel Core"
+  ],
+  "title": "Novel Core ONE MAN LIVE \"ROOM\" 東京公演 生配信（PPV）",
+  "link": "https://example.com/novelcore-ppv",
+  "fictional": true
+ },
+ {
   "date": "2026-10-01",
   "start": "22:35",
   "end": "22:45",
@@ -79,10 +118,10 @@ window.EVENTS = [
   "allDay": false,
   "cat": "ライブ先行",
   "artists": [
-   "BE:FIRST"
+   "MAZZEL"
   ],
-  "title": "BE:FIRST ARENA TOUR 2027 -Prism- FC最速先行 受付開始",
-  "link": "https://example.com/befirst-presale",
+  "title": "MAZZEL HALL TOUR 2027 \"ZONE\" FC先行 受付開始（〜10/5 23:59）",
+  "link": "https://example.com/mazzel-presale",
   "fictional": true
  },
  {
@@ -159,6 +198,19 @@ window.EVENTS = [
  },
  {
   "date": "2026-10-03",
+  "start": "20:00",
+  "end": "22:00",
+  "allDay": false,
+  "cat": "PPV",
+  "artists": [
+   "BE:FIRST"
+  ],
+  "title": "BE:FIRST WORLD SHOWCASE 2026 -【MANILA】生配信（PPV）",
+  "link": "https://example.com/befirst-manila-ppv",
+  "fictional": true
+ },
+ {
+  "date": "2026-10-03",
   "start": "23:00",
   "end": "23:54",
   "allDay": false,
@@ -216,6 +268,32 @@ window.EVENTS = [
   ],
   "title": "エネクル presents まいにちザキヤマ（FM NACK5）",
   "link": "https://nack5.co.jp/program/zakiyama795/"
+ },
+ {
+  "date": "2026-10-05",
+  "start": "18:00",
+  "end": "",
+  "allDay": false,
+  "cat": "FC新規開設",
+  "artists": [
+   "REIKO"
+  ],
+  "title": "REIKO OFFICIAL FAN CLUB 開設・入会受付開始",
+  "link": "https://example.com/reiko-fc",
+  "fictional": true
+ },
+ {
+  "date": "2026-10-06",
+  "start": "12:00",
+  "end": "",
+  "allDay": false,
+  "cat": "ライブ先行",
+  "artists": [
+   "SKY-HI"
+  ],
+  "title": "SKY-HI HALL TOUR 2027 FC先行 受付開始",
+  "link": "https://example.com/skyhi-presale",
+  "fictional": true
  },
  {
   "date": "2026-10-06",
@@ -464,19 +542,6 @@ window.EVENTS = [
   "link": "https://novelcore.jp/announcement/blacktietour2026/"
  },
  {
-  "date": "2026-10-15",
-  "start": "18:00",
-  "end": "",
-  "allDay": false,
-  "cat": "FC新規開設",
-  "artists": [
-   "STARGLOW"
-  ],
-  "title": "STARGLOW OFFICIAL FAN CLUB 開設・入会受付開始",
-  "link": "https://example.com/starglow-fc",
-  "fictional": true
- },
- {
   "date": "2026-10-16",
   "start": "",
   "end": "",
@@ -657,19 +722,6 @@ window.EVENTS = [
   ],
   "title": "BLACK TiE TOUR 2026（長野）",
   "link": "https://novelcore.jp/announcement/blacktietour2026/"
- },
- {
-  "date": "2026-10-23",
-  "start": "12:00",
-  "end": "",
-  "allDay": false,
-  "cat": "ライブ先行",
-  "artists": [
-   "MAZZEL"
-  ],
-  "title": "MAZZEL HALL TOUR 2027 \"ZONE\" FC先行 受付開始（〜10/25 23:59）",
-  "link": "https://example.com/mazzel-presale",
-  "fictional": true
  },
  {
   "date": "2026-10-23",
@@ -1034,19 +1086,6 @@ window.EVENTS = [
   "link": "https://skyhi.tokyo/news/2141"
  },
  {
-  "date": "2026-11-07",
-  "start": "19:00",
-  "end": "21:30",
-  "allDay": false,
-  "cat": "PPV",
-  "artists": [
-   "Novel Core"
-  ],
-  "title": "Novel Core ONE MAN LIVE \"ROOM\" 東京公演 生配信（PPV）",
-  "link": "https://example.com/novelcore-ppv",
-  "fictional": true
- },
- {
   "date": "2026-11-08",
   "start": "",
   "end": "",
@@ -1081,19 +1120,6 @@ window.EVENTS = [
   ],
   "title": "MAZZEL 2nd Fan Meeting -Play at the MUZEUM Vol.2-（神奈川）",
   "link": ""
- },
- {
-  "date": "2026-11-12",
-  "start": "18:00",
-  "end": "",
-  "allDay": false,
-  "cat": "FC新規開設",
-  "artists": [
-   "REIKO"
-  ],
-  "title": "REIKO OFFICIAL FAN CLUB 開設・入会受付開始",
-  "link": "https://example.com/reiko-fc",
-  "fictional": true
  },
  {
   "date": "2026-11-14",
@@ -1178,19 +1204,6 @@ window.EVENTS = [
   ],
   "title": "HAL",
   "link": ""
- },
- {
-  "date": "2026-11-20",
-  "start": "12:00",
-  "end": "",
-  "allDay": false,
-  "cat": "ライブ先行",
-  "artists": [
-   "SKY-HI"
-  ],
-  "title": "SKY-HI HALL TOUR 2027 FC先行 受付開始",
-  "link": "https://example.com/skyhi-presale",
-  "fictional": true
  },
  {
   "date": "2026-11-22",
@@ -1299,18 +1312,5 @@ window.EVENTS = [
   ],
   "title": "映画『ワンダンス』全国公開",
   "link": "https://happinet-phantom.com/wandance/"
- },
- {
-  "date": "2026-11-28",
-  "start": "18:00",
-  "end": "21:00",
-  "allDay": false,
-  "cat": "PPV",
-  "artists": [
-   "HANA"
-  ],
-  "title": "HANA Zepp Tour 2026 FINAL 生配信（PPV）",
-  "link": "https://example.com/hana-ppv",
-  "fictional": true
  }
 ];
