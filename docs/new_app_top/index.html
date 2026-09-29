@@ -75,12 +75,14 @@
     min-width:0;
   }
   .card.filled{background:#232323;border-color:#232323;}
-  /* BIRTHDAY : same look as calendar-bmsg.tokyo (pink 15% bg + cake icon bottom-right, pink outlined label) */
-  .card.birthday{
-    background:rgba(230,0,118,.15) url(assets/birthday.svg) no-repeat calc(100% - 16px) 100%;
-    border-color:transparent;
-  }
-  .card.birthday .cat{border:1px solid #e60076;background:rgba(230,0,118,.08);}
+  /* highlighted categories : tinted card + outlined label (BIRTHDAY follows calendar-bmsg.tokyo, the rest are BWU originals) */
+  .card.hl{background:color-mix(in srgb, var(--c) 15%, transparent);border-color:transparent;}
+  .card.hl .cat{border:1px solid var(--c);background:color-mix(in srgb, var(--c) 8%, transparent);}
+  .cat-birthday{--c:#e60076;}
+  .cat-birthday.card{background-image:url(assets/birthday.svg);background-repeat:no-repeat;background-position:calc(100% - 16px) 100%;}
+  .cat-presale{--c:#3d8bff;}   /* ライブ先行 */
+  .cat-ppv{--c:#a855f7;}       /* PPV */
+  .cat-fcopen{--c:#ffb300;}    /* FC新規開設 */
   .card .details{flex:1 0 0;min-width:0;display:flex;flex-direction:column;gap:8px;}
   .card .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .card .left{display:flex;align-items:center;gap:8px;flex:none;}
@@ -127,6 +129,7 @@
 <script>
 // ---------- real data: calendar-bmsg.tokyo, built by tools/build_events.mjs into assets/events.js ----------
 const pad2 = n => String(n).padStart(2,'0');
+const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', PPV:'ppv', 'FC新規開設':'fcopen' };
 const performerLabel = a => a.length === 1 ? a[0] : a.length === 2 ? `${a[0]} / ${a[1]}` : `${a[0]} 他${a.length - 1}組`;
 
 function buildMonths(events){
@@ -160,7 +163,8 @@ function render(months){
       const wd = WD[new Date(mo.y, mo.m - 1, day.d).getDay()];
       html += `<div class="row"><div class="day"><span class="d">${pad2(day.d)}</span><span class="w">${wd}</span></div><div class="cards">`;
       for (const ev of day.events){
-        html += `<div class="card${ev.link?' filled':''}${ev.cat==='BIRTHDAY'?' birthday':''}">
+        const hl = CAT_STYLE[ev.cat];
+        html += `<div class="card${ev.link?' filled':''}${hl?` hl cat-${hl}`:''}">
           <div class="details">
             <div class="row1">
               <div class="left"><span class="cat">${ev.cat}</span>${ev.time?`<span class="time">${ev.time}</span>`:''}</div>
