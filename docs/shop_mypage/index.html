@@ -6,88 +6,154 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BMSG SHOP マイページ リデザイン</title>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="account-mypage.css">
 <style>
-  /* ---- サイト側の見た目を模したスタブ (header/footer/Button はテーマ側のまま) ---- */
-  body{margin:0;background:#181818;color:#fff;font-family:"游ゴシック",YuGothic,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;font-size:14px}
-  .stub-header{height:52px;background:#000;display:flex;align-items:center;justify-content:center;font-family:Figtree,sans-serif;font-weight:700;letter-spacing:.1em;border-bottom:1px solid #222}
-  .stub-header span{border:1.5px solid #fff;padding:2px 6px;font-size:12px}
-  .stub-footer{margin-top:80px;height:120px;background:#000;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px}
-  .Container{padding:0 80px}
+  /* ---- ページ土台 ---- */
+  body{margin:0;background:#181818;color:#fff;font-family:Figtree,"游ゴシック",YuGothic,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+  .Container{padding:0 20px}
   @media (max-width:767px){.Container{padding:0}}
-  /* Prestige テーマの .Button 再現 */
-  .Button{position:relative;display:inline-block;padding:14px 28px;line-height:normal;border:1px solid transparent;border-radius:12px;font-weight:700;font-size:18px;letter-spacing:.2em;text-decoration:none;text-transform:uppercase;text-align:center;cursor:pointer;background:transparent;color:#000;overflow:hidden;z-index:1}
+
+  /* ---- Header (Figma: Header/pc 1357:7619 / Header/SP 1382:10334) ---- */
+  .hd{width:100%}
+  .hd__nav{height:66px;border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:center;align-items:center;padding:0 10px;box-sizing:border-box}
+  .hd__inner{position:relative;width:1000px;max-width:100%;height:100%;display:flex;align-items:center;justify-content:space-between}
+  .hd__lang{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:4px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);font:400 14px/1 Figtree,sans-serif;letter-spacing:-.24px;cursor:pointer}
+  .hd__lang svg{width:20px;height:20px;display:block}
+  .hd__logo{position:absolute;left:50%;top:-1.5px;transform:translateX(-50%);width:104px;height:69px;mix-blend-mode:lighten;overflow:hidden}
+  .hd__logo img{position:absolute;width:104px;height:104px;left:0;top:-17.5px;display:block} /* Figma: 1:1画像を104pxで配置し枠でクロップ */
+  .hd__icons{display:flex;align-items:center;gap:16px}
+  .hd__icons svg{width:20px;height:20px;display:block}
+  .hd__crumb{height:48px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.15);display:flex;justify-content:center;align-items:center;padding:0 16px;box-sizing:border-box}
+  .hd__crumb-inner{flex:1 0 0;max-width:1000px;display:flex;align-items:center;gap:8px}
+  .hd__crumb a{color:#fff;text-decoration:none;font:400 14px/20px Roboto,Figtree,sans-serif;border-bottom:1px solid #fff}
+  .hd__crumb svg{width:16px;height:16px;display:block}
+  @media (max-width:767px){
+    .hd__nav{height:100px;align-items:flex-end;padding:0 0 12px}
+    .hd__inner{height:auto;padding:0 16px;box-sizing:border-box}
+    .hd__logo{top:-4px;width:56px;height:31px}
+    .hd__logo img{left:-24px;top:-36.5px}
+    .hd__crumb-inner{max-width:none}
+  }
+
+  /* ---- Prestige テーマの .Button 再現（白枠・白文字は account-mypage.css 側で上書き） ---- */
+  .Button{position:relative;display:inline-block;padding:14px 28px;line-height:normal;border:1px solid transparent;border-radius:12px;font-weight:700;font-size:18px;letter-spacing:.2em;text-decoration:none;text-align:center;cursor:pointer;background:transparent;color:#000;overflow:hidden;z-index:1}
   .Button::before{content:"";position:absolute;inset:0;background:#fff;z-index:-1;border-radius:12px}
   .Button--primary{color:#000;border-color:#fff}
   .Button--secondary{color:#fff;border-color:rgba(255,255,255,.4)}
   .Button--secondary::before{background:transparent}
+
+  .stub-footer{margin-top:80px;height:120px;background:#000;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px}
 </style>
 </head>
 <body>
-<div class="stub-header"><span>BMSG</span></div>
+
+<header class="hd">
+  <div class="hd__nav">
+    <div class="hd__inner">
+      <button class="hd__lang" type="button" aria-label="言語">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<mask maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_258)">
+<path d="M10.0015 17.9167C8.90646 17.9167 7.87722 17.7089 6.91375 17.2933C5.95028 16.8778 5.11222 16.3138 4.39958 15.6015C3.68694 14.8891 3.12271 14.0514 2.70687 13.0883C2.29118 12.1253 2.08333 11.0963 2.08333 10.0015C2.08333 8.90646 2.29111 7.87722 2.70667 6.91375C3.12222 5.95028 3.68618 5.11222 4.39854 4.39958C5.1109 3.68694 5.94861 3.12271 6.91167 2.70687C7.87472 2.29118 8.90368 2.08333 9.99854 2.08333C11.0935 2.08333 12.1228 2.29111 13.0863 2.70667C14.0497 3.12222 14.8878 3.68618 15.6004 4.39854C16.3131 5.1109 16.8773 5.94861 17.2931 6.91167C17.7088 7.87472 17.9167 8.90368 17.9167 9.99854C17.9167 11.0935 17.7089 12.1228 17.2933 13.0863C16.8778 14.0497 16.3138 14.8878 15.6015 15.6004C14.8891 16.3131 14.0514 16.8773 13.0883 17.2931C12.1253 17.7088 11.0963 17.9167 10.0015 17.9167ZM10 16.6667C11.8611 16.6667 13.4375 16.0208 14.7292 14.7292C16.0208 13.4375 16.6667 11.8611 16.6667 10C16.6667 9.90278 16.6645 9.8034 16.6602 9.70187C16.6559 9.60035 16.6511 9.50958 16.6458 9.42958C16.5924 9.81625 16.4249 10.1362 16.1433 10.3894C15.8619 10.6426 15.5235 10.7692 15.1281 10.7692H13.2371C12.814 10.7692 12.4519 10.6187 12.1506 10.3177C11.8494 10.0166 11.6987 9.65465 11.6987 9.23187V8.46312H8.62187V6.92583C8.62187 6.50306 8.7725 6.14049 9.07375 5.83812C9.375 5.53576 9.73715 5.38458 10.1602 5.38458H10.9296V5.06417C10.9296 4.70194 11.0391 4.40194 11.2581 4.16417C11.477 3.92653 11.7409 3.76069 12.0498 3.66667C11.7238 3.55986 11.3915 3.47757 11.0529 3.41979C10.7143 3.36215 10.3633 3.33333 10 3.33333C8.13889 3.33333 6.5625 3.97917 5.27083 5.27083C3.97917 6.5625 3.33333 8.13889 3.33333 10V10.1202C3.33333 10.1576 3.33597 10.1976 3.34125 10.2404H7.29167C8.14417 10.2404 8.87014 10.5401 9.46958 11.1394C10.0689 11.7388 10.3685 12.4636 10.3685 13.3137V14.0865H8.06083V16.3702C8.37069 16.4663 8.68639 16.5398 9.00792 16.5906C9.32958 16.6413 9.66028 16.6667 10 16.6667Z" fill="white"/>
+</g>
+</g>
+</svg>
+        <span>JP</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<mask maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+<rect width="20" height="20" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_242)">
+<path d="M10 12.2308C9.89958 12.2308 9.80611 12.2148 9.71958 12.1827C9.63306 12.1506 9.55076 12.0956 9.47271 12.0177L5.7275 8.2725C5.61222 8.15708 5.5532 8.01201 5.55042 7.83729C5.54778 7.66271 5.60681 7.515 5.7275 7.39417C5.84833 7.27347 5.99472 7.21312 6.16667 7.21312C6.33861 7.21312 6.485 7.27347 6.60583 7.39417L10 10.7885L13.3942 7.39417C13.5096 7.27889 13.6547 7.21986 13.8294 7.21708C14.004 7.21444 14.1517 7.27347 14.2725 7.39417C14.3932 7.515 14.4535 7.66139 14.4535 7.83333C14.4535 8.00528 14.3932 8.15167 14.2725 8.2725L10.5273 12.0177C10.4492 12.0956 10.3669 12.1506 10.2804 12.1827C10.1939 12.2148 10.1004 12.2308 10 12.2308Z" fill="white"/>
+</g>
+</g>
+</svg>
+      </button>
+      <div class="hd__logo"><img src="data:image/png;base64,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" alt="BMSG"></div>
+      <div class="hd__icons">
+        <a href="#" aria-label="検索"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<path d="M13.3138 12.0596H12.6555L12.4221 11.8346C13.4221 10.668 13.9388 9.0763 13.6555 7.38464C13.2638 5.06797 11.3305 3.21797 8.99714 2.93464C5.47214 2.5013 2.50547 5.46797 2.9388 8.99297C3.22214 11.3263 5.07214 13.2596 7.3888 13.6513C9.08047 13.9346 10.6721 13.418 11.8388 12.418L12.0638 12.6513V13.3096L15.6055 16.8513C15.9471 17.193 16.5055 17.193 16.8471 16.8513C17.1888 16.5096 17.1888 15.9513 16.8471 15.6096L13.3138 12.0596ZM8.3138 12.0596C6.2388 12.0596 4.5638 10.3846 4.5638 8.30964C4.5638 6.23464 6.2388 4.55964 8.3138 4.55964C10.3888 4.55964 12.0638 6.23464 12.0638 8.30964C12.0638 10.3846 10.3888 12.0596 8.3138 12.0596Z" fill="white" fill-opacity="0.8"/>
+</g>
+</svg></a>
+        <a href="#" aria-label="カート"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<path d="M6.66357 15C5.74691 15 5.00524 15.75 5.00524 16.6667C5.00524 17.5833 5.74691 18.3333 6.66357 18.3333C7.58024 18.3333 8.33024 17.5833 8.33024 16.6667C8.33024 15.75 7.58024 15 6.66357 15ZM1.66357 2.5C1.66357 2.95833 2.03857 3.33333 2.49691 3.33333H3.33024L6.33024 9.65833L5.20524 11.6917C4.59691 12.8083 5.39691 14.1667 6.66357 14.1667H15.8302C16.2886 14.1667 16.6636 13.7917 16.6636 13.3333C16.6636 12.875 16.2886 12.5 15.8302 12.5H6.66357L7.58024 10.8333H13.7886C14.4136 10.8333 14.9636 10.4917 15.2469 9.975L18.2302 4.56667C18.5386 4.01667 18.1386 3.33333 17.5052 3.33333H5.17191L4.61357 2.14167C4.48024 1.85 4.18024 1.66667 3.86357 1.66667H2.49691C2.03857 1.66667 1.66357 2.04167 1.66357 2.5ZM14.9969 15C14.0802 15 13.3386 15.75 13.3386 16.6667C13.3386 17.5833 14.0802 18.3333 14.9969 18.3333C15.9136 18.3333 16.6636 17.5833 16.6636 16.6667C16.6636 15.75 15.9136 15 14.9969 15Z" fill="white" fill-opacity="0.8"/>
+</g>
+</svg></a>
+        <a href="#" aria-label="アカウント"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<path d="M10 10C11.8417 10 13.3333 8.50833 13.3333 6.66667C13.3333 4.825 11.8417 3.33333 10 3.33333C8.15833 3.33333 6.66667 4.825 6.66667 6.66667C6.66667 8.50833 8.15833 10 10 10ZM10 11.6667C7.775 11.6667 3.33333 12.7833 3.33333 15V15.8333C3.33333 16.2917 3.70833 16.6667 4.16667 16.6667H15.8333C16.2917 16.6667 16.6667 16.2917 16.6667 15.8333V15C16.6667 12.7833 12.225 11.6667 10 11.6667Z" fill="white" fill-opacity="0.8"/>
+</g>
+</svg></a>
+      </div>
+    </div>
+  </div>
+  <div class="hd__crumb">
+    <div class="hd__crumb-inner">
+      <a href="#">テキスト</a>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<path d="M6 10.5833L8.58667 7.99667L6 5.41C5.74 5.15 5.74 4.73 6 4.47C6.26 4.21 6.68 4.21 6.94 4.47L10 7.53C10.26 7.79 10.26 8.21 10 8.47L6.94 11.53C6.68 11.79 6.26 11.79 6 11.53C5.74667 11.27 5.74 10.8433 6 10.5833Z" fill="#9DA2AF"/>
+</g>
+</svg>
+      <a href="#">テキスト</a>
+    </div>
+  </div>
+</header>
 
 <main id="main">
 <div class="shopify-section">
 <div class="Container">
 <div class="mp">
 
-  <!-- ===== アカウント基本情報 ===== -->
-  <section class="mp-section">
-    <div class="mp-section__head">
-      <h1 class="mp-section__title">アカウント基本情報</h1>
-    </div>
-    <div class="mp-card">
-      <dl class="mp-dl">
-        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">有田 亮平</dd></div>
-        <div class="mp-dl__row"><dt class="mp-dl__label">メールアドレス</dt><dd class="mp-dl__value">r.arita@hut.co.jp</dd></div>
+  <h1 class="mp-title">マイページ</h1>
+
+  <div class="mp-cols">
+    <!-- ===== 基本情報 ===== -->
+    <section class="mp-section">
+      <div class="mp-section__head">
+        <h2 class="mp-section__title">基本情報</h2>
+      </div>
+      <div class="mp-card">
+        <dl class="mp-dl">
+        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">山田 太郎</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">メールアドレス</dt><dd class="mp-dl__value">sample@example.com</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">性別</dt><dd class="mp-dl__value">男性</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">生年月日</dt><dd class="mp-dl__value">1995/12/04</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value">+81 90-0000-0000</dd></div>
-      </dl>
-    </div>
-    <div class="mp-actions">
-      <a href="#" class="Button Button--primary cf-edit-account-link">アカウント編集</a>
-    </div>
-  </section>
+        <div class="mp-dl__row"><dt class="mp-dl__label">郵便番号</dt><dd class="mp-dl__value">123-4567</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value">東京都 某区某町 1234 某マンション123</dd></div>
+        </dl>
+      </div>
+      <div class="mp-actions">
+        <a href="#" class="Button Button--primary cf-edit-account-link">基本情報の編集</a>
+      </div>
+    </section>
 
-  <!-- ===== 登録住所 ===== -->
-  <section class="mp-section">
-    <div class="mp-section__head">
-      <div>
-        <h2 class="mp-section__title">登録住所</h2>
-        <p class="mp-section__sub">チケット先行の当選通知・配送に使用する住所です。</p>
+    <!-- ===== 配送用住所 ===== -->
+    <section class="mp-section">
+      <div class="mp-section__head">
+        <h2 class="mp-section__title">配送用住所</h2>
       </div>
-    </div>
-    <div class="mp-addr-grid">
-      <div class="mp-card mp-addr">
-        <div class="mp-addr__head">
-          <h3 class="mp-addr__title">チケット先行用住所</h3>
-        </div>
-        <p class="mp-addr__body">
-          〒100-0001<br>
-          東京都 千代田区<br>
-          千代田1-1-1 サンプルマンション101
-          <strong>有田 亮平</strong>
-          090-0000-0000
-        </p>
-        <div class="mp-addr__foot"><a href="#" class="mp-link">編集</a></div>
+      <div class="mp-card">
+        <dl class="mp-dl">
+        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">山田 太郎</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">郵便番号</dt><dd class="mp-dl__value">123-4567</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value">東京都 某区某町 1234 某マンション123</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value">090-0000-0000</dd></div>
+        </dl>
       </div>
-      <div class="mp-card mp-addr">
-        <div class="mp-addr__head">
-          <h3 class="mp-addr__title">配送用住所</h3>
-        </div>
-        <p class="mp-addr__body">
-          〒100-0001<br>
-          東京都 千代田区<br>
-          千代田1-1-1 サンプルマンション101
-          <strong>有田 亮平</strong>
-          090-0000-0000
-        </p>
-        <div class="mp-addr__foot"><a href="#" class="mp-link">編集</a></div>
+      <div class="mp-actions">
+        <a href="#" class="Button Button--primary">配送用住所の編集</a>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <!-- ===== 支払い方法・変更確認 ===== -->
   <section class="mp-section">
@@ -96,7 +162,8 @@
     </div>
     <p class="mp-subtitle">加入済み</p>
     <div class="mp-card mp-card--table">
-      <table class="mp-table">
+      <table class="mp-table mp-table--fanclub">
+        <colgroup><col style="width:26%"><col style="width:14%"><col style="width:14%"><col style="width:12%"><col style="width:14%"><col style="width:20%"></colgroup>
         <thead>
           <tr>
             <th>ファンクラブ</th>
@@ -125,40 +192,20 @@
             <td data-label="支払方法">キャリア決済</td>
           </tr>
           <tr>
-            <td class="fanclub-name">Aile The Shota<p>fanclub</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">Ayumu Imazu<p>Official Fan Club</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">edhiii boi<p>Official Fan Club</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
             <td class="fanclub-name">SKY-HI<p>FLYERS</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">ふみの<p>Official Fan Club</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+            <td data-label="加入月" class="mp-num">2025/01</td>
+            <td data-label="加入累計" class="mp-num">9ヶ月</td>
+            <td data-label="周期">月額</td>
+            <td data-label="次回更新" class="mp-num">2026/11/01</td>
+            <td data-label="支払方法">クレジットカード</td>
           </tr>
           <tr>
             <td class="fanclub-name">HANA<p>Official Fan Club</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">Novel Core<p>CORE HOUSE</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">REIKO<p>Official Fanclub</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期"></td><td data-label="次回更新"></td><td data-label="支払方法"></td>
-          </tr>
-          <tr>
-            <td class="fanclub-name">STARGLOW<p>Official Fan Club</p></td>
-            <td data-label="加入月"></td><td data-label="加入累計"></td><td data-label="周期">年額</td><td data-label="次回更新"></td><td data-label="支払方法"></td>
+            <td data-label="加入月" class="mp-num">2025/06</td>
+            <td data-label="加入累計" class="mp-num">4ヶ月</td>
+            <td data-label="周期">年額</td>
+            <td data-label="次回更新" class="mp-num">2027/06/01</td>
+            <td data-label="支払方法">コンビニ決済</td>
           </tr>
         </tbody>
       </table>
@@ -174,8 +221,42 @@
     <div class="mp-section__head">
       <h2 class="mp-section__title">注文履歴</h2>
     </div>
-    <div class="mp-card">
-      <p class="mp-empty">まだ注文していません</p>
+    <div class="mp-card mp-card--table">
+      <table class="mp-table mp-table--orders">
+        <colgroup><col style="width:30%"><col style="width:17.5%"><col style="width:17.5%"><col style="width:17.5%"><col style="width:17.5%"></colgroup>
+        <thead>
+          <tr>
+            <th>注文番号</th>
+            <th>注文日</th>
+            <th>支払状況</th>
+            <th>配送状況</th>
+            <th>合計</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fanclub-name">#12345</td>
+            <td data-label="注文日" class="mp-num">2024/02/12</td>
+            <td data-label="支払状況">支払い済み</td>
+            <td data-label="配送状況">未発送</td>
+            <td data-label="合計" class="mp-num">¥12,345</td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">#12346</td>
+            <td data-label="注文日" class="mp-num">2024/02/12</td>
+            <td data-label="支払状況">支払い済み</td>
+            <td data-label="配送状況">会員費</td>
+            <td data-label="合計" class="mp-num">¥12,345</td>
+          </tr>
+          <tr>
+            <td class="fanclub-name">#12347</td>
+            <td data-label="注文日" class="mp-num">2024/02/12</td>
+            <td data-label="支払状況">返金済み</td>
+            <td data-label="配送状況">未発送</td>
+            <td data-label="合計" class="mp-num">¥12,345</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 

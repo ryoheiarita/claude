@@ -23,9 +23,9 @@
   --mp-font: Figtree, "游ゴシック", YuGothic, "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", Meiryo, sans-serif;
 
   box-sizing: border-box;
-  max-width: 960px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 56px 0 96px;
+  padding: 48px 0 96px;
   color: var(--mp-text);
   font-family: var(--mp-font);
   -webkit-font-smoothing: antialiased;
@@ -39,6 +39,23 @@
 .mp .Segment__ButtonWrapper { margin: 0; }
 .mp #logout_btn .cf-edit-account-link,
 .mp #logout_btn .cf-edit-account-link-spacer { display: none !important; }
+
+/* ---------- ページ見出し / 2カラム ---------- */
+.mp-title {
+  margin: 0 0 56px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+  color: var(--mp-text);
+}
+.mp-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  margin: 0 0 56px;
+}
+.mp-cols .mp-section { margin: 0; }
 
 /* ---------- セクション ---------- */
 .mp-section { margin: 0 0 56px; }
@@ -90,7 +107,7 @@
 .mp-dl { margin: 0; }
 .mp-dl__row {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 111px 1fr; /* 最長ラベル(メールアドレス 95px)+16 */
   gap: 16px;
   align-items: baseline;
   padding: 16px 20px;
@@ -215,8 +232,6 @@
 }
 .mp-table tbody tr:last-child td { border-bottom: 0; }
 .mp-table tbody tr:hover td { background: var(--mp-surface-2); }
-.mp-table th:first-child,
-.mp-table td:first-child { width: 30%; }
 .mp-table td:empty::after {
   content: "—";
   color: var(--mp-text-3);
@@ -324,6 +339,8 @@
    ===================================================================== */
 @media screen and (max-width: 767px) {
   .mp { padding: 32px 16px 72px; }
+  .mp-title { margin-bottom: 44px; font-size: 20px; }
+  .mp-cols { grid-template-columns: 1fr; gap: 44px; margin-bottom: 44px; }
   .mp-section { margin-bottom: 44px; }
   .mp-section__title { font-size: 19px; }
 
@@ -364,8 +381,6 @@
     font-size: 12px;
     color: var(--mp-text-3);
   }
-  .mp-table th:first-child,
-  .mp-table td:first-child { width: auto; }
   .mp-table td.fanclub-name {
     display: block;
     padding: 10px 0 12px;
