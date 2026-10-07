@@ -14,7 +14,7 @@
     --bg:#101010;
     --hero-h:647px;         /* Figma: cards start at y=647 (Container 452 + Frame 2611525 195) */
     --status-h:40px;        /* fixed status bar strip (0..40pt, hero circle masked out) */
-    --sheet-tint:rgba(16,16,16,.62);
+    --sheet-tint:rgba(0,0,0,.6);
     --sheet-blur:24px;
     --ff:"Figtree","Noto Sans JP",system-ui,sans-serif;
   }
@@ -43,13 +43,15 @@
   .sheet{
     position:relative;z-index:1;
     padding:0 16px 120px;
+    min-height:100%;                 /* enough scroll range for the first card to reach the top */
     display:flex;flex-direction:column;gap:8px;
-    background:var(--sheet-tint);
-    -webkit-backdrop-filter:blur(var(--sheet-blur));backdrop-filter:blur(var(--sheet-blur));
+    --p:0;                           /* 0 at rest -> 1 as the cards travel up (set by JS) */
   }
-  .sheet::before{ /* soft leading edge so the tint fades in instead of cutting the hero */
-    content:"";position:absolute;left:0;right:0;top:-24px;height:24px;pointer-events:none;
-    background:linear-gradient(to bottom, rgba(16,16,16,0), var(--sheet-tint));
+  .sheet::before{ /* black 60% + blur layer behind the cards; fades in with --p */
+    content:"";position:absolute;left:0;right:0;top:-24px;bottom:0;z-index:-1;pointer-events:none;
+    background:linear-gradient(to bottom, rgba(0,0,0,0), var(--sheet-tint) 24px);
+    -webkit-backdrop-filter:blur(var(--sheet-blur));backdrop-filter:blur(var(--sheet-blur));
+    opacity:var(--p);
   }
 
   /* ---------- cards (Figma "Card") ---------- */
@@ -71,9 +73,10 @@
   .chead .pager i.on{background:#fff;}
 
   /* horizontal scroller inside a card */
-  .hscroll{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;}
+  .hscroll{display:flex;gap:8px;padding:0 16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;}
   .hscroll::-webkit-scrollbar{display:none}
   .hscroll > *{scroll-snap-align:start;flex:none;}
+  .hscroll::after{content:"";flex:none;width:8px;} /* trailing padding (end padding is dropped by overflow) */
 
   /* Calendar tile */
   .tile{
@@ -226,6 +229,16 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
     const i = Math.min(dots.length - 1, Math.round(sc.scrollLeft / w));
     dots.forEach((d, k) => d.classList.toggle('on', k === i));
   }, { passive:true });
+})();
+
+// ---------- sheet backdrop fades in as the cards travel up over the hero ----------
+(function sheetBackdrop(){
+  const sc = document.getElementById('screen'), sheet = document.getElementById('sheet');
+  const RANGE = 480;                                   // px of scroll until the backdrop is fully on
+  let raf = 0;
+  const update = () => { raf = 0; sheet.style.setProperty('--p', Math.min(1, sc.scrollTop / RANGE).toFixed(3)); };
+  sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(update); }, { passive:true });
+  update();
 })();
 
 if (new URLSearchParams(location.search).get('guide')) document.getElementById('guides').classList.add('on');
