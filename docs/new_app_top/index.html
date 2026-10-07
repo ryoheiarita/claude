@@ -60,11 +60,14 @@
   .toolbar .avatar img{display:block;width:100%;height:100%;object-fit:cover;}
 
   /* ---------- hero : fixed layer at the bottom of the stack (circle photo + artist block, both Figma exports) ---------- */
-  .hero-wrap{position:absolute;top:0;left:50%;width:390px;margin-left:-195px;height:var(--hero-h);z-index:0;overflow:hidden;
+  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;
     background:linear-gradient(to bottom, #070707 0, #101010 160px);}
-  .hero-wrap img{position:absolute;left:0;display:block;width:390px;height:auto;}
-  .hero-wrap .circle{top:32px;}      /* Mask group export: y=32, 390x453 — only its top (32..112) shows under the nav gradient */
-  .hero-wrap .body{top:112px;}       /* full-frame export cropped 112..647: photo + thumbnails + name, i.e. everything but the nav bar */
+  /* Figma "Mask group": 453px circle at (-28,32) -> centre is 3.5px right of the frame centre; not clipped to 390 any more */
+  .hero-wrap .circle{position:absolute;top:32px;left:calc(50% + 3.5px - 226.5px);width:453px;height:453px;border-radius:50%;overflow:hidden;}
+  /* Rectangle 59 (image fill) : 670.59x535.88 at (-126.19,13.73) in frame coords -> relative to the circle */
+  .hero-wrap .circle img{position:absolute;left:-98.2px;top:-18.27px;width:670.59px;height:535.88px;object-fit:cover;display:block;}
+  /* thumbnails row + name pill : full-frame export cropped 452..647 (the circle only spans x 81..316 there, so nothing is clipped) */
+  .hero-wrap .lower{position:absolute;top:452px;left:calc(50% - 195px);width:390px;height:195px;display:block;}
 
   /* ---------- scrim : full-screen black 60% + blur, hidden under the card layer, fades in on scroll
      (same as the backdrop behind a bottom sheet being dragged up) ---------- */
@@ -175,8 +178,8 @@
     <i style="top:647px" data-l="cards 647"></i>
   </div>
   <div class="hero-wrap">
-    <img class="circle" src="assets/hero_circle.png" width="390" height="453" alt="">
-    <img class="body" src="assets/hero_body.png" width="390" height="535" alt="">
+    <div class="circle"><img src="assets/hero_photo.jpg" alt=""></div>
+    <img class="lower" src="assets/hero_lower.png" width="390" height="195" alt="">
   </div>
   <div class="scrim" id="scrim"></div>
   <div class="screen" id="screen">
@@ -294,6 +297,52 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
     const w = sc.firstElementChild.getBoundingClientRect().width + 12;
     const i = Math.min(dots.length - 1, Math.round(sc.scrollLeft / w));
     dots.forEach((d, k) => d.classList.toggle('on', k === i));
+  }, { passive:true });
+})();
+
+// ---------- snap : any scroll from the top brings the card layer to 32px under the logo header ----------
+(function snap(){
+  const sc = document.getElementById('screen');
+  const SNAP = 647 - (104 + 32);                        // card top at toolbar bottom (104) + 32
+  let last = 0, timer = 0, quiet = 0, animating = false, locked = false, dir = 1;
+  const go = top => {
+    dir = top > sc.scrollTop ? 1 : -1;
+    animating = true; locked = true;
+    sc.style.overflowY = 'hidden';                      // kills native (touch) momentum while we move
+    sc.scrollTo({ top, behavior: 'smooth' });
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      animating = false; sc.scrollTop = top; last = top;
+      sc.style.overflowY = '';
+      lockedAt = performance.now(); lastAbs = 1e9;      // stay locked only while decaying momentum ticks keep coming
+      armQuiet();
+    }, 450);
+  };
+  let lockedAt = 0, lastAbs = 0;
+  const armQuiet = () => { clearTimeout(quiet); quiet = setTimeout(() => { locked = false; }, 160); };
+  const unlock = () => { locked = false; clearTimeout(quiet); };
+  sc.addEventListener('wheel', e => {
+    if (animating) { e.preventDefault(); return; }
+    if (locked) {
+      const abs = Math.abs(e.deltaY);
+      // momentum only ever decays: a growing or reversed delta is a new gesture -> let it through
+      const fresh = abs > lastAbs * 1.15 + 1 || Math.sign(e.deltaY) !== Math.sign(dir) || performance.now() - lockedAt > 900;
+      lastAbs = abs;
+      if (!fresh) { e.preventDefault(); armQuiet(); return; }   // swallow trailing momentum tick
+      unlock();
+    }
+    if (sc.scrollTop < 8 && e.deltaY > 0) { e.preventDefault(); go(SNAP); }
+  }, { passive:false });
+  sc.addEventListener('scroll', () => {
+    const y = sc.scrollTop;
+    if (!animating) dir = y > last ? 1 : y < last ? -1 : dir;
+    last = y;
+    if (animating) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const t = sc.scrollTop;
+      if (t > 0 && t < SNAP) go(dir > 0 ? SNAP : 0);
+    }, 80);
   }, { passive:true });
 })();
 
