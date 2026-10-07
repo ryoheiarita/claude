@@ -185,20 +185,7 @@
       <!-- New Contents -->
       <section class="ccard">
         <div class="chead"><h2>New Contents</h2></div>
-        <div class="vlist">
-          <div class="item">
-            <div class="thumb"><img src="assets/thumb_bf4.jpg" alt=""></div>
-            <div class="info"><p class="ttl">【Behind the Scenes】"Neon Cathedral" Music Video Making</p><p class="who">B-Town Architect</p></div>
-          </div>
-          <div class="item">
-            <div class="thumb"><img src="assets/thumb_bf5.jpg" alt=""></div>
-            <div class="info"><p class="ttl">Vlog #12 — ツアー移動日の裏側、メンバーの過ごし方</p><p class="who">B-Town Architect</p></div>
-          </div>
-          <div class="item">
-            <div class="thumb"><img src="assets/thumb_bf4.jpg" alt=""></div>
-            <div class="info"><p class="ttl">B-Town Radio vol.8（アーカイブ配信）</p><p class="who">B-Town Architect</p></div>
-          </div>
-        </div>
+        <div class="vlist" id="newContents"></div>
       </section>
 
     </div>
@@ -224,6 +211,26 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
       <p class="when">${whenLabel(ev)}</p>
     </div>`;
   }).join('');
+})();
+
+// ---------- New Contents : fictional B-Town Architect items ----------
+(function renderNewContents(){
+  const items = [
+    ['【Behind the Scenes】"Neon Cathedral" Music Video Making', 'bf4'],
+    ['Vlog #12 — ツアー移動日の裏側、メンバーの過ごし方', 'bf5'],
+    ['B-Town Radio vol.8（アーカイブ配信）', 'bf4'],
+    ['1st ALBUM「ARCHITECTURE」全曲試聴トレーラー', 'bf5'],
+    ['【Dance Practice】"Neon Cathedral" Fix ver.', 'bf4'],
+    ['メンバー対談：デビューから1年を振り返る（前編）', 'bf5'],
+    ['BMSG FES\'26 リハーサル密着 Day1', 'bf4'],
+    ['【Photo】Billboard Japan 撮影オフショット 32枚', 'bf5'],
+    ['Weekly Letter #41 — 今週のひとこと', 'bf4'],
+    ['FC限定：ボイスメッセージ「おやすみ前に」', 'bf5'],
+  ];
+  document.getElementById('newContents').innerHTML = items.map(([t, img]) => `<div class="item">
+    <div class="thumb"><img src="assets/thumb_${img}.jpg" alt=""></div>
+    <div class="info"><p class="ttl">${esc(t)}</p><p class="who">B-Town Architect</p></div>
+  </div>`).join('');
 })();
 
 // ---------- News pager dots follow the horizontal scroll ----------
