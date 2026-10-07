@@ -12,7 +12,7 @@
 <style>
   :root{
     --bg:#101010;
-    --hero-h:647px;         /* Figma: cards start at y=647 (Container 452 + Frame 2611525 195) */
+    --hero-h:631px;         /* Figma 647 (Container 452 + 195) minus 16: slider and everything below pulled up over the circle */
     --nav-h:112px;          /* Figma Navigation Bar: status 59 + gap 5 + toolbar 40 + pb 8 */
     --sheet-tint:rgba(0,0,0,.6);
     --sheet-blur:24px;
@@ -68,7 +68,7 @@
   .hero-wrap .circle img{position:absolute;left:-98.2px;top:-18.27px;width:670.59px;height:535.88px;object-fit:cover;display:block;}
   /* artist slider + name pill : Figma full-frame export (3x) cropped 429..647pt, placed as-is.
      429 = top of the centre logo card; the circle only spans x 49..348 there, so nothing is clipped. */
-  .hero-wrap .lower{position:absolute;top:429px;left:calc(50% - 195px);width:390px;height:218px;display:block;}
+  .hero-wrap .lower{position:absolute;top:413px;left:calc(50% - 195px);width:390px;height:218px;display:block;} /* 429 - 16 */
 
   /* ---------- scrim : full-screen black 60% + blur, hidden under the card layer, fades in on scroll
      (same as the backdrop behind a bottom sheet being dragged up) ---------- */
@@ -176,7 +176,7 @@
   <div class="guides" id="guides">
     <i style="top:59px" data-l="status 59"></i>
     <i style="top:112px" data-l="nav 112"></i>
-    <i style="top:647px" data-l="cards 647"></i>
+    <i style="top:631px" data-l="cards 631"></i>
   </div>
   <div class="hero-wrap">
     <div class="circle"><img src="assets/hero_photo.jpg" alt=""></div>
@@ -304,7 +304,8 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 // ---------- snap : any scroll from the top brings the card layer to 32px under the logo header ----------
 (function snap(){
   const sc = document.getElementById('screen');
-  const SNAP = 647 - (104 + 32);                        // card top at toolbar bottom (104) + 32
+  const HERO = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hero-h'));
+  const SNAP = HERO - (104 + 32);                       // card top at toolbar bottom (104) + 32
   let last = 0, timer = 0, quiet = 0, animating = false, locked = false, dir = 1;
   const go = top => {
     dir = top > sc.scrollTop ? 1 : -1;
