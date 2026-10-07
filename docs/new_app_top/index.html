@@ -61,30 +61,14 @@
 
   /* ---------- hero : fixed layer at the bottom of the stack (circle photo + artist block, both Figma exports) ---------- */
   .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;
-    background:linear-gradient(to bottom, #070707 0, #101010 160px);
-    --grad:linear-gradient(90deg, #7c7cff 0%, #ff8db5 50%, #5ee6a8 100%);}   /* Gradient_main approximation */
+    background:linear-gradient(to bottom, #070707 0, #101010 160px);}
   /* Figma "Mask group": 453px circle at (-28,32) -> centre is 3.5px right of the frame centre; not clipped to 390 any more */
   .hero-wrap .circle{position:absolute;top:32px;left:calc(50% + 3.5px - 226.5px);width:453px;height:453px;border-radius:50%;overflow:hidden;}
   /* Rectangle 59 (image fill) : 670.59x535.88 at (-126.19,13.73) in frame coords -> relative to the circle */
   .hero-wrap .circle img{position:absolute;left:-98.2px;top:-18.27px;width:670.59px;height:535.88px;object-fit:cover;display:block;}
-  /* artist slider (Figma _レイヤー_1, 358x119 at (16,452)) : 6 photo cards + centre logo card, laid over the circle */
-  .hero-wrap .slider{position:absolute;top:452px;left:calc(50% - 179px);width:358px;height:119px;}
-  .hero-wrap .slider .th{position:absolute;overflow:hidden;background:#222;}
-  .hero-wrap .slider .th img{display:block;width:100%;height:100%;object-fit:cover;}
-  .hero-wrap .slider .center{
-    position:absolute;left:calc(50% + .5px);top:-23px;width:141px;height:141px;transform:translateX(-50%);
-    border-radius:12px;padding:2px;background:var(--grad);
-    box-shadow:0 20px 40px rgba(0,0,0,.5);
-  }
-  .hero-wrap .slider .center .in{width:100%;height:100%;border-radius:10px;overflow:hidden;background:#000;position:relative;}
-  .hero-wrap .slider .center img{position:absolute;left:-50.24%;top:-6.38%;width:200.47%;height:112.77%;display:block;}
-  /* name pill (Frame 626474) : 1px gradient border, 22px Bold */
-  .hero-wrap .name{
-    position:absolute;top:583px;left:50%;transform:translateX(-50%);
-    padding:1px;border-radius:999px;background:var(--grad);
-  }
-  .hero-wrap .name span{display:block;padding:5px 23px;border-radius:999px;background:#101010;
-    font-weight:700;font-size:22px;line-height:28px;color:#fff;white-space:nowrap;}
+  /* artist slider + name pill : Figma full-frame export (3x) cropped 429..647pt, placed as-is.
+     429 = top of the centre logo card; the circle only spans x 49..348 there, so nothing is clipped. */
+  .hero-wrap .lower{position:absolute;top:429px;left:calc(50% - 195px);width:390px;height:218px;display:block;}
 
   /* ---------- scrim : full-screen black 60% + blur, hidden under the card layer, fades in on scroll
      (same as the backdrop behind a bottom sheet being dragged up) ---------- */
@@ -196,16 +180,7 @@
   </div>
   <div class="hero-wrap">
     <div class="circle"><img src="assets/hero_photo.jpg" alt=""></div>
-    <div class="slider">
-      <div class="th" style="left:5px;top:32.87px;width:13.27px;height:53.27px;border-radius:1.2px"><img src="assets/th1.jpg" alt=""></div>
-      <div class="th" style="left:18px;top:23.22px;width:34.95px;height:72.56px;border-radius:3.1px"><img src="assets/th2.jpg" alt=""></div>
-      <div class="th" style="left:50.19px;top:4.34px;width:75.82px;height:110.32px;border-radius:6.8px"><img src="assets/th3.jpg" alt=""></div>
-      <div class="th" style="left:232.88px;top:4.34px;width:75.82px;height:110.32px;border-radius:6.8px"><img src="assets/th6.jpg" alt=""></div>
-      <div class="th" style="left:305.66px;top:18.77px;width:38.34px;height:80.11px;border-radius:3.5px"><img src="assets/th5.jpg" alt=""></div>
-      <div class="th" style="left:344px;top:31.4px;width:14px;height:56.2px;border-radius:1.3px"><img src="assets/th4.jpg" alt=""></div>
-      <div class="center"><div class="in"><img src="assets/th_center.jpg" alt=""></div></div>
-    </div>
-    <div class="name"><span>B-Town Architect</span></div>
+    <img class="lower" src="assets/hero_lower.png" width="390" height="218" alt="">
   </div>
   <div class="scrim" id="scrim"></div>
   <div class="screen" id="screen">
