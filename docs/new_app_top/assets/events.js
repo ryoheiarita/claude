@@ -79,7 +79,7 @@ window.EVENTS = [
   "start": "19:00",
   "end": "21:00",
   "allDay": false,
-  "cat": "配信チケット",
+  "cat": "Premium",
   "artists": [
    "Novel Core"
   ],
@@ -201,7 +201,7 @@ window.EVENTS = [
   "start": "20:00",
   "end": "22:00",
   "allDay": false,
-  "cat": "配信チケット",
+  "cat": "Premium",
   "artists": [
    "BE:FIRST"
   ],
@@ -418,7 +418,7 @@ window.EVENTS = [
   "start": "16:00",
   "end": "21:30",
   "allDay": false,
-  "cat": "配信チケット",
+  "cat": "Premium",
   "artists": [
    "BE:FIRST",
    "MAZZEL",
@@ -476,7 +476,7 @@ window.EVENTS = [
   "start": "16:00",
   "end": "21:30",
   "allDay": false,
-  "cat": "配信チケット",
+  "cat": "Premium",
   "artists": [
    "BE:FIRST",
    "MAZZEL",
