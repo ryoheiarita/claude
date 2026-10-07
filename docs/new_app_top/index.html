@@ -306,44 +306,50 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
   const sc = document.getElementById('screen');
   const HERO = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hero-h'));
   const SNAP = HERO - (104 + 32);                       // card top at toolbar bottom (104) + 32
-  let last = 0, timer = 0, quiet = 0, animating = false, locked = false, dir = 1;
-  const go = top => {
+  let last = 0, timer = 0, quiet = 0, maxLock = 0, animating = false, locked = false, dir = 1, lastAbs = 0;
+
+  // While locked the container is overflow:hidden, so trackpad momentum cannot move it at all
+  // (Safari ignores preventDefault on momentum wheel events, so swallowing them is not enough).
+  const lock = () => { locked = true; sc.style.overflowY = 'hidden'; };
+  const unlock = () => { locked = false; sc.style.overflowY = ''; clearTimeout(quiet); clearTimeout(maxLock); };
+  const armQuiet = () => { clearTimeout(quiet); quiet = setTimeout(unlock, 160); };
+
+  const go = (top, fromWheel) => {
     dir = top > sc.scrollTop ? 1 : -1;
-    animating = true; locked = true;
-    sc.style.overflowY = 'hidden';                      // kills native (touch) momentum while we move
+    animating = true; lock();
     sc.scrollTo({ top, behavior: 'smooth' });
     clearTimeout(timer);
     timer = setTimeout(() => {
       animating = false; sc.scrollTop = top; last = top;
-      sc.style.overflowY = '';
-      lockedAt = performance.now(); lastAbs = 1e9;      // stay locked only while decaying momentum ticks keep coming
-      armQuiet();
+      if (fromWheel) {                                  // keep blocking until the momentum ticks die down
+        lastAbs = 1e9; armQuiet();
+        clearTimeout(maxLock); maxLock = setTimeout(unlock, 900);
+      } else unlock();                                  // touch: momentum already ended before we snapped
     }, 450);
   };
-  let lockedAt = 0, lastAbs = 0;
-  const armQuiet = () => { clearTimeout(quiet); quiet = setTimeout(() => { locked = false; }, 160); };
-  const unlock = () => { locked = false; clearTimeout(quiet); };
+
   sc.addEventListener('wheel', e => {
     if (animating) { e.preventDefault(); return; }
     if (locked) {
       const abs = Math.abs(e.deltaY);
-      // momentum only ever decays: a growing or reversed delta is a new gesture -> let it through
-      const fresh = abs > lastAbs * 1.15 + 1 || Math.sign(e.deltaY) !== Math.sign(dir) || performance.now() - lockedAt > 900;
+      // momentum only ever decays: a growing or reversed delta is a new gesture -> release immediately
+      const fresh = abs > lastAbs * 1.15 + 1 || Math.sign(e.deltaY) !== dir;
       lastAbs = abs;
-      if (!fresh) { e.preventDefault(); armQuiet(); return; }   // swallow trailing momentum tick
+      if (!fresh) { e.preventDefault(); armQuiet(); return; }
       unlock();
     }
-    if (sc.scrollTop < 8 && e.deltaY > 0) { e.preventDefault(); go(SNAP); }
+    if (sc.scrollTop < 8 && e.deltaY > 0) { e.preventDefault(); go(SNAP, true); }
   }, { passive:false });
+
   sc.addEventListener('scroll', () => {
     const y = sc.scrollTop;
     if (!animating) dir = y > last ? 1 : y < last ? -1 : dir;
     last = y;
-    if (animating) return;
+    if (animating || locked) return;
     clearTimeout(timer);
     timer = setTimeout(() => {
       const t = sc.scrollTop;
-      if (t > 0 && t < SNAP) go(dir > 0 ? SNAP : 0);
+      if (t > 0 && t < SNAP) go(dir > 0 ? SNAP : 0, false);
     }, 80);
   }, { passive:true });
 })();
