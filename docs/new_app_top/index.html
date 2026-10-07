@@ -202,7 +202,11 @@ const whenLabel = ev => ev.allDay ? md(ev.date) : `${md(ev.date)} ${ev.start} -$
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 (function renderCalendar(){
-  const list = (window.EVENTS || []).slice(0, 8);
+  // only the BWU-original categories, grouped in this order: ライブ先行 -> PPV -> FC新規開設 (each by date)
+  const ORDER = ['ライブ先行', 'PPV', 'FC新規開設'];
+  const list = (window.EVENTS || [])
+    .filter(ev => ORDER.includes(ev.cat))
+    .sort((a, b) => ORDER.indexOf(a.cat) - ORDER.indexOf(b.cat) || a.date.localeCompare(b.date) || (a.start || '').localeCompare(b.start || ''));
   document.getElementById('cal').innerHTML = list.map(ev => {
     const hl = CAT_STYLE[ev.cat];
     return `<div class="tile">
