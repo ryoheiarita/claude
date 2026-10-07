@@ -45,7 +45,7 @@ for (const e of raw) {
     sort: e.start_at,
   });
 }
-// fictional extras (ライブ先行 / PPV / FC新規開設) kept in data/extra_events.json
+// fictional extras (ライブ先行 / 配信チケット / FC新規開設) kept in data/extra_events.json
 const extraPath = path.join(root, 'data/extra_events.json');
 const extras = fs.existsSync(extraPath) ? JSON.parse(fs.readFileSync(extraPath, 'utf8')).filter(e => e.date >= FROM && e.date <= TO) : [];
 for (const e of extras) e.sort = `${e.date}T${e.start || '00:00'}`;

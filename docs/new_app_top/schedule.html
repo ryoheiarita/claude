@@ -81,7 +81,7 @@
   .cat-birthday{--c:#e60076;}
   .cat-birthday.card{background-image:url(assets/birthday.svg);background-repeat:no-repeat;background-position:calc(100% - 16px) 100%;}
   .cat-presale{--c:#3d8bff;}   /* ライブ先行 */
-  .cat-ppv{--c:#a855f7;}       /* PPV */
+  .cat-ppv{--c:#a855f7;}       /* 配信チケット */
   .cat-fcopen{--c:#ffb300;}    /* FC新規開設 */
   .card .details{flex:1 0 0;min-width:0;display:flex;flex-direction:column;gap:8px;}
   .card .row1{display:flex;align-items:center;justify-content:space-between;gap:8px;}
@@ -129,7 +129,7 @@
 <script>
 // ---------- real data: calendar-bmsg.tokyo, built by tools/build_events.mjs into assets/events.js ----------
 const pad2 = n => String(n).padStart(2,'0');
-const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', PPV:'ppv', 'FC新規開設':'fcopen' };
+const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', '配信チケット':'ppv', 'FC新規開設':'fcopen' };
 const performerLabel = a => a.length === 1 ? a[0] : a.length === 2 ? `${a[0]} / ${a[1]}` : `${a[0]} 他${a.length - 1}組`;
 
 function buildMonths(events){

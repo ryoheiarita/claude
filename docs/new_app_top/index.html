@@ -94,7 +94,7 @@
     border:1px solid var(--c);background:color-mix(in srgb, var(--c) 8%, transparent);
     font-weight:400;font-size:14px;line-height:normal;letter-spacing:-.28px;color:#fff;white-space:nowrap;
   }
-  .badge.cat-birthday{--c:#e60076;} .badge.cat-presale{--c:#3d8bff;} .badge.cat-ppv{--c:#a855f7;} .badge.cat-fcopen{--c:#ffb300;}
+  .badge.cat-birthday{--c:#e60076;} .badge.cat-presale{--c:#3d8bff;} .badge.cat-ppv{--c:#a855f7;} /* 配信チケット */ .badge.cat-fcopen{--c:#ffb300;}
   .tile .who{font-weight:400;font-size:14px;line-height:20px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .tile .ttl{font-weight:600;font-size:16px;line-height:22px;color:#fff;height:44px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
   .tile .when{font-weight:400;font-size:14px;line-height:17px;letter-spacing:-.28px;color:rgba(255,255,255,.5);white-space:nowrap;}
@@ -154,7 +154,7 @@
         <div class="item">
           <div class="thumb"><img src="assets/thumb_bf3.jpg" alt=""></div>
           <div class="info">
-            <p class="ttl">BMSG FES'26 DAY1 生配信（PPV）</p>
+            <p class="ttl">BMSG FES'26 DAY1 生配信</p>
             <p class="who">BE:FIRST 他11組</p>
           </div>
         </div>
@@ -195,15 +195,15 @@
 <script src="assets/events.js"></script>
 <script>
 // ---------- Calendar tiles : next events from calendar-bmsg.tokyo data (assets/events.js) ----------
-const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', PPV:'ppv', 'FC新規開設':'fcopen' };
+const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', '配信チケット':'ppv', 'FC新規開設':'fcopen' };
 const performerLabel = a => a.length === 1 ? a[0] : a.length === 2 ? `${a[0]} / ${a[1]}` : `${a[0]} 他${a.length - 1}組`;
 const md = d => d.slice(5).replace('-', '.');                // 2026-10-02 -> 10.02
 const whenLabel = ev => ev.allDay ? md(ev.date) : `${md(ev.date)} ${ev.start} -${ev.end ? ' ' + md(ev.date) + ' ' + ev.end : ''}`;
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 (function renderCalendar(){
-  // only the BWU-original categories, grouped in this order: ライブ先行 -> PPV -> FC新規開設 (each by date)
-  const ORDER = ['ライブ先行', 'PPV', 'FC新規開設'];
+  // only the BWU-original categories, grouped in this order: ライブ先行 -> 配信チケット -> FC新規開設 (each by date)
+  const ORDER = ['ライブ先行', '配信チケット', 'FC新規開設'];
   const list = (window.EVENTS || [])
     .filter(ev => ORDER.includes(ev.cat))
     .sort((a, b) => ORDER.indexOf(a.cat) - ORDER.indexOf(b.cat) || a.date.localeCompare(b.date) || (a.start || '').localeCompare(b.start || ''));

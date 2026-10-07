@@ -79,11 +79,11 @@ window.EVENTS = [
   "start": "19:00",
   "end": "21:00",
   "allDay": false,
-  "cat": "PPV",
+  "cat": "配信チケット",
   "artists": [
    "Novel Core"
   ],
-  "title": "Novel Core ONE MAN LIVE \"ROOM\" 東京公演 生配信（PPV）",
+  "title": "Novel Core ONE MAN LIVE \"ROOM\" 東京公演 生配信",
   "link": "https://example.com/novelcore-ppv",
   "fictional": true
  },
@@ -201,11 +201,11 @@ window.EVENTS = [
   "start": "20:00",
   "end": "22:00",
   "allDay": false,
-  "cat": "PPV",
+  "cat": "配信チケット",
   "artists": [
    "BE:FIRST"
   ],
-  "title": "BE:FIRST WORLD SHOWCASE 2026 -【MANILA】生配信（PPV）",
+  "title": "BE:FIRST WORLD SHOWCASE 2026 -【MANILA】生配信",
   "link": "https://example.com/befirst-manila-ppv",
   "fictional": true
  },
@@ -418,7 +418,7 @@ window.EVENTS = [
   "start": "16:00",
   "end": "21:30",
   "allDay": false,
-  "cat": "PPV",
+  "cat": "配信チケット",
   "artists": [
    "BE:FIRST",
    "MAZZEL",
@@ -433,7 +433,7 @@ window.EVENTS = [
    "ふみの",
    "TAKARA"
   ],
-  "title": "BMSG FES'26 DAY1 生配信（PPV）",
+  "title": "BMSG FES'26 DAY1 生配信",
   "link": "https://example.com/bmsgfes26-day1",
   "fictional": true
  },
@@ -476,7 +476,7 @@ window.EVENTS = [
   "start": "16:00",
   "end": "21:30",
   "allDay": false,
-  "cat": "PPV",
+  "cat": "配信チケット",
   "artists": [
    "BE:FIRST",
    "MAZZEL",
@@ -491,7 +491,7 @@ window.EVENTS = [
    "ふみの",
    "TAKARA"
   ],
-  "title": "BMSG FES'26 DAY2 生配信（PPV）",
+  "title": "BMSG FES'26 DAY2 生配信",
   "link": "https://example.com/bmsgfes26-day2",
   "fictional": true
  },
