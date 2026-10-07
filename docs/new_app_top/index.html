@@ -29,29 +29,32 @@
     body{display:block}
     .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
   }
-  .screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .screen{position:absolute;inset:0;z-index:2;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .screen::-webkit-scrollbar{display:none}
   .statusbar{position:absolute;top:0;left:0;width:390px;height:var(--status-h);z-index:10;pointer-events:none;
     background:url(assets/statusbar.png) top left/390px 40px no-repeat;}
   @media (max-width:430px){ .statusbar{width:100%;background-size:100% auto} }
 
-  /* ---------- hero : stays put, the card sheet scrolls over it ---------- */
-  .hero-wrap{position:sticky;top:0;height:var(--hero-h);z-index:0;}
+  /* ---------- hero : fixed layer at the bottom of the stack ---------- */
+  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;}
   .hero{display:block;width:100%;height:var(--hero-h);object-fit:cover;object-position:top;}
 
-  /* ---------- sheet : blur + black tint pulled over the hero ---------- */
+  /* ---------- scrim : full-screen black 60% + blur, hidden under the card layer, fades in on scroll
+     (same as the backdrop behind a bottom sheet being dragged up) ---------- */
+  .scrim{
+    position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:var(--sheet-tint);
+    -webkit-backdrop-filter:blur(var(--sheet-blur));backdrop-filter:blur(var(--sheet-blur));
+    opacity:var(--p,0);              /* 0 at rest -> 1 as the cards travel up (set by JS) */
+  }
+
+  /* ---------- card layer : transparent scroller, spacer for the hero then the cards ---------- */
+  .spacer{height:var(--hero-h);}
   .sheet{
-    position:relative;z-index:1;
+    position:relative;
     padding:0 16px 120px;
     min-height:100%;                 /* enough scroll range for the first card to reach the top */
     display:flex;flex-direction:column;gap:8px;
-    --p:0;                           /* 0 at rest -> 1 as the cards travel up (set by JS) */
-  }
-  .sheet::before{ /* black 60% + blur layer behind the cards; fades in with --p */
-    content:"";position:absolute;left:0;right:0;top:-24px;bottom:0;z-index:-1;pointer-events:none;
-    background:linear-gradient(to bottom, rgba(0,0,0,0), var(--sheet-tint) 24px);
-    -webkit-backdrop-filter:blur(var(--sheet-blur));backdrop-filter:blur(var(--sheet-blur));
-    opacity:var(--p);
   }
 
   /* ---------- cards (Figma "Card") ---------- */
@@ -124,8 +127,10 @@
     <i style="top:59px" data-l="safe 59"></i>
     <i style="top:647px" data-l="cards 647"></i>
   </div>
+  <div class="hero-wrap"><img class="hero" src="assets/top.png" width="390" height="647" alt=""></div>
+  <div class="scrim" id="scrim"></div>
   <div class="screen" id="screen">
-    <div class="hero-wrap"><img class="hero" src="assets/top.png" width="390" height="647" alt=""></div>
+    <div class="spacer"></div>
     <div class="sheet" id="sheet">
 
       <!-- Calendar -->
@@ -231,12 +236,12 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
   }, { passive:true });
 })();
 
-// ---------- sheet backdrop fades in as the cards travel up over the hero ----------
-(function sheetBackdrop(){
-  const sc = document.getElementById('screen'), sheet = document.getElementById('sheet');
-  const RANGE = 480;                                   // px of scroll until the backdrop is fully on
+// ---------- full-screen scrim fades in as the card layer travels up (bottom-sheet style) ----------
+(function scrim(){
+  const sc = document.getElementById('screen'), scrim = document.getElementById('scrim');
+  const RANGE = 480;                                   // px of scroll until the scrim is fully on
   let raf = 0;
-  const update = () => { raf = 0; sheet.style.setProperty('--p', Math.min(1, sc.scrollTop / RANGE).toFixed(3)); };
+  const update = () => { raf = 0; scrim.style.setProperty('--p', Math.min(1, sc.scrollTop / RANGE).toFixed(3)); };
   sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(update); }, { passive:true });
   update();
 })();
