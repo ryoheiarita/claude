@@ -1,120 +1,89 @@
 {%- comment -%}
   =====================================================================
   BMSG SHOP マイページ (/account) 本文
-  既存 sections/main-account.liquid (template--xxx__main) 内の
-  <div class="btown-section"> 〜 #logout_btn までを、このマークアップで置き換える。
-  ・ヘッダー/フッターはテーマのまま
-  ・CSS は assets/account-mypage.css (theme.liquid か本セクション先頭で読み込み)
-  ・既存の <style> (.fanclub-wrap 系) は削除する
+  既存 sections/main-account.liquid の <div class="btown-section"> 〜 #logout_btn を
+  このマークアップで置き換える。
+  ・ヘッダー/フッター/テーマの .Button はそのまま（見た目は .mp 配下で白枠・白文字に上書き）
+  ・CSS は assets/account-mypage.css
   ・ⓘ モーダル (#infoModal) の JS/DOM は既存のまま流用
+  ・住所の追加/編集は Shopify 標準の customer_address フォームをモーダルに入れる
+    （都道府県セレクトは Shopify.CountryProvinceSelector を使用 → shopify_common.js が必要）
   =====================================================================
 {%- endcomment -%}
 {{ 'account-mypage.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'shopify_common.js' | shopify_asset_url }}" defer></script>
 
-{%- comment -%} ---- 住所の取得 ----
-  配送用     : customer.default_address (初期登録の住所をそのまま表示)
-  チケット先行用: ★要確認★ 現状どこに保存しているか (customer metafield / 別addressのタグ等)。
-               下記は例として metafield  customer.metafields.custom.ticket_address (JSON or 複数行) を想定。
-{%- endcomment -%}
-{%- assign shipping_address = customer.default_address -%}
-{%- assign ticket_address = customer.metafields.custom.ticket_address -%}
+{%- assign gender   = customer.metafields.custom.gender -%}
+{%- assign birthday = customer.metafields.custom.birthday -%}
+{%- comment -%} 基本情報に出す住所: ★要確認★ チケット先行用住所の保存先（metafield 想定） {%- endcomment -%}
+{%- assign base_zip  = customer.metafields.custom.ticket_zip -%}
+{%- assign base_addr = customer.metafields.custom.ticket_address -%}
 
 <div class="mp">
 
-  {%- comment -%} ===== アカウント基本情報 ===== {%- endcomment -%}
+  <h1 class="mp-title">マイページ</h1>
+
+  {%- comment -%} ===== 基本情報 ===== {%- endcomment -%}
   <section class="mp-section">
     <div class="mp-section__head">
-      <h1 class="mp-section__title">アカウント基本情報</h1>
+      <h2 class="mp-section__title">基本情報</h2>
+      {%- comment -%} PC: 見出し右 / SP: リスト下（同じリンクを2つ置き CSS で出し分け） {%- endcomment -%}
+      <a href="{{ customer_fields_edit_url | default: '/account/edit' }}" class="Button Button--primary cf-edit-account-link mp-pc-only">基本情報の編集</a>
     </div>
     <div class="mp-card">
       <dl class="mp-dl">
-        <div class="mp-dl__row">
-          <dt class="mp-dl__label">氏名</dt>
-          <dd class="mp-dl__value">{{ customer.last_name }} {{ customer.first_name }}</dd>
-        </div>
-        <div class="mp-dl__row">
-          <dt class="mp-dl__label">メールアドレス</dt>
-          <dd class="mp-dl__value">{{ customer.email }}</dd>
-        </div>
-        <div class="mp-dl__row">
-          <dt class="mp-dl__label">性別</dt>
-          {%- assign gender = customer.metafields.custom.gender -%}
-          <dd class="mp-dl__value{% if gender == blank %} mp-dl__value--empty{% endif %}">{{ gender | default: '未設定' }}</dd>
-        </div>
-        <div class="mp-dl__row">
-          <dt class="mp-dl__label">生年月日</dt>
-          {%- assign birthday = customer.metafields.custom.birthday -%}
-          <dd class="mp-dl__value{% if birthday == blank %} mp-dl__value--empty{% endif %}">{{ birthday | default: '未設定' }}</dd>
-        </div>
-        <div class="mp-dl__row">
-          <dt class="mp-dl__label">電話番号</dt>
-          <dd class="mp-dl__value{% if customer.phone == blank %} mp-dl__value--empty{% endif %}">{{ customer.phone | default: '未設定' }}</dd>
-        </div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">{{ customer.last_name }} {{ customer.first_name }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">メールアドレス</dt><dd class="mp-dl__value">{{ customer.email }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">性別</dt><dd class="mp-dl__value{% if gender == blank %} mp-dl__value--empty{% endif %}">{{ gender | default: '未設定' }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">生年月日</dt><dd class="mp-dl__value{% if birthday == blank %} mp-dl__value--empty{% endif %}">{{ birthday | default: '未設定' }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value{% if customer.phone == blank %} mp-dl__value--empty{% endif %}">{{ customer.phone | default: '未設定' }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">郵便番号</dt><dd class="mp-dl__value{% if base_zip == blank %} mp-dl__value--empty{% endif %}">{{ base_zip | default: '未設定' }}</dd></div>
+        <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value{% if base_addr == blank %} mp-dl__value--empty{% endif %}">{{ base_addr | default: '未設定' }}</dd></div>
       </dl>
     </div>
-    <div class="mp-actions">
-      {%- comment -%} Customer Fields 編集リンク: 既存の href をそのまま使う {%- endcomment -%}
-      <a href="{{ customer_fields_edit_url | default: '/account/edit' }}" class="Button Button--primary cf-edit-account-link">アカウント編集</a>
+    <p class="mp-section__note mp-section__note--lg">※最新の住所の反映をお願いいたします</p>
+    <div class="mp-actions mp-sp-only">
+      <a href="{{ customer_fields_edit_url | default: '/account/edit' }}" class="Button Button--primary cf-edit-account-link">基本情報の編集</a>
     </div>
   </section>
 
-  {%- comment -%} ===== 登録住所 (チケット先行用 / 配送用) ===== {%- endcomment -%}
-  <section class="mp-section">
+  {%- comment -%} ===== 配送用住所 (複数) ===== {%- endcomment -%}
+  <section class="mp-section" id="addresses">
     <div class="mp-section__head">
       <div>
-        <h2 class="mp-section__title">登録住所</h2>
-        <p class="mp-section__sub">チケット先行の当選通知・配送に使用する住所です。</p>
+        <h2 class="mp-section__title">配送用住所</h2>
+        <p class="mp-section__sub">複数の配送先を登録できます。注文時に選択する住所です。</p>
       </div>
     </div>
-    <div class="mp-addr-grid">
-
-      {%- comment -%} チケット先行用 {%- endcomment -%}
-      {%- if ticket_address != blank -%}
-        <div class="mp-card mp-addr">
+    <div class="mp-addr-cards">
+      {%- for address in customer.addresses -%}
+        <article class="mp-card mp-addr" data-address-id="{{ address.id }}">
           <div class="mp-addr__head">
-            <h3 class="mp-addr__title">チケット先行用住所</h3>
+            <h3 class="mp-addr__title">{{ address.last_name }} {{ address.first_name }}</h3>
+            {%- if address == customer.default_address -%}<span class="mp-pill">選択中</span>{%- endif -%}
           </div>
           <p class="mp-addr__body">
-            {%- comment -%} 保存形式に合わせて整形する {%- endcomment -%}
-            {{ ticket_address | newline_to_br }}
+            〒{{ address.zip }}<br>
+            {{ address.province }} {{ address.city }}<br>
+            {{ address.address1 }}{% if address.address2 != blank %} {{ address.address2 }}{% endif %}
+            {%- if address.company != blank -%}<br>{{ address.company }}{%- endif -%}
+            {%- if address.phone != blank -%}<br>{{ address.phone }}{%- endif -%}
           </p>
-          <div class="mp-addr__foot"><a href="{{ ticket_address_edit_url | default: '/account/edit' }}" class="mp-link">編集</a></div>
-        </div>
-      {%- else -%}
-        <div class="mp-card mp-addr mp-addr--empty">
-          <div class="mp-addr__head">
-            <h3 class="mp-addr__title">チケット先行用住所</h3>
+          <div class="mp-addr__foot">
+            {%- comment -%} 削除: Shopify 標準の DELETE フォーム {%- endcomment -%}
+            <form method="post" action="/account/addresses/{{ address.id }}" class="mp-addr__delete" data-confirm="この住所を削除しますか？">
+              <input type="hidden" name="_method" value="delete">
+              <button type="submit" class="mp-link mp-link--muted">削除</button>
+            </form>
+            <button type="button" class="mp-link" data-modal-open="addr-modal-{{ address.id }}">編集</button>
           </div>
-          <p class="mp-addr__body">チケット先行用住所は未登録です。</p>
-          <div class="mp-addr__foot"><a href="{{ ticket_address_edit_url | default: '/account/edit' }}" class="mp-link">住所を登録</a></div>
-        </div>
+        </article>
+      {%- endfor -%}
+      {%- if customer.addresses_count < 10 -%}
+        <button type="button" class="mp-addr mp-addr--add" data-modal-open="addr-modal-new">
+          <span class="mp-addr__plus">＋</span><span class="mp-addr__addlabel">配送用住所を追加</span>
+        </button>
       {%- endif -%}
-
-      {%- comment -%} 配送用 {%- endcomment -%}
-      {%- if shipping_address -%}
-        <div class="mp-card mp-addr">
-          <div class="mp-addr__head">
-            <h3 class="mp-addr__title">配送用住所</h3>
-          </div>
-          <p class="mp-addr__body">
-            〒{{ shipping_address.zip }}<br>
-            {{ shipping_address.province }} {{ shipping_address.city }}<br>
-            {{ shipping_address.address1 }} {{ shipping_address.address2 }}
-            <strong>{{ shipping_address.last_name }} {{ shipping_address.first_name }}</strong>
-            {{ shipping_address.phone }}
-          </p>
-          <div class="mp-addr__foot"><a href="{{ routes.account_addresses_url }}" class="mp-link">編集</a></div>
-        </div>
-      {%- else -%}
-        <div class="mp-card mp-addr mp-addr--empty">
-          <div class="mp-addr__head">
-            <h3 class="mp-addr__title">配送用住所</h3>
-          </div>
-          <p class="mp-addr__body">配送用住所は未登録です。</p>
-          <div class="mp-addr__foot"><a href="{{ routes.account_addresses_url }}" class="mp-link">住所を登録</a></div>
-        </div>
-      {%- endif -%}
-
     </div>
   </section>
 
@@ -122,10 +91,12 @@
   <section class="mp-section">
     <div class="mp-section__head">
       <h2 class="mp-section__title">支払い方法・変更確認</h2>
+      <a href="{{ plan_manage_url }}" class="Button Button--primary mp-pc-only">加入プランの管理</a>
     </div>
     <p class="mp-subtitle">加入済み</p>
     <div class="mp-card mp-card--table">
-      <table class="mp-table">
+      <table class="mp-table mp-table--fanclub">
+        <colgroup><col style="width:26%"><col style="width:14%"><col style="width:14%"><col style="width:12%"><col style="width:14%"><col style="width:20%"></colgroup>
         <thead>
           <tr>
             <th>ファンクラブ</th>
@@ -137,11 +108,7 @@
           </tr>
         </thead>
         <tbody>
-          {%- comment -%}
-            ★ 既存のファンクラブ行ループをここに移植する。
-            各 td に data-label を付けるとスマホでカード表示のラベルになる。
-            値が空の td は自動で「—」表示。
-          {%- endcomment -%}
+          {%- comment -%} ★ 既存のファンクラブ行ループをここに移植。各 td に data-label を付ける（SP のカード表示用）。空の td は CSS で「—」 {%- endcomment -%}
           {%- for fc in fanclubs -%}
           <tr>
             <td class="fanclub-name">{{ fc.artist }}<p>{{ fc.name }}</p></td>
@@ -155,7 +122,7 @@
         </tbody>
       </table>
     </div>
-    <div class="mp-actions">
+    <div class="mp-actions mp-sp-only">
       <a href="{{ plan_manage_url }}" class="Button Button--primary">加入プランの管理</a>
     </div>
     <p class="mp-section__note">※加入中のB-Townのプランもこちらからご確認いただけます。</p>
@@ -168,15 +135,10 @@
     </div>
     <div class="mp-card mp-card--table">
       {%- if customer.orders.size > 0 -%}
-        <table class="mp-table">
+        <table class="mp-table mp-table--orders">
+          <colgroup><col style="width:30%"><col style="width:17.5%"><col style="width:17.5%"><col style="width:17.5%"><col style="width:17.5%"></colgroup>
           <thead>
-            <tr>
-              <th>注文番号</th>
-              <th>注文日</th>
-              <th>支払状況</th>
-              <th>配送状況</th>
-              <th>合計</th>
-            </tr>
+            <tr><th>注文番号</th><th>注文日</th><th>支払状況</th><th>配送状況</th><th>合計</th></tr>
           </thead>
           <tbody>
             {%- for order in customer.orders -%}
@@ -201,6 +163,68 @@
   </div>
 
 </div>
+
+{%- comment -%} ===== 住所 追加/編集 モーダル（住所ごとに1つ + 新規1つ。Shopify の customer_address フォーム） ===== {%- endcomment -%}
+{%- for address in customer.addresses -%}
+  {%- render 'mp-address-modal', address: address, id: address.id, title: '住所を編集する', submit: '住所を編集する' -%}
+{%- endfor -%}
+{%- render 'mp-address-modal', address: customer.new_address, id: 'new', title: '住所を追加する', submit: '住所を追加する' -%}
+
+{%- comment -%}
+  ---------------------------------------------------------------------
+  snippets/mp-address-modal.liquid （下記を別ファイルとして作成）
+  ---------------------------------------------------------------------
+  <div class="mp-modal" id="addr-modal-{{ id }}" hidden>
+    <div class="mp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="addr-modal-{{ id }}-title">
+      <button class="mp-modal__close" type="button" data-modal-close aria-label="閉じる">×</button>
+      <h2 class="mp-modal__title" id="addr-modal-{{ id }}-title">{{ title }}</h2>
+      <p class="mp-modal__lead">以下の情報を入力してください：</p>
+      {% form 'customer_address', address, class: 'mp-form' %}
+        <div class="mp-form__row">
+          <label class="mp-field"><span class="mp-field__label">姓<span class="req">*</span></span><input class="mp-input" type="text" name="address[last_name]" value="{{ form.last_name }}" placeholder="姓" required></label>
+          <label class="mp-field"><span class="mp-field__label">名<span class="req">*</span></span><input class="mp-input" type="text" name="address[first_name]" value="{{ form.first_name }}" placeholder="名" required></label>
+        </div>
+        <label class="mp-field"><span class="mp-field__label">会社名</span><input class="mp-input" type="text" name="address[company]" value="{{ form.company }}" placeholder="会社名"></label>
+        <label class="mp-field"><span class="mp-field__label">電話番号</span><input class="mp-input" type="tel" name="address[phone]" value="{{ form.phone }}" placeholder="090-1234-1234"></label>
+        <div class="mp-form__row">
+          <label class="mp-field"><span class="mp-field__label">国</span><span class="mp-select-wrap"><select class="mp-select" name="address[country]" id="addr-country-{{ id }}" data-default="{{ form.country | default: 'Japan' }}">{{ all_country_option_tags }}</select></span></label>
+          <label class="mp-field"><span class="mp-field__label">郵便番号<span class="req">*</span></span><input class="mp-input" type="text" name="address[zip]" value="{{ form.zip }}" placeholder="郵便番号" inputmode="numeric" required></label>
+        </div>
+        <label class="mp-field"><span class="mp-field__label">都道府県<span class="req">*</span></span><span class="mp-select-wrap"><select class="mp-select" name="address[province]" id="addr-province-{{ id }}" data-default="{{ form.province }}" required></select></span></label>
+        <label class="mp-field"><span class="mp-field__label">市区町村<span class="req">*</span></span><input class="mp-input" type="text" name="address[city]" value="{{ form.city }}" placeholder="市区町村" required></label>
+        <label class="mp-field"><span class="mp-field__label">丁目・番地<span class="req">*</span></span><input class="mp-input" type="text" name="address[address1]" value="{{ form.address1 }}" placeholder="東山2-14-9" required></label>
+        <label class="mp-field"><span class="mp-field__label">建物名・部屋番号</span><input class="mp-input" type="text" name="address[address2]" value="{{ form.address2 }}" placeholder="BMSGビル101"></label>
+        <label class="mp-check"><input type="checkbox" name="address[default]" value="1"{% if form.set_as_default_checkbox or address == customer.default_address %} checked{% endif %}><span class="mp-check__box"></span>この住所をデフォルトとして設定する</label>
+        <button class="Button Button--primary" type="submit">{{ submit }}</button>
+      {% endform %}
+    </div>
+  </div>
+  ---------------------------------------------------------------------
+{%- endcomment -%}
+
+<script>
+  // モーダル開閉 + 都道府県セレクト + 削除確認
+  (function () {
+    function open(id) { var m = document.getElementById(id); if (!m) return; m.hidden = false; document.body.style.overflow = 'hidden'; var f = m.querySelector('input:not([type=hidden])'); if (f) setTimeout(function () { f.focus(); }, 0); }
+    function closeAll() { document.querySelectorAll('.mp-modal').forEach(function (m) { m.hidden = true; }); document.body.style.overflow = ''; }
+    document.addEventListener('click', function (e) {
+      var o = e.target.closest('[data-modal-open]'); if (o) { open(o.getAttribute('data-modal-open')); return; }
+      if (e.target.closest('[data-modal-close]') || e.target.classList.contains('mp-modal')) closeAll();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+    document.querySelectorAll('form[data-confirm]').forEach(function (f) { f.addEventListener('submit', function (e) { if (!confirm(f.getAttribute('data-confirm'))) e.preventDefault(); }); });
+    // 国 → 都道府県（Shopify 標準）
+    function initProvinces() {
+      if (!window.Shopify || !Shopify.CountryProvinceSelector) return;
+      document.querySelectorAll('.mp-modal select[id^="addr-country-"]').forEach(function (c) {
+        var id = c.id.replace('addr-country-', '');
+        new Shopify.CountryProvinceSelector('addr-country-' + id, 'addr-province-' + id, { hideElement: 'addr-province-' + id });
+        var p = document.getElementById('addr-province-' + id); var def = p && p.getAttribute('data-default'); if (def) p.value = def;
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initProvinces); else initProvinces();
+  })();
+</script>
 
 {%- comment -%} 情報モーダル: 既存の DOM / script をそのまま残す {%- endcomment -%}
 <div class="info-modal-overlay" id="infoModal">

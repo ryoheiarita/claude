@@ -81,23 +81,25 @@
     <div class="header">
       <h1>Handoff for Shopify</h1>
       <h2>BMSG SHOP マイページ 実装指示</h2>
-      <p><b>bmsg.shop/account</b>（Shopify・Prestige テーマ）のマイページを、Design_System_V2 のカラーで「管理画面的なリスト表示」に作り直すための実装指示です。<b>ヘッダー / フッター / テーマの <code>.Button</code> はそのまま</b>、セクション本文（<code>.btown-section</code> 〜 ログアウト）のみを差し替えます。動く見本は<a href="./">プレビュー</a>を参照してください。</p>
+      <p><b>bmsg.shop/account</b>（Shopify・Prestige テーマ）のマイページを、Design_System_V2 のカラーで「管理画面的なリスト表示」に作り直すための実装指示です。<b>ヘッダー / フッター / テーマの <code>.Button</code> はそのまま</b>、セクション本文（<code>.btown-section</code> 〜 ログアウト）のみを差し替えます。配送用住所は<b>複数登録・カード表示・モーダルで追加/編集</b>します。動く見本は<a href="./">プレビュー</a>（<a href="./#edit-1">編集モーダルを開いた状態</a> / <a href="./#add">追加</a>）を参照してください。</p>
       <div class="links">
         <a href="./">▶ プレビュー (PC / SP)</a>
         <a href="account-mypage.liquid" download>⬇ account-mypage.liquid</a>
         <a href="account-mypage.css" download>⬇ account-mypage.css</a>
+        <a href="https://www.figma.com/design/hWeegM3BnzhEI5zrpBUmzL/?node-id=1119-5276" target="_blank" rel="noopener">Figma PC ↗</a>
+        <a href="https://www.figma.com/design/hWeegM3BnzhEI5zrpBUmzL/?node-id=1386-12398" target="_blank" rel="noopener">Figma SP ↗</a>
         <a href="https://bmsg.shop/account" target="_blank" rel="noopener">現行ページ ↗</a>
       </div>
     </div>
 
     <div class="toc">
       <b>Contents</b>
-      <a href="#scope">1. 対象範囲</a><a href="#files">2. ファイルと適用手順</a><a href="#structure">3. ページ構造</a><a href="#tokens">4. デザイントークン</a><a href="#spec">5. セクション別仕様</a><a href="#responsive">6. レスポンシブ</a><a href="#data">7. データ結線（要確認）</a><a href="#remove">8. 削除するもの</a><a href="#qa">9. QA チェック</a><a href="#src-liquid">10. Liquid 全文</a><a href="#src-css">11. CSS 全文</a>
+      <a href="#scope">1. 対象範囲</a><a href="#files">2. ファイルと適用手順</a><a href="#structure">3. ページ構造</a><a href="#tokens">4. デザイントークン</a><a href="#spec">5. セクション別仕様</a><a href="#modal">6. 住所モーダル</a><a href="#responsive">7. レスポンシブ</a><a href="#data">8. データ結線（要確認）</a><a href="#remove">9. 削除するもの</a><a href="#qa">10. QA チェック</a><a href="#src-liquid">11. Liquid 全文</a><a href="#src-css">12. CSS 全文</a>
     </div>
 
     <!-- 1 -->
     <h3 class="section" id="scope">1. 対象範囲</h3>
-    <p class="lead">テンプレート <code>customers/account</code> のメインセクション（現行 ID <code>shopify-section-template--22655249252593__main</code>）内の本文のみ。</p>
+    <p class="lead">テンプレート <code>customers/account</code> のメインセクション（現行 ID <code>shopify-section-template--22655249252593__main</code>）内の本文のみ。Figma: <span class="fig">mypage_pc 1119:5276</span> / <span class="fig">detail_sp_limited 1386:12398</span>。</p>
     <div class="shots">
       <div class="shot"><iframe src="./" style="height:520px" loading="lazy" title="PC preview"></iframe><div class="shot-cap">PC（iframe 幅で表示）</div></div>
       <div class="shot"><iframe src="./" style="height:520px;width:390px;max-width:100%" loading="lazy" title="SP preview"></iframe><div class="shot-cap">SP 390px</div></div>
@@ -105,8 +107,8 @@
     <div class="note">
       <b>変えないもの</b>
       <ul>
-        <li>テーマのヘッダー / アナウンスバー / フッター</li>
-        <li>テーマの <code>.Button</code> コンポーネント自体（マークアップは流用。見た目は <code>.mp</code> 配下でのみ「白枠・白文字」に上書き）</li>
+        <li>テーマのヘッダー / アナウンスバー / フッター（プレビューのヘッダーは Figma の Header/pc・Header/SP を再現したモックで、実装ではテーマのものを使う）</li>
+        <li>テーマの <code>.Button</code> コンポーネント自体（マークアップは流用。見た目は <code>.mp</code> 配下でのみ「白枠・白文字」に上書き。モーダル内の送信ボタンはテーマ標準の白塗りのまま）</li>
         <li>ⓘ 情報モーダル（<code>#infoModal</code>）の DOM と JS</li>
         <li>Customer Fields アプリの「アカウント編集」リンク（<code>.cf-edit-account-link</code> と href）</li>
         <li>ファンクラブ行を生成している既存の Liquid ループ（データ取得ロジック）</li>
@@ -117,119 +119,133 @@
     <h3 class="section" id="files">2. ファイルと適用手順</h3>
     <div class="tree"><b>theme/</b>
 ├── assets/
-│   └── <b>account-mypage.css</b>        <i>← 新規。このページの全スタイル</i>
-└── sections/
-    └── <b>main-account.liquid</b>       <i>← 本文マークアップを account-mypage.liquid の内容で置換</i></div>
+│   └── <b>account-mypage.css</b>            <i>← 新規。このページ＋住所モーダルの全スタイル</i>
+├── sections/
+│   └── <b>main-account.liquid</b>           <i>← 本文マークアップを account-mypage.liquid の内容で置換</i>
+└── snippets/
+    └── <b>mp-address-modal.liquid</b>       <i>← 新規。住所フォームのモーダル（Liquid 末尾のコメントに全文）</i></div>
     <div class="steps">
       <div class="step"><div><b>CSS をアップロード</b><br><code>account-mypage.css</code> をテーマの <code>assets/</code> に追加。読み込みはセクション先頭の <code>{{ 'account-mypage.css' | asset_url | stylesheet_tag }}</code>（Liquid に含めてあります）。</div></div>
       <div class="step"><div><b>既存のインライン <code>&lt;style&gt;</code> を削除</b><br><code>.btown-section</code> 直下にある <code>.fc-text-title / .fanclub-wrap / .account_wrap / .info-modal…</code> 一式。モーダルのスタイルは新 CSS に含まれています。</div></div>
-      <div class="step"><div><b>本文マークアップを置換</b><br><code>&lt;div class="btown-section"&gt;</code> から <code>#logout_btn</code> までを <code>account-mypage.liquid</code> の <code>&lt;div class="mp"&gt;…&lt;/div&gt;</code> に差し替え。テーマの <code>.Container.Container--narrow</code> の中に置きます（<code>.mp</code> 自身が max-width 960px で中央寄せ）。</div></div>
+      <div class="step"><div><b>本文マークアップを置換</b><br><code>&lt;div class="btown-section"&gt;</code> から <code>#logout_btn</code> までを <code>account-mypage.liquid</code> の <code>&lt;div class="mp"&gt;…&lt;/div&gt;</code> に差し替え。テーマの <code>.Container.Container--narrow</code> の中に置きます（<code>.mp</code> 自身が max-width 1000px で中央寄せ）。</div></div>
+      <div class="step"><div><b>住所モーダルの snippet を作成</b><br>Liquid 末尾のコメントにある内容で <code>snippets/mp-address-modal.liquid</code> を作成。住所ごとに <code>{% form 'customer_address', address %}</code>、新規は <code>customer.new_address</code> で 1 つ。都道府県セレクトは <code>Shopify.CountryProvinceSelector</code>（<code>shopify_common.js</code>）で生成。</div></div>
       <div class="step"><div><b>ファンクラブ行のループを移植</b><br>既存の行生成ロジックを <code>{% for fc in fanclubs %}</code> の位置に移す。<b>各 <code>&lt;td&gt;</code> に <code>data-label="列名"</code> を付ける</b>だけで SP のカード表示に対応します（§5-3）。</div></div>
-      <div class="step"><div><b>データ結線の確認</b><br>§7 の項目（チケット先行用住所の保存先、性別・生年月日の metafield キー、各リンク URL）を実装環境に合わせて置換。</div></div>
-      <div class="step"><div><b>QA</b><br>§9 のチェックリストで PC 1280 / SP 390 を確認。</div></div>
+      <div class="step"><div><b>データ結線の確認</b><br>§8 の項目（基本情報に出す住所の保存先、性別・生年月日の metafield キー、各リンク URL）を実装環境に合わせて置換。</div></div>
+      <div class="step"><div><b>QA</b><br>§10 のチェックリストで PC 1280 / SP 390 を確認。</div></div>
     </div>
 
     <!-- 3 -->
     <h3 class="section" id="structure">3. ページ構造</h3>
-    <p class="lead">上から順に 5 ブロック。各ボタンは<b>リスト直下・リストと同じ幅</b>に置きます。</p>
-    <div class="tree"><b>.mp</b>                                  <i>max-width 960 / padding 56px 0 96px（SP: 32px 16px 72px）</i>
-├── section.mp-section  <b>アカウント基本情報</b>
-│   ├── .mp-section__head › h1.mp-section__title
-│   ├── .mp-card › dl.mp-dl › .mp-dl__row × 5   <i>氏名 / メール / 性別 / 生年月日 / 電話</i>
-│   └── .mp-actions › a.Button  <b>アカウント編集</b>
-├── section.mp-section  <b>登録住所</b>
+    <p class="lead">上から順に 6 ブロック、すべて全幅（1000px）。PC では「基本情報の編集」「加入プランの管理」を<b>見出しの右</b>に、SP では<b>リスト直下に全幅</b>で置きます（同じリンクを2つ置き <code>.mp-pc-only</code> / <code>.mp-sp-only</code> で出し分け）。</p>
+    <div class="tree"><b>.mp</b>                                  <i>max-width 1000 / padding 48px 0 96px（SP: 32px 16px 72px）</i>
+├── h1.mp-title  <b>マイページ</b>               <i>28px Bold（SP 24px）</i>
+├── section.mp-section  <b>基本情報</b>
+│   ├── .mp-section__head › h2 + a.Button.mp-pc-only「基本情報の編集」
+│   ├── .mp-card › dl.mp-dl › .mp-dl__row × 7   <i>氏名 / メール / 性別 / 生年月日 / 電話 / 郵便番号 / 住所</i>
+│   ├── p.mp-section__note--lg「※最新の住所の反映をお願いいたします」
+│   └── .mp-actions.mp-sp-only › a.Button「基本情報の編集」
+├── section.mp-section#addresses  <b>配送用住所</b>
 │   ├── .mp-section__head › h2 + p.mp-section__sub
-│   └── .mp-addr-grid  <i>2 カラム（SP: 1 カラム）</i>
-│       ├── .mp-card.mp-addr  <b>チケット先行用住所</b>   › 編集 ›
-│       └── .mp-card.mp-addr  <b>配送用住所</b>            › 編集 ›
+│   └── .mp-addr-cards  <i>grid 3列（SP 1列）</i>
+│       ├── article.mp-card.mp-addr × N   <i>Head(氏名 + .mp-pill「選択中」) / Body / Foot(削除・編集)</i>
+│       └── button.mp-addr.mp-addr--add「＋ 配送用住所を追加」   <i>10件未満のとき</i>
 ├── section.mp-section  <b>支払い方法・変更確認</b>
+│   ├── .mp-section__head › h2 + a.Button.mp-pc-only「加入プランの管理」
 │   ├── p.mp-subtitle「加入済み」
 │   ├── .mp-card.mp-card--table › table.mp-table   <i>6 列</i>
-│   ├── .mp-actions › a.Button  <b>加入プランの管理</b>
+│   ├── .mp-actions.mp-sp-only › a.Button「加入プランの管理」
 │   └── p.mp-section__note「※加入中のB-Town…」
 ├── section.mp-section  <b>注文履歴</b>
 │   └── .mp-card.mp-card--table › table.mp-table ｜ p.mp-empty
-└── .mp-logout#logout_btn › a.Button  <b>ログアウト</b></div>
+└── .mp-logout#logout_btn › a.Button  <b>ログアウト</b>
+
+<b>.mp-modal#addr-modal-{id}</b>  <i>（.mp の外・住所ごと＋新規）</i>
+└── .mp-modal__dialog › 閉じる × / h2 / p.lead / form.mp-form（§6）</div>
 
     <!-- 4 -->
     <h3 class="section" id="tokens">4. デザイントークン</h3>
-    <p class="lead">Figma <span class="fig">Design_System_V2 › Lists (21:1459)</span> の List コンポーネントから取得。CSS では <code>.mp</code> のカスタムプロパティとして定義済み。</p>
+    <p class="lead">Figma <span class="fig">Design_System_V2 › Lists (21:1459)</span> の List コンポーネントから取得。CSS では <code>.mp</code> と <code>.mp-modal</code> のカスタムプロパティとして定義済み（モーダルは <code>.mp</code> の外に置くため両方に宣言）。</p>
     <div class="table-wrap"><table>
       <tr><th>用途</th><th>値</th><th>CSS 変数</th><th>Figma</th></tr>
       <tr><td>ページ背景</td><td><span class="swatch" style="background:#181818"></span><code>#181818</code>（テーマ既存）</td><td>—</td><td>—</td></tr>
-      <tr><td>カード / 行の面</td><td><span class="swatch" style="background:rgba(255,255,255,.08)"></span><code>rgba(255,255,255,.08)</code></td><td><code>--mp-surface</code></td><td>Surface/Primary</td></tr>
+      <tr><td>カード / 行の面 / 入力欄</td><td><span class="swatch" style="background:rgba(255,255,255,.08)"></span><code>rgba(255,255,255,.08)</code></td><td><code>--mp-surface</code></td><td>Surface/Primary</td></tr>
       <tr><td>テーブルヘッダー行 / hover</td><td><span class="swatch" style="background:rgba(255,255,255,.04)"></span><code>rgba(255,255,255,.04)</code></td><td><code>--mp-surface-2</code></td><td>—</td></tr>
-      <tr><td>区切り線</td><td><span class="swatch" style="background:rgba(255,255,255,.15)"></span><code>rgba(255,255,255,.15)</code> 0.5px</td><td><code>--mp-divider</code></td><td>Divider/White</td></tr>
+      <tr><td>区切り線 / 入力欄の枠</td><td><span class="swatch" style="background:rgba(255,255,255,.15)"></span><code>rgba(255,255,255,.15)</code> 0.5px（枠は 1px）</td><td><code>--mp-divider</code></td><td>Divider/White</td></tr>
       <tr><td>テキスト 主</td><td><span class="swatch" style="background:#fff"></span><code>#FFFFFF</code></td><td><code>--mp-text</code></td><td>Text/Primary</td></tr>
       <tr><td>テキスト 副（値・本文）</td><td><span class="swatch" style="background:rgba(255,255,255,.75)"></span><code>rgba(255,255,255,.75)</code></td><td><code>--mp-text-2</code></td><td>Text/Secondary</td></tr>
-      <tr><td>テキスト 弱（ラベル・空値）</td><td><span class="swatch" style="background:rgba(255,255,255,.5)"></span><code>rgba(255,255,255,.5)</code></td><td><code>--mp-text-3</code></td><td>Text/Tertiary</td></tr>
-      <tr><td>アクセント（予備）</td><td><span class="swatch" style="background:#FF3E55"></span><code>#FF3E55</code></td><td><code>--mp-accent</code></td><td>color/live</td></tr>
-      <tr><td>角丸</td><td>カード 12px / ボタン 10px</td><td><code>--mp-radius</code></td><td>12</td></tr>
+      <tr><td>テキスト 弱（ラベル・注記）</td><td><span class="swatch" style="background:rgba(255,255,255,.5)"></span><code>rgba(255,255,255,.5)</code></td><td><code>--mp-text-3</code></td><td>Text/Tertiary</td></tr>
+      <tr><td>「選択中」バッジ</td><td><span class="swatch" style="background:#fff"></span>白地 ／ 文字 <code>#101010</code></td><td>—</td><td>Badge</td></tr>
+      <tr><td>追加カードの破線</td><td><span class="swatch" style="background:rgba(255,255,255,.25)"></span><code>rgba(255,255,255,.25)</code> 1px dashed</td><td>—</td><td>—</td></tr>
+      <tr><td>モーダル面</td><td><span class="swatch" style="background:#202020"></span><code>#202020</code> ＋ 枠 Divider ／ 背景 <code>rgba(0,0,0,.7)</code> + blur 4px</td><td>—</td><td>—</td></tr>
+      <tr><td>角丸</td><td>カード 12px / ボタン 10px / 入力欄 8px</td><td><code>--mp-radius</code></td><td>12</td></tr>
       <tr><td>フォント</td><td>Figtree → 游ゴシック / Hiragino Kaku Gothic ProN / Meiryo</td><td><code>--mp-font</code></td><td>Figtree</td></tr>
     </table></div>
     <h4>タイポグラフィ</h4>
     <div class="table-wrap"><table>
       <tr><th>要素</th><th>PC</th><th>SP</th><th>色</th></tr>
+      <tr><td>ページ見出し <code>.mp-title</code></td><td>28px / 700 / lh 36</td><td>24px</td><td>主</td></tr>
       <tr><td>セクション見出し <code>.mp-section__title</code></td><td>22px / 700 / tracking .08em</td><td>19px</td><td>主</td></tr>
+      <tr><td>セクション補足 <code>.mp-section__sub</code></td><td colspan="2">13px / lh 21</td><td>弱</td></tr>
       <tr><td>小見出し <code>.mp-subtitle</code></td><td colspan="2">15px / 700</td><td>副</td></tr>
-      <tr><td>リストラベル <code>.mp-dl__label</code></td><td>13px</td><td>12px</td><td>弱</td></tr>
-      <tr><td>リスト値 <code>.mp-dl__value</code></td><td colspan="2">15px / line-height 1.6</td><td>主</td></tr>
-      <tr><td>テーブル th</td><td colspan="2">12px / 500 / tracking .04em</td><td>弱</td></tr>
-      <tr><td>テーブル td</td><td>14px</td><td>13px</td><td>副</td></tr>
-      <tr><td>アーティスト名 <code>.fanclub-name</code></td><td colspan="2">15px / 700 ＋ サブ 12px</td><td>主 ＋ 弱</td></tr>
+      <tr><td>リストラベル <code>.mp-dl__label</code></td><td>13px / 列幅 111px</td><td>12px</td><td>弱</td></tr>
+      <tr><td>リスト値 <code>.mp-dl__value</code></td><td colspan="2">15px / lh 24</td><td>主</td></tr>
+      <tr><td>住所カード 氏名 / 本文</td><td colspan="2">15px 700 / 14px lh 24</td><td>主 / 副</td></tr>
+      <tr><td>カード内リンク 編集 › / 削除</td><td colspan="2">13px 600 / 13px 400</td><td>主 / 弱</td></tr>
+      <tr><td>テーブル th / td</td><td>12px 500 / 14px</td><td>— / 13px</td><td>弱 / 副</td></tr>
       <tr><td>ボタン <code>.Button</code></td><td colspan="2">14px / 700 / tracking .08em / padding 14px 24px</td><td>主</td></tr>
+      <tr><td>モーダル見出し / 入力欄</td><td colspan="2">20px 700 / 15px（高さ 48）</td><td>主</td></tr>
     </table></div>
 
     <!-- 5 -->
     <h3 class="section" id="spec">5. セクション別仕様</h3>
 
-    <h4>5-1. アカウント基本情報</h4>
+    <h4>5-1. 基本情報</h4>
     <div class="note">
       <ul>
-        <li><code>dl.mp-dl</code> の行（<code>.mp-dl__row</code>）を 5 行。PC は <b>ラベル 160px ｜ 値</b> の 2 カラム grid、SP はラベル上・値下の縦積み。</li>
+        <li><code>dl.mp-dl</code> の行（<code>.mp-dl__row</code>）を 7 行。PC は <b>ラベル 111px（最長「メールアドレス」＋16px）｜ 値</b> の 2 カラム grid、SP はラベル上・値下の縦積み。</li>
         <li>既存のアイコン画像（person / email / gender / cake / message / location の PNG）は<b>廃止</b>。ラベル文字で代替。</li>
-        <li>住所はこのリストから外し、次の「登録住所」カードへ移動。</li>
+        <li>郵便番号・住所の行は<b>チケット先行用（基本情報側）の住所</b>。配送用住所とは別データ（§8）。</li>
         <li>値が空のときは <code>.mp-dl__value--empty</code> を付けて「未設定」を弱色で表示。</li>
-        <li>「アカウント編集」ボタンはリスト直下（<code>.mp-actions</code>）。<code>.cf-edit-account-link</code> クラスと href は Customer Fields アプリのものをそのまま。</li>
+        <li>カード下に注記 <code>.mp-section__note--lg</code>「※最新の住所の反映をお願いいたします」（13px / 50%）。</li>
+        <li>「基本情報の編集」は PC: 見出し右（内容幅）、SP: 注記の下に全幅。<code>.cf-edit-account-link</code> クラスと href は Customer Fields アプリのものをそのまま。</li>
       </ul>
     </div>
 
-    <h4>5-2. 登録住所（チケット先行用 / 配送用）</h4>
+    <h4>5-2. 配送用住所（複数）</h4>
     <div class="note">
       <ul>
-        <li><code>.mp-addr-grid</code> に 2 枚の <code>.mp-card.mp-addr</code>。PC は 1:1 の 2 カラム、SP は縦積み。カード min-height 190px（SP は解除）。</li>
-        <li>カード構成: タイトル（15px/700）→ 本文（〒 / 都道府県 市区町村 / 番地 建物 / <b>氏名</b> / 電話）→ フッター（上罫線 ＋ 右寄せ「編集 ›」<code>.mp-link</code>）。</li>
-        <li><b>バッジ（先行受付 / 配送）は付けない</b>。</li>
-        <li><b>配送用</b> = <code>customer.default_address</code>。初期登録の住所をそのまま表示。「編集」は <code>routes.account_addresses_url</code>。</li>
-        <li><b>チケット先行用</b> = 保存先を確認のうえ結線（§7）。未登録時は <code>.mp-addr--empty</code>（破線枠・面なし）で「未登録です」＋「住所を登録 ›」。</li>
+        <li><code>customer.addresses</code> をループして <code>article.mp-card.mp-addr</code> を並べる。<code>.mp-addr-cards</code> は PC 3 列 grid（gap 16）、SP 1 列（gap 12）。同じ行のカードは高さが揃う（<code>align-items: stretch</code>）。</li>
+        <li>カード構成: Head（氏名 15px Bold ＋ デフォルト住所のみ <code>.mp-pill</code>「選択中」白地/黒文字）→ Body（〒 / 都道府県 市区町村 / 番地 建物 / 会社名 / 電話、14px 75% lh 24）→ Foot（上罫線 0.5 ＋ 右寄せ「削除」「編集 ›」）。</li>
+        <li><b>編集</b>: そのカードのモーダル <code>#addr-modal-{address.id}</code> を開く。<b>削除</b>: <code>POST /account/addresses/{id}</code>（<code>_method=delete</code>）を confirm 付きで送信。</li>
+        <li><b>追加カード</b> <code>.mp-addr--add</code>: 破線枠（白25% 1px）・透過・中央に「＋ 配送用住所を追加」。<code>customer.addresses_count &lt; 10</code> のときだけ表示（Shopify の上限）。クリックで <code>#addr-modal-new</code>。</li>
+        <li>見出し下に補足「複数の配送先を登録できます。注文時に選択する住所です。」。旧「配送用住所の編集」ボタンは廃止。</li>
       </ul>
     </div>
 
     <h4>5-3. 支払い方法・変更確認 › 加入済み一覧</h4>
     <div class="table-wrap"><table>
-      <tr><th>列</th><th>th テキスト</th><th>td の <code>data-label</code></th><th>備考</th></tr>
-      <tr><td>1</td><td>ファンクラブ</td><td>—（<code>class="fanclub-name"</code>）</td><td>アーティスト名 ＋ <code>&lt;p&gt;</code> でFC名。PC 幅 30%</td></tr>
-      <tr><td>2</td><td>加入月 ⓘ</td><td><code>加入月</code></td><td><code>.mp-num</code>（等幅数字）。ⓘは <code>span.info-icon</code> 既存 JS 用</td></tr>
-      <tr><td>3</td><td>加入累計 ⓘ</td><td><code>加入累計</code></td><td><code>.mp-num</code></td></tr>
-      <tr><td>4</td><td>周期</td><td><code>周期</code></td><td>年額 / 月額</td></tr>
-      <tr><td>5</td><td>次回更新</td><td><code>次回更新</code></td><td><code>.mp-num</code></td></tr>
-      <tr><td>6</td><td>支払方法</td><td><code>支払方法</code></td><td></td></tr>
+      <tr><th>列</th><th>th テキスト</th><th>幅</th><th>td の <code>data-label</code></th><th>備考</th></tr>
+      <tr><td>1</td><td>ファンクラブ</td><td>26%</td><td>—（<code>class="fanclub-name"</code>）</td><td>アーティスト名 15px Bold ＋ <code>&lt;p&gt;</code> でFC名</td></tr>
+      <tr><td>2</td><td>加入月 ⓘ</td><td>14%</td><td><code>加入月</code></td><td><code>.mp-num</code>（等幅数字）。ⓘは <code>span.info-icon</code> 既存 JS 用</td></tr>
+      <tr><td>3</td><td>加入累計 ⓘ</td><td>14%</td><td><code>加入累計</code></td><td><code>.mp-num</code></td></tr>
+      <tr><td>4</td><td>周期</td><td>12%</td><td><code>周期</code></td><td>年額 / 月額</td></tr>
+      <tr><td>5</td><td>次回更新</td><td>14%</td><td><code>次回更新</code></td><td><code>.mp-num</code></td></tr>
+      <tr><td>6</td><td>支払方法</td><td>20%</td><td><code>支払方法</code></td><td>「クレジットカード」が折り返さない幅</td></tr>
     </table></div>
     <div class="note">
       <ul>
-        <li>テーブルは <code>.mp-card.mp-card--table</code> で包み、<code>table.mp-table</code>（border-collapse / table-layout: fixed / 幅 100%）。旧 <code>.fanclub-wrap</code> の border 重ね描画は使わない。</li>
-        <li>ヘッダー行は <code>--mp-surface-2</code> の面 ＋ 下罫線 1px。行間は 0.5px 罫線、最終行は罫線なし。行 hover で <code>--mp-surface-2</code>。</li>
-        <li><b>空セルは CSS で「—」を自動表示</b>（<code>td:empty::after</code>）。Liquid 側で空文字を出せば OK。td 内に空白や改行を入れると <code>:empty</code> にならないので <code>{%- -%}</code> で空白を除去すること。</li>
-        <li>SP では thead を非表示にし、各 <code>tr</code> を <code>--mp-surface</code> のカードに変換。1 列目（fanclub-name）を全幅の見出し、2〜6 列目を <b>ラベル 88px ｜ 値</b> の grid で並べる。ラベル文字は <code>td::before { content: attr(data-label) }</code>。</li>
-        <li>横スクロール（旧 <code>.sp_table_scroll</code>）は<b>廃止</b>。</li>
-        <li>「加入プランの管理」ボタンはテーブル直下、同幅。その下に注記 <code>.mp-section__note</code>。</li>
+        <li>テーブルは <code>.mp-card.mp-card--table</code> で包み、<code>table.mp-table</code>（border-collapse / table-layout: fixed / 幅 100% / <code>&lt;colgroup&gt;</code> で列幅）。旧 <code>.fanclub-wrap</code> の border 重ね描画は使わない。</li>
+        <li>ヘッダー行は <code>--mp-surface-2</code> の面 ＋ 下罫線 1px。行間は 0.5px 罫線、最終行は罫線なし。</li>
+        <li><b>空セルは CSS で「—」を自動表示</b>（<code>td:empty::after</code>）。td 内に空白や改行を入れると <code>:empty</code> にならないので <code>{%- -%}</code> で空白を除去すること。</li>
+        <li>SP では thead を非表示にし、各 <code>tr</code> を <code>--mp-surface</code> のカードに変換。1 列目を全幅の見出し、2〜6 列目を <b>ラベル 88px ｜ 値</b> の grid で並べる（<code>td::before { content: attr(data-label) }</code>）。横スクロール（旧 <code>.sp_table_scroll</code>）は<b>廃止</b>。</li>
+        <li>「加入プランの管理」は PC: 見出し右、SP: テーブル直下に全幅。その下に注記 <code>.mp-section__note</code>。</li>
       </ul>
     </div>
 
     <h4>5-4. 注文履歴</h4>
     <div class="note">
       <ul>
-        <li>テーマ標準の <code>.Segment / .PageLayout</code> マークアップは使わず、加入済みと同じ <code>.mp-table</code> 様式（注文番号 / 注文日 / 支払状況 / 配送状況 / 合計）。</li>
+        <li>テーマ標準の <code>.Segment / .PageLayout</code> マークアップは使わず、加入済みと同じ <code>.mp-table</code> 様式（注文番号 30% / 注文日 / 支払状況 / 配送状況 / 合計 各 17.5%）。注文番号は 15px Bold。</li>
         <li>注文 0 件は <code>p.mp-empty</code>（padding 40px・中央・弱色）「まだ注文していません」。</li>
       </ul>
     </div>
@@ -237,191 +253,196 @@
     <h4>5-5. ボタン</h4>
     <div class="note">
       <ul>
-        <li>3 つ（アカウント編集 / 加入プランの管理 / ログアウト）すべて <b>白枠 1px・白文字・背景透過</b>、hover で <code>rgba(255,255,255,.08)</code>。角丸 10px。</li>
-        <li>すべて <code>display:block; width:100%</code> で直前のリスト / カードと同幅。</li>
-        <li>Prestige の <code>.Button--primary::before</code>（白塗り）は <code>.mp .Button::before</code> で透過に上書き済み。ログアウトは <code>Button--secondary</code> でも可（見た目は同じになる）。</li>
+        <li>ページ内の <code>.Button</code> はすべて <b>白枠 1px・白文字・背景透過</b>、hover で <code>rgba(255,255,255,.08)</code>。角丸 10px。Prestige の <code>.Button--primary::before</code>（白塗り）は <code>.mp .Button::before</code> で透過に上書き済み。</li>
+        <li>PC の見出し右ボタン（<code>.mp-section__head .Button</code>）は内容幅（padding 14px 24px）。SP の <code>.mp-actions</code> 内とログアウトは <code>display:block; width:100%</code>。</li>
+        <li>モーダル内の送信ボタンは <code>.mp</code> の外なのでテーマ標準の<b>白塗り・黒文字</b>（プライマリ）のまま。</li>
       </ul>
     </div>
 
     <!-- 6 -->
-    <h3 class="section" id="responsive">6. レスポンシブ</h3>
+    <h3 class="section" id="modal">6. 住所モーダル（追加 / 編集）</h3>
+    <p class="lead">Shopify 標準の <code>customer_address</code> フォームをモーダルに入れる。住所ごとに 1 つ（編集）＋新規 1 つを <code>snippets/mp-address-modal.liquid</code> で描画し、JS は開閉のみ（送信・保存は Shopify のフォーム POST に任せる）。</p>
+    <div class="shots">
+      <div class="shot"><iframe src="./#edit-1" style="height:620px" loading="lazy" title="modal preview"></iframe><div class="shot-cap">編集モーダル（プレビュー <code>#edit-1</code>）</div></div>
+      <div class="shot"><iframe src="./#add" style="height:620px;width:390px;max-width:100%" loading="lazy" title="modal sp preview"></iframe><div class="shot-cap">SP はボトムシート（<code>#add</code>）</div></div>
+    </div>
     <div class="table-wrap"><table>
-      <tr><th>項目</th><th>PC（768px〜）</th><th>SP（〜767px）</th></tr>
-      <tr><td>コンテナ</td><td>max-width 960px 中央 / padding 56px 0 96px</td><td>padding 32px 16px 72px</td></tr>
-      <tr><td>セクション間</td><td>56px</td><td>44px</td></tr>
-      <tr><td>基本情報の行</td><td>ラベル 160px ｜ 値（padding 16px 20px）</td><td>ラベル上・値下（padding 14px 16px）</td></tr>
-      <tr><td>住所カード</td><td>2 カラム gap 16 / padding 20</td><td>1 カラム / padding 16</td></tr>
-      <tr><td>加入済み・注文履歴</td><td>テーブル</td><td>行ごとのカード（thead 非表示・data-label 表示）</td></tr>
-      <tr><td>ボタン</td><td colspan="2">block・100% 幅（共通）</td></tr>
+      <tr><th>項目</th><th>name</th><th>必須</th><th>備考</th></tr>
+      <tr><td>姓 / 名</td><td><code>address[last_name]</code> / <code>address[first_name]</code></td><td>●</td><td>2 列（<code>.mp-form__row</code>）</td></tr>
+      <tr><td>会社名</td><td><code>address[company]</code></td><td></td><td></td></tr>
+      <tr><td>電話番号</td><td><code>address[phone]</code></td><td></td><td>placeholder 090-1234-1234</td></tr>
+      <tr><td>国 / 郵便番号</td><td><code>address[country]</code> / <code>address[zip]</code></td><td>— / ●</td><td>2 列。国は <code>all_country_option_tags</code>、初期値 Japan</td></tr>
+      <tr><td>都道府県</td><td><code>address[province]</code></td><td>●</td><td><code>Shopify.CountryProvinceSelector</code> が国に応じて生成（<code>shopify_common.js</code>）</td></tr>
+      <tr><td>市区町村</td><td><code>address[city]</code></td><td>●</td><td></td></tr>
+      <tr><td>丁目・番地</td><td><code>address[address1]</code></td><td>●</td><td>placeholder 東山2-14-9</td></tr>
+      <tr><td>建物名・部屋番号</td><td><code>address[address2]</code></td><td></td><td>placeholder BMSGビル101</td></tr>
+      <tr><td>デフォルト設定</td><td><code>address[default]</code></td><td></td><td>チェックボックス「この住所をデフォルトとして設定する」。カスタム見た目 <code>.mp-check</code></td></tr>
+      <tr><td>送信</td><td>—</td><td></td><td>「住所を編集する」/「住所を追加する」。白塗りプライマリ、全幅</td></tr>
     </table></div>
-    <div class="note"><b>ブレークポイント</b>は <code>767px</code> の 1 つだけ。旧 CSS の <code>640px</code> は使いません。テーマの <code>.Container--narrow</code> の左右 padding（PC 80px）はそのまま活かし、<code>.mp</code> は横 padding を持たない設計です。</div>
-
-    <!-- 7 -->
-    <h3 class="section" id="data">7. データ結線（要確認）</h3>
-    <p class="lead">Liquid では下記を<b>仮置き</b>にしています。実装環境に合わせて置換してください。</p>
-    <div class="table-wrap"><table>
-      <tr><th>箇所</th><th>仮置き</th><th>確認事項</th></tr>
-      <tr><td>チケット先行用住所</td><td><code>customer.metafields.custom.ticket_address</code></td><td><b>保存先が未確認</b>。metafield（JSON / 複数行テキスト）か、<code>customer.addresses</code> のうちタグ / company 等で識別する別住所か。形式に応じて本文の整形を書き換える</td></tr>
-      <tr><td>チケット先行用住所の編集リンク</td><td><code>ticket_address_edit_url</code></td><td>Customer Fields のフォーム URL など</td></tr>
-      <tr><td>配送用住所</td><td><code>customer.default_address</code></td><td>確定（初期登録住所をそのまま表示）</td></tr>
-      <tr><td>性別</td><td><code>customer.metafields.custom.gender</code></td><td>Customer Fields アプリのキーに合わせる</td></tr>
-      <tr><td>生年月日</td><td><code>customer.metafields.custom.birthday</code></td><td>同上。表示は <code>YYYY/MM/DD</code></td></tr>
-      <tr><td>アカウント編集リンク</td><td><code>customer_fields_edit_url</code></td><td>現行の <code>.cf-edit-account-link</code> の href をそのまま</td></tr>
-      <tr><td>ファンクラブ行</td><td><code>{% for fc in fanclubs %}</code></td><td>既存ループを移植。各 td に <code>data-label</code> を付与</td></tr>
-      <tr><td>加入プランの管理</td><td><code>plan_manage_url</code></td><td>現行ボタンの href（サブスク管理ポータル）</td></tr>
-      <tr><td>ⓘ モーダル本文</td><td>既存 JS</td><td><code>span.info-icon[data-info]</code> のクリック → <code>#infoModal</code>。既存実装をそのまま</td></tr>
-    </table></div>
-
-    <!-- 8 -->
-    <h3 class="section" id="remove">8. 削除するもの</h3>
-    <div class="note warn">
+    <div class="note">
       <ul>
-        <li><code>.btown-section</code> 内のインライン <code>&lt;style&gt;</code> 全部（<code>.fc-text-title / .fanclub-wrap / .mypage-button / .account_wrap / .sp_table_scroll / .info-*</code> と <code>@media (max-width:640px)</code>）</li>
-        <li><code>.account_wrap</code> の <code>ul &gt; li &gt; span &gt; img</code>（アイコン PNG 6 点）</li>
-        <li><code>.sp_table_scroll</code> ラッパー（横スクロール）</li>
-        <li><code>#logout_btn</code> 内の 2 つ目の「アカウント編集」（<code>.cf-edit-account-link</code> と <code>.cf-edit-account-link-spacer</code>）— 元々 <code>display:none</code> だったもの。残す場合は CSS で非表示のまま</li>
-        <li>注文履歴の <code>.PageLayout / .Segment</code> マークアップ（<code>.mp-table</code> に置換）</li>
+        <li><b>見た目</b>: ダイアログ max-width 560 / padding 40px 32px 32px / 面 <code>#202020</code> / 枠 Divider / 角丸 12 / 影 0 16px 48px rgba(0,0,0,.5)。背景 <code>rgba(0,0,0,.7)</code> + backdrop-blur 4px。見出し「住所を編集する」20px 700 中央、リード「以下の情報を入力してください：」14px 75%。</li>
+        <li><b>入力欄</b> <code>.mp-input / .mp-select</code>: 高さ 48・padding 0 14・面 Surface・枠 Divider 1px・角丸 8・15px。focus で枠 白60%。ラベルは上に 12px 弱色、必須は赤 <code>*</code>（<code>.req</code>）。select は <code>.mp-select-wrap::after</code> で山形矢印。</li>
+        <li><b>× ボタン</b> <code>.mp-modal__close</code>: 36px 円・通常＝面 Surface（白8%）＋白、<b>hover＝白背景＋黒</b>。</li>
+        <li><b>挙動</b>: <code>[data-modal-open="addr-modal-{id}"]</code> で開く、× / 背景クリック / Esc で閉じる。開いている間は <code>body { overflow:hidden }</code>。必須チェックはブラウザ標準（<code>required</code>）。送信は通常の POST → 完了後 <code>/account</code> に戻る（Shopify 標準）。エラー時は <code>form.errors</code> をモーダル内に出す実装を推奨（Liquid 側は未対応・要追加）。</li>
+        <li><b>SP</b>: ボトムシート（画面下寄せ・上角丸 16・左右下の枠なし・max-height calc(100vh - 32px)・内部スクロール）。</li>
+        <li>プレビューは JS でカードを即時更新するデモ。実装では Shopify のフォーム送信に置き換える。</li>
       </ul>
     </div>
 
+    <!-- 7 -->
+    <h3 class="section" id="responsive">7. レスポンシブ</h3>
+    <div class="table-wrap"><table>
+      <tr><th>項目</th><th>PC（768px〜）</th><th>SP（〜767px）</th></tr>
+      <tr><td>コンテナ</td><td>max-width 1000px 中央 / padding 48px 0 96px</td><td>padding 32px 16px 72px</td></tr>
+      <tr><td>セクション間</td><td>56px</td><td>44px</td></tr>
+      <tr><td>編集 / 管理ボタン</td><td>見出し右・内容幅（<code>.mp-pc-only</code>）</td><td>リスト直下・全幅（<code>.mp-sp-only</code>）</td></tr>
+      <tr><td>基本情報の行</td><td>ラベル 111px ｜ 値（padding 16px 20px）</td><td>ラベル上・値下（padding 14px 16px）</td></tr>
+      <tr><td>配送用住所カード</td><td>3 列 gap 16 / padding 20</td><td>1 列 gap 12 / padding 16。追加カードは横並び 1 行</td></tr>
+      <tr><td>加入済み・注文履歴</td><td>テーブル</td><td>行ごとのカード（thead 非表示・data-label 表示）</td></tr>
+      <tr><td>住所モーダル</td><td>中央ダイアログ 560px</td><td>ボトムシート・全幅</td></tr>
+      <tr><td>ログアウト</td><td colspan="2">block・100% 幅（共通）</td></tr>
+    </table></div>
+    <div class="note"><b>ブレークポイント</b>は <code>767px</code> の 1 つだけ。旧 CSS の <code>640px</code> は使いません。テーマの <code>.Container--narrow</code> の左右 padding はそのまま活かし、<code>.mp</code> は横 padding を持たない設計です。</div>
+
+    <!-- 8 -->
+    <h3 class="section" id="data">8. データ結線（要確認）</h3>
+    <p class="lead">Liquid では下記を<b>仮置き</b>にしています。実装環境に合わせて置換してください。</p>
+    <div class="table-wrap"><table>
+      <tr><th>箇所</th><th>仮置き</th><th>確認事項</th></tr>
+      <tr><td>基本情報の郵便番号 / 住所（チケット先行用）</td><td><code>customer.metafields.custom.ticket_zip</code> / <code>…ticket_address</code></td><td><b>保存先が未確認</b>。metafield か、<code>customer.addresses</code> のうちタグ等で識別する別住所か</td></tr>
+      <tr><td>配送用住所 一覧</td><td><code>customer.addresses</code> / デフォルト判定 <code>address == customer.default_address</code></td><td>確定（Shopify 標準）。上限判定は <code>customer.addresses_count &lt; 10</code></td></tr>
+      <tr><td>住所の追加 / 編集 / 削除</td><td><code>{% form 'customer_address' %}</code> / <code>POST /account/addresses/{id}</code> + <code>_method=delete</code></td><td>確定（Shopify 標準）。都道府県は <code>shopify_common.js</code> の <code>CountryProvinceSelector</code></td></tr>
+      <tr><td>性別</td><td><code>customer.metafields.custom.gender</code></td><td>Customer Fields アプリのキーに合わせる</td></tr>
+      <tr><td>生年月日</td><td><code>customer.metafields.custom.birthday</code></td><td>同上。表示は <code>YYYY/MM/DD</code></td></tr>
+      <tr><td>基本情報の編集リンク</td><td><code>customer_fields_edit_url</code></td><td>現行の <code>.cf-edit-account-link</code> の href をそのまま（PC/SP で 2 箇所）</td></tr>
+      <tr><td>ファンクラブ行</td><td><code>{% for fc in fanclubs %}</code></td><td>既存ループを移植。各 td に <code>data-label</code> を付与</td></tr>
+      <tr><td>加入プランの管理</td><td><code>plan_manage_url</code></td><td>現行ボタンの href（サブスク管理ポータル）。PC/SP で 2 箇所</td></tr>
+      <tr><td>ⓘ モーダル本文</td><td>既存 JS</td><td><code>span.info-icon[data-info]</code> のクリック → <code>#infoModal</code>。既存実装をそのまま</td></tr>
+    </table></div>
+
     <!-- 9 -->
-    <h3 class="section" id="qa">9. QA チェックリスト</h3>
-    <div class="note">
-      <ol>
-        <li>PC 1280px: リスト・住所カード・テーブル・ボタンの左右端が揃っている（960px）</li>
-        <li>SP 390px: 横スクロールが発生しない（<code>document.documentElement.scrollWidth === 390</code>）</li>
-        <li>SP: 加入済みの各行がカードになり、ラベルが表示される（data-label 漏れがないか）</li>
-        <li>空の td に「—」が出る / 値がある td には出ない</li>
-        <li>ボタン 3 つが白枠・白文字で、直前のリストと同幅</li>
-        <li>ⓘ クリックでモーダルが開く・× で閉じる</li>
-        <li>「アカウント編集」が Customer Fields のフォームに飛ぶ / 「編集 ›」が住所編集に飛ぶ</li>
-        <li>注文 0 件 / 1 件以上の両方で表示確認</li>
-        <li>ヘッダー・フッターに影響が出ていない（<code>.mp</code> 外にスタイルが漏れていない）</li>
-      </ol>
+    <h3 class="section" id="remove">9. 削除するもの</h3>
+    <div class="note warn">
+      <ul>
+        <li><code>.btown-section</code> 内のインライン <code>&lt;style&gt;</code> 全部（<code>.fc-text-title / .fanclub-wrap / .mypage-button / .account_wrap / .sp_table_scroll / .info-*</code> と <code>@media (max-width:640px)</code>）</li>
+        <li><code>.account_wrap</code> の <code>ul &gt; li &gt; span &gt; img</code>（アイコン PNG 6 点）と、基本情報リスト内の住所ブロック（配送用住所はカードへ）</li>
+        <li><code>.sp_table_scroll</code> ラッパー（横スクロール）</li>
+        <li><code>#logout_btn</code> 内の 2 つ目の「アカウント編集」（<code>.cf-edit-account-link</code> と <code>.cf-edit-account-link-spacer</code>）— 元々 <code>display:none</code> だったもの</li>
+        <li>注文履歴の <code>.PageLayout / .Segment</code> マークアップ（<code>.mp-table</code> に置換）</li>
+        <li>テーマ標準の <code>customers/addresses</code> ページへの導線（住所管理はマイページ内のモーダルに集約。ページ自体は残して可）</li>
+      </ul>
     </div>
 
     <!-- 10 -->
-    <h3 class="section" id="src-liquid">10. Liquid 全文</h3>
-    <p class="lead"><code>sections/main-account.liquid</code> の本文差し替え用。<a href="account-mypage.liquid" download>ファイルをダウンロード</a></p>
+    <h3 class="section" id="qa">10. QA チェックリスト</h3>
+    <div class="note">
+      <ol>
+        <li>PC 1280px: リスト・住所カード・テーブル・ボタンの左右端が揃っている（1000px）。見出し右のボタンが見出しと垂直中央で揃う</li>
+        <li>SP 390px: 横スクロールが発生しない（<code>document.documentElement.scrollWidth === 390</code>）。見出し右ボタンが消え、リスト下に全幅ボタンが出る</li>
+        <li>基本情報 7 行・ラベル列 111px。注記「※最新の住所…」がカード直下に出る</li>
+        <li>配送用住所: デフォルト住所にだけ「選択中」。住所 0 件でも追加カードが出る / 10 件で追加カードが消える</li>
+        <li>編集 › で該当住所が入ったモーダル、＋ で空のモーダルが開く。× / 背景 / Esc で閉じる</li>
+        <li>国を変えると都道府県セレクトが切り替わる。必須未入力で送信できない。保存後に一覧へ反映される</li>
+        <li>削除で confirm → 一覧から消える。デフォルト住所を消した場合の挙動（Shopify 側で繰り上げ）を確認</li>
+        <li>SP: 加入済みの各行がカードになり、ラベルが表示される（data-label 漏れがないか）。空の td に「—」</li>
+        <li>ⓘ クリックで情報モーダルが開く・× で閉じる（住所モーダルと競合しない）</li>
+        <li>注文 0 件 / 1 件以上の両方で表示確認</li>
+        <li>ヘッダー・フッターに影響が出ていない（<code>.mp</code> / <code>.mp-modal</code> 外にスタイルが漏れていない）</li>
+      </ol>
+    </div>
+
+    <!-- 11 -->
+    <h3 class="section" id="src-liquid">11. Liquid 全文</h3>
+    <p class="lead"><code>sections/main-account.liquid</code> の本文差し替え用。末尾のコメントに <code>snippets/mp-address-modal.liquid</code> の全文。<a href="account-mypage.liquid" download>ファイルをダウンロード</a></p>
     <div class="code">
       <div class="code-head"><span>account-mypage.liquid</span><button class="code-copy" data-copy="src-liquid-code">Copy</button></div>
       <pre><code id="src-liquid-code">{%- comment -%}
   =====================================================================
   BMSG SHOP マイページ (/account) 本文
-  既存 sections/main-account.liquid (template--xxx__main) 内の
-  &lt;div class=&quot;btown-section&quot;&gt; 〜 #logout_btn までを、このマークアップで置き換える。
-  ・ヘッダー/フッターはテーマのまま
-  ・CSS は assets/account-mypage.css (theme.liquid か本セクション先頭で読み込み)
-  ・既存の &lt;style&gt; (.fanclub-wrap 系) は削除する
+  既存 sections/main-account.liquid の &lt;div class=&quot;btown-section&quot;&gt; 〜 #logout_btn を
+  このマークアップで置き換える。
+  ・ヘッダー/フッター/テーマの .Button はそのまま（見た目は .mp 配下で白枠・白文字に上書き）
+  ・CSS は assets/account-mypage.css
   ・ⓘ モーダル (#infoModal) の JS/DOM は既存のまま流用
+  ・住所の追加/編集は Shopify 標準の customer_address フォームをモーダルに入れる
+    （都道府県セレクトは Shopify.CountryProvinceSelector を使用 → shopify_common.js が必要）
   =====================================================================
 {%- endcomment -%}
 {{ &#x27;account-mypage.css&#x27; | asset_url | stylesheet_tag }}
+&lt;script src=&quot;{{ &#x27;shopify_common.js&#x27; | shopify_asset_url }}&quot; defer&gt;&lt;/script&gt;
 
-{%- comment -%} ---- 住所の取得 ----
-  配送用     : customer.default_address (初期登録の住所をそのまま表示)
-  チケット先行用: ★要確認★ 現状どこに保存しているか (customer metafield / 別addressのタグ等)。
-               下記は例として metafield  customer.metafields.custom.ticket_address (JSON or 複数行) を想定。
-{%- endcomment -%}
-{%- assign shipping_address = customer.default_address -%}
-{%- assign ticket_address = customer.metafields.custom.ticket_address -%}
+{%- assign gender   = customer.metafields.custom.gender -%}
+{%- assign birthday = customer.metafields.custom.birthday -%}
+{%- comment -%} 基本情報に出す住所: ★要確認★ チケット先行用住所の保存先（metafield 想定） {%- endcomment -%}
+{%- assign base_zip  = customer.metafields.custom.ticket_zip -%}
+{%- assign base_addr = customer.metafields.custom.ticket_address -%}
 
 &lt;div class=&quot;mp&quot;&gt;
 
-  {%- comment -%} ===== アカウント基本情報 ===== {%- endcomment -%}
+  &lt;h1 class=&quot;mp-title&quot;&gt;マイページ&lt;/h1&gt;
+
+  {%- comment -%} ===== 基本情報 ===== {%- endcomment -%}
   &lt;section class=&quot;mp-section&quot;&gt;
     &lt;div class=&quot;mp-section__head&quot;&gt;
-      &lt;h1 class=&quot;mp-section__title&quot;&gt;アカウント基本情報&lt;/h1&gt;
+      &lt;h2 class=&quot;mp-section__title&quot;&gt;基本情報&lt;/h2&gt;
+      {%- comment -%} PC: 見出し右 / SP: リスト下（同じリンクを2つ置き CSS で出し分け） {%- endcomment -%}
+      &lt;a href=&quot;{{ customer_fields_edit_url | default: &#x27;/account/edit&#x27; }}&quot; class=&quot;Button Button--primary cf-edit-account-link mp-pc-only&quot;&gt;基本情報の編集&lt;/a&gt;
     &lt;/div&gt;
     &lt;div class=&quot;mp-card&quot;&gt;
       &lt;dl class=&quot;mp-dl&quot;&gt;
-        &lt;div class=&quot;mp-dl__row&quot;&gt;
-          &lt;dt class=&quot;mp-dl__label&quot;&gt;氏名&lt;/dt&gt;
-          &lt;dd class=&quot;mp-dl__value&quot;&gt;{{ customer.last_name }} {{ customer.first_name }}&lt;/dd&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;mp-dl__row&quot;&gt;
-          &lt;dt class=&quot;mp-dl__label&quot;&gt;メールアドレス&lt;/dt&gt;
-          &lt;dd class=&quot;mp-dl__value&quot;&gt;{{ customer.email }}&lt;/dd&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;mp-dl__row&quot;&gt;
-          &lt;dt class=&quot;mp-dl__label&quot;&gt;性別&lt;/dt&gt;
-          {%- assign gender = customer.metafields.custom.gender -%}
-          &lt;dd class=&quot;mp-dl__value{% if gender == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ gender | default: &#x27;未設定&#x27; }}&lt;/dd&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;mp-dl__row&quot;&gt;
-          &lt;dt class=&quot;mp-dl__label&quot;&gt;生年月日&lt;/dt&gt;
-          {%- assign birthday = customer.metafields.custom.birthday -%}
-          &lt;dd class=&quot;mp-dl__value{% if birthday == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ birthday | default: &#x27;未設定&#x27; }}&lt;/dd&gt;
-        &lt;/div&gt;
-        &lt;div class=&quot;mp-dl__row&quot;&gt;
-          &lt;dt class=&quot;mp-dl__label&quot;&gt;電話番号&lt;/dt&gt;
-          &lt;dd class=&quot;mp-dl__value{% if customer.phone == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ customer.phone | default: &#x27;未設定&#x27; }}&lt;/dd&gt;
-        &lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;氏名&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value&quot;&gt;{{ customer.last_name }} {{ customer.first_name }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;メールアドレス&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value&quot;&gt;{{ customer.email }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;性別&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value{% if gender == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ gender | default: &#x27;未設定&#x27; }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;生年月日&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value{% if birthday == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ birthday | default: &#x27;未設定&#x27; }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;電話番号&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value{% if customer.phone == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ customer.phone | default: &#x27;未設定&#x27; }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;郵便番号&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value{% if base_zip == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ base_zip | default: &#x27;未設定&#x27; }}&lt;/dd&gt;&lt;/div&gt;
+        &lt;div class=&quot;mp-dl__row&quot;&gt;&lt;dt class=&quot;mp-dl__label&quot;&gt;住所&lt;/dt&gt;&lt;dd class=&quot;mp-dl__value{% if base_addr == blank %} mp-dl__value--empty{% endif %}&quot;&gt;{{ base_addr | default: &#x27;未設定&#x27; }}&lt;/dd&gt;&lt;/div&gt;
       &lt;/dl&gt;
     &lt;/div&gt;
-    &lt;div class=&quot;mp-actions&quot;&gt;
-      {%- comment -%} Customer Fields 編集リンク: 既存の href をそのまま使う {%- endcomment -%}
-      &lt;a href=&quot;{{ customer_fields_edit_url | default: &#x27;/account/edit&#x27; }}&quot; class=&quot;Button Button--primary cf-edit-account-link&quot;&gt;アカウント編集&lt;/a&gt;
+    &lt;p class=&quot;mp-section__note mp-section__note--lg&quot;&gt;※最新の住所の反映をお願いいたします&lt;/p&gt;
+    &lt;div class=&quot;mp-actions mp-sp-only&quot;&gt;
+      &lt;a href=&quot;{{ customer_fields_edit_url | default: &#x27;/account/edit&#x27; }}&quot; class=&quot;Button Button--primary cf-edit-account-link&quot;&gt;基本情報の編集&lt;/a&gt;
     &lt;/div&gt;
   &lt;/section&gt;
 
-  {%- comment -%} ===== 登録住所 (チケット先行用 / 配送用) ===== {%- endcomment -%}
-  &lt;section class=&quot;mp-section&quot;&gt;
+  {%- comment -%} ===== 配送用住所 (複数) ===== {%- endcomment -%}
+  &lt;section class=&quot;mp-section&quot; id=&quot;addresses&quot;&gt;
     &lt;div class=&quot;mp-section__head&quot;&gt;
       &lt;div&gt;
-        &lt;h2 class=&quot;mp-section__title&quot;&gt;登録住所&lt;/h2&gt;
-        &lt;p class=&quot;mp-section__sub&quot;&gt;チケット先行の当選通知・配送に使用する住所です。&lt;/p&gt;
+        &lt;h2 class=&quot;mp-section__title&quot;&gt;配送用住所&lt;/h2&gt;
+        &lt;p class=&quot;mp-section__sub&quot;&gt;複数の配送先を登録できます。注文時に選択する住所です。&lt;/p&gt;
       &lt;/div&gt;
     &lt;/div&gt;
-    &lt;div class=&quot;mp-addr-grid&quot;&gt;
-
-      {%- comment -%} チケット先行用 {%- endcomment -%}
-      {%- if ticket_address != blank -%}
-        &lt;div class=&quot;mp-card mp-addr&quot;&gt;
+    &lt;div class=&quot;mp-addr-cards&quot;&gt;
+      {%- for address in customer.addresses -%}
+        &lt;article class=&quot;mp-card mp-addr&quot; data-address-id=&quot;{{ address.id }}&quot;&gt;
           &lt;div class=&quot;mp-addr__head&quot;&gt;
-            &lt;h3 class=&quot;mp-addr__title&quot;&gt;チケット先行用住所&lt;/h3&gt;
+            &lt;h3 class=&quot;mp-addr__title&quot;&gt;{{ address.last_name }} {{ address.first_name }}&lt;/h3&gt;
+            {%- if address == customer.default_address -%}&lt;span class=&quot;mp-pill&quot;&gt;選択中&lt;/span&gt;{%- endif -%}
           &lt;/div&gt;
           &lt;p class=&quot;mp-addr__body&quot;&gt;
-            {%- comment -%} 保存形式に合わせて整形する {%- endcomment -%}
-            {{ ticket_address | newline_to_br }}
+            〒{{ address.zip }}&lt;br&gt;
+            {{ address.province }} {{ address.city }}&lt;br&gt;
+            {{ address.address1 }}{% if address.address2 != blank %} {{ address.address2 }}{% endif %}
+            {%- if address.company != blank -%}&lt;br&gt;{{ address.company }}{%- endif -%}
+            {%- if address.phone != blank -%}&lt;br&gt;{{ address.phone }}{%- endif -%}
           &lt;/p&gt;
-          &lt;div class=&quot;mp-addr__foot&quot;&gt;&lt;a href=&quot;{{ ticket_address_edit_url | default: &#x27;/account/edit&#x27; }}&quot; class=&quot;mp-link&quot;&gt;編集&lt;/a&gt;&lt;/div&gt;
-        &lt;/div&gt;
-      {%- else -%}
-        &lt;div class=&quot;mp-card mp-addr mp-addr--empty&quot;&gt;
-          &lt;div class=&quot;mp-addr__head&quot;&gt;
-            &lt;h3 class=&quot;mp-addr__title&quot;&gt;チケット先行用住所&lt;/h3&gt;
+          &lt;div class=&quot;mp-addr__foot&quot;&gt;
+            {%- comment -%} 削除: Shopify 標準の DELETE フォーム {%- endcomment -%}
+            &lt;form method=&quot;post&quot; action=&quot;/account/addresses/{{ address.id }}&quot; class=&quot;mp-addr__delete&quot; data-confirm=&quot;この住所を削除しますか？&quot;&gt;
+              &lt;input type=&quot;hidden&quot; name=&quot;_method&quot; value=&quot;delete&quot;&gt;
+              &lt;button type=&quot;submit&quot; class=&quot;mp-link mp-link--muted&quot;&gt;削除&lt;/button&gt;
+            &lt;/form&gt;
+            &lt;button type=&quot;button&quot; class=&quot;mp-link&quot; data-modal-open=&quot;addr-modal-{{ address.id }}&quot;&gt;編集&lt;/button&gt;
           &lt;/div&gt;
-          &lt;p class=&quot;mp-addr__body&quot;&gt;チケット先行用住所は未登録です。&lt;/p&gt;
-          &lt;div class=&quot;mp-addr__foot&quot;&gt;&lt;a href=&quot;{{ ticket_address_edit_url | default: &#x27;/account/edit&#x27; }}&quot; class=&quot;mp-link&quot;&gt;住所を登録&lt;/a&gt;&lt;/div&gt;
-        &lt;/div&gt;
+        &lt;/article&gt;
+      {%- endfor -%}
+      {%- if customer.addresses_count &lt; 10 -%}
+        &lt;button type=&quot;button&quot; class=&quot;mp-addr mp-addr--add&quot; data-modal-open=&quot;addr-modal-new&quot;&gt;
+          &lt;span class=&quot;mp-addr__plus&quot;&gt;＋&lt;/span&gt;&lt;span class=&quot;mp-addr__addlabel&quot;&gt;配送用住所を追加&lt;/span&gt;
+        &lt;/button&gt;
       {%- endif -%}
-
-      {%- comment -%} 配送用 {%- endcomment -%}
-      {%- if shipping_address -%}
-        &lt;div class=&quot;mp-card mp-addr&quot;&gt;
-          &lt;div class=&quot;mp-addr__head&quot;&gt;
-            &lt;h3 class=&quot;mp-addr__title&quot;&gt;配送用住所&lt;/h3&gt;
-          &lt;/div&gt;
-          &lt;p class=&quot;mp-addr__body&quot;&gt;
-            〒{{ shipping_address.zip }}&lt;br&gt;
-            {{ shipping_address.province }} {{ shipping_address.city }}&lt;br&gt;
-            {{ shipping_address.address1 }} {{ shipping_address.address2 }}
-            &lt;strong&gt;{{ shipping_address.last_name }} {{ shipping_address.first_name }}&lt;/strong&gt;
-            {{ shipping_address.phone }}
-          &lt;/p&gt;
-          &lt;div class=&quot;mp-addr__foot&quot;&gt;&lt;a href=&quot;{{ routes.account_addresses_url }}&quot; class=&quot;mp-link&quot;&gt;編集&lt;/a&gt;&lt;/div&gt;
-        &lt;/div&gt;
-      {%- else -%}
-        &lt;div class=&quot;mp-card mp-addr mp-addr--empty&quot;&gt;
-          &lt;div class=&quot;mp-addr__head&quot;&gt;
-            &lt;h3 class=&quot;mp-addr__title&quot;&gt;配送用住所&lt;/h3&gt;
-          &lt;/div&gt;
-          &lt;p class=&quot;mp-addr__body&quot;&gt;配送用住所は未登録です。&lt;/p&gt;
-          &lt;div class=&quot;mp-addr__foot&quot;&gt;&lt;a href=&quot;{{ routes.account_addresses_url }}&quot; class=&quot;mp-link&quot;&gt;住所を登録&lt;/a&gt;&lt;/div&gt;
-        &lt;/div&gt;
-      {%- endif -%}
-
     &lt;/div&gt;
   &lt;/section&gt;
 
@@ -429,10 +450,12 @@
   &lt;section class=&quot;mp-section&quot;&gt;
     &lt;div class=&quot;mp-section__head&quot;&gt;
       &lt;h2 class=&quot;mp-section__title&quot;&gt;支払い方法・変更確認&lt;/h2&gt;
+      &lt;a href=&quot;{{ plan_manage_url }}&quot; class=&quot;Button Button--primary mp-pc-only&quot;&gt;加入プランの管理&lt;/a&gt;
     &lt;/div&gt;
     &lt;p class=&quot;mp-subtitle&quot;&gt;加入済み&lt;/p&gt;
     &lt;div class=&quot;mp-card mp-card--table&quot;&gt;
-      &lt;table class=&quot;mp-table&quot;&gt;
+      &lt;table class=&quot;mp-table mp-table--fanclub&quot;&gt;
+        &lt;colgroup&gt;&lt;col style=&quot;width:26%&quot;&gt;&lt;col style=&quot;width:14%&quot;&gt;&lt;col style=&quot;width:14%&quot;&gt;&lt;col style=&quot;width:12%&quot;&gt;&lt;col style=&quot;width:14%&quot;&gt;&lt;col style=&quot;width:20%&quot;&gt;&lt;/colgroup&gt;
         &lt;thead&gt;
           &lt;tr&gt;
             &lt;th&gt;ファンクラブ&lt;/th&gt;
@@ -444,11 +467,7 @@
           &lt;/tr&gt;
         &lt;/thead&gt;
         &lt;tbody&gt;
-          {%- comment -%}
-            ★ 既存のファンクラブ行ループをここに移植する。
-            各 td に data-label を付けるとスマホでカード表示のラベルになる。
-            値が空の td は自動で「—」表示。
-          {%- endcomment -%}
+          {%- comment -%} ★ 既存のファンクラブ行ループをここに移植。各 td に data-label を付ける（SP のカード表示用）。空の td は CSS で「—」 {%- endcomment -%}
           {%- for fc in fanclubs -%}
           &lt;tr&gt;
             &lt;td class=&quot;fanclub-name&quot;&gt;{{ fc.artist }}&lt;p&gt;{{ fc.name }}&lt;/p&gt;&lt;/td&gt;
@@ -462,7 +481,7 @@
         &lt;/tbody&gt;
       &lt;/table&gt;
     &lt;/div&gt;
-    &lt;div class=&quot;mp-actions&quot;&gt;
+    &lt;div class=&quot;mp-actions mp-sp-only&quot;&gt;
       &lt;a href=&quot;{{ plan_manage_url }}&quot; class=&quot;Button Button--primary&quot;&gt;加入プランの管理&lt;/a&gt;
     &lt;/div&gt;
     &lt;p class=&quot;mp-section__note&quot;&gt;※加入中のB-Townのプランもこちらからご確認いただけます。&lt;/p&gt;
@@ -475,15 +494,10 @@
     &lt;/div&gt;
     &lt;div class=&quot;mp-card mp-card--table&quot;&gt;
       {%- if customer.orders.size &gt; 0 -%}
-        &lt;table class=&quot;mp-table&quot;&gt;
+        &lt;table class=&quot;mp-table mp-table--orders&quot;&gt;
+          &lt;colgroup&gt;&lt;col style=&quot;width:30%&quot;&gt;&lt;col style=&quot;width:17.5%&quot;&gt;&lt;col style=&quot;width:17.5%&quot;&gt;&lt;col style=&quot;width:17.5%&quot;&gt;&lt;col style=&quot;width:17.5%&quot;&gt;&lt;/colgroup&gt;
           &lt;thead&gt;
-            &lt;tr&gt;
-              &lt;th&gt;注文番号&lt;/th&gt;
-              &lt;th&gt;注文日&lt;/th&gt;
-              &lt;th&gt;支払状況&lt;/th&gt;
-              &lt;th&gt;配送状況&lt;/th&gt;
-              &lt;th&gt;合計&lt;/th&gt;
-            &lt;/tr&gt;
+            &lt;tr&gt;&lt;th&gt;注文番号&lt;/th&gt;&lt;th&gt;注文日&lt;/th&gt;&lt;th&gt;支払状況&lt;/th&gt;&lt;th&gt;配送状況&lt;/th&gt;&lt;th&gt;合計&lt;/th&gt;&lt;/tr&gt;
           &lt;/thead&gt;
           &lt;tbody&gt;
             {%- for order in customer.orders -%}
@@ -509,6 +523,68 @@
 
 &lt;/div&gt;
 
+{%- comment -%} ===== 住所 追加/編集 モーダル（住所ごとに1つ + 新規1つ。Shopify の customer_address フォーム） ===== {%- endcomment -%}
+{%- for address in customer.addresses -%}
+  {%- render &#x27;mp-address-modal&#x27;, address: address, id: address.id, title: &#x27;住所を編集する&#x27;, submit: &#x27;住所を編集する&#x27; -%}
+{%- endfor -%}
+{%- render &#x27;mp-address-modal&#x27;, address: customer.new_address, id: &#x27;new&#x27;, title: &#x27;住所を追加する&#x27;, submit: &#x27;住所を追加する&#x27; -%}
+
+{%- comment -%}
+  ---------------------------------------------------------------------
+  snippets/mp-address-modal.liquid （下記を別ファイルとして作成）
+  ---------------------------------------------------------------------
+  &lt;div class=&quot;mp-modal&quot; id=&quot;addr-modal-{{ id }}&quot; hidden&gt;
+    &lt;div class=&quot;mp-modal__dialog&quot; role=&quot;dialog&quot; aria-modal=&quot;true&quot; aria-labelledby=&quot;addr-modal-{{ id }}-title&quot;&gt;
+      &lt;button class=&quot;mp-modal__close&quot; type=&quot;button&quot; data-modal-close aria-label=&quot;閉じる&quot;&gt;×&lt;/button&gt;
+      &lt;h2 class=&quot;mp-modal__title&quot; id=&quot;addr-modal-{{ id }}-title&quot;&gt;{{ title }}&lt;/h2&gt;
+      &lt;p class=&quot;mp-modal__lead&quot;&gt;以下の情報を入力してください：&lt;/p&gt;
+      {% form &#x27;customer_address&#x27;, address, class: &#x27;mp-form&#x27; %}
+        &lt;div class=&quot;mp-form__row&quot;&gt;
+          &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;姓&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[last_name]&quot; value=&quot;{{ form.last_name }}&quot; placeholder=&quot;姓&quot; required&gt;&lt;/label&gt;
+          &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;名&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[first_name]&quot; value=&quot;{{ form.first_name }}&quot; placeholder=&quot;名&quot; required&gt;&lt;/label&gt;
+        &lt;/div&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;会社名&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[company]&quot; value=&quot;{{ form.company }}&quot; placeholder=&quot;会社名&quot;&gt;&lt;/label&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;電話番号&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;tel&quot; name=&quot;address[phone]&quot; value=&quot;{{ form.phone }}&quot; placeholder=&quot;090-1234-1234&quot;&gt;&lt;/label&gt;
+        &lt;div class=&quot;mp-form__row&quot;&gt;
+          &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;国&lt;/span&gt;&lt;span class=&quot;mp-select-wrap&quot;&gt;&lt;select class=&quot;mp-select&quot; name=&quot;address[country]&quot; id=&quot;addr-country-{{ id }}&quot; data-default=&quot;{{ form.country | default: &#x27;Japan&#x27; }}&quot;&gt;{{ all_country_option_tags }}&lt;/select&gt;&lt;/span&gt;&lt;/label&gt;
+          &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;郵便番号&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[zip]&quot; value=&quot;{{ form.zip }}&quot; placeholder=&quot;郵便番号&quot; inputmode=&quot;numeric&quot; required&gt;&lt;/label&gt;
+        &lt;/div&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;都道府県&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mp-select-wrap&quot;&gt;&lt;select class=&quot;mp-select&quot; name=&quot;address[province]&quot; id=&quot;addr-province-{{ id }}&quot; data-default=&quot;{{ form.province }}&quot; required&gt;&lt;/select&gt;&lt;/span&gt;&lt;/label&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;市区町村&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[city]&quot; value=&quot;{{ form.city }}&quot; placeholder=&quot;市区町村&quot; required&gt;&lt;/label&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;丁目・番地&lt;span class=&quot;req&quot;&gt;*&lt;/span&gt;&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[address1]&quot; value=&quot;{{ form.address1 }}&quot; placeholder=&quot;東山2-14-9&quot; required&gt;&lt;/label&gt;
+        &lt;label class=&quot;mp-field&quot;&gt;&lt;span class=&quot;mp-field__label&quot;&gt;建物名・部屋番号&lt;/span&gt;&lt;input class=&quot;mp-input&quot; type=&quot;text&quot; name=&quot;address[address2]&quot; value=&quot;{{ form.address2 }}&quot; placeholder=&quot;BMSGビル101&quot;&gt;&lt;/label&gt;
+        &lt;label class=&quot;mp-check&quot;&gt;&lt;input type=&quot;checkbox&quot; name=&quot;address[default]&quot; value=&quot;1&quot;{% if form.set_as_default_checkbox or address == customer.default_address %} checked{% endif %}&gt;&lt;span class=&quot;mp-check__box&quot;&gt;&lt;/span&gt;この住所をデフォルトとして設定する&lt;/label&gt;
+        &lt;button class=&quot;Button Button--primary&quot; type=&quot;submit&quot;&gt;{{ submit }}&lt;/button&gt;
+      {% endform %}
+    &lt;/div&gt;
+  &lt;/div&gt;
+  ---------------------------------------------------------------------
+{%- endcomment -%}
+
+&lt;script&gt;
+  // モーダル開閉 + 都道府県セレクト + 削除確認
+  (function () {
+    function open(id) { var m = document.getElementById(id); if (!m) return; m.hidden = false; document.body.style.overflow = &#x27;hidden&#x27;; var f = m.querySelector(&#x27;input:not([type=hidden])&#x27;); if (f) setTimeout(function () { f.focus(); }, 0); }
+    function closeAll() { document.querySelectorAll(&#x27;.mp-modal&#x27;).forEach(function (m) { m.hidden = true; }); document.body.style.overflow = &#x27;&#x27;; }
+    document.addEventListener(&#x27;click&#x27;, function (e) {
+      var o = e.target.closest(&#x27;[data-modal-open]&#x27;); if (o) { open(o.getAttribute(&#x27;data-modal-open&#x27;)); return; }
+      if (e.target.closest(&#x27;[data-modal-close]&#x27;) || e.target.classList.contains(&#x27;mp-modal&#x27;)) closeAll();
+    });
+    document.addEventListener(&#x27;keydown&#x27;, function (e) { if (e.key === &#x27;Escape&#x27;) closeAll(); });
+    document.querySelectorAll(&#x27;form[data-confirm]&#x27;).forEach(function (f) { f.addEventListener(&#x27;submit&#x27;, function (e) { if (!confirm(f.getAttribute(&#x27;data-confirm&#x27;))) e.preventDefault(); }); });
+    // 国 → 都道府県（Shopify 標準）
+    function initProvinces() {
+      if (!window.Shopify || !Shopify.CountryProvinceSelector) return;
+      document.querySelectorAll(&#x27;.mp-modal select[id^=&quot;addr-country-&quot;]&#x27;).forEach(function (c) {
+        var id = c.id.replace(&#x27;addr-country-&#x27;, &#x27;&#x27;);
+        new Shopify.CountryProvinceSelector(&#x27;addr-country-&#x27; + id, &#x27;addr-province-&#x27; + id, { hideElement: &#x27;addr-province-&#x27; + id });
+        var p = document.getElementById(&#x27;addr-province-&#x27; + id); var def = p &amp;&amp; p.getAttribute(&#x27;data-default&#x27;); if (def) p.value = def;
+      });
+    }
+    if (document.readyState === &#x27;loading&#x27;) document.addEventListener(&#x27;DOMContentLoaded&#x27;, initProvinces); else initProvinces();
+  })();
+&lt;/script&gt;
+
 {%- comment -%} 情報モーダル: 既存の DOM / script をそのまま残す {%- endcomment -%}
 &lt;div class=&quot;info-modal-overlay&quot; id=&quot;infoModal&quot;&gt;
   &lt;div class=&quot;info-modal&quot;&gt;
@@ -519,9 +595,9 @@
 </code></pre>
     </div>
 
-    <!-- 11 -->
-    <h3 class="section" id="src-css">11. CSS 全文</h3>
-    <p class="lead"><code>assets/account-mypage.css</code>。<a href="account-mypage.css" download>ファイルをダウンロード</a></p>
+    <!-- 12 -->
+    <h3 class="section" id="src-css">12. CSS 全文</h3>
+    <p class="lead"><code>assets/account-mypage.css</code>（ページ＋住所モーダル）。<a href="account-mypage.css" download>ファイルをダウンロード</a></p>
     <div class="code">
       <div class="code-head"><span>account-mypage.css</span><button class="code-copy" data-copy="src-css-code">Copy</button></div>
       <pre><code id="src-css-code">/* =====================================================================
