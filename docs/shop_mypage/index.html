@@ -114,14 +114,13 @@
 
   <h1 class="mp-title">マイページ</h1>
 
-  <div class="mp-cols">
-    <!-- ===== 基本情報 ===== -->
-    <section class="mp-section">
-      <div class="mp-section__head">
-        <h2 class="mp-section__title">基本情報</h2>
-      </div>
-      <div class="mp-card">
-        <dl class="mp-dl">
+  <!-- ===== 基本情報 ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <h2 class="mp-section__title">基本情報</h2>
+    </div>
+    <div class="mp-card">
+      <dl class="mp-dl">
         <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">山田 太郎</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">メールアドレス</dt><dd class="mp-dl__value">sample@example.com</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">性別</dt><dd class="mp-dl__value">男性</dd></div>
@@ -129,31 +128,23 @@
         <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value">+81 90-0000-0000</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">郵便番号</dt><dd class="mp-dl__value">123-4567</dd></div>
         <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value">東京都 某区某町 1234 某マンション123</dd></div>
-        </dl>
-      </div>
-      <div class="mp-actions">
-        <a href="#" class="Button Button--primary cf-edit-account-link">基本情報の編集</a>
-      </div>
-    </section>
+      </dl>
+    </div>
+    <div class="mp-actions">
+      <a href="#" class="Button Button--primary cf-edit-account-link">基本情報の編集</a>
+    </div>
+  </section>
 
-    <!-- ===== 配送用住所 ===== -->
-    <section class="mp-section">
-      <div class="mp-section__head">
+  <!-- ===== 配送用住所 (複数・モーダルで追加/編集) ===== -->
+  <section class="mp-section">
+    <div class="mp-section__head">
+      <div>
         <h2 class="mp-section__title">配送用住所</h2>
+        <p class="mp-section__sub">複数の配送先を登録できます。注文時に選択する住所です。</p>
       </div>
-      <div class="mp-card">
-        <dl class="mp-dl">
-        <div class="mp-dl__row"><dt class="mp-dl__label">氏名</dt><dd class="mp-dl__value">山田 太郎</dd></div>
-        <div class="mp-dl__row"><dt class="mp-dl__label">郵便番号</dt><dd class="mp-dl__value">123-4567</dd></div>
-        <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value">東京都 某区某町 1234 某マンション123</dd></div>
-        <div class="mp-dl__row"><dt class="mp-dl__label">電話番号</dt><dd class="mp-dl__value">090-0000-0000</dd></div>
-        </dl>
-      </div>
-      <div class="mp-actions">
-        <a href="#" class="Button Button--primary">配送用住所の編集</a>
-      </div>
-    </section>
-  </div>
+    </div>
+    <div class="mp-addr-cards" id="addrCards"></div>
+  </section>
 
   <!-- ===== 支払い方法・変更確認 ===== -->
   <section class="mp-section">
@@ -270,5 +261,120 @@
 </main>
 
 <div class="stub-footer">footer (テーマのまま)</div>
+
+<!-- ===== 住所 追加/編集 モーダル ===== -->
+<div class="mp-modal" id="addrModal" hidden>
+  <div class="mp-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="addrModalTitle">
+    <button class="mp-modal__close" type="button" data-close aria-label="閉じる">×</button>
+    <h2 class="mp-modal__title" id="addrModalTitle">住所を編集する</h2>
+    <p class="mp-modal__lead">以下の情報を入力してください：</p>
+    <form class="mp-form" id="addrForm" novalidate>
+      <input type="hidden" name="id">
+      <div class="mp-form__row">
+        <label class="mp-field"><span class="mp-field__label">姓<span class="req">*</span></span><input class="mp-input" name="last" placeholder="姓" required></label>
+        <label class="mp-field"><span class="mp-field__label">名<span class="req">*</span></span><input class="mp-input" name="first" placeholder="名" required></label>
+      </div>
+      <label class="mp-field"><span class="mp-field__label">会社名</span><input class="mp-input" name="company" placeholder="会社名"></label>
+      <label class="mp-field"><span class="mp-field__label">電話番号</span><input class="mp-input" name="tel" placeholder="090-1234-1234" inputmode="tel"></label>
+      <div class="mp-form__row">
+        <label class="mp-field"><span class="mp-field__label">国</span><span class="mp-select-wrap"><select class="mp-select" name="country"><option>日本</option></select></span></label>
+        <label class="mp-field"><span class="mp-field__label">郵便番号<span class="req">*</span></span><input class="mp-input" name="zip" placeholder="郵便番号" inputmode="numeric" required></label>
+      </div>
+      <label class="mp-field"><span class="mp-field__label">都道府県<span class="req">*</span></span><span class="mp-select-wrap"><select class="mp-select" name="pref" id="prefSelect" required></select></span></label>
+      <label class="mp-field"><span class="mp-field__label">市区町村<span class="req">*</span></span><input class="mp-input" name="city" placeholder="市区町村" required></label>
+      <label class="mp-field"><span class="mp-field__label">丁目・番地<span class="req">*</span></span><input class="mp-input" name="addr1" placeholder="東山2-14-9" required></label>
+      <label class="mp-field"><span class="mp-field__label">建物名・部屋番号</span><input class="mp-input" name="addr2" placeholder="BMSGビル101"></label>
+      <label class="mp-check"><input type="checkbox" name="def"><span class="mp-check__box"></span>この住所をデフォルトとして設定する</label>
+      <button class="Button Button--primary" type="submit" id="addrSubmit">住所を編集する</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  var MAX = 10;
+  var PREFS = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+  var addrs = [
+    { id: 1, last: '山田', first: '太郎', company: '', tel: '090-0000-0000', country: '日本', zip: '123-4567', pref: '東京都', city: '某区某町', addr1: '1234', addr2: '某マンション123', def: true },
+    { id: 2, last: '山田', first: '花子', company: '', tel: '080-0000-0000', country: '日本', zip: '100-0001', pref: '東京都', city: '千代田区', addr1: '千代田1-1-1', addr2: 'サンプルビル5F', def: false }
+  ];
+  var nextId = 3;
+  var wrap = document.getElementById('addrCards');
+  var modal = document.getElementById('addrModal');
+  var form = document.getElementById('addrForm');
+  var titleEl = document.getElementById('addrModalTitle');
+  var submitEl = document.getElementById('addrSubmit');
+  var prefSel = document.getElementById('prefSelect');
+  PREFS.forEach(function (p) { var o = document.createElement('option'); o.textContent = p; prefSel.appendChild(o); });
+
+  function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function render() {
+    var html = addrs.map(function (a) {
+      return '<article class="mp-card mp-addr" data-id="' + a.id + '">' +
+        '<div class="mp-addr__head"><h3 class="mp-addr__title">' + esc(a.last) + ' ' + esc(a.first) + '</h3>' + (a.def ? '<span class="mp-pill">デフォルト</span>' : '') + '</div>' +
+        '<p class="mp-addr__body">〒' + esc(a.zip) + '<br>' + esc(a.pref) + ' ' + esc(a.city) + '<br>' + esc(a.addr1) + (a.addr2 ? ' ' + esc(a.addr2) : '') + (a.company ? '<br>' + esc(a.company) : '') + (a.tel ? '<br>' + esc(a.tel) : '') + '</p>' +
+        '<div class="mp-addr__foot"><button type="button" class="mp-link mp-link--muted" data-act="delete">削除</button><button type="button" class="mp-link" data-act="edit">編集</button></div>' +
+        '</article>';
+    }).join('');
+    var left = MAX - addrs.length;
+    if (left > 0) {
+      html += '<button type="button" class="mp-addr mp-addr--add" data-act="add"><span class="mp-addr__plus">＋</span><span class="mp-addr__addlabel">住所を追加</span><span class="mp-addr__addnote">あと' + left + '件登録できます</span></button>';
+    }
+    wrap.innerHTML = html;
+  }
+  function open(mode, a) {
+    form.reset();
+    form.id.value = a ? a.id : '';
+    titleEl.textContent = mode === 'edit' ? '住所を編集する' : '住所を追加する';
+    submitEl.textContent = mode === 'edit' ? '住所を編集する' : '住所を追加する';
+    if (a) {
+      ['last', 'first', 'company', 'tel', 'country', 'zip', 'pref', 'city', 'addr1', 'addr2'].forEach(function (k) { form[k].value = a[k] || ''; });
+      form.def.checked = !!a.def;
+    } else {
+      form.country.value = '日本'; form.pref.value = '東京都';
+      form.def.checked = addrs.length === 0;
+    }
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { form.last.focus(); }, 0);
+  }
+  function close() { modal.hidden = true; document.body.style.overflow = ''; }
+
+  wrap.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-act]'); if (!btn) return;
+    var act = btn.dataset.act;
+    if (act === 'add') return open('add');
+    var card = btn.closest('[data-id]'); var id = Number(card.dataset.id);
+    var a = addrs.find(function (x) { return x.id === id; });
+    if (act === 'edit') return open('edit', a);
+    if (act === 'delete') {
+      if (!confirm('この住所を削除しますか？')) return;
+      addrs = addrs.filter(function (x) { return x.id !== id; });
+      if (a.def && addrs[0]) addrs[0].def = true;
+      render();
+    }
+  });
+  modal.addEventListener('click', function (e) { if (e.target === modal || e.target.closest('[data-close]')) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) close(); });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+    var data = {};
+    ['last', 'first', 'company', 'tel', 'country', 'zip', 'pref', 'city', 'addr1', 'addr2'].forEach(function (k) { data[k] = form[k].value.trim(); });
+    data.def = form.def.checked;
+    var id = Number(form.id.value);
+    if (data.def) addrs.forEach(function (x) { x.def = false; });
+    if (id) { var a = addrs.find(function (x) { return x.id === id; }); Object.assign(a, data); }
+    else { data.id = nextId++; if (addrs.length === 0) data.def = true; addrs.push(data); }
+    if (!addrs.some(function (x) { return x.def; }) && addrs[0]) addrs[0].def = true;
+    render(); close();
+  });
+  render();
+  // 共有用: #add / #edit-1 でモーダルを開いた状態を再現
+  var h = location.hash;
+  if (h === '#add') open('add');
+  else if (/^#edit-(\d+)$/.test(h)) { var ea = addrs.find(function (x) { return x.id === Number(h.slice(6)); }); if (ea) open('edit', ea); }
+})();
+</script>
 </body>
 </html>
