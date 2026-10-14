@@ -118,6 +118,7 @@
   <section class="mp-section">
     <div class="mp-section__head">
       <h2 class="mp-section__title">基本情報</h2>
+      <a href="#" class="Button Button--primary cf-edit-account-link mp-pc-only">基本情報の編集</a>
     </div>
     <div class="mp-card">
       <dl class="mp-dl">
@@ -130,7 +131,8 @@
         <div class="mp-dl__row"><dt class="mp-dl__label">住所</dt><dd class="mp-dl__value">東京都 某区某町 1234 某マンション123</dd></div>
       </dl>
     </div>
-    <div class="mp-actions">
+    <p class="mp-section__note mp-section__note--lg">※最新の住所の反映をお願いいたします</p>
+    <div class="mp-actions mp-sp-only">
       <a href="#" class="Button Button--primary cf-edit-account-link">基本情報の編集</a>
     </div>
   </section>
@@ -150,6 +152,7 @@
   <section class="mp-section">
     <div class="mp-section__head">
       <h2 class="mp-section__title">支払い方法・変更確認</h2>
+      <a href="#" class="Button Button--primary mp-pc-only">加入プランの管理</a>
     </div>
     <p class="mp-subtitle">加入済み</p>
     <div class="mp-card mp-card--table">
@@ -201,7 +204,7 @@
         </tbody>
       </table>
     </div>
-    <div class="mp-actions">
+    <div class="mp-actions mp-sp-only">
       <a href="#" class="Button Button--primary">加入プランの管理</a>
     </div>
     <p class="mp-section__note">※加入中のB-Townのプランもこちらからご確認いただけます。</p>
@@ -311,14 +314,14 @@
   function render() {
     var html = addrs.map(function (a) {
       return '<article class="mp-card mp-addr" data-id="' + a.id + '">' +
-        '<div class="mp-addr__head"><h3 class="mp-addr__title">' + esc(a.last) + ' ' + esc(a.first) + '</h3>' + (a.def ? '<span class="mp-pill">デフォルト</span>' : '') + '</div>' +
+        '<div class="mp-addr__head"><h3 class="mp-addr__title">' + esc(a.last) + ' ' + esc(a.first) + '</h3>' + (a.def ? '<span class="mp-pill">選択中</span>' : '') + '</div>' +
         '<p class="mp-addr__body">〒' + esc(a.zip) + '<br>' + esc(a.pref) + ' ' + esc(a.city) + '<br>' + esc(a.addr1) + (a.addr2 ? ' ' + esc(a.addr2) : '') + (a.company ? '<br>' + esc(a.company) : '') + (a.tel ? '<br>' + esc(a.tel) : '') + '</p>' +
         '<div class="mp-addr__foot"><button type="button" class="mp-link mp-link--muted" data-act="delete">削除</button><button type="button" class="mp-link" data-act="edit">編集</button></div>' +
         '</article>';
     }).join('');
     var left = MAX - addrs.length;
     if (left > 0) {
-      html += '<button type="button" class="mp-addr mp-addr--add" data-act="add"><span class="mp-addr__plus">＋</span><span class="mp-addr__addlabel">住所を追加</span><span class="mp-addr__addnote">あと' + left + '件登録できます</span></button>';
+      html += '<button type="button" class="mp-addr mp-addr--add" data-act="add"><span class="mp-addr__plus">＋</span><span class="mp-addr__addlabel">配送用住所を追加</span></button>';
     }
     wrap.innerHTML = html;
   }

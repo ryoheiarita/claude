@@ -55,11 +55,14 @@
 
 .mp-section__head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin: 0 0 16px;
 }
+/* 見出し右のボタン (PC) は内容幅 */
+.mp .mp-section__head .Button { display: inline-block; width: auto; }
+.mp .mp-sp-only { display: none; }
 .mp-section__title {
   margin: 0;
   font-size: 22px;
@@ -80,6 +83,7 @@
   line-height: 1.7;
   color: var(--mp-text-3);
 }
+.mp-section__note--lg { margin-top: 16px; font-size: 13px; line-height: 21px; }
 .mp-subtitle {
   margin: 32px 0 12px;
   font-size: 15px;
@@ -152,11 +156,11 @@
   align-items: center;
   padding: 3px 10px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.15);
+  background: #fff;
   font-size: 11px;
   letter-spacing: 0.04em;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+  color: #101010;
   white-space: nowrap;
 }
 .mp-addr__body {
@@ -191,7 +195,6 @@
 .mp-addr--add:hover { background: var(--mp-surface-2); border-color: rgba(255, 255, 255, 0.45); }
 .mp-addr__plus { font-size: 22px; line-height: 28px; }
 .mp-addr__addlabel { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; }
-.mp-addr__addnote { font-size: 12px; color: rgba(255, 255, 255, 0.4); }
 .mp-addr--add[hidden] { display: none; }
 
 /* テキストリンク (編集 ›) */
@@ -371,13 +374,14 @@
   height: 36px;
   border: 0;
   border-radius: 50%;
-  background: transparent;
-  color: var(--mp-text-2);
+  background: var(--mp-surface);
+  color: var(--mp-text);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
-.mp-modal__close:hover { background: var(--mp-surface); color: var(--mp-text); }
+.mp-modal__close:hover { background: #fff; color: #000; }
 .mp-modal__title {
   margin: 0 0 8px;
   text-align: center;
@@ -528,7 +532,9 @@
    ===================================================================== */
 @media screen and (max-width: 767px) {
   .mp { padding: 32px 16px 72px; }
-  .mp-title { margin-bottom: 44px; font-size: 20px; }
+  .mp-title { margin-bottom: 44px; font-size: 24px; }
+  .mp .mp-pc-only { display: none !important; }
+  .mp .mp-sp-only { display: flex; }
   .mp-section { margin-bottom: 44px; }
   .mp-section__title { font-size: 19px; }
 
