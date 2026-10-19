@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<script src="../gate.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>チケット先行</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Figma「チケット先行 / B タイムライン（ガント）」14831:33458 */
+  :root{
+    --bg:#101010;
+    --ff:"Figtree","Noto Sans JP",system-ui,sans-serif;
+    --red:#ff454d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#000;}
+  body{font-family:var(--ff);color:#fff;display:flex;align-items:center;justify-content:center;min-height:100%;}
+  a{color:inherit;text-decoration:none}
+
+  .phone{position:relative;width:390px;height:min(844px,calc(100vh - 32px));background:var(--bg);overflow:hidden;border-radius:44px;box-shadow:0 0 0 8px #1b1b1b,0 30px 80px rgba(0,0,0,.6);
+    display:flex;flex-direction:column;}
+  @media (max-width:430px){
+    body{display:block}
+    .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+  }
+
+  /* status bar (index.html と同じ) */
+  .status{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;height:59px;flex:none;}
+  .status .time{flex:1 1 0;min-width:0;height:22px;padding-top:2px;display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,"SF Pro Text","SF Pro","Helvetica Neue",var(--ff);font-weight:600;font-size:17px;line-height:22px;color:#fff;letter-spacing:-.2px;}
+  .status .island{flex:none;width:125px;height:37px;border-radius:100px;}
+  .status .levels{flex:1 1 0;min-width:0;height:22px;padding-top:1px;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .status .levels svg{display:block;flex:none;}
+
+  /* toolbar : back + centered title (40px) */
+  .bar{flex:none;height:40px;display:flex;align-items:center;gap:8px;padding:0 16px;}
+  .bar a,.bar span{width:24px;height:24px;flex:none;display:block;}
+  .bar svg{display:block;width:24px;height:24px;}
+  .bar h1{flex:1 1 0;min-width:0;text-align:center;font-weight:600;font-size:17px;line-height:20px;}
+
+  .scroll{flex:1 1 0;min-height:0;overflow-y:auto;scrollbar-width:none;}
+  .scroll::-webkit-scrollbar{display:none}
+  .content{padding:8px 16px 40px;display:flex;flex-direction:column;gap:16px;}
+
+
+  /* timeline */
+  .tk{position:relative;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.04);--axh:70px;--bh:54px;--g:4px;}
+  .tk::after{content:"";position:absolute;top:0;right:0;bottom:0;width:40px;pointer-events:none;background:linear-gradient(90deg,rgba(16,16,16,0),rgba(16,16,16,.9));}
+  .tk-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;}
+  .tk-sc::-webkit-scrollbar{display:none}
+  .tk-sc.drag{cursor:grabbing;}
+  .tk-track{position:relative;}
+  .tk-day{position:absolute;top:0;bottom:0;}
+  .tk-day.we{background:rgba(255,255,255,.03);}
+  .tk-day .lbl{position:absolute;top:26px;left:1px;right:1px;height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .tk-day .w{font-size:10px;line-height:12px;color:rgba(255,255,255,.45);}
+  .tk-day .d{font-weight:600;font-size:12px;line-height:16px;color:rgba(255,255,255,.85);}
+  .tk-day.today .lbl{background:#fff;}
+  .tk-day.today .w{color:rgba(0,0,0,.6);}
+  .tk-day.today .d{color:#000;}
+  /* 月ラベル : 月ごとの区間の中で position:sticky。表示左端に張り付き、区間の終わり（次の月の1日）で押し出されて入れ替わる。
+     JS で毎フレーム動かすとスクロールに遅れてずれるので CSS だけで止める */
+  .tk-mon{position:absolute;top:6px;height:16px;padding-right:8px;}
+  .tk-mon span{position:sticky;left:12px;display:inline-block;font-weight:600;font-size:12px;line-height:16px;color:#fff;white-space:nowrap;}
+  /* 表示範囲に予定が無いとき、右端に「次の予定」ボタン（その予定の色の角丸＋日付＋→） */
+  .tk-next{position:absolute;right:8px;z-index:2;display:flex;align-items:center;gap:2px;height:24px;padding:0 4px 0 10px;border:0;border-radius:100px;
+    font:600 11px/1 var(--ff);color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transform:translateX(6px);transition:opacity .2s,transform .2s;}
+  .tk-next.on{opacity:1;pointer-events:auto;transform:none;}
+  .tk-next svg{width:16px;height:16px;display:block;}
+  .tk-next .l{display:none;}
+  .tk-next.left{right:auto;left:8px;padding:0 10px 0 4px;transform:translateX(-6px);}
+  .tk-next.left.on{transform:none;}
+  .tk-next.left .l{display:block;}
+  .tk-next.left .r{display:none;}
+  .tk-axis{position:absolute;left:0;right:0;top:var(--axh);height:1px;background:rgba(255,255,255,.1);}
+  .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:var(--red);}
+  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
+  .tk-bar.pre{border:1px dashed currentColor;}
+  .tk-bar.end,.tk-lbl.end{opacity:.45;}
+  .tk-bar .th{position:absolute;left:6px;top:6px;width:42px;height:42px;border-radius:4px;overflow:hidden;background:#222;}
+  .tk-bar .th img{width:100%;height:100%;object-fit:cover;display:block;}
+  .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;}   /* left/width は JS */
+  .tk-lbl{position:absolute;height:var(--bh);}
+  .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+  .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hint{font-size:11px;line-height:13px;color:rgba(255,255,255,.4);text-align:center;margin-top:-4px;}
+
+  /* list */
+  h2{font-weight:600;font-size:17px;line-height:20px;}
+  .list{display:flex;flex-direction:column;gap:8px;margin-top:-4px;}
+  .item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);}
+  .item.end{opacity:.5;}
+  .item .th{width:64px;height:64px;border-radius:8px;overflow:hidden;flex:none;background:#222;}
+  .item .th img{width:100%;height:100%;object-fit:cover;display:block;}
+  .item .info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;}
+  .l1{display:flex;align-items:center;gap:8px;min-width:0;}
+  .badge{flex:none;font-size:12px;line-height:14px;padding:2px 6px;border-radius:10px;border:1px solid #c10007;background:rgba(193,0,7,.08);}
+  .badge.pre,.badge.end{border-color:#6a7282;background:rgba(106,114,130,.08);}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .who{font-size:13px;line-height:16px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item .ttl{font-weight:600;font-size:15px;line-height:20px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+  .l3{display:flex;gap:8px;font-size:12px;line-height:14px;color:rgba(255,255,255,.6);white-space:nowrap;}
+  .l3 b{font-weight:600;color:rgba(255,255,255,.9);}
+  .l3 b.hot{color:var(--red);}
+  .empty{font-size:13px;color:rgba(255,255,255,.5);}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status">
+    <div class="time">9:18</div>
+    <div class="island"></div>
+    <div class="levels">
+      <svg width="19.2" height="12.23" viewBox="0 0 19.2 12.2264" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.2 1.14623C19.2 0.513183 18.7224 0 18.1333 0H17.0667C16.4776 0 16 0.513183 16 1.14623V11.0802C16 11.7132 16.4776 12.2264 17.0667 12.2264H18.1333C18.7224 12.2264 19.2 11.7132 19.2 11.0802V1.14623ZM11.7659 2.44528H12.8326C13.4217 2.44528 13.8992 2.97078 13.8992 3.61902V11.0527C13.8992 11.7009 13.4217 12.2264 12.8326 12.2264H11.7659C11.1768 12.2264 10.6992 11.7009 10.6992 11.0527V3.61902C10.6992 2.97078 11.1768 2.44528 11.7659 2.44528ZM7.43411 5.09433H6.36745C5.77834 5.09433 5.30078 5.62652 5.30078 6.28301V11.0377C5.30078 11.6942 5.77834 12.2264 6.36745 12.2264H7.43411C8.02322 12.2264 8.50078 11.6942 8.50078 11.0377V6.28301C8.50078 5.62652 8.02322 5.09433 7.43411 5.09433ZM2.13333 7.53962H1.06667C0.477563 7.53962 0 8.06421 0 8.71132V11.0547C0 11.7018 0.477563 12.2264 1.06667 12.2264H2.13333C2.72244 12.2264 3.2 11.7018 3.2 11.0547V8.71132C3.2 8.06421 2.72244 7.53962 2.13333 7.53962Z" fill="#fff"/></svg>
+      <svg width="17.14" height="12.33" viewBox="0 0 17.1417 12.3283" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.5713 2.46628C11.0584 2.46639 13.4504 3.38847 15.2529 5.04195C15.3887 5.1696 15.6056 5.16799 15.7393 5.03834L17.0368 3.77487C17.1045 3.70911 17.1422 3.62004 17.1417 3.52735C17.1411 3.43467 17.1023 3.34603 17.0338 3.28104C12.3028 -1.09368 4.83907 -1.09368 0.108056 3.28104C0.039524 3.34598 0.000639766 3.4346 7.82398e-06 3.52728C-0.000624118 3.61996 0.0370483 3.70906 0.104689 3.77487L1.40255 5.03834C1.53615 5.16819 1.75327 5.1698 1.88893 5.04195C3.69167 3.38836 6.08395 2.46628 8.5713 2.46628ZM8.56795 6.68656C9.92527 6.68647 11.2341 7.19821 12.2403 8.12234C12.3763 8.2535 12.5907 8.25065 12.7234 8.11593L14.0106 6.79663C14.0784 6.72742 14.1161 6.63355 14.1151 6.53599C14.1141 6.43844 14.0746 6.34536 14.0054 6.27757C10.9416 3.38672 6.19688 3.38672 3.13305 6.27757C3.06384 6.34536 3.02435 6.43849 3.02345 6.53607C3.02254 6.63365 3.06028 6.72752 3.12822 6.79663L4.41513 8.11593C4.54778 8.25065 4.76215 8.2535 4.89823 8.12234C5.90368 7.19882 7.21152 6.68713 8.56795 6.68656ZM11.0924 9.48011C11.0943 9.58546 11.0572 9.68703 10.9899 9.76084L8.81327 12.2156C8.74946 12.2877 8.66247 12.3283 8.5717 12.3283C8.48093 12.3283 8.39394 12.2877 8.33013 12.2156L6.1531 9.76084C6.08585 9.68697 6.04886 9.58537 6.05085 9.48002C6.05284 9.37467 6.09365 9.27491 6.16364 9.20429C7.55374 7.8904 9.58966 7.8904 10.9798 9.20429C11.0497 9.27497 11.0904 9.37476 11.0924 9.48011Z" fill="#fff"/></svg>
+      <svg width="27.33" height="13" viewBox="0 0 27.328 13" fill="none"><rect opacity="0.35" x="0.5" y="0.5" width="24" height="12" rx="3.8" stroke="#fff"/><path opacity="0.4" d="M26 4.78113V8.8566C26.8047 8.51143 27.328 7.70847 27.328 6.81886C27.328 5.92926 26.8047 5.1263 26 4.78113" fill="#fff"/><rect x="2" y="2" width="21" height="9" rx="2.5" fill="#fff"/></svg>
+    </div>
+  </div>
+  <div class="bar">
+    <a href="index.html" aria-label="戻る"><svg viewBox="0 0 24 24" fill="none"><path d="M15 19L8 12L15 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <h1>チケット先行</h1>
+    <span></span>
+  </div>
+  <div class="scroll">
+    <div class="content">
+      <div class="tk" id="tk"><div class="tk-sc" id="sc"><div class="tk-track" id="track"></div></div><button class="tk-next" type="button" aria-label="近くの予定へ"><svg class="l" viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span><svg class="r" viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <p class="hint">← 横スクロールで日付移動 →</p>
+      <h2>締切が近い順</h2>
+      <div class="list" id="list"></div>
+      <h2 id="endHead" hidden>受付終了</h2>
+      <div class="list" id="endList"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/presales.js?v=20261019"></script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COLORS = { 'BE:FIRST':'#145cfc', 'MAZZEL':'#8021ff', 'Aile The Shota':'#009e8f', 'HANA':'#e6007a', 'SKY-HI':'#f54a00',
+                 'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282', 'Ayumu Imazu':'#0092b8' };
+const THUMBS = { 'BE:FIRST':'assets/thumb_bf3.jpg' };
+const WD = ['日','月','火','水','木','金','土'];
+const p2 = n => String(n).padStart(2, '0');
+const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const NOW = new Date(), TODAY = day0(NOW);
+const START = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, TODAY.getDate());   // 1ヶ月前からスクロール可能
+const short = d => `${d.getMonth() + 1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+const long = d => `${d.getMonth() + 1}.${p2(d.getDate())}(${WD[d.getDay()]}) ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+const left = t => { const h = (t - NOW) / 36e5; return h < 24 ? `あと${Math.max(1, Math.ceil(h))}時間` : `あと${Math.ceil(h / 24)}日`; };
+
+const ALL = (window.PRESALES || []).map(p => {
+  const s = new Date(p.start), e = new Date(p.end);
+  return { ...p, s, e, status: NOW < s ? 'pre' : NOW > e ? 'end' : 'on',
+    color: COLORS[p.artists[0]] || '#6a7282', img: p.thumb || THUMBS[p.artists[0]] || 'assets/thumb_bf5.jpg',
+    label: `${p.kind ? p.kind + ' ' : ''}${p.title}` };
+});
+
+// ---------- list : 受付中(締切順) → 受付前(開始順)、終了は別見出し ----------
+const item = p => {
+  const label = { on:'受付中', pre:'受付前', end:'受付終了' }[p.status];
+  const l3 = p.status === 'on'  ? `<span>締切 ${long(p.e)}</span><b class="hot">${left(p.e)}</b>`
+           : p.status === 'pre' ? `<span>開始 ${long(p.s)}</span><b>${left(p.s)}</b>`
+           : `<span>${long(p.e)} 終了</span>`;
+  return `<a class="item ${p.status}" href="${esc(p.link || '#')}" target="_blank" rel="noopener">
+    <div class="th"><img src="${p.img}" alt=""></div>
+    <div class="info">
+      <div class="l1"><span class="badge ${p.status}">${label}</span><span class="dot" style="background:${p.color}"></span><span class="who">${esc(p.artists.join(' / '))}</span></div>
+      <p class="ttl">${esc(p.label)}</p>
+      <div class="l3">${l3}</div>${p.result ? `<div class="l3"><span>当選発表 ${long(new Date(p.result))}頃</span></div>` : ''}
+    </div></a>`;
+};
+const live = [...ALL.filter(p => p.status === 'on').sort((a, b) => a.e - b.e), ...ALL.filter(p => p.status === 'pre').sort((a, b) => a.s - b.s)];
+const ended = ALL.filter(p => p.status === 'end' && p.e >= new Date(TODAY.getTime() - 30 * 864e5)).sort((a, b) => b.e - a.e);
+document.getElementById('list').innerHTML = live.length ? live.map(item).join('') : '<p class="empty">現在受付中・予定のチケット先行はありません</p>';
+document.getElementById('endList').innerHTML = ended.map(item).join('');
+document.getElementById('endHead').hidden = !ended.length;
+
+// ---------- timeline : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
+const tk = document.getElementById('tk'), sc = document.getElementById('sc'), track = document.getElementById('track');
+const X0 = 12, G = 4, AXH = 70, BH = 54, PAD = 6, THUMB = 42, LBL = 170, SHORT = 160;
+let bars = [], tlItems = [];
+const nextBtn = tk.querySelector('.tk-next');
+
+function build(DW) {
+  const idx = d => Math.round((day0(d) - START) / 864e5);
+  for (const it of ALL) {
+    it.L = X0 + idx(it.s) * DW + 2; it.W = (idx(it.e) - idx(it.s) + 1) * DW - 4;
+    it.short = it.W < SHORT;
+    it.R = it.L + it.W + (it.short ? 6 + LBL : 0);
+  }
+  const { items, lanes } = packByArtist(ALL.filter(p => p.e >= START));
+  const laneEnds = items.map(it => it.R);
+  const yearEnd = new Date(TODAY.getFullYear(), 11, 31);                                   // 年末まで
+  const days = Math.max(idx(yearEnd) + 1, Math.ceil((Math.max(0, ...laneEnds) - X0) / DW) + 2);
+  track.style.width = (X0 * 2 + days * DW) + 'px';
+  track.style.height = (AXH + 1 + G + lanes * (BH + G) + G) + 'px';
+
+  let html = '';
+  const months = [];
+  for (let i = 0; i < days; i++) {
+    const dt = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i), w = dt.getDay(), d = dt.getDate();
+    html += `<div class="tk-day${w === 0 || w === 6 ? ' we' : ''}${+dt === +TODAY ? ' today' : ''}" style="left:${X0 + i * DW}px;width:${DW}px">` +
+            `<div class="lbl"><span class="w">${WD[w]}</span><span class="d">${d}</span></div></div>`;
+    if (i === 0 || d === 1) months.push({ x:X0 + i * DW, label:`${dt.getMonth() + 1}月` });
+  }
+  months.forEach((m, k) => { m.end = k + 1 < months.length ? months[k + 1].x : X0 + days * DW; });
+  html += months.map(m => `<div class="tk-mon" style="left:${m.x}px;width:${m.end - m.x}px"><span>${m.label}</span></div>`).join('');
+  html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + idx(TODAY) * DW + DW / 2 - 1}px"></div>`;
+  html += items.map(it => {
+    const top = AXH + 1 + G + it.lane * (BH + G);
+    const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
+    const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${short(it.s)} – ${short(it.e)}</p></div>`;
+    const thumb = it.W >= THUMB + 2 * PAD ? `<div class="th"><img src="${it.img}" alt=""></div>` : '';
+    const href = esc(it.link || '#');
+    return `<a class="tk-bar ${it.status}${it.short ? ' short' : ''}" href="${href}" target="_blank" rel="noopener" data-l="${it.L}" data-w="${it.W}" ` +
+           `style="left:${it.L}px;width:${it.W}px;top:${top}px;color:${it.color};background:${bg}">${thumb}${it.short ? '' : txt}</a>` +
+           (it.short ? `<a class="tk-lbl ${it.status}" href="${href}" target="_blank" rel="noopener" style="left:${it.L + it.W + 6}px;width:${LBL}px;top:${top}px">${txt}</a>` : '');
+  }).join('');
+  if (!items.length) html += `<p class="empty" style="position:absolute;left:16px;top:${AXH + 16}px">表示期間にチケット先行はありません</p>`;
+  track.innerHTML = html;
+  tlItems = items;
+  nextBtn.style.top = (AXH + 1 + G + (lanes * (BH + G)) / 2 - 12) + 'px';
+  bars = [...track.querySelectorAll('.tk-bar:not(.short)')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
+  sc.scrollLeft = Math.max(0, (idx(TODAY) - 2) * DW);       // 今日の2日前を左端に
+  layout();
+}
+// アーティストごとに段をまとめる。同じアーティストの予定が重なるときだけ、そのすぐ下の段に並べる。
+// アーティストの並びは「受付中の締切が近い → 受付前の開始が近い → 終了」の順。maxLanes を超えるアーティストは載せない。
+// perArtist : 1アーティストあたりの最大段数（TOP カードは 1。重なって入りきらない予定は presale.html で見る）
+function packByArtist(items, maxLanes = Infinity, perArtist = Infinity) {
+  const rank = it => it.status === 'on' ? [0, +it.e] : it.status === 'pre' ? [1, +it.s] : [2, -it.e];
+  const groups = new Map();
+  for (const it of [...items].sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || x[1] - y[1]; })) {
+    const k = it.artists[0];
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const placed = [];
+  let base = 0;
+  for (const g of groups.values()) {
+    const sub = [];                                                      // 段ごとの [left, right] 区間
+    for (const it of [...g].sort((a, b) => a.L - b.L)) {
+      let l = sub.findIndex(ivs => ivs.every(([a, b]) => it.R + 4 <= a || b + 4 <= it.L));
+      if (l < 0) { l = sub.length; sub.push([]); }
+      sub[l].push([it.L, it.R]); it.sub = l;
+    }
+    const need = Math.min(sub.length, perArtist, base === 0 ? maxLanes : Infinity);
+    if (base + need > maxLanes) continue;
+    for (const it of g) if (it.sub < need) { it.lane = base + it.sub; placed.push(it); }
+    base += need;
+  }
+  return { items:placed, lanes:Math.max(1, base) };
+}
+// 表示範囲に予定が写っていない（端が 40px 未満しか見えない）とき、一番近い予定へ飛ぶボタンを出す。
+// 右に予定があれば右端に「日付 ›」、右に無ければ左端に「‹ 日付」。色はその予定の色。
+function nextButton(btn, items, s, V, onGo) {
+  const ext = it => [it.L, it.L + it.W + (it.short ? 6 + 170 : 0)];
+  const vis = items.some(it => { const [a, b] = ext(it); return Math.min(b, s + V) - Math.max(a, s) > 40; });
+  const right = vis ? null : items.filter(it => ext(it)[0] >= s + V - 40).sort((a, b) => a.L - b.L)[0];
+  const left = vis || right ? null : items.filter(it => ext(it)[1] <= s + 40).sort((a, b) => ext(b)[1] - ext(a)[1])[0];
+  const t = right || left;
+  btn.classList.toggle('on', !!t);
+  if (!t) return;
+  btn.classList.toggle('left', !right);
+  const d = right ? t.s : t.e;                                           // 右=開始日、左=締切日
+  btn.querySelector('span').textContent = `${d.getMonth() + 1}/${d.getDate()}`;
+  btn.style.background = t.color;
+  btn.onclick = () => onGo(Math.max(0, right ? t.L - 16 : ext(t)[1] - V * 0.7)); // 右=始まりを左端へ、左=終わりを右寄りに
+}
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+function layout() {
+  const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
+  nextButton(nextBtn, tlItems, s, sc.clientWidth, x => sc.scrollTo({ left:x, behavior:'smooth' }));
+  for (const b of bars) {
+    const right = Math.min(b.L + b.W - PAD, viewR);
+    const lft = Math.min(Math.max(b.L + PAD + THUMB + PAD, viewL), right);
+    b.txt.style.left = (lft - b.L) + 'px';
+    b.txt.style.width = Math.max(0, right - lft) + 'px';
+  }
+}
+let raf = 0;
+sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); }); }, { passive:true });
+window.addEventListener('resize', layout);
+
+build(26);                                                  // 2週間表示（1日 26px）のみ
+
+// PC: マウスドラッグで横スクロール（クリックはリンクに通す）
+let dragX = null, startS = 0, moved = false, pid = 0;
+sc.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; dragX = e.clientX; startS = sc.scrollLeft; pid = e.pointerId; });
+sc.addEventListener('pointermove', e => {
+  if (dragX === null) return;
+  if (!moved && Math.abs(e.clientX - dragX) > 5) { moved = true; sc.classList.add('drag'); sc.setPointerCapture(pid); }
+  sc.scrollLeft = startS - (e.clientX - dragX);
+});
+const end = () => { dragX = null; sc.classList.remove('drag'); setTimeout(() => { moved = false; }, 0); };
+sc.addEventListener('pointerup', end);
+sc.addEventListener('pointercancel', end);
+sc.addEventListener('click', e => { if (moved) e.preventDefault(); }, true);
+sc.addEventListener('dragstart', e => e.preventDefault());
+</script>
+</body>
+</html>

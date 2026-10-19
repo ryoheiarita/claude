@@ -159,6 +159,17 @@
   .tk-day.today .lbl{background:#fff;}
   .tk-day.today .w{color:rgba(0,0,0,.6);}
   .tk-day.today .d{color:#000;}
+  /* 表示範囲に予定が無いとき、右端に「次の予定」ボタン（その予定の色の角丸＋日付＋→） */
+  .tk-next{position:absolute;right:8px;z-index:2;display:flex;align-items:center;gap:2px;height:24px;padding:0 4px 0 10px;border:0;border-radius:100px;
+    font:600 11px/1 var(--ff);color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transform:translateX(6px);transition:opacity .2s,transform .2s;}
+  .tk-next.on{opacity:1;pointer-events:auto;transform:none;}
+  .tk-next svg{width:16px;height:16px;display:block;}
+  .tk-next .l{display:none;}
+  .tk-next.left{right:auto;left:8px;padding:0 10px 0 4px;transform:translateX(-6px);}
+  .tk-next.left.on{transform:none;}
+  .tk-next.left .l{display:block;}
+  .tk-next.left .r{display:none;}
   .tk-axis{position:absolute;left:0;right:0;top:var(--axh);height:1px;background:rgba(255,255,255,.1);}
   .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:#ff454d;}
   .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
@@ -227,11 +238,11 @@
       <section class="ccard ticket">
         <div class="chead">
           <h2>チケット先行</h2>
-          <a class="trail link" href="#">View All
+          <a class="trail link" href="presale.html">View All
             <svg viewBox="0 0 24 24" fill="none"><path d="M10 8L14 12L10 16" stroke="white" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
         </div>
-        <div class="tk"><div class="tk-sc" id="tkScroller"><div class="tk-track" id="tkTrack"></div></div></div>
+        <div class="tk"><div class="tk-sc" id="tkScroller"><div class="tk-track" id="tkTrack"></div></div><button class="tk-next" type="button" aria-label="近くの予定へ"><svg class="l" viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span><svg class="r" viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       </section>
 
       <!-- Calendar（Figma の縦積みから外れたため非表示） -->
@@ -431,43 +442,86 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 })();
 
 // ---------- チケット先行タイムライン : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
+// アーティストごとに段をまとめる。同じアーティストの予定が重なるときだけ、そのすぐ下の段に並べる。
+// アーティストの並びは「受付中の締切が近い → 受付前の開始が近い → 終了」の順。maxLanes を超えるアーティストは載せない。
+// perArtist : 1アーティストあたりの最大段数（TOP カードは 1。重なって入りきらない予定は presale.html で見る）
+function packByArtist(items, maxLanes = Infinity, perArtist = Infinity) {
+  const rank = it => it.status === 'on' ? [0, +it.e] : it.status === 'pre' ? [1, +it.s] : [2, -it.e];
+  const groups = new Map();
+  for (const it of [...items].sort((a, b) => { const x = rank(a), y = rank(b); return x[0] - y[0] || x[1] - y[1]; })) {
+    const k = it.artists[0];
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const placed = [];
+  let base = 0;
+  for (const g of groups.values()) {
+    const sub = [];                                                      // 段ごとの [left, right] 区間
+    for (const it of [...g].sort((a, b) => a.L - b.L)) {
+      let l = sub.findIndex(ivs => ivs.every(([a, b]) => it.R + 4 <= a || b + 4 <= it.L));
+      if (l < 0) { l = sub.length; sub.push([]); }
+      sub[l].push([it.L, it.R]); it.sub = l;
+    }
+    const need = Math.min(sub.length, perArtist, base === 0 ? maxLanes : Infinity);
+    if (base + need > maxLanes) continue;
+    for (const it of g) if (it.sub < need) { it.lane = base + it.sub; placed.push(it); }
+    base += need;
+  }
+  return { items:placed, lanes:Math.max(1, base) };
+}
+// 表示範囲に予定が写っていない（端が 40px 未満しか見えない）とき、一番近い予定へ飛ぶボタンを出す。
+// 右に予定があれば右端に「日付 ›」、右に無ければ左端に「‹ 日付」。色はその予定の色。
+function nextButton(btn, items, s, V, onGo) {
+  const ext = it => [it.L, it.L + it.W + (it.short ? 6 + 170 : 0)];
+  const vis = items.some(it => { const [a, b] = ext(it); return Math.min(b, s + V) - Math.max(a, s) > 40; });
+  const right = vis ? null : items.filter(it => ext(it)[0] >= s + V - 40).sort((a, b) => a.L - b.L)[0];
+  const left = vis || right ? null : items.filter(it => ext(it)[1] <= s + 40).sort((a, b) => ext(b)[1] - ext(a)[1])[0];
+  const t = right || left;
+  btn.classList.toggle('on', !!t);
+  if (!t) return;
+  btn.classList.toggle('left', !right);
+  const d = right ? t.s : t.e;                                           // 右=開始日、左=締切日
+  btn.querySelector('span').textContent = `${d.getMonth() + 1}/${d.getDate()}`;
+  btn.style.background = t.color;
+  btn.onclick = () => onGo(Math.max(0, right ? t.L - 16 : ext(t)[1] - V * 0.7)); // 右=始まりを左端へ、左=終わりを右寄りに
+}
 (function ticketTimeline(){
   const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, THUMB = 42;
   // 先行データ : calendar-bmsg.tokyo から tools/build_presales.mjs で生成した assets/presales.js
   const NOW = new Date();
   const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const TODAY = day0(NOW);
-  const START = new Date(TODAY.getTime() - 9 * 864e5);                 // 今日の9日前から
+  const START = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, TODAY.getDate());   // 1ヶ月前からスクロール可能
   const FIRST_VISIBLE = new Date(TODAY.getTime() - 2 * 864e5);         // 初期表示の左端 = 2日前
   const COLORS = { 'BE:FIRST':'#145cfc', 'MAZZEL':'#8021ff', 'Aile The Shota':'#009e8f', 'HANA':'#e6007a', 'SKY-HI':'#f54a00',
-                   'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282' };
+                   'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282', 'Ayumu Imazu':'#0092b8' };
   const THUMBS = { 'BE:FIRST':'assets/thumb_bf3.jpg' };
   const p2 = n => String(n).padStart(2, '0');
   const fmt = d => `${d.getMonth() + 1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
-  const ITEMS = (window.PRESALES || [])
-    .map(p => ({ ...p, s:new Date(p.start), e:new Date(p.end) }))
-    .filter(p => p.e >= START)                                         // 表示範囲より前に終わったものは出さない
-    .sort((a, b) => a.s - b.s);
   const idx = d => Math.round((day0(d) - START) / 864e5);
-  // 期間が短いバーは文字を右外に出す（ガント風）。その分も含めて重ならない段に詰める
-  const SHORT = 160, LBL = 170;
-  const laneEnds = [];
-  for (const it of ITEMS) {
+  // TOP カードは受付中・受付前だけ。締切が近い順（受付中→受付前）に、最大 MAX_LANES 段へ入るぶんだけ載せる（全件は presale.html）
+  const SHORT = 160, LBL = 170, MAX_LANES = 2;
+  const cand = (window.PRESALES || [])
+    .map(p => ({ ...p, s:new Date(p.start), e:new Date(p.end) }))
+    .map(p => ({ ...p, status: NOW < p.s ? 'pre' : NOW > p.e ? 'end' : 'on' }))
+    .filter(p => p.status !== 'end')
+    .sort((a, b) => (a.status === b.status ? 0 : a.status === 'on' ? -1 : 1) || (a.status === 'on' ? a.e - b.e : a.s - b.s));
+  for (const it of cand) {
     it.L = X0 + idx(it.s) * DW + 2; it.W = (idx(it.e) - idx(it.s) + 1) * DW - 4;
     it.short = it.W < SHORT;
-    const right = it.L + it.W + (it.short ? 6 + LBL : 0);
-    let l = laneEnds.findIndex(end => end + 4 <= it.L);
-    if (l < 0) { l = laneEnds.length; laneEnds.push(0); }
-    laneEnds[l] = right; it.lane = l;
-    it.status = NOW < it.s ? 'pre' : NOW > it.e ? 'end' : 'on';
+    it.R = it.L + it.W + (it.short ? 6 + LBL : 0);
     it.color = COLORS[it.artists[0]] || '#6a7282';
     it.img = it.thumb || THUMBS[it.artists[0]] || 'assets/thumb_bf5.jpg';
     it.label = `${it.kind ? it.kind + ' ' : ''}${it.title}`;
     it.date = `${fmt(it.s)} – ${fmt(it.e)}`;
   }
-  const LANES = Math.max(1, laneEnds.length);
+  const packed = packByArtist(cand, MAX_LANES, 1);
+  const ITEMS = packed.items;
+  const laneEnds = ITEMS.map(it => it.R);
+  const LANES = packed.lanes;
   const lastRight = Math.max(0, ...laneEnds);
-  const DAYS = Math.max(32, Math.ceil((lastRight - X0) / DW) + 2);
+  const yearEnd = new Date(TODAY.getFullYear(), 11, 31);                                   // 年末まで
+  const DAYS = Math.max(idx(yearEnd) + 1, Math.ceil((lastRight - X0) / DW) + 2);
   const WD = ['日','月','火','水','木','金','土'];
   const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
   const sc = document.getElementById('tkScroller'), track = document.getElementById('tkTrack');
@@ -493,9 +547,12 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
   if (!ITEMS.length) html += `<p class="tk-empty">現在受付中・予定のチケット先行はありません</p>`;
   track.innerHTML = html;
 
+  const nextBtn = sc.parentElement.querySelector('.tk-next');
+  nextBtn.style.top = (AXH + 1 + G + (LANES * (BH + G)) / 2 - 12) + 'px';
   const bars = [...track.querySelectorAll('.tk-bar:not(.short)')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
   const layout = () => {
     const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
+    nextButton(nextBtn, ITEMS, s, sc.clientWidth, x => sc.scrollTo({ left:x, behavior:'smooth' }));
     for (const b of bars) {
       const right = Math.min(b.L + b.W - PAD, viewR);
       const left = Math.min(Math.max(b.L + PAD + THUMB + PAD, viewL), right);
