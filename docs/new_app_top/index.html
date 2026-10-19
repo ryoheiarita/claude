@@ -150,7 +150,7 @@
   .tk-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;}
   .tk-sc::-webkit-scrollbar{display:none}
   .tk-sc.drag{cursor:grabbing;}
-  .tk-track{position:relative;height:calc(var(--axh) + 1px + var(--g) + 2*var(--bh) + var(--g) + var(--g));}
+  .tk-track{position:relative;height:calc(var(--axh) + 1px + var(--g) + 2*var(--bh) + var(--g) + var(--g));} /* 段数に応じて JS で上書き */
   .tk-day{position:absolute;top:0;bottom:0;width:var(--dw);}
   .tk-day.we{background:rgba(255,255,255,.03);}
   .tk-day .lbl{position:absolute;top:2px;left:1px;right:1px;height:calc(var(--axh) - 4px);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:13px;}
@@ -163,11 +163,16 @@
   .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:#ff454d;}
   .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
   .tk-bar.pre{border:1px dashed currentColor;}
+  .tk-bar.end{opacity:.45;}                     /* 受付終了 */
+  .tk-lbl{position:absolute;height:var(--bh);}            /* 短いバーの右外ラベル */
+  .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .tk-lbl.end{opacity:.45;}
+  .tk-empty{position:absolute;left:16px;top:calc(var(--axh) + 16px);font-size:12px;color:rgba(255,255,255,.5);}
   .tk-bar .th{position:absolute;left:6px;top:6px;width:42px;height:42px;border-radius:4px;overflow:hidden;background:#222;}
   .tk-bar .th img{width:100%;height:100%;object-fit:cover;display:block;}
   .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;} /* left/width は JS */
-  .tk-bar .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
-  .tk-bar .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tk-bar .tt,.tk-lbl .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+  .tk-bar .dt,.tk-lbl .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   .hscroll.news{gap:12px;}
   .hscroll.news .item{width:310px;}
@@ -289,6 +294,7 @@
 </div>
 
 <script src="assets/events.js?v=20261007c"></script>
+<script src="assets/presales.js?v=20261019"></script>
 <script>
 // ---------- チケット先行カードが最初の画面で必ず全部見えるよう、足りない分だけヒーローごと持ち上げる ----------
 (function lift(){
@@ -427,34 +433,67 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 // ---------- チケット先行タイムライン : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
 (function ticketTimeline(){
   const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, THUMB = 42;
-  const START = new Date(2026, 9, 10), DAYS = 32;                 // 10/10〜11/10
-  const TODAY = new Date(2026, 9, 19), FIRST_VISIBLE = new Date(2026, 9, 17);
-  const ITEMS = [
-    { lane:0, color:'#145cfc', title:'BE:FIRST ARENA TOUR 2026-2027 “Mainstream II” FC最速先行', date:'10/15 12:00 – 10/22 23:59', s:[10,15], e:[10,22], img:'assets/thumb_bf3.jpg' },
-    { lane:1, color:'#8021ff', title:'MAZZEL 1st Arena Tour 2026 “Shall we hit the Banquet?”', date:'10/18 10:00 – 10/26 23:59', s:[10,18], e:[10,26], img:'assets/thumb_bf4.jpg' },
-    { lane:0, color:'#009e8f', pre:true, title:'Aile The Shota Oneman Live 2026 “Epilogue” FC先行', date:'10/25 12:00 – 11/3 23:59', s:[10,25], e:[11,3], img:'assets/thumb_bf5.jpg' },
-  ];
+  // 先行データ : calendar-bmsg.tokyo から tools/build_presales.mjs で生成した assets/presales.js
+  const NOW = new Date();
+  const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const TODAY = day0(NOW);
+  const START = new Date(TODAY.getTime() - 9 * 864e5);                 // 今日の9日前から
+  const FIRST_VISIBLE = new Date(TODAY.getTime() - 2 * 864e5);         // 初期表示の左端 = 2日前
+  const COLORS = { 'BE:FIRST':'#145cfc', 'MAZZEL':'#8021ff', 'Aile The Shota':'#009e8f', 'HANA':'#e6007a', 'SKY-HI':'#f54a00',
+                   'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282' };
+  const THUMBS = { 'BE:FIRST':'assets/thumb_bf3.jpg' };
+  const p2 = n => String(n).padStart(2, '0');
+  const fmt = d => `${d.getMonth() + 1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  const ITEMS = (window.PRESALES || [])
+    .map(p => ({ ...p, s:new Date(p.start), e:new Date(p.end) }))
+    .filter(p => p.e >= START)                                         // 表示範囲より前に終わったものは出さない
+    .sort((a, b) => a.s - b.s);
+  const idx = d => Math.round((day0(d) - START) / 864e5);
+  // 期間が短いバーは文字を右外に出す（ガント風）。その分も含めて重ならない段に詰める
+  const SHORT = 160, LBL = 170;
+  const laneEnds = [];
+  for (const it of ITEMS) {
+    it.L = X0 + idx(it.s) * DW + 2; it.W = (idx(it.e) - idx(it.s) + 1) * DW - 4;
+    it.short = it.W < SHORT;
+    const right = it.L + it.W + (it.short ? 6 + LBL : 0);
+    let l = laneEnds.findIndex(end => end + 4 <= it.L);
+    if (l < 0) { l = laneEnds.length; laneEnds.push(0); }
+    laneEnds[l] = right; it.lane = l;
+    it.status = NOW < it.s ? 'pre' : NOW > it.e ? 'end' : 'on';
+    it.color = COLORS[it.artists[0]] || '#6a7282';
+    it.img = it.thumb || THUMBS[it.artists[0]] || 'assets/thumb_bf5.jpg';
+    it.label = `${it.kind ? it.kind + ' ' : ''}${it.title}`;
+    it.date = `${fmt(it.s)} – ${fmt(it.e)}`;
+  }
+  const LANES = Math.max(1, laneEnds.length);
+  const lastRight = Math.max(0, ...laneEnds);
+  const DAYS = Math.max(32, Math.ceil((lastRight - X0) / DW) + 2);
   const WD = ['日','月','火','水','木','金','土'];
-  const dayIdx = (m, d) => Math.round((new Date(2026, m - 1, d) - START) / 864e5);
   const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
   const sc = document.getElementById('tkScroller'), track = document.getElementById('tkTrack');
   track.style.width = (X0 * 2 + DAYS * DW) + 'px';
+  track.style.height = (AXH + 1 + G + LANES * (BH + G)) + 'px';
 
   let html = '';
   for (let i = 0; i < DAYS; i++) {
-    const dt = new Date(START.getTime() + i * 864e5), w = dt.getDay(), d = dt.getDate();
+    const dt = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i), w = dt.getDay(), d = dt.getDate();
     html += `<div class="tk-day${w === 0 || w === 6 ? ' we' : ''}${+dt === +TODAY ? ' today' : ''}" style="left:${X0 + i * DW}px">` +
             `<div class="lbl"><span class="w">${WD[w]}</span><span class="d">${d === 1 ? (dt.getMonth() + 1) + '/' : ''}${d}</span></div></div>`;
   }
-  html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + dayIdx(10, 19) * DW + DW / 2 - 1}px"></div>`;
+  html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + idx(TODAY) * DW + DW / 2 - 1}px"></div>`;
   html += ITEMS.map(it => {
-    const L = X0 + dayIdx(...it.s) * DW + 2, W = (dayIdx(...it.e) - dayIdx(...it.s) + 1) * DW - 4;
-    return `<div class="tk-bar${it.pre ? ' pre' : ''}" data-l="${L}" data-w="${W}" style="left:${L}px;width:${W}px;top:${AXH + 1 + G + it.lane * (BH + G)}px;color:${it.color};background:${rgba(it.color, it.pre ? .2 : .9)}">` +
-           `<div class="th"><img src="${it.img}" alt=""></div><div class="txt"><p class="tt">${esc(it.title)}</p><p class="dt">${it.date}</p></div></div>`;
+    const { L, W } = it, top = AXH + 1 + G + it.lane * (BH + G);
+    const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
+    const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${it.date}</p></div>`;
+    const thumb = W >= THUMB + 2 * PAD ? `<div class="th"><img src="${it.img}" alt=""></div>` : '';
+    return `<a class="tk-bar ${it.status}${it.short ? ' short' : ''}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" data-l="${L}" data-w="${W}" ` +
+           `style="left:${L}px;width:${W}px;top:${top}px;color:${it.color};background:${bg}">${thumb}${it.short ? '' : txt}</a>` +
+           (it.short ? `<a class="tk-lbl ${it.status}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" style="left:${L + W + 6}px;width:${LBL}px;top:${top}px">${txt}</a>` : '');
   }).join('');
+  if (!ITEMS.length) html += `<p class="tk-empty">現在受付中・予定のチケット先行はありません</p>`;
   track.innerHTML = html;
 
-  const bars = [...track.querySelectorAll('.tk-bar')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
+  const bars = [...track.querySelectorAll('.tk-bar:not(.short)')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
   const layout = () => {
     const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
     for (const b of bars) {
@@ -471,15 +510,23 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
   layout();
 
   // PC: マウスドラッグで横スクロール（縦ホイールはページのスクロールに残す）
-  let dragX = null, startS = 0;
+  let dragX = null, startS = 0, moved = false, pid = 0;
   sc.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'mouse') return;
-    dragX = e.clientX; startS = sc.scrollLeft; sc.classList.add('drag'); sc.setPointerCapture(e.pointerId);
+    dragX = e.clientX; startS = sc.scrollLeft; pid = e.pointerId;
   });
-  sc.addEventListener('pointermove', e => { if (dragX !== null) sc.scrollLeft = startS - (e.clientX - dragX); });
-  const end = () => { dragX = null; sc.classList.remove('drag'); };
+  sc.addEventListener('pointermove', e => {
+    if (dragX === null) return;
+    if (!moved && Math.abs(e.clientX - dragX) > 5) { moved = true; sc.classList.add('drag'); sc.setPointerCapture(pid); }  // クリックはリンクに通す
+    sc.scrollLeft = startS - (e.clientX - dragX);
+  });
+  const end = () => { dragX = null; sc.classList.remove('drag'); setTimeout(() => { moved = false; }, 0); };
   sc.addEventListener('pointerup', end);
   sc.addEventListener('pointercancel', end);
+  sc.addEventListener('click', e => { if (moved) e.preventDefault(); }, true);   // ドラッグ後のリンク遷移を抑止
+  sc.addEventListener('dragstart', e => e.preventDefault());
+
+  window.dispatchEvent(new Event('resize'));                                         // 段数でカードの高さが変わるので lift を再計算
 })();
 
 if (new URLSearchParams(location.search).get('guide')) document.getElementById('guides').classList.add('on');
