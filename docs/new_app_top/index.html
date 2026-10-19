@@ -12,7 +12,7 @@
 <style>
   :root{
     --bg:#101010;
-    --hero-h:631px;         /* Figma 647 (Container 452 + 195) minus 16: slider and everything below pulled up over the circle */
+    --hero-h:615px;         /* Figma: Container 420 + 195 (2026-10-19 調整後) */
     --nav-h:112px;          /* Figma Navigation Bar: status 59 + gap 5 + toolbar 40 + pb 8 */
     --sheet-tint:rgba(0,0,0,.6);
     --sheet-blur:24px;
@@ -60,15 +60,17 @@
   .toolbar .avatar img{display:block;width:100%;height:100%;object-fit:cover;}
 
   /* ---------- hero : fixed layer at the bottom of the stack (circle photo + artist block, both Figma exports) ---------- */
-  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;
+  /* --lift : 画面が低いときにチケット先行カードが必ず全部見えるよう、ヒーローとカードをまとめて持ち上げる量（JS） */
+  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;transform:translateY(calc(-1 * var(--lift,0px)));
     background:linear-gradient(to bottom, #070707 0, #101010 160px);}
-  /* Figma "Mask group": 453px circle at (-28,32) -> centre is 3.5px right of the frame centre; not clipped to 390 any more */
-  .hero-wrap .circle{position:absolute;top:32px;left:calc(50% + 3.5px - 226.5px);width:453px;height:453px;border-radius:50%;overflow:hidden;}
-  /* Rectangle 59 (image fill) : 670.59x535.88 at (-126.19,13.73) in frame coords -> relative to the circle */
-  .hero-wrap .circle img{position:absolute;left:-98.2px;top:-18.27px;width:670.59px;height:535.88px;object-fit:cover;display:block;}
-  /* artist slider + name pill : Figma full-frame export (3x) cropped 429..647pt, placed as-is.
-     429 = top of the centre logo card; the circle only spans x 49..348 there, so nothing is clipped. */
-  .hero-wrap .lower{position:absolute;top:413px;left:calc(50% - 195px);width:390px;height:218px;display:block;} /* 429 - 16 */
+  /* Figma "Mask group": 453px circle at (-28,-16) -> centre is 3.5px right of the frame centre; not clipped to 390 any more */
+  .hero-wrap .circle{position:absolute;top:-16px;left:calc(50% + 3.5px - 226.5px);width:453px;height:453px;border-radius:50%;overflow:hidden;}
+  /* Rectangle 59 (image fill) : 670.59x643.68 at (-126.19,-31.51) in frame coords -> relative to the circle */
+  .hero-wrap .circle img{position:absolute;left:-98.2px;top:-15.51px;width:670.59px;height:643.68px;object-fit:cover;display:block;}
+  /* artist slider + name pill : Figma "Frame 53" (14482:31934) を透過 PNG(3x) にしたもの。円の上に重ねる。
+     白背景・黒背景の2枚の書き出し差分からアルファを復元（MCP の書き出しは背景が焼き込まれるため）。
+     描画範囲（影込み）は Frame 53 の上 43px から 221px → top 377 = Container 420 - 43。 */
+  .hero-wrap .lower{position:absolute;top:377px;left:calc(50% - 195px);width:390px;height:221px;display:block;}
 
   /* ---------- scrim : full-screen black 60% + blur, hidden under the card layer, fades in on scroll
      (same as the backdrop behind a bottom sheet being dragged up) ---------- */
@@ -80,7 +82,7 @@
   }
 
   /* ---------- card layer : transparent scroller, spacer for the hero then the cards ---------- */
-  .spacer{height:var(--hero-h);}
+  .spacer{height:calc(var(--hero-h) - var(--lift,0px));}
   .sheet{
     position:relative;
     padding:0 16px 120px;
@@ -138,6 +140,35 @@
   .info .ttl{font-weight:600;font-size:16px;line-height:22px;color:#fff;height:45px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
   .info .who{font-weight:400;font-size:14px;line-height:20px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .vlist{display:flex;flex-direction:column;gap:12px;padding:0 16px;}
+  /* チケット先行タイムライン（Figma 14842:3 / 単体版 ticket_card.html） */
+  .ccard[hidden]{display:none;}
+  .ccard.ticket{padding-bottom:0;gap:4px;}
+  .ccard.ticket .chead{padding-top:12px;}
+  .ccard.ticket .chead h2{font-size:14px;line-height:20px;letter-spacing:-.28px;}  /* View All と同じ 14px */
+  .tk{position:relative;--dw:26px;--axh:34px;--bh:54px;--g:4px;}
+  .tk::after{content:"";position:absolute;top:0;right:0;bottom:0;width:32px;pointer-events:none;background:linear-gradient(90deg,rgba(31,31,31,0),rgba(31,31,31,.85));}
+  .tk-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;}
+  .tk-sc::-webkit-scrollbar{display:none}
+  .tk-sc.drag{cursor:grabbing;}
+  .tk-track{position:relative;height:calc(var(--axh) + 1px + var(--g) + 2*var(--bh) + var(--g) + var(--g));}
+  .tk-day{position:absolute;top:0;bottom:0;width:var(--dw);}
+  .tk-day.we{background:rgba(255,255,255,.03);}
+  .tk-day .lbl{position:absolute;top:2px;left:1px;right:1px;height:calc(var(--axh) - 4px);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:13px;}
+  .tk-day .w{color:rgba(255,255,255,.45);}
+  .tk-day .d{font-weight:600;color:rgba(255,255,255,.85);}
+  .tk-day.today .lbl{background:#fff;}
+  .tk-day.today .w{color:rgba(0,0,0,.6);}
+  .tk-day.today .d{color:#000;}
+  .tk-axis{position:absolute;left:0;right:0;top:var(--axh);height:1px;background:rgba(255,255,255,.1);}
+  .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:#ff454d;}
+  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
+  .tk-bar.pre{border:1px dashed currentColor;}
+  .tk-bar .th{position:absolute;left:6px;top:6px;width:42px;height:42px;border-radius:4px;overflow:hidden;background:#222;}
+  .tk-bar .th img{width:100%;height:100%;object-fit:cover;display:block;}
+  .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;} /* left/width は JS */
+  .tk-bar .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+  .tk-bar .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
   .hscroll.news{gap:12px;}
   .hscroll.news .item{width:310px;}
   .live .item{padding:0 16px;}
@@ -176,19 +207,30 @@
   <div class="guides" id="guides">
     <i style="top:59px" data-l="status 59"></i>
     <i style="top:112px" data-l="nav 112"></i>
-    <i style="top:631px" data-l="cards 631"></i>
+    <i style="top:615px" data-l="cards 615"></i>
   </div>
   <div class="hero-wrap">
     <div class="circle"><img src="assets/hero_photo.jpg" alt=""></div>
-    <img class="lower" src="assets/hero_lower.png" width="390" height="218" alt="">
+    <img class="lower" src="assets/hero_lower.png?v=20261019b" width="390" height="221" alt="">
   </div>
   <div class="scrim" id="scrim"></div>
   <div class="screen" id="screen">
     <div class="spacer"></div>
     <div class="sheet" id="sheet">
 
-      <!-- Calendar -->
-      <section class="ccard">
+      <!-- チケット先行 -->
+      <section class="ccard ticket">
+        <div class="chead">
+          <h2>チケット先行</h2>
+          <a class="trail link" href="#">View All
+            <svg viewBox="0 0 24 24" fill="none"><path d="M10 8L14 12L10 16" stroke="white" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+        <div class="tk"><div class="tk-sc" id="tkScroller"><div class="tk-track" id="tkTrack"></div></div></div>
+      </section>
+
+      <!-- Calendar（Figma の縦積みから外れたため非表示） -->
+      <section class="ccard" hidden>
         <div class="chead">
           <h2>Calendar</h2>
           <a class="trail link" href="schedule.html">View All
@@ -248,6 +290,23 @@
 
 <script src="assets/events.js?v=20261007c"></script>
 <script>
+// ---------- チケット先行カードが最初の画面で必ず全部見えるよう、足りない分だけヒーローごと持ち上げる ----------
+(function lift(){
+  const root = document.documentElement, sc = document.getElementById('screen');
+  const MARGIN = 16;                                   // カード下と画面下端の余白
+  const update = () => {
+    const card = document.querySelector('.ccard.ticket');
+    if (!card) return;
+    const cur = parseFloat(root.style.getPropertyValue('--lift')) || 0;
+    const bottom = card.getBoundingClientRect().bottom - sc.getBoundingClientRect().top + sc.scrollTop + cur; // lift 0 のときの下端
+    const next = Math.max(0, Math.ceil(bottom + MARGIN - sc.clientHeight));
+    if (next !== cur) { root.style.setProperty('--lift', next + 'px'); window.dispatchEvent(new Event('lift')); }
+  };
+  update();
+  window.addEventListener('resize', update);
+  document.fonts && document.fonts.ready.then(update);
+})();
+
 // ---------- Calendar tiles : next events from calendar-bmsg.tokyo data (assets/events.js) ----------
 const CAT_STYLE = { BIRTHDAY:'birthday', 'ライブ先行':'presale', 'Premium':'ppv', 'FC新規開設':'fcopen' };
 const performerLabel = a => a.length === 1 ? a[0] : a.length === 2 ? `${a[0]} / ${a[1]}` : `${a[0]} 他${a.length - 1}組`;
@@ -304,8 +363,9 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 // ---------- snap : any scroll from the top brings the card layer to 32px under the logo header ----------
 (function snap(){
   const sc = document.getElementById('screen');
-  const HERO = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hero-h'));
-  const SNAP = HERO - (104 + 32);                       // card top at toolbar bottom (104) + 32
+  let SNAP = 0;                                         // card top at toolbar bottom (104) + 32
+  const setSnap = () => { SNAP = document.querySelector('.spacer').offsetHeight - (104 + 32); };
+  setSnap(); window.addEventListener('lift', setSnap);
   let last = 0, timer = 0, quiet = 0, maxLock = 0, animating = false, locked = false, dir = 1, lastAbs = 0;
 
   // While locked the container is overflow:hidden, so trackpad momentum cannot move it at all
@@ -362,6 +422,64 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
   const update = () => { raf = 0; scrim.style.setProperty('--p', Math.min(1, sc.scrollTop / RANGE).toFixed(3)); };
   sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(update); }, { passive:true });
   update();
+})();
+
+// ---------- チケット先行タイムライン : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
+(function ticketTimeline(){
+  const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, THUMB = 42;
+  const START = new Date(2026, 9, 10), DAYS = 32;                 // 10/10〜11/10
+  const TODAY = new Date(2026, 9, 19), FIRST_VISIBLE = new Date(2026, 9, 17);
+  const ITEMS = [
+    { lane:0, color:'#145cfc', title:'BE:FIRST ARENA TOUR 2026-2027 “Mainstream II” FC最速先行', date:'10/15 12:00 – 10/22 23:59', s:[10,15], e:[10,22], img:'assets/thumb_bf3.jpg' },
+    { lane:1, color:'#8021ff', title:'MAZZEL 1st Arena Tour 2026 “Shall we hit the Banquet?”', date:'10/18 10:00 – 10/26 23:59', s:[10,18], e:[10,26], img:'assets/thumb_bf4.jpg' },
+    { lane:0, color:'#009e8f', pre:true, title:'Aile The Shota Oneman Live 2026 “Epilogue” FC先行', date:'10/25 12:00 – 11/3 23:59', s:[10,25], e:[11,3], img:'assets/thumb_bf5.jpg' },
+  ];
+  const WD = ['日','月','火','水','木','金','土'];
+  const dayIdx = (m, d) => Math.round((new Date(2026, m - 1, d) - START) / 864e5);
+  const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const sc = document.getElementById('tkScroller'), track = document.getElementById('tkTrack');
+  track.style.width = (X0 * 2 + DAYS * DW) + 'px';
+
+  let html = '';
+  for (let i = 0; i < DAYS; i++) {
+    const dt = new Date(START.getTime() + i * 864e5), w = dt.getDay(), d = dt.getDate();
+    html += `<div class="tk-day${w === 0 || w === 6 ? ' we' : ''}${+dt === +TODAY ? ' today' : ''}" style="left:${X0 + i * DW}px">` +
+            `<div class="lbl"><span class="w">${WD[w]}</span><span class="d">${d === 1 ? (dt.getMonth() + 1) + '/' : ''}${d}</span></div></div>`;
+  }
+  html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + dayIdx(10, 19) * DW + DW / 2 - 1}px"></div>`;
+  html += ITEMS.map(it => {
+    const L = X0 + dayIdx(...it.s) * DW + 2, W = (dayIdx(...it.e) - dayIdx(...it.s) + 1) * DW - 4;
+    return `<div class="tk-bar${it.pre ? ' pre' : ''}" data-l="${L}" data-w="${W}" style="left:${L}px;width:${W}px;top:${AXH + 1 + G + it.lane * (BH + G)}px;color:${it.color};background:${rgba(it.color, it.pre ? .2 : .9)}">` +
+           `<div class="th"><img src="${it.img}" alt=""></div><div class="txt"><p class="tt">${esc(it.title)}</p><p class="dt">${it.date}</p></div></div>`;
+  }).join('');
+  track.innerHTML = html;
+
+  const bars = [...track.querySelectorAll('.tk-bar')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
+  const layout = () => {
+    const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
+    for (const b of bars) {
+      const right = Math.min(b.L + b.W - PAD, viewR);
+      const left = Math.min(Math.max(b.L + PAD + THUMB + PAD, viewL), right);
+      b.txt.style.left = (left - b.L) + 'px';
+      b.txt.style.width = Math.max(0, right - left) + 'px';
+    }
+  };
+  let raf = 0;
+  sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); }); }, { passive:true });
+  window.addEventListener('resize', layout);
+  sc.scrollLeft = Math.round((FIRST_VISIBLE - START) / 864e5) * DW;
+  layout();
+
+  // PC: マウスドラッグで横スクロール（縦ホイールはページのスクロールに残す）
+  let dragX = null, startS = 0;
+  sc.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse') return;
+    dragX = e.clientX; startS = sc.scrollLeft; sc.classList.add('drag'); sc.setPointerCapture(e.pointerId);
+  });
+  sc.addEventListener('pointermove', e => { if (dragX !== null) sc.scrollLeft = startS - (e.clientX - dragX); });
+  const end = () => { dragX = null; sc.classList.remove('drag'); };
+  sc.addEventListener('pointerup', end);
+  sc.addEventListener('pointercancel', end);
 })();
 
 if (new URLSearchParams(location.search).get('guide')) document.getElementById('guides').classList.add('on');
