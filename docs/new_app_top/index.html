@@ -607,10 +607,12 @@ const TICKET_VIEW = (() => {
   // 名前の下に代表イベント名 : 受付中を優先し、複数あれば締切が一番早いもの（無ければ開始が一番早い受付前）。ps はその順に並んでいる
   // 最大 MAX_ROWS 組まで行で出し、残りは「ほか n組」に名前だけまとめる（存在は必ず伝える）
   const MAX_ROWS = 3, list = [...groups];
-  for (const [artist, ps] of list.slice(0, MAX_ROWS)) html += `<a class="row" href="presale.html">${badge(ps)}` +
+  // 行を押すと、そのアーティストで絞り込んだ状態でチケット先行ページへ（presale.html?artist=…）
+  const to = arts => 'presale.html?' + arts.map(a => 'artist=' + encodeURIComponent(a)).join('&');
+  for (const [artist, ps] of list.slice(0, MAX_ROWS)) html += `<a class="row" href="${to([artist])}">${badge(ps)}` +
     `<span class="who"><span class="nm">${esc(artist)}<span class="cnt">${ps.length}件</span></span><span class="ev"><span class="evn">${esc(ps[0].title)}</span>${ps.length > 1 ? `<span class="oth">他${ps.length - 1}件</span>` : ''}</span></span><span class="st">${status(ps)}</span></a>`;
   const rest = list.slice(MAX_ROWS);
-  if (rest.length) html += `<a class="row more" href="presale.html"><span class="who"><span class="ev">ほか${rest.length}組　${rest.map(([a, ps]) => `${esc(a)} ${ps.length}件`).join('・')}</span></span></a>`;
+  if (rest.length) html += `<a class="row more" href="${to(rest.map(([a]) => a))}"><span class="who"><span class="ev">ほか${rest.length}組　${rest.map(([a, ps]) => `${esc(a)} ${ps.length}件`).join('・')}</span></span></a>`;
   sum.innerHTML = html;
   window.dispatchEvent(new Event('resize'));
 })();

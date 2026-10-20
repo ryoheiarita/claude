@@ -222,7 +222,7 @@ const item = p => {
     </div></a>`;
 };
 // ---------- アーティストの絞り込み ----------
-const SEL = new Set();                                        // 選択中のアーティスト（空 = 全員）
+const SEL = new Set(new URLSearchParams(location.search).getAll('artist'));   // 選択中のアーティスト（空 = 全員）。?artist=… で初期選択
 const shown = () => SEL.size ? ALL.filter(p => p.artists.some(a => SEL.has(a))) : ALL;
 function renderList() {
   const src = shown();
@@ -243,7 +243,9 @@ renderList();
     if (!arts.has(a)) arts.set(a, 0);
     if (p.status !== 'end') arts.set(a, arts.get(a) + 1);
   }
-  flt.innerHTML = [...arts].map(([a, n]) => `<button type="button" class="${n ? 'has' : ''}" aria-pressed="false" data-a="${esc(a)}">${esc(a)}${n ? `<span class="c">${n}</span>` : ''}</button>`).join('');
+  flt.innerHTML = [...arts].map(([a, n]) => `<button type="button" class="${n ? 'has' : ''}${SEL.has(a) ? ' on' : ''}" aria-pressed="${SEL.has(a)}" data-a="${esc(a)}">${esc(a)}${n ? `<span class="c">${n}</span>` : ''}</button>`).join('');
+  const firstOn = flt.querySelector('button.on');                // 選択中のタブを見える位置へ
+  if (firstOn) flt.scrollLeft = Math.max(0, firstOn.offsetLeft - 16);
   flt.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const a = b.dataset.a;
