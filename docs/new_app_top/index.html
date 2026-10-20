@@ -28,6 +28,10 @@
   @media (max-width:430px){
     body{display:block}
     .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+    /* SP 実機では端末のステータスバーがあるので、プロトタイプのステータスバー(59)を消して全体を上に詰める */
+    :root{--sbcut:59px;--nav-h:53px;}
+    .nav .status{display:none;}
+    .phone .nav{padding-top:5px;}
   }
   .screen{position:absolute;inset:0;z-index:2;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .screen::-webkit-scrollbar{display:none}
@@ -61,7 +65,7 @@
 
   /* ---------- hero : fixed layer at the bottom of the stack (circle photo + artist block, both Figma exports) ---------- */
   /* --lift : 画面が低いときにチケット先行カードが必ず全部見えるよう、ヒーローとカードをまとめて持ち上げる量（JS） */
-  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;transform:translateY(calc(-1 * var(--lift,0px)));
+  .hero-wrap{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:0;overflow:hidden;transform:translateY(calc(-1 * (var(--lift,0px) + var(--sbcut,0px))));
     background:linear-gradient(to bottom, #070707 0, #101010 160px);}
   /* Figma "Mask group": 453px circle at (-28,-16) -> centre is 3.5px right of the frame centre; not clipped to 390 any more */
   .hero-wrap .circle{position:absolute;top:-16px;left:calc(50% + 3.5px - 226.5px);width:453px;height:453px;border-radius:50%;overflow:hidden;}
@@ -82,7 +86,7 @@
   }
 
   /* ---------- card layer : transparent scroller, spacer for the hero then the cards ---------- */
-  .spacer{height:calc(var(--hero-h) - var(--lift,0px));}
+  .spacer{height:calc(var(--hero-h) - var(--lift,0px) - var(--sbcut,0px));}
   .sheet{
     position:relative;
     padding:0 16px 120px;
@@ -142,6 +146,48 @@
   .vlist{display:flex;flex-direction:column;gap:12px;padding:0 16px;}
   /* チケット先行タイムライン（Figma 14842:3 / 単体版 ticket_card.html） */
   .ccard[hidden]{display:none;}
+  /* パターン切替コントローラー : PC はスマホ枠の右上外、スマホ幅は画面下に浮かせる */
+  .ctrl{position:fixed;top:16px;right:16px;z-index:100;display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:14px;
+    background:rgba(40,40,40,.92);box-shadow:0 8px 24px rgba(0,0,0,.5);font-family:var(--ff);}
+  .ctrl-ttl{font-size:11px;line-height:14px;color:rgba(255,255,255,.5);padding:0 2px;}
+  .ctrl button{display:flex;align-items:center;gap:8px;border:0;border-radius:10px;padding:8px 12px 8px 8px;background:rgba(255,255,255,.08);
+    color:rgba(255,255,255,.8);font:500 13px/16px var(--ff);cursor:pointer;text-align:left;white-space:nowrap;}
+  .ctrl button b{display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,.12);font-size:11px;}
+  .ctrl button.on{background:#fff;color:#000;}
+  .ctrl button.on b{background:#000;color:#fff;}
+  /* SP : 浮かせずにページの一番下（カードの後ろ）に置く（JS で #sheet の末尾へ移動） */
+  @media (max-width:430px){
+    .ctrl{position:static;align-self:center;flex-direction:row;align-items:center;gap:6px;margin:16px auto 32px;padding:6px;border-radius:100px;}
+    .ctrl-ttl{display:block;padding:0 4px 0 8px;}
+    .ctrl button{padding:6px 10px 6px 6px;border-radius:100px;font-size:12px;}
+  }
+  /* チケット先行サマリー : 受付中/受付前を漏れなく、アーティストごとに1行。イベント名は省き、残り日数だけ見せる */
+  .tk-sum{display:flex;flex-direction:column;padding:4px 0 6px;}
+  .tk-sum[hidden],.tk[hidden]{display:none;}
+  /* 全体の件数 : 見出し「チケット先行」の右 */
+  .chead .total{display:inline-flex;gap:10px;margin-left:10px;vertical-align:1px;font-weight:400;font-size:12px;line-height:16px;letter-spacing:0;color:rgba(255,255,255,.6);}
+  .chead .total b{font-weight:600;color:#fff;margin-left:3px;}
+  .chead .total b.hot{color:#ff6b72;}
+  .tk-sum .row{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 16px;border-top:1px solid rgba(255,255,255,.06);}
+  .tk-sum .who{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:2px;}
+  .tk-sum .row.more{min-height:32px;}
+  /* 複数件ある行 : イベント名は … で切り、右に「他n件」を必ず残す */
+  .tk-sum .row .ev{display:flex;min-width:0;}
+  .tk-sum .evn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tk-sum .oth{flex:none;margin-left:2px;}
+  .tk-sum .ev{font-size:11px;line-height:14px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}   /* 代表イベント名 */
+  .tk-sum .cnt{margin-left:6px;font-weight:400;font-size:11px;color:rgba(255,255,255,.5);}   /* 件数 : アーティスト名の右 */
+  .tk-sum .row .nm{min-width:0;font-weight:600;font-size:13px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 右端 : 上に「あと n 日」、下に締切日（受付前は開始日） */
+  .tk-sum .st{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;white-space:nowrap;font-size:11px;line-height:14px;color:rgba(255,255,255,.6);}
+  .tk-sum .bdg{flex:none;}
+  .tk-sum .bdg{font-size:11px;line-height:14px;padding:1px 6px;border-radius:9px;border:1px solid #c10007;background:rgba(193,0,7,.08);color:#fff;}
+  .tk-sum .bdg.pre{border-color:#6a7282;background:rgba(106,114,130,.08);}
+  .tk-sum .num{flex:none;display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.14);font-weight:600;font-size:11px;line-height:1;color:#fff;}   /* 件数 */
+  .tk-sum .cd{font-weight:600;font-size:12px;line-height:16px;color:#fff;}
+  .tk-sum .cd.hot{color:#ff6b72;}                 /* 締切3日以内 */
+  .tk-sum .sub{color:rgba(255,255,255,.45);}
+  .tk-sum .empty{padding:4px 16px 0;font-size:12px;color:rgba(255,255,255,.5);}
   .ccard.ticket{padding-bottom:0;gap:4px;}
   .ccard.ticket .chead{padding-top:12px;}
   .ccard.ticket .chead h2{font-size:14px;line-height:20px;letter-spacing:-.28px;}  /* View All と同じ 14px */
@@ -196,6 +242,12 @@
 </style>
 </head>
 <body>
+<!-- パターン切替コントローラー（プロトタイプ用）: チケット先行カードの A/B -->
+<div class="ctrl" id="ctrl" role="group" aria-label="チケット先行カードのパターン">
+  <span class="ctrl-ttl">チケット先行</span>
+  <button type="button" data-v="list"><b>A</b>リスト</button>
+  <button type="button" data-v="timeline"><b>B</b>横カレンダー2列</button>
+</div>
 <div class="phone">
   <header class="nav">
     <div class="status">
@@ -240,6 +292,7 @@
             <svg viewBox="0 0 24 24" fill="none"><path d="M10 8L14 12L10 16" stroke="white" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
         </div>
+        <div class="tk-sum" id="tkSum" hidden></div>
         <div class="tk"><div class="tk-sc" id="tkScroller"><div class="tk-track" id="tkTrack"></div></div><button class="tk-next" type="button" aria-label="近くの予定へ"><svg class="l" viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span><svg class="r" viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       </section>
 
@@ -378,8 +431,12 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 // ---------- snap : any scroll from the top brings the card layer to 32px under the logo header ----------
 (function snap(){
   const sc = document.getElementById('screen');
-  let SNAP = 0;                                         // card top at toolbar bottom (104) + 32
-  const setSnap = () => { SNAP = document.querySelector('.spacer').offsetHeight - (104 + 32); };
+  let SNAP = 0;                                         // card top at toolbar bottom (PC 104 / SP 45) + 32
+  const setSnap = () => {
+    const tb = document.querySelector('.toolbar').getBoundingClientRect().bottom - document.querySelector('.phone').getBoundingClientRect().top;
+    SNAP = document.querySelector('.spacer').offsetHeight - (tb + 32);
+  };
+  window.addEventListener('resize', setSnap);
   setSnap(); window.addEventListener('lift', setSnap);
   let last = 0, timer = 0, quiet = 0, maxLock = 0, animating = false, locked = false, dir = 1, lastAbs = 0;
 
@@ -483,6 +540,77 @@ function nextButton(btn, items, s, V, onGo) {
   btn.style.background = t.color;
   btn.onclick = () => onGo(Math.max(0, right ? t.L - 16 : ext(t)[1] - V * 0.7)); // 右=始まりを左端へ、左=終わりを右寄りに
 }
+// ---------- パターン切替 : A = チケット先行リスト(list) / B = 横カレンダー2列(timeline)。?view= > 前回の選択 > A ----------
+const TICKET_VIEW = (() => {
+  const q = new URLSearchParams(location.search).get('view');
+  let v = q;
+  if (!v) { try { v = localStorage.getItem('ticketView'); } catch (e) {} }
+  return v === 'timeline' ? 'timeline' : 'list';
+})();
+(function controller(){
+  const ctrl = document.getElementById('ctrl');
+  // SP はページの一番下へ（PC はスマホ枠の外の右上に固定のまま）
+  const place = () => {
+    const sp = matchMedia('(max-width:430px)').matches, sheet = document.getElementById('sheet');
+    if (sp && ctrl.parentElement !== sheet) sheet.appendChild(ctrl);
+    if (!sp && ctrl.parentElement !== document.body) document.body.insertBefore(ctrl, document.body.firstChild);
+  };
+  place();
+  matchMedia('(max-width:430px)').addEventListener('change', place);
+  for (const b of ctrl.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v === TICKET_VIEW);
+  ctrl.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.v === TICKET_VIEW) return;
+    try { localStorage.setItem('ticketView', b.dataset.v); } catch (err) {}
+    const u = new URL(location.href); u.searchParams.set('view', b.dataset.v); location.href = u.toString();   // 読み直して切り替え
+  });
+})();
+// ---------- チケット先行サマリー（パターン A） ----------
+(function ticketSummary(){
+  const sum = document.getElementById('tkSum'), tl = document.querySelector('.ccard.ticket .tk');
+  if (TICKET_VIEW === 'timeline') return;
+  tl.hidden = true; sum.hidden = false;
+  const NOW = new Date();
+  const items = (window.PRESALES || []).map(p => ({ ...p, s:new Date(p.start), e:new Date(p.end) }))
+    .map(p => ({ ...p, status: NOW < p.s ? 'pre' : NOW > p.e ? 'end' : 'on' }))
+    .filter(p => p.status !== 'end');
+  const on = items.filter(p => p.status === 'on').length, pre = items.length - on;
+  // アーティストごと : 受付中(締切が近い順) → 受付前(開始が近い順)
+  const key = p => p.status === 'on' ? +p.e : 1e15 + +p.s;
+  const groups = new Map();
+  for (const p of [...items].sort((a, b) => key(a) - key(b))) {
+    const k = p.artists[0];
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(p);
+  }
+  const WD = ['日','月','火','水','木','金','土'], p2 = n => String(n).padStart(2, '0');
+  const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  const left = t => { const h = (t - NOW) / 36e5; return h < 24 ? `あと${Math.max(1, Math.ceil(h))}時間` : `あと${Math.ceil(h / 24)}日`; };
+  // 行の右側 : 受付中なら「[受付中] n件 あと○日 MM/DD締切」、受付前だけなら「[受付前] MM/DD(曜) HH:MM 開始」
+  // 行の左 : ステータスのバッジ
+  const badge = ps => ps[0].status === 'on' ? `<span class="bdg">受付中</span>` : `<span class="bdg pre">受付前</span>`;
+  // 行の右 : 上に「あと n 日」、下に締切日（受付前は開始まで / 開始日時）
+  const status = ps => {
+    const p = ps[0];                                                     // 受付中(締切が近い順) → 受付前
+    if (p.status === 'on') {
+      const hot = p.e - NOW < 3 * 864e5;
+      return `<span class="cd${hot ? ' hot' : ''}">${left(p.e)}</span><span class="sub">${md(p.e)}(${WD[p.e.getDay()]}) 締切</span>`;
+    }
+    return `<span class="cd">${left(p.s)}</span><span class="sub">${md(p.s)}(${WD[p.s.getDay()]}) ${p2(p.s.getHours())}:${p2(p.s.getMinutes())} 開始</span>`;
+  };
+  if (items.length) document.querySelector('.ccard.ticket .chead h2').insertAdjacentHTML('beforeend',
+    `<span class="total"><span>受付中<b class="hot">${on}</b></span><span>受付前<b>${pre}</b></span></span>`);
+  let html = items.length ? '' : `<p class="empty">現在受付中・予定のチケット先行はありません</p>`;
+  // 名前の下に代表イベント名 : 受付中を優先し、複数あれば締切が一番早いもの（無ければ開始が一番早い受付前）。ps はその順に並んでいる
+  // 最大 MAX_ROWS 組まで行で出し、残りは「ほか n組」に名前だけまとめる（存在は必ず伝える）
+  const MAX_ROWS = 3, list = [...groups];
+  for (const [artist, ps] of list.slice(0, MAX_ROWS)) html += `<a class="row" href="presale.html">${badge(ps)}` +
+    `<span class="who"><span class="nm">${esc(artist)}<span class="cnt">${ps.length}件</span></span><span class="ev"><span class="evn">${esc(ps[0].title)}</span>${ps.length > 1 ? `<span class="oth">他${ps.length - 1}件</span>` : ''}</span></span><span class="st">${status(ps)}</span></a>`;
+  const rest = list.slice(MAX_ROWS);
+  if (rest.length) html += `<a class="row more" href="presale.html"><span class="who"><span class="ev">ほか${rest.length}組　${rest.map(([a, ps]) => `${esc(a)} ${ps.length}件`).join('・')}</span></span></a>`;
+  sum.innerHTML = html;
+  window.dispatchEvent(new Event('resize'));
+})();
+
 (function ticketTimeline(){
   const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, TXT = 10;   // TXT = バー内テキストの左余白
   // 先行データ : calendar-bmsg.tokyo から tools/build_presales.mjs で生成した assets/presales.js
