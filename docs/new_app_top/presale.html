@@ -48,14 +48,20 @@
 
 
   /* timeline */
-  .tk{position:relative;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.04);--axh:70px;--bh:54px;--g:4px;}
-  .tk::after{content:"";position:absolute;top:0;right:0;bottom:0;width:40px;pointer-events:none;background:linear-gradient(90deg,rgba(16,16,16,0),rgba(16,16,16,.9));}
-  .tk-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;}
+  /* 月日の帯(.tk-head)は縦スクロールで上に固定（sticky）。横位置はバー本体(.tk-sc)のスクロールに同期（JS）。
+     sticky を効かせるため .tk 自体は overflow:hidden にしない */
+  .tk{position:relative;border-radius:16px;background:rgba(255,255,255,.04);--axh:70px;--bh:54px;--g:4px;}
+  .tk::after{content:"";position:absolute;top:0;right:0;bottom:0;width:40px;z-index:4;pointer-events:none;border-radius:0 16px 16px 0;background:linear-gradient(90deg,rgba(16,16,16,0),rgba(16,16,16,.9));}
+  .tk-headwrap{position:sticky;top:0;z-index:3;background:var(--bg);}   /* 固定時に角丸のすき間から後ろのバーが見えないよう、ページ背景色の台に載せる */
+  .tk-head{height:var(--axh);overflow:hidden;background:#1a1a1a;border-radius:16px 16px 0 0;box-shadow:0 1px 0 rgba(255,255,255,.1);}
+  .tk-head-track{position:relative;height:100%;}
+  .tk-sc{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;border-radius:0 0 16px 16px;}
   .tk-sc::-webkit-scrollbar{display:none}
   .tk-sc.drag{cursor:grabbing;}
   .tk-track{position:relative;}
   .tk-day{position:absolute;top:0;bottom:0;}
   .tk-day.we{background:rgba(255,255,255,.03);}
+  .tk-head .tk-day.we{background:rgba(255,255,255,.02);}
   .tk-day .lbl{position:absolute;top:26px;left:1px;right:1px;height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
   .tk-day .w{font-size:10px;line-height:12px;color:rgba(255,255,255,.45);}
   .tk-day .d{font-weight:600;font-size:12px;line-height:16px;color:rgba(255,255,255,.85);}
@@ -77,13 +83,17 @@
   .tk-next.left.on{transform:none;}
   .tk-next.left .l{display:block;}
   .tk-next.left .r{display:none;}
-  .tk-axis{position:absolute;left:0;right:0;top:var(--axh);height:1px;background:rgba(255,255,255,.1);}
-  .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:var(--red);}
+  .tk-now{position:absolute;top:0;bottom:0;width:2px;background:var(--red);}
+  /* アーティスト名 : 各アーティストの段のまとまりの上に 10px、ブロックとの間は 2px。横スクロールでも左端に固定（sticky） */
+  .tk-art{position:absolute;left:0;height:12px;}
+  /* 横スクロールで写っている予定の段数に合わせて欄の高さが変わる（写っていなければ名前だけ残して閉じる） */
+  .tk.anim .tk-bar,.tk.anim .tk-lbl,.tk.anim .tk-art{transition:top .25s ease;}
+  .tk.anim .tk-track{transition:height .25s ease;}
+  .tk-art span{position:sticky;left:12px;display:block;width:max-content;height:12px;font-size:10px;line-height:12px;color:rgba(255,255,255,.45);white-space:nowrap;}
+  .tk-bar{cursor:pointer;}
   .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
   .tk-bar.pre{border:1px dashed currentColor;}
   .tk-bar.end,.tk-lbl.end{opacity:.45;}
-  .tk-bar .th{position:absolute;left:6px;top:6px;width:42px;height:42px;border-radius:4px;overflow:hidden;background:#222;}
-  .tk-bar .th img{width:100%;height:100%;object-fit:cover;display:block;}
   .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;}   /* left/width は JS */
   .tk-lbl{position:absolute;height:var(--bh);}
   .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
@@ -96,8 +106,6 @@
   .list{display:flex;flex-direction:column;gap:8px;margin-top:-4px;}
   .item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);}
   .item.end{opacity:.5;}
-  .item .th{width:64px;height:64px;border-radius:8px;overflow:hidden;flex:none;background:#222;}
-  .item .th img{width:100%;height:100%;object-fit:cover;display:block;}
   .item .info{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;}
   .l1{display:flex;align-items:center;gap:8px;min-width:0;}
   .badge{flex:none;font-size:12px;line-height:14px;padding:2px 6px;border-radius:10px;border:1px solid #c10007;background:rgba(193,0,7,.08);}
@@ -109,6 +117,21 @@
   .l3 b{font-weight:600;color:rgba(255,255,255,.9);}
   .l3 b.hot{color:var(--red);}
   .empty{font-size:13px;color:rgba(255,255,255,.5);}
+
+  /* 予定タップのダイアログ */
+  .dlg{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.6);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+  .dlg[hidden]{display:none;}
+  .dlg-card{width:100%;border-radius:20px;background:#1f1f1f;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .dlg .kind{font-size:13px;line-height:18px;color:rgba(255,255,255,.7);}
+  .dlg .ttl{font-weight:600;font-size:17px;line-height:24px;overflow-wrap:anywhere;margin-top:-8px;}
+  .dlg dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;line-height:18px;padding:12px;border-radius:12px;background:rgba(255,255,255,.06);}
+  .dlg dt{color:rgba(255,255,255,.5);white-space:nowrap;}
+  .dlg dd b{font-weight:600;}
+  .dlg dd b.hot{color:var(--red);}
+  .dlg .btns{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .dlg .go{display:block;text-align:center;font-weight:600;font-size:15px;line-height:20px;padding:12px;border-radius:100px;background:#fff;color:#000;}
+  .dlg .close{border:0;background:none;color:rgba(255,255,255,.7);font:400 14px/20px var(--ff);padding:8px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -129,7 +152,7 @@
   </div>
   <div class="scroll">
     <div class="content">
-      <div class="tk" id="tk"><div class="tk-sc" id="sc"><div class="tk-track" id="track"></div></div><button class="tk-next" type="button" aria-label="近くの予定へ"><svg class="l" viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span><svg class="r" viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="tk" id="tk"><div class="tk-headwrap"><div class="tk-head" id="head"><div class="tk-head-track" id="headTrack"></div></div></div><div class="tk-sc" id="sc"><div class="tk-track" id="track"></div></div><button class="tk-next" type="button" aria-label="近くの予定へ"><svg class="l" viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span><svg class="r" viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <p class="hint">← 横スクロールで日付移動 →</p>
       <h2>締切が近い順</h2>
       <div class="list" id="list"></div>
@@ -137,6 +160,7 @@
       <div class="list" id="endList"></div>
     </div>
   </div>
+  <div class="dlg" id="dlg" hidden><div class="dlg-card" role="dialog" aria-modal="true" id="dlgCard"></div></div>
 </div>
 
 <script src="assets/presales.js?v=20261019"></script>
@@ -144,7 +168,6 @@
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const COLORS = { 'BE:FIRST':'#145cfc', 'MAZZEL':'#8021ff', 'Aile The Shota':'#009e8f', 'HANA':'#e6007a', 'SKY-HI':'#f54a00',
                  'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282', 'Ayumu Imazu':'#0092b8' };
-const THUMBS = { 'BE:FIRST':'assets/thumb_bf3.jpg' };
 const WD = ['日','月','火','水','木','金','土'];
 const p2 = n => String(n).padStart(2, '0');
 const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -157,7 +180,7 @@ const left = t => { const h = (t - NOW) / 36e5; return h < 24 ? `あと${Math.ma
 const ALL = (window.PRESALES || []).map(p => {
   const s = new Date(p.start), e = new Date(p.end);
   return { ...p, s, e, status: NOW < s ? 'pre' : NOW > e ? 'end' : 'on',
-    color: COLORS[p.artists[0]] || '#6a7282', img: p.thumb || THUMBS[p.artists[0]] || 'assets/thumb_bf5.jpg',
+    color: COLORS[p.artists[0]] || '#6a7282',
     label: `${p.kind ? p.kind + ' ' : ''}${p.title}` };
 });
 
@@ -168,7 +191,6 @@ const item = p => {
            : p.status === 'pre' ? `<span>開始 ${long(p.s)}</span><b>${left(p.s)}</b>`
            : `<span>${long(p.e)} 終了</span>`;
   return `<a class="item ${p.status}" href="${esc(p.link || '#')}" target="_blank" rel="noopener">
-    <div class="th"><img src="${p.img}" alt=""></div>
     <div class="info">
       <div class="l1"><span class="badge ${p.status}">${label}</span><span class="dot" style="background:${p.color}"></span><span class="who">${esc(p.artists.join(' / '))}</span></div>
       <p class="ttl">${esc(p.label)}</p>
@@ -183,52 +205,76 @@ document.getElementById('endHead').hidden = !ended.length;
 
 // ---------- timeline : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
 const tk = document.getElementById('tk'), sc = document.getElementById('sc'), track = document.getElementById('track');
-const X0 = 12, G = 4, AXH = 70, BH = 54, PAD = 6, THUMB = 42, LBL = 170, SHORT = 160;
-let bars = [], tlItems = [];
+const head = document.getElementById('head'), headTrack = document.getElementById('headTrack');
+const X0 = 12, G = 4, AXH = 70, HDR = 14, BH = 54,   // HDR = アーティスト名(12) + ブロックとの間(2)
+      PAD = 6, TXT = 10, LBL = 170;
+// 期間がこの日数未満のバーは文字を右外に出す。いまは全バー枠内（0）。3日以内を外に出すなら 4
+const SHORT_DAYS = 0;
+let bars = [], tlItems = [], tlGroups = [];
 const nextBtn = tk.querySelector('.tk-next');
 
 function build(DW) {
   const idx = d => Math.round((day0(d) - START) / 864e5);
   for (const it of ALL) {
     it.L = X0 + idx(it.s) * DW + 2; it.W = (idx(it.e) - idx(it.s) + 1) * DW - 4;
-    it.short = it.W < SHORT;
+    it.short = idx(it.e) - idx(it.s) + 1 < SHORT_DAYS;
     it.R = it.L + it.W + (it.short ? 6 + LBL : 0);
   }
-  const { items, lanes } = packByArtist(ALL.filter(p => p.e >= START));
+  const { items, lanes, groups } = packByArtist(ALL.filter(p => p.e >= START));
+  // アーティストのまとまりごとに名前の帯(HDR)を挟む。段 l の上端 = 帯の数ぶん下げる
+  const groupTop = [];                                                   // 各まとまりの名前の帯の上端
+  // 上のブロック ─2px─ アーティスト名(12) ─2px─ 下のブロック（同じアーティスト内の段の間は G）
+  let y = 2;
+  for (const g of groups) { groupTop.push(y); y += HDR + g.count * BH + (g.count - 1) * G + 2; }
+  y += G - 2;                                                            // 一番下の余白
+  const laneTop = l => { const gi = groups.findIndex(g => l >= g.base && l < g.base + g.count); return groupTop[gi] + HDR + (l - groups[gi].base) * (BH + G); };
+  const bodyH = Math.max(y, BH + 2 * G);
   const laneEnds = items.map(it => it.R);
   const yearEnd = new Date(TODAY.getFullYear(), 11, 31);                                   // 年末まで
   const days = Math.max(idx(yearEnd) + 1, Math.ceil((Math.max(0, ...laneEnds) - X0) / DW) + 2);
   track.style.width = (X0 * 2 + days * DW) + 'px';
-  track.style.height = (AXH + 1 + G + lanes * (BH + G) + G) + 'px';
+  track.style.height = bodyH + 'px';
+  headTrack.style.width = track.style.width;
 
-  let html = '';
+  // 月日の帯（固定）
+  let hh = '', html = '';
   const months = [];
   for (let i = 0; i < days; i++) {
     const dt = new Date(START.getFullYear(), START.getMonth(), START.getDate() + i), w = dt.getDay(), d = dt.getDate();
-    html += `<div class="tk-day${w === 0 || w === 6 ? ' we' : ''}${+dt === +TODAY ? ' today' : ''}" style="left:${X0 + i * DW}px;width:${DW}px">` +
-            `<div class="lbl"><span class="w">${WD[w]}</span><span class="d">${d}</span></div></div>`;
+    const cls = `tk-day${w === 0 || w === 6 ? ' we' : ''}${+dt === +TODAY ? ' today' : ''}`, pos = `left:${X0 + i * DW}px;width:${DW}px`;
+    hh += `<div class="${cls}" style="${pos}"><div class="lbl"><span class="w">${WD[w]}</span><span class="d">${d}</span></div></div>`;
+    if (w === 0 || w === 6) html += `<div class="tk-day we" style="${pos}"></div>`;
     if (i === 0 || d === 1) months.push({ x:X0 + i * DW, label:`${dt.getMonth() + 1}月` });
   }
   months.forEach((m, k) => { m.end = k + 1 < months.length ? months[k + 1].x : X0 + days * DW; });
-  html += months.map(m => `<div class="tk-mon" style="left:${m.x}px;width:${m.end - m.x}px"><span>${m.label}</span></div>`).join('');
-  html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + idx(TODAY) * DW + DW / 2 - 1}px"></div>`;
-  html += items.map(it => {
-    const top = AXH + 1 + G + it.lane * (BH + G);
+  hh += months.map(m => `<div class="tk-mon" style="left:${m.x}px;width:${m.end - m.x}px"><span>${m.label}</span></div>`).join('');
+  headTrack.innerHTML = hh;
+  // 本体 : 土日の帯・今日の線・アーティスト名・バー
+  html += `<div class="tk-now" style="left:${X0 + idx(TODAY) * DW + DW / 2 - 1}px"></div>`;
+  html += groups.map((g, gi) => `<div class="tk-art" style="top:${groupTop[gi]}px;width:${X0 * 2 + days * DW}px"><span>${esc(g.artist)}</span></div>`).join('');
+  html += items.map((it, i) => {
+    const top = laneTop(it.lane);
     const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
     const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${short(it.s)} – ${short(it.e)}</p></div>`;
-    const thumb = it.W >= THUMB + 2 * PAD ? `<div class="th"><img src="${it.img}" alt=""></div>` : '';
-    const href = esc(it.link || '#');
-    return `<a class="tk-bar ${it.status}${it.short ? ' short' : ''}" href="${href}" target="_blank" rel="noopener" data-l="${it.L}" data-w="${it.W}" ` +
-           `style="left:${it.L}px;width:${it.W}px;top:${top}px;color:${it.color};background:${bg}">${thumb}${it.short ? '' : txt}</a>` +
-           (it.short ? `<a class="tk-lbl ${it.status}" href="${href}" target="_blank" rel="noopener" style="left:${it.L + it.W + 6}px;width:${LBL}px;top:${top}px">${txt}</a>` : '');
+    return `<div class="tk-bar ${it.status}${it.short ? ' short' : ''}" role="button" tabindex="0" data-i="${i}" data-l="${it.L}" data-w="${it.W}" ` +
+           `style="left:${it.L}px;width:${it.W}px;top:${top}px;color:${it.color};background:${bg}">${it.short ? '' : txt}</div>` +
+           (it.short ? `<div class="tk-lbl ${it.status}" role="button" tabindex="0" data-i="${i}" style="left:${it.L + it.W + 6}px;width:${LBL}px;top:${top}px">${txt}</div>` : '');
   }).join('');
-  if (!items.length) html += `<p class="empty" style="position:absolute;left:16px;top:${AXH + 16}px">表示期間にチケット先行はありません</p>`;
+  if (!items.length) html += `<p class="empty" style="position:absolute;left:16px;top:16px">表示期間にチケット先行はありません</p>`;
   track.innerHTML = html;
   tlItems = items;
-  nextBtn.style.top = (AXH + 1 + G + (lanes * (BH + G)) / 2 - 12) + 'px';
+  // 縦の詰め直し用に、アーティストごとの要素を控える
+  const artEls = track.querySelectorAll('.tk-art');
+  groups.forEach((g, gi) => { g.el = artEls[gi]; g.items = items.filter(it => it.artists[0] === g.artist); });
+  for (const el of track.querySelectorAll('.tk-bar')) { const it = items[+el.dataset.i]; it.el = el; it.lblEl = el.nextElementSibling && el.nextElementSibling.classList.contains('tk-lbl') ? el.nextElementSibling : null; }
+  tlGroups = groups;
+  nextBtn.style.top = (AXH + Math.min(bodyH, 400) / 2 - 12) + 'px';
   bars = [...track.querySelectorAll('.tk-bar:not(.short)')].map(el => ({ L:+el.dataset.l, W:+el.dataset.w, txt:el.querySelector('.txt') }));
   sc.scrollLeft = Math.max(0, (idx(TODAY) - 2) * DW);       // 今日の2日前を左端に
+  head.scrollLeft = sc.scrollLeft;
+  tk.classList.remove('anim');
   layout();
+  requestAnimationFrame(() => requestAnimationFrame(() => tk.classList.add('anim')));   // 初回は動かさない
 }
 // アーティストごとに段をまとめる。同じアーティストの予定が重なるときだけ、そのすぐ下の段に並べる。
 // アーティストの並びは「受付中の締切が近い → 受付前の開始が近い → 終了」の順。maxLanes を超えるアーティストは載せない。
@@ -241,7 +287,7 @@ function packByArtist(items, maxLanes = Infinity, perArtist = Infinity) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(it);
   }
-  const placed = [];
+  const placed = [], groupsOut = [];
   let base = 0;
   for (const g of groups.values()) {
     const sub = [];                                                      // 段ごとの [left, right] 区間
@@ -253,9 +299,10 @@ function packByArtist(items, maxLanes = Infinity, perArtist = Infinity) {
     const need = Math.min(sub.length, perArtist, base === 0 ? maxLanes : Infinity);
     if (base + need > maxLanes) continue;
     for (const it of g) if (it.sub < need) { it.lane = base + it.sub; placed.push(it); }
+    groupsOut.push({ artist:g[0].artists[0], color:g[0].color, base, count:need });
     base += need;
   }
-  return { items:placed, lanes:Math.max(1, base) };
+  return { items:placed, lanes:Math.max(1, base), groups:groupsOut };
 }
 // 表示範囲に予定が写っていない（端が 40px 未満しか見えない）とき、一番近い予定へ飛ぶボタンを出す。
 // 右に予定があれば右端に「日付 ›」、右に無ければ左端に「‹ 日付」。色はその予定の色。
@@ -274,18 +321,43 @@ function nextButton(btn, items, s, V, onGo) {
   btn.onclick = () => onGo(Math.max(0, right ? t.L - 16 : ext(t)[1] - V * 0.7)); // 右=始まりを左端へ、左=終わりを右寄りに
 }
 function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+// アーティストの欄を、表示範囲に写っている段だけの高さに詰め直す
+function vlayout(s, V) {
+  let y = 2;
+  for (const g of tlGroups) {
+    const vis = g.items.filter(it => Math.min(it.R, s + V) - Math.max(it.L, s) > 0);
+    const subs = [...new Set(vis.map(it => it.sub))].sort((a, b) => a - b);
+    g.el.style.top = y + 'px';
+    const top0 = y + HDR;
+    for (const it of g.items) {
+      const k = Math.max(0, subs.indexOf(it.sub));                       // 写っていない段は先頭の段に重ねておく（画面外なので見えない）
+      const t = top0 + k * (BH + G) + 'px';
+      it.el.style.top = t;
+      if (it.lblEl) it.lblEl.style.top = t;
+    }
+    const n = subs.length;
+    y += n ? HDR + n * BH + (n - 1) * G + 2 : 12 + 2;                   // 0段 = 名前(12) + 2px だけ
+  }
+  y += G - 2;
+  track.style.height = Math.max(y, 40) + 'px';
+}
 function layout() {
   const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
+  vlayout(s, sc.clientWidth);
   nextButton(nextBtn, tlItems, s, sc.clientWidth, x => sc.scrollTo({ left:x, behavior:'smooth' }));
   for (const b of bars) {
     const right = Math.min(b.L + b.W - PAD, viewR);
-    const lft = Math.min(Math.max(b.L + PAD + THUMB + PAD, viewL), right);
+    const lft = Math.min(Math.max(b.L + TXT, viewL), right);
     b.txt.style.left = (lft - b.L) + 'px';
     b.txt.style.width = Math.max(0, right - lft) + 'px';
   }
 }
 let raf = 0;
-sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); }); }, { passive:true });
+sc.addEventListener('scroll', () => {
+  head.scrollLeft = sc.scrollLeft;                          // 月日の帯を同期（遅れないよう即時）
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); });
+}, { passive:true });
+head.addEventListener('wheel', e => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { sc.scrollLeft += e.deltaX; e.preventDefault(); } }, { passive:false });
 window.addEventListener('resize', layout);
 
 build(26);                                                  // 2週間表示（1日 26px）のみ
@@ -301,7 +373,34 @@ sc.addEventListener('pointermove', e => {
 const end = () => { dragX = null; sc.classList.remove('drag'); setTimeout(() => { moved = false; }, 0); };
 sc.addEventListener('pointerup', end);
 sc.addEventListener('pointercancel', end);
-sc.addEventListener('click', e => { if (moved) e.preventDefault(); }, true);
+sc.addEventListener('click', e => { if (moved) { e.preventDefault(); e.stopPropagation(); } }, true);   // ドラッグ後のタップは無視
+
+// ---------- 予定タップでダイアログ ----------
+const dlg = document.getElementById('dlg'), dlgCard = document.getElementById('dlgCard');
+const STATUS = { on:'受付中', pre:'受付前', end:'受付終了' };
+function openDialog(it) {
+  const until = it.status === 'on' ? `<dt>締切まで</dt><dd><b class="hot">${left(it.e)}</b></dd>`
+              : it.status === 'pre' ? `<dt>開始まで</dt><dd><b>${left(it.s)}</b></dd>` : '';
+  dlgCard.innerHTML = `
+    <div class="l1"><span class="badge ${it.status}">${STATUS[it.status]}</span><span class="dot" style="background:${it.color}"></span><span class="who">${esc(it.artists.join(' / '))}</span></div>
+    ${it.kind ? `<p class="kind">${esc(it.kind)}</p>` : ''}
+    <p class="ttl">${esc(it.title)}</p>
+    <dl>
+      <dt>受付期間</dt><dd>${long(it.s)} 〜<br>${long(it.e)}</dd>
+      ${until}
+      ${it.result ? `<dt>当選発表</dt><dd>${long(new Date(it.result))}頃</dd>` : ''}
+    </dl>
+    <div class="btns">
+      ${it.link ? `<a class="go" href="${esc(it.link)}" target="_blank" rel="noopener">詳細ページを見る</a>` : ''}
+      <button class="close" type="button">閉じる</button>
+    </div>`;
+  dlg.hidden = false;
+}
+const closeDialog = () => { dlg.hidden = true; };
+track.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) openDialog(tlItems[+b.dataset.i]); });
+track.addEventListener('keydown', e => { const b = e.target.closest('[data-i]'); if (b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDialog(tlItems[+b.dataset.i]); } });
+dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('.close')) closeDialog(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.hidden) closeDialog(); });
 sc.addEventListener('dragstart', e => e.preventDefault());
 </script>
 </body>

@@ -179,8 +179,6 @@
   .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
   .tk-lbl.end{opacity:.45;}
   .tk-empty{position:absolute;left:16px;top:calc(var(--axh) + 16px);font-size:12px;color:rgba(255,255,255,.5);}
-  .tk-bar .th{position:absolute;left:6px;top:6px;width:42px;height:42px;border-radius:4px;overflow:hidden;background:#222;}
-  .tk-bar .th img{width:100%;height:100%;object-fit:cover;display:block;}
   .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;} /* left/width は JS */
   .tk-bar .tt,.tk-lbl .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
   .tk-bar .dt,.tk-lbl .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -486,7 +484,7 @@ function nextButton(btn, items, s, V, onGo) {
   btn.onclick = () => onGo(Math.max(0, right ? t.L - 16 : ext(t)[1] - V * 0.7)); // 右=始まりを左端へ、左=終わりを右寄りに
 }
 (function ticketTimeline(){
-  const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, THUMB = 42;
+  const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, TXT = 10;   // TXT = バー内テキストの左余白
   // 先行データ : calendar-bmsg.tokyo から tools/build_presales.mjs で生成した assets/presales.js
   const NOW = new Date();
   const day0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -495,12 +493,12 @@ function nextButton(btn, items, s, V, onGo) {
   const FIRST_VISIBLE = new Date(TODAY.getTime() - 2 * 864e5);         // 初期表示の左端 = 2日前
   const COLORS = { 'BE:FIRST':'#145cfc', 'MAZZEL':'#8021ff', 'Aile The Shota':'#009e8f', 'HANA':'#e6007a', 'SKY-HI':'#f54a00',
                    'STARGLOW':'#c58000', 'Novel Core':'#00a640', 'REIKO':'#7f22fe', 'edhiii boi':'#6a7282', 'Ayumu Imazu':'#0092b8' };
-  const THUMBS = { 'BE:FIRST':'assets/thumb_bf3.jpg' };
   const p2 = n => String(n).padStart(2, '0');
   const fmt = d => `${d.getMonth() + 1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
   const idx = d => Math.round((day0(d) - START) / 864e5);
   // TOP カードは受付中・受付前だけ。締切が近い順（受付中→受付前）に、最大 MAX_LANES 段へ入るぶんだけ載せる（全件は presale.html）
-  const SHORT = 160, LBL = 170, MAX_LANES = 2;
+  const LBL = 170, MAX_LANES = 2;
+  const SHORT_DAYS = 0;            // 期間がこの日数未満のバーは文字を右外に出す。いまは全バー枠内（0）。3日以内を外に出すなら 4
   const cand = (window.PRESALES || [])
     .map(p => ({ ...p, s:new Date(p.start), e:new Date(p.end) }))
     .map(p => ({ ...p, status: NOW < p.s ? 'pre' : NOW > p.e ? 'end' : 'on' }))
@@ -508,10 +506,9 @@ function nextButton(btn, items, s, V, onGo) {
     .sort((a, b) => (a.status === b.status ? 0 : a.status === 'on' ? -1 : 1) || (a.status === 'on' ? a.e - b.e : a.s - b.s));
   for (const it of cand) {
     it.L = X0 + idx(it.s) * DW + 2; it.W = (idx(it.e) - idx(it.s) + 1) * DW - 4;
-    it.short = it.W < SHORT;
+    it.short = idx(it.e) - idx(it.s) + 1 < SHORT_DAYS;
     it.R = it.L + it.W + (it.short ? 6 + LBL : 0);
     it.color = COLORS[it.artists[0]] || '#6a7282';
-    it.img = it.thumb || THUMBS[it.artists[0]] || 'assets/thumb_bf5.jpg';
     it.label = `${it.kind ? it.kind + ' ' : ''}${it.title}`;
     it.date = `${fmt(it.s)} – ${fmt(it.e)}`;
   }
@@ -539,9 +536,8 @@ function nextButton(btn, items, s, V, onGo) {
     const { L, W } = it, top = AXH + 1 + G + it.lane * (BH + G);
     const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
     const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${it.date}</p></div>`;
-    const thumb = W >= THUMB + 2 * PAD ? `<div class="th"><img src="${it.img}" alt=""></div>` : '';
     return `<a class="tk-bar ${it.status}${it.short ? ' short' : ''}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" data-l="${L}" data-w="${W}" ` +
-           `style="left:${L}px;width:${W}px;top:${top}px;color:${it.color};background:${bg}">${thumb}${it.short ? '' : txt}</a>` +
+           `style="left:${L}px;width:${W}px;top:${top}px;color:${it.color};background:${bg}">${it.short ? '' : txt}</a>` +
            (it.short ? `<a class="tk-lbl ${it.status}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" style="left:${L + W + 6}px;width:${LBL}px;top:${top}px">${txt}</a>` : '');
   }).join('');
   if (!ITEMS.length) html += `<p class="tk-empty">現在受付中・予定のチケット先行はありません</p>`;
@@ -555,7 +551,7 @@ function nextButton(btn, items, s, V, onGo) {
     nextButton(nextBtn, ITEMS, s, sc.clientWidth, x => sc.scrollTo({ left:x, behavior:'smooth' }));
     for (const b of bars) {
       const right = Math.min(b.L + b.W - PAD, viewR);
-      const left = Math.min(Math.max(b.L + PAD + THUMB + PAD, viewL), right);
+      const left = Math.min(Math.max(b.L + TXT, viewL), right);
       b.txt.style.left = (left - b.L) + 'px';
       b.txt.style.width = Math.max(0, right - left) + 'px';
     }
