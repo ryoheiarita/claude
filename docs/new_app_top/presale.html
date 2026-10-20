@@ -50,6 +50,15 @@
 
 
   /* timeline */
+  /* アーティストの絞り込みタブ（複数選択可、何も選ばなければ全員）。数字は受付中＋受付前の件数 */
+  .flt{display:flex;gap:6px;overflow-x:auto;margin:0 -16px -4px;padding:0 16px;scrollbar-width:none;}
+  .flt::-webkit-scrollbar{display:none}
+  .flt button{flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:100px;border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);color:#fff;font:600 13px/16px var(--ff);cursor:pointer;white-space:nowrap;}
+  .flt button.has{padding-right:6px;}
+  .flt .c{display:flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:rgba(255,255,255,.16);font-size:11px;line-height:1;}
+  .flt button.on{background:#fff;border-color:#fff;color:#000;}
+  .flt button.on .c{background:#000;color:#fff;}
   /* 月日の帯(.tk-head)は縦スクロールで上に固定（sticky）。横位置はバー本体(.tk-sc)のスクロールに同期（JS）。
      sticky を効かせるため .tk 自体は overflow:hidden にしない */
   .tk{position:relative;border-radius:16px;background:rgba(255,255,255,.04);--axh:70px;--bh:54px;--g:4px;}
@@ -94,10 +103,14 @@
   .tk.anim .tk-track{transition:height .25s ease;}
   .tk-art span{position:sticky;left:12px;flex:none;display:block;width:max-content;height:12px;font-size:10px;line-height:12px;color:rgba(255,255,255,.45);white-space:nowrap;}
   .tk-bar{cursor:pointer;}
-  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
+  /* 文字の張り付きは CSS sticky（JS で動かすと横スクロールに 1 フレーム遅れてガクつくため）。
+     sticky を効かせるため overflow は hidden ではなく clip。バー右端で切れる文字は --solid（バー色の不透明換算）へのグラデで消す */
+  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:clip;padding:6px 6px 6px 10px;}
+  .tk-bar::after{content:"";position:absolute;top:0;right:0;bottom:0;width:20px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--solid));}
   .tk-bar.pre{border:1px dashed currentColor;}
   .tk-bar.end,.tk-lbl.end{opacity:.45;}
-  .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;}   /* left/width は JS */
+  /* 表示範囲の左端+4 に張り付く。sticky は親(バー)の中でしか動けないので、文字は中身の幅（最大240）にしてバー内を滑らせる */
+  .tk-bar .txt{position:sticky;left:4px;display:flex;flex-direction:column;gap:4px;min-width:0;width:fit-content;max-width:min(100%,240px);}
   .tk-lbl{position:absolute;height:var(--bh);}
   .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
   .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
@@ -160,6 +173,7 @@
   </div>
   <div class="scroll">
     <div class="content">
+      <div class="flt" id="flt" role="group" aria-label="アーティストで絞り込み"></div>
       <div class="tk" id="tk"><div class="tk-headwrap"><div class="tk-head" id="head"><div class="tk-head-track" id="headTrack"></div></div></div><div class="tk-sc" id="sc"><div class="tk-track" id="track"></div></div></div>
       <p class="hint">← 横スクロールで日付移動 →</p>
       <h2>締切が近い順</h2>
@@ -207,15 +221,44 @@ const item = p => {
       <div class="l3">${l3}</div>${p.result ? `<div class="l3"><span>当選発表 ${long(new Date(p.result))}頃</span></div>` : ''}
     </div></a>`;
 };
-const live = [...ALL.filter(p => p.status === 'on').sort((a, b) => a.e - b.e), ...ALL.filter(p => p.status === 'pre').sort((a, b) => a.s - b.s)];
-const ended = ALL.filter(p => p.status === 'end' && p.e >= new Date(TODAY.getTime() - 30 * 864e5)).sort((a, b) => b.e - a.e);
-document.getElementById('list').innerHTML = live.length ? live.map(item).join('') : '<p class="empty">現在受付中・予定のチケット先行はありません</p>';
-document.getElementById('endList').innerHTML = ended.map(item).join('');
-document.getElementById('endHead').hidden = !ended.length;
+// ---------- アーティストの絞り込み ----------
+const SEL = new Set();                                        // 選択中のアーティスト（空 = 全員）
+const shown = () => SEL.size ? ALL.filter(p => p.artists.some(a => SEL.has(a))) : ALL;
+function renderList() {
+  const src = shown();
+  const live = [...src.filter(p => p.status === 'on').sort((a, b) => a.e - b.e), ...src.filter(p => p.status === 'pre').sort((a, b) => a.s - b.s)];
+  const ended = src.filter(p => p.status === 'end' && p.e >= new Date(TODAY.getTime() - 30 * 864e5)).sort((a, b) => b.e - a.e);
+  document.getElementById('list').innerHTML = live.length ? live.map(item).join('') : '<p class="empty">現在受付中・予定のチケット先行はありません</p>';
+  document.getElementById('endList').innerHTML = ended.map(item).join('');
+  document.getElementById('endHead').hidden = !ended.length;
+}
+renderList();
+(function filters(){
+  const flt = document.getElementById('flt');
+  // タブの並び : 受付中の締切が近い → 受付前の開始が近い → 終了のみ（カレンダーの段の並びと同じ）
+  const rank = p => p.status === 'on' ? +p.e : p.status === 'pre' ? 1e15 + +p.s : 2e15 - +p.e;
+  const arts = new Map();
+  for (const p of [...ALL].sort((a, b) => rank(a) - rank(b))) {
+    const a = p.artists[0];
+    if (!arts.has(a)) arts.set(a, 0);
+    if (p.status !== 'end') arts.set(a, arts.get(a) + 1);
+  }
+  flt.innerHTML = [...arts].map(([a, n]) => `<button type="button" class="${n ? 'has' : ''}" aria-pressed="false" data-a="${esc(a)}">${esc(a)}${n ? `<span class="c">${n}</span>` : ''}</button>`).join('');
+  flt.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const a = b.dataset.a;
+    SEL.has(a) ? SEL.delete(a) : SEL.add(a);
+    b.classList.toggle('on', SEL.has(a)); b.setAttribute('aria-pressed', SEL.has(a));
+    renderList();
+    const keep = sc.scrollLeft;                                  // 横位置はそのまま
+    build(26); sc.scrollLeft = keep; head.scrollLeft = keep; sc.scrollTop = 0; layout();
+  });
+})();
 
 // ---------- timeline : 画像は見切れ、テキストは表示左端に張り付き右側を … 省略 ----------
 const tk = document.getElementById('tk'), sc = document.getElementById('sc'), track = document.getElementById('track');
 const head = document.getElementById('head'), headTrack = document.getElementById('headTrack');
+const ART_GAP = 4;                                          // アーティスト名の上の余白（上のブロック・月日の帯から）
 const X0 = 12, G = 4, AXH = 70, HDR = 14, BH = 54,   // HDR = アーティスト名(12) + ブロックとの間(2)
       PAD = 6, TXT = 10, LBL = 170;
 // 期間がこの日数未満のバーは文字を右外に出す。いまは全バー枠内（0）。3日以内を外に出すなら 4
@@ -229,13 +272,13 @@ function build(DW) {
     it.short = idx(it.e) - idx(it.s) + 1 < SHORT_DAYS;
     it.R = it.L + it.W + (it.short ? 6 + LBL : 0);
   }
-  const { items, lanes, groups } = packByArtist(ALL.filter(p => p.e >= START));
+  const { items, lanes, groups } = packByArtist(shown().filter(p => p.e >= START));
   // アーティストのまとまりごとに名前の帯(HDR)を挟む。段 l の上端 = 帯の数ぶん下げる
   const groupTop = [];                                                   // 各まとまりの名前の帯の上端
-  // 上のブロック ─2px─ アーティスト名(12) ─2px─ 下のブロック（同じアーティスト内の段の間は G）
-  let y = 2;
-  for (const g of groups) { groupTop.push(y); y += HDR + g.count * BH + (g.count - 1) * G + 2; }
-  y += G - 2;                                                            // 一番下の余白
+  // 上のブロック ─4px─ アーティスト名(12) ─2px─ 下のブロック（同じアーティスト内の段の間は G）
+  let y = ART_GAP;
+  for (const g of groups) { groupTop.push(y); y += HDR + g.count * BH + (g.count - 1) * G + ART_GAP; }
+  y += G - ART_GAP;                                                            // 一番下の余白
   const laneTop = l => { const gi = groups.findIndex(g => l >= g.base && l < g.base + g.count); return groupTop[gi] + HDR + (l - groups[gi].base) * (BH + G); };
   const bodyH = Math.max(y, BH + 2 * G);
   const laneEnds = items.map(it => it.R);
@@ -264,10 +307,10 @@ function build(DW) {
   html += groups.map((g, gi) => `<div class="tk-art" style="top:${groupTop[gi]}px;width:${X0 * 2 + days * DW}px"><span>${esc(g.artist)}</span><button class="tk-go" type="button" aria-label="${esc(g.artist)}の予定へ">${GO}</button></div>`).join('');
   html += items.map((it, i) => {
     const top = laneTop(it.lane);
-    const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
+    const al = it.status === 'on' ? .9 : .2, bg = rgba(it.color, al);
     const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${short(it.s)} – ${short(it.e)}</p></div>`;
     return `<div class="tk-bar ${it.status}${it.short ? ' short' : ''}" role="button" tabindex="0" data-i="${i}" data-l="${it.L}" data-w="${it.W}" ` +
-           `style="left:${it.L}px;width:${it.W}px;top:${top}px;color:${it.color};background:${bg}">${it.short ? '' : txt}</div>` +
+           `style="left:${it.L}px;width:${it.W}px;top:${top}px;color:${it.color};background:${bg};--solid:${solid(it.color, al)}">${it.short ? '' : txt}</div>` +
            (it.short ? `<div class="tk-lbl ${it.status}" role="button" tabindex="0" data-i="${i}" style="left:${it.L + it.W + 6}px;width:${LBL}px;top:${top}px">${txt}</div>` : '');
   }).join('');
   if (!items.length) html += `<p class="empty" style="position:absolute;left:16px;top:16px">表示期間にチケット先行はありません</p>`;
@@ -313,27 +356,49 @@ function packByArtist(items, maxLanes = Infinity, perArtist = Infinity) {
   }
   return { items:placed, lanes:Math.max(1, base), groups:groupsOut };
 }
+// バー色 × 透明度 を下地 #1a1a1a に重ねた不透明色（右端グラデ用）
+function solid(hex, a) { const n = parseInt(hex.slice(1), 16), b = parseInt('#1a1a1a'.slice(1), 16), m = (c, d) => Math.round(c * a + d * (1 - a));
+  return `rgb(${m(n >> 16, b >> 16)},${m((n >> 8) & 255, (b >> 8) & 255)},${m(n & 255, b & 255)})`; }
 function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
 // アーティストの欄を、表示範囲に写っている段だけの高さに詰め直す
+// 縦位置のアンカー : カレンダー内を縦スクロールしているとき、画面上端にいるアーティストの欄を目印にして、
+// それより上の欄が開閉しても目印が同じ位置に残るよう scrollTop を合わせる（上側が動くときはアニメーションを止める）
 function vlayout(s, V) {
-  let y = 2;
-  for (const g of tlGroups) {
+  // 1) 目印 : いま画面上端にかかっているアーティスト
+  const st = sc.scrollTop;
+  const anchor = st > 0 ? tlGroups.find(g => g.y != null && g.y + g.h > st) : null;
+  // 2) 新しい位置を計算
+  let y = ART_GAP;
+  const plan = tlGroups.map(g => {
     const vis = g.items.filter(it => Math.min(it.R, s + V) - Math.max(it.L, s) > 0);
     const subs = [...new Set(vis.map(it => it.sub))].sort((a, b) => a - b);
-    g.el.style.top = y + 'px';
-    const top0 = y + HDR;
-    for (const it of g.items) {
-      const k = Math.max(0, subs.indexOf(it.sub));                       // 写っていない段は先頭の段に重ねておく（画面外なので見えない）
-      const t = top0 + k * (BH + G) + 'px';
-      it.el.style.top = t;
-      if (it.lblEl) it.lblEl.style.top = t;
-    }
     const n = subs.length;
     // 何も写っていなければ、受付中/受付前の予定のうち一番近いものへのボタンを欄に出す
     const live = n ? [] : g.items.filter(it => it.status !== 'end');
     const right = live.filter(it => it.L >= s + V).sort((a, b) => a.L - b.L)[0];
     const leftT = right ? null : live.filter(it => it.R <= s).sort((a, b) => b.R - a.R)[0];
     const t = right || leftT;
+    const h = n ? HDR + n * BH + (n - 1) * G : (t ? 34 : 12);       // 0段 = 名前(12)、ボタンありは 名前の下にボタン(2+20)
+    const p = { g, y, h, subs, t, right };
+    y += h + ART_GAP;
+    return p;
+  });
+  y += G - ART_GAP;
+  // 3) 目印がずれる分（上側の欄の開閉）を求め、ずれるならアニメーションを止めて scrollTop で相殺
+  const ap = anchor && plan.find(p => p.g === anchor);
+  const delta = ap ? ap.y - anchor.y : 0;
+  const animOn = tk.classList.contains('anim');
+  if (delta && animOn) tk.classList.remove('anim');
+  // 4) 反映
+  for (const { g, y: gy, h, subs, t, right } of plan) {
+    g.el.style.top = gy + 'px';
+    const top0 = gy + HDR;
+    for (const it of g.items) {
+      const k = Math.max(0, subs.indexOf(it.sub));                       // 写っていない段は先頭の段に重ねておく（画面外なので見えない）
+      const tp = top0 + k * (BH + G) + 'px';
+      it.el.style.top = tp;
+      if (it.lblEl) it.lblEl.style.top = tp;
+    }
     g.el.classList.toggle('btn', !!t);
     if (t) {
       const btn = g.el.querySelector('.tk-go'), d = right ? t.s : t.e;    // 右=開始日、左=締切日
@@ -342,20 +407,17 @@ function vlayout(s, V) {
       btn.style.background = t.color;
       btn.onclick = e => { e.stopPropagation(); sc.scrollTo({ left:Math.max(0, right ? t.L - 16 : t.R - V * 0.7), behavior:'smooth' }); };
     }
-    y += n ? HDR + n * BH + (n - 1) * G + 2 : (t ? 34 : 12) + 2;       // 0段 = 名前(12)、ボタンありは 名前の下にボタン(2+20)
+    g.y = gy; g.h = h;
   }
-  y += G - 2;
   track.style.height = Math.max(y, 40) + 'px';
+  if (delta) {
+    sc.scrollTop = st + delta;
+    if (animOn) { void track.offsetHeight; requestAnimationFrame(() => tk.classList.add('anim')); }
+  }
 }
 function layout() {
   const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
   vlayout(s, sc.clientWidth);
-  for (const b of bars) {
-    const right = Math.min(b.L + b.W - PAD, viewR);
-    const lft = Math.min(Math.max(b.L + TXT, viewL), right);
-    b.txt.style.left = (lft - b.L) + 'px';
-    b.txt.style.width = Math.max(0, right - lft) + 'px';
-  }
 }
 let raf = 0;
 sc.addEventListener('scroll', () => {

@@ -218,14 +218,18 @@
   .tk-next.left .r{display:none;}
   .tk-axis{position:absolute;left:0;right:0;top:var(--axh);height:1px;background:rgba(255,255,255,.1);}
   .tk-now{position:absolute;top:var(--axh);bottom:0;width:2px;background:#ff454d;}
-  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:hidden;}
+  /* 文字の張り付きは CSS sticky（JS で動かすと横スクロールに 1 フレーム遅れてガクつくため）。
+     sticky を効かせるため overflow は hidden ではなく clip。バー右端で切れる文字は --solid（バー色の不透明換算）へのグラデで消す */
+  .tk-bar{position:absolute;height:var(--bh);border-radius:10px;overflow:clip;padding:6px 6px 6px 10px;}
+  .tk-bar::after{content:"";position:absolute;top:0;right:0;bottom:0;width:20px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--solid));}
   .tk-bar.pre{border:1px dashed currentColor;}
   .tk-bar.end{opacity:.45;}                     /* 受付終了 */
   .tk-lbl{position:absolute;height:var(--bh);}            /* 短いバーの右外ラベル */
   .tk-lbl .txt{position:absolute;inset:6px 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
   .tk-lbl.end{opacity:.45;}
   .tk-empty{position:absolute;left:16px;top:calc(var(--axh) + 16px);font-size:12px;color:rgba(255,255,255,.5);}
-  .tk-bar .txt{position:absolute;top:6px;bottom:6px;display:flex;flex-direction:column;gap:4px;min-width:0;} /* left/width は JS */
+  /* 表示範囲の左端+4 に張り付く。sticky は親(バー)の中でしか動けないので、文字は中身の幅（最大240）にしてバー内を滑らせる */
+  .tk-bar .txt{position:sticky;left:4px;display:flex;flex-direction:column;gap:4px;min-width:0;width:fit-content;max-width:min(100%,240px);}
   .tk-bar .tt,.tk-lbl .tt{font-weight:600;font-size:11px;line-height:13px;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
   .tk-bar .dt,.tk-lbl .dt{font-size:11px;line-height:13px;color:rgba(255,255,255,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
@@ -611,6 +615,9 @@ const TICKET_VIEW = (() => {
   window.dispatchEvent(new Event('resize'));
 })();
 
+// バー色 × 透明度 を下地 #232323 に重ねた不透明色（右端グラデ用）
+function solid(hex, a) { const n = parseInt(hex.slice(1), 16), b = parseInt('#232323'.slice(1), 16), m = (c, d) => Math.round(c * a + d * (1 - a));
+  return `rgb(${m(n >> 16, b >> 16)},${m((n >> 8) & 255, (b >> 8) & 255)},${m(n & 255, b & 255)})`; }
 (function ticketTimeline(){
   const DW = 26, X0 = 12, G = 4, AXH = 34, BH = 54, PAD = 6, TXT = 10;   // TXT = バー内テキストの左余白
   // 先行データ : calendar-bmsg.tokyo から tools/build_presales.mjs で生成した assets/presales.js
@@ -662,10 +669,10 @@ const TICKET_VIEW = (() => {
   html += `<div class="tk-axis"></div><div class="tk-now" style="left:${X0 + idx(TODAY) * DW + DW / 2 - 1}px"></div>`;
   html += ITEMS.map(it => {
     const { L, W } = it, top = AXH + 1 + G + it.lane * (BH + G);
-    const bg = it.status === 'on' ? rgba(it.color, .9) : rgba(it.color, .2);
+    const al = it.status === 'on' ? .9 : .2, bg = rgba(it.color, al);
     const txt = `<div class="txt"><p class="tt">${esc(it.label)}</p><p class="dt">${it.date}</p></div>`;
     return `<a class="tk-bar ${it.status}${it.short ? ' short' : ''}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" data-l="${L}" data-w="${W}" ` +
-           `style="left:${L}px;width:${W}px;top:${top}px;color:${it.color};background:${bg}">${it.short ? '' : txt}</a>` +
+           `style="left:${L}px;width:${W}px;top:${top}px;color:${it.color};background:${bg};--solid:${solid(it.color, al)}">${it.short ? '' : txt}</a>` +
            (it.short ? `<a class="tk-lbl ${it.status}" href="${esc(it.link || '#')}" target="_blank" rel="noopener" style="left:${L + W + 6}px;width:${LBL}px;top:${top}px">${txt}</a>` : '');
   }).join('');
   if (!ITEMS.length) html += `<p class="tk-empty">現在受付中・予定のチケット先行はありません</p>`;
@@ -677,12 +684,6 @@ const TICKET_VIEW = (() => {
   const layout = () => {
     const s = sc.scrollLeft, viewL = s + G, viewR = s + sc.clientWidth - G;
     nextButton(nextBtn, ITEMS, s, sc.clientWidth, x => sc.scrollTo({ left:x, behavior:'smooth' }));
-    for (const b of bars) {
-      const right = Math.min(b.L + b.W - PAD, viewR);
-      const left = Math.min(Math.max(b.L + TXT, viewL), right);
-      b.txt.style.left = (left - b.L) + 'px';
-      b.txt.style.width = Math.max(0, right - left) + 'px';
-    }
   };
   let raf = 0;
   sc.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); }); }, { passive:true });
