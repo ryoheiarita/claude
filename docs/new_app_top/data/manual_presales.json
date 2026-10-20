@@ -1,28 +1,30 @@
 [
- {"artists":["BE:FIRST"],"title":"UVERworld vs BE:FIRST（12/26 日本武道館）","kind":"1次 NSW先行","start":"2026-10-01T12:00","end":"2026-10-12T23:59","result":"2026-10-17T18:00","link":"https://www.uverworld.jp/news/detail/3231"},
- {"artists":["BE:FIRST"],"title":"UVERworld vs BE:FIRST（12/26 日本武道館）","kind":"2次 NSW先行","start":"2026-10-18T12:00","end":"2026-10-25T23:59","result":"2026-10-31T18:00","link":"https://www.uverworld.jp/news/detail/3231"},
-
- {"artists":["SKY-HI"],"title":"SKY-HI Birthday Bash 2026 -X-（12/11〜13 豊洲PIT）","kind":"FLYERS / B-Town 2次先行（抽選）","start":"2026-09-17T15:00","end":"2026-09-23T23:59","link":"https://skyhi.tokyo/news/2120"},
-
- {"artists":["Aile The Shota","SKY-HI"],"title":"OMEN -The Origin-（11/7 豊洲PIT）","kind":"第2回チケット抽選","start":"2026-09-21T21:00","end":"2026-09-27T23:59","link":"https://skyhi.tokyo/news/2141"},
- {"artists":["Aile The Shota","SKY-HI"],"title":"OMEN -The Origin-（11/7 豊洲PIT）","kind":"最終抽選（一般）","start":"2026-10-15T21:00","end":"2026-10-22T23:59","link":"https://buzz-ticket.com/e/omen.theorigin"},
-
- {"artists":["Aile The Shota"],"title":"Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）","kind":"プレオーダー先行（抽選）","start":"2026-09-14T18:00","end":"2026-09-27T23:59","link":"https://eplus.jp/ailetheshota/"},
- {"artists":["Aile The Shota"],"title":"Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）","kind":"プレオーダー2次先行（抽選）","start":"2026-09-28T18:00","end":"2026-10-12T23:59","link":"https://eplus.jp/ailetheshota/"},
- {"artists":["Aile The Shota"],"title":"Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）","kind":"イープラス先行（抽選）","start":"2026-10-13T18:00","end":"2026-10-25T23:59","link":"https://eplus.jp/ailetheshota/"},
- {"artists":["Aile The Shota"],"title":"946 AGE FES 2026（10/24 釧路）","kind":"一般発売（先着）","start":"2026-08-07T20:00","end":"2026-10-23T23:59","link":"https://eplus.jp/sf/detail/4583180001"},
- {"artists":["Aile The Shota"],"title":"OTRN [Sound Lab] at YOKOHAMA BUNTAI（10/31）","kind":"先着先行（第一〜三弾）","start":"2026-10-05T20:00","end":"2026-10-30T23:59","link":"https://eplus.jp/otrn/"},
- {"artists":["Aile The Shota"],"title":"OTRN [Sound Lab] at YOKOHAMA BUNTAI（10/31）","kind":"ペア招待 第2回（抽選）","start":"2026-10-17T12:00","end":"2026-10-21T23:59","link":"https://jetmusic-official.com/?p=8392"},
-
- {"artists":["Novel Core"],"title":"BLACK TiE TOUR 2026（11/22 渋谷clubasia）","kind":"オフィシャル先行（先着）","start":"2026-09-04T10:00","end":"2026-09-13T23:59","link":"https://novelcore.jp/announcement/blacktietour2026/"},
- {"artists":["Novel Core"],"title":"Good Grief Presents. SAD STATION “駅伝”（11/26 Spotify O-Crest）","kind":"一般発売","start":"2026-09-19T10:00","end":"2026-11-25T23:59","link":"https://t.pia.jp/pia/ticketInformation.do?eventCd=2633047&rlsCd=001"},
-
- {"artists":["REIKO"],"title":"Re:Re:Re:TUNE LIVE supported by Visa（11/2 EX THEATER ROPPONGI）","kind":"招待応募","start":"2026-10-14T11:00","end":"2026-10-19T23:59","link":"https://reiko-bmsg.tokyo/"},
-
- {"artists":["STARGLOW"],"title":"STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –","kind":"FC / B-Town 先行（抽選）","start":"2026-09-22T00:00","end":"2026-10-04T23:59","link":"https://starglow.tokyo/news/live/1420/"},
- {"artists":["STARGLOW"],"title":"STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –","kind":"FC / B-Town 2次先行（抽選）","start":"2026-10-10T12:00","end":"2026-10-15T23:59","link":"https://starglow.tokyo/news/live/1447/"},
- {"artists":["STARGLOW"],"title":"STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –","kind":"ローソンチケット先行（抽選）","start":"2026-10-23T15:00","end":"2026-11-01T23:59","link":"https://starglow.tokyo/news/live/1420/"},
-
- {"artists":["Ayumu Imazu"],"title":"バズリズム LIVE 2026（11/6 横浜アリーナ）","kind":"オフィシャル最終特別先着先行","start":"2026-10-02T18:00","end":"2026-10-19T23:59","link":"https://buzzrhythm.live/"},
- {"artists":["Ayumu Imazu"],"title":"バズリズム LIVE 2026（11/6 横浜アリーナ）","kind":"アップグレードチケット（抽選）","start":"2026-10-13T18:00","end":"2026-10-19T23:59","link":"https://buzzrhythm.live/"}
+ {"artists": ["BE:FIRST"], "title": "UVERworld vs BE:FIRST（12/26 日本武道館）", "kind": "1次 NSW先行", "start": "2026-10-01T12:00", "end": "2026-10-12T23:59", "result": "2026-10-17T18:00", "link": "https://www.uverworld.jp/news/detail/3231"},
+ {"artists": ["BE:FIRST"], "title": "UVERworld vs BE:FIRST（12/26 日本武道館）", "kind": "2次 NSW先行", "start": "2026-10-18T12:00", "end": "2026-10-25T23:59", "result": "2026-10-31T18:00", "link": "https://www.uverworld.jp/news/detail/3231"},
+ {"artists": ["SKY-HI"], "title": "SKY-HI Birthday Bash 2026 -X-（12/11〜13 豊洲PIT）", "kind": "FLYERS / B-Town 2次先行（抽選）", "start": "2026-09-17T15:00", "end": "2026-09-23T23:59", "link": "https://skyhi.tokyo/news/2120"},
+ {"artists": ["Aile The Shota", "SKY-HI"], "title": "OMEN -The Origin-（11/7 豊洲PIT）", "kind": "第2回チケット抽選", "start": "2026-09-21T21:00", "end": "2026-09-27T23:59", "link": "https://skyhi.tokyo/news/2141"},
+ {"artists": ["Aile The Shota", "SKY-HI"], "title": "OMEN -The Origin-（11/7 豊洲PIT）", "kind": "最終抽選（一般）", "start": "2026-10-15T21:00", "end": "2026-10-22T23:59", "link": "https://buzz-ticket.com/e/omen.theorigin", "result": "2026-10-23T21:00"},
+ {"artists": ["Aile The Shota"], "title": "Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）", "kind": "プレオーダー先行（抽選）", "start": "2026-09-14T18:00", "end": "2026-09-27T23:59", "link": "https://eplus.jp/ailetheshota/"},
+ {"artists": ["Aile The Shota"], "title": "Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）", "kind": "プレオーダー2次先行（抽選）", "start": "2026-09-28T18:00", "end": "2026-10-12T23:59", "link": "https://eplus.jp/ailetheshota/"},
+ {"artists": ["Aile The Shota"], "title": "Aile The Shota Oneman Live 2027 in 日本武道館（2027/3/13）", "kind": "イープラス先行（抽選）", "start": "2026-10-13T18:00", "end": "2026-10-25T23:59", "link": "https://eplus.jp/ailetheshota/"},
+ {"artists": ["Aile The Shota"], "title": "946 AGE FES 2026（10/24 釧路）", "kind": "一般発売（先着）", "start": "2026-08-07T20:00", "end": "2026-10-23T23:59", "link": "https://eplus.jp/sf/detail/4583180001"},
+ {"artists": ["Aile The Shota"], "title": "OTRN [Sound Lab] at YOKOHAMA BUNTAI（10/31）", "kind": "先着先行（第一〜三弾）", "start": "2026-10-05T20:00", "end": "2026-10-30T23:59", "link": "https://eplus.jp/otrn/"},
+ {"artists": ["Aile The Shota"], "title": "OTRN [Sound Lab] at YOKOHAMA BUNTAI（10/31）", "kind": "ペア招待 第2回（抽選）", "start": "2026-10-17T12:00", "end": "2026-10-21T23:59", "link": "https://jetmusic-official.com/?p=8392"},
+ {"artists": ["Novel Core"], "title": "BLACK TiE TOUR 2026（11/22 渋谷clubasia）", "kind": "オフィシャル先行（先着）", "start": "2026-09-04T10:00", "end": "2026-09-13T23:59", "link": "https://novelcore.jp/announcement/blacktietour2026/"},
+ {"artists": ["Novel Core"], "title": "Good Grief Presents. SAD STATION “駅伝”（11/26 Spotify O-Crest）", "kind": "一般発売", "start": "2026-09-19T10:00", "end": "2026-11-25T23:59", "link": "https://t.pia.jp/pia/ticketInformation.do?eventCd=2633047&rlsCd=001"},
+ {"artists": ["REIKO"], "title": "Re:Re:Re:TUNE LIVE supported by Visa（11/2 EX THEATER ROPPONGI）", "kind": "招待応募", "start": "2026-10-14T11:00", "end": "2026-10-19T23:59", "link": "https://reiko-bmsg.tokyo/"},
+ {"artists": ["STARGLOW"], "title": "STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –", "kind": "FC / B-Town 先行（抽選）", "start": "2026-09-22T00:00", "end": "2026-10-04T23:59", "link": "https://starglow.tokyo/news/live/1420/", "result": "2026-10-10T12:00"},
+ {"artists": ["STARGLOW"], "title": "STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –", "kind": "FC / B-Town 2次先行（抽選）", "start": "2026-10-10T12:00", "end": "2026-10-15T23:59", "link": "https://starglow.tokyo/news/live/1447/", "result": "2026-10-23T12:00"},
+ {"artists": ["STARGLOW"], "title": "STARGLOW 1st Arena Tour 2027 Aurora – The Dawn –", "kind": "ローソンチケット先行（抽選）", "start": "2026-10-23T15:00", "end": "2026-11-01T23:59", "link": "https://starglow.tokyo/news/live/1420/", "result": "2026-11-07T12:00"},
+ {"artists": ["Ayumu Imazu"], "title": "バズリズム LIVE 2026（11/6 横浜アリーナ）", "kind": "オフィシャル最終特別先着先行", "start": "2026-10-02T18:00", "end": "2026-10-19T23:59", "link": "https://buzzrhythm.live/"},
+ {"artists": ["Ayumu Imazu"], "title": "バズリズム LIVE 2026（11/6 横浜アリーナ）", "kind": "アップグレードチケット（抽選）", "start": "2026-10-13T18:00", "end": "2026-10-19T23:59", "link": "https://buzzrhythm.live/"},
+ {"artists": ["HANA"], "title": "ASIA POP GIRL FEST 2027 日本公演（2027/1/22・23 ららアリーナ 東京ベイ）", "kind": "HANA FC / B-Town〈Architect〉会員先行（抽選）", "start": "2026-10-07T18:00", "end": "2026-10-12T23:59", "result": "2026-10-20T12:00", "link": "https://hana.b-rave.tokyo/live/asia-pop-girl-fest-2027_ticket/"},
+ {"artists": ["HANA"], "title": "ASIA POP GIRL FEST 2027 日本公演（2027/1/22・23 ららアリーナ 東京ベイ）", "kind": "B-Town〈Resident〉会員先行（抽選）", "start": "2026-10-20T18:00", "end": "2026-10-25T23:59", "result": "2026-10-31T12:00", "link": "https://hana.b-rave.tokyo/live/asia-pop-girl-fest-2027_ticket/"},
+ {"artists": ["MAZZEL"], "title": "COUNTDOWN JAPAN 26/27（MAZZEL出演 12/26 幕張メッセ）", "kind": "第1次抽選先行（Jフェスアプリ）", "start": "2026-10-14T12:15", "end": "2026-10-20T16:00", "result": "2026-10-23T16:00", "link": "https://countdownjapan.jp/"},
+ {"artists": ["MAZZEL"], "title": "テレビ朝日ドリームフェスティバル2026（MAZZEL出演 11/23 Kアリーナ横浜）", "kind": "アップグレードチケット（抽選）", "start": "2026-10-21T12:00", "end": "2026-10-25T23:59", "link": "https://dreamfestival.jp/"},
+ {"artists": ["Aile The Shota", "SKY-HI"], "title": "OMEN -The Origin-（11/7 豊洲PIT）", "kind": "第3次チケット抽選", "start": "2026-09-30T21:00", "end": "2026-10-14T23:59", "result": "2026-10-15T21:00", "link": "https://buzz-ticket.com/e/omen.theorigin"},
+ {"artists": ["Aile The Shota"], "title": "Setouchi Contemporary 2026 -MUSIC FESTIVAL-（Aile出演 10/25 岡山）", "kind": "1日券 一般発売（先着）", "start": "2026-09-26T10:00", "end": "2026-10-24T23:59", "link": "https://eplus.jp/sf/detail/4353820001-P0030003P021002?P1=0175"},
+ {"artists": ["Aile The Shota"], "title": "946 AGE FES 2026（10/24 釧路）", "kind": "当日券価格 一般発売（先着）", "start": "2026-10-24T00:00", "end": "2026-10-24T11:30", "link": "https://eplus.jp/sf/detail/4583180001"},
+ {"artists": ["Novel Core"], "title": "EMNW TO KAMASU “LOVING TO GET US BY” TOUR 2026（12/3 Zepp Shinjuku／GUEST Novel Core）", "kind": "一般発売", "start": "2026-09-01T10:00", "end": "2026-12-02T18:00", "link": "https://eplus.jp/sf/detail/4463130001-P0030034P021001"},
+ {"artists": ["REIKO"], "title": "REIKO’s Winterland Vol.3（12/15 SHIBUYA PLEASURE PLEASURE）", "kind": "ローチケ先行（抽選）", "start": "2026-09-30T18:00", "end": "2026-10-05T23:59", "result": "2026-10-09T17:00", "link": "https://reiko-bmsg.tokyo/"}
 ]
