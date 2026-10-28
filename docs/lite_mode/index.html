@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../gate.js"></script>
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<title>BWU 低速遅延モード</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+<script src="vendor/lottie-icons.js"></script>
+<script src="vendor/tabbar-adjust.js"></script>
+<link rel="stylesheet" href="vendor/tabbar.css">
+<style>
+/* Layout: 左に操作できる実機モック、右に再生コントロールとタイムライン。下に通常/軽量の比較4台。アプリに合わせて暗色で統一 */
+:root{
+  --bg:#0c0d0f; --panel:#141519; --card:#202126; --card2:#2a2b31; --line:#33343b;
+  --fg:#f2f2f4; --mute:#9b9ca5; --dim:#6c6d75;
+  --lite:#f2c14e;      /* 軽量モードを示す色 */
+  --live:#e5484d; --ok:#45c08a;
+  --sans:"Figtree","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--lite);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:56px}
+header h1{font-size:30px;line-height:1.3;margin:0 0 8px;font-weight:800;text-wrap:balance}
+header p{margin:0;color:var(--mute);max-width:68ch}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--lite);font-weight:700;margin-bottom:6px}
+h2{font-size:20px;margin:0 0 4px;font-weight:700}
+.sub{color:var(--mute);margin:0 0 16px;font-size:14px}
+
+/* stage */
+.stage{display:grid;grid-template-columns:360px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}.stage>.phone{justify-self:center}}
+.panel{display:grid;gap:24px;min-width:0}
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.scen label{display:block;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;background:var(--panel)}
+.scen input{position:absolute;opacity:0;pointer-events:none}
+.scen label:has(input:checked){border-color:var(--lite);background:color-mix(in oklab,var(--lite) 10%,var(--panel))}
+.scen label:has(input:focus-visible){outline:2px solid var(--lite);outline-offset:2px}
+.scen b{display:block;font-size:15px}
+.scen span{font-size:12.5px;color:var(--mute)}
+.play{justify-self:start;background:var(--fg);color:var(--bg);font-weight:700;padding:10px 20px;border-radius:999px}
+.tlwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px}
+.tlhead{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-bottom:28px}
+.tlhead b{color:var(--fg);font-variant-numeric:tabular-nums;font-size:15px}
+.tl{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--card2) 0 20%,color-mix(in oklab,var(--lite) 35%,var(--card2)) 20% 53.3%,color-mix(in oklab,var(--live) 30%,var(--card2)) 53.3% 100%)}
+.tl .head{position:absolute;top:-6px;width:3px;height:20px;background:var(--fg);border-radius:2px;left:0;transform:translateX(-1px)}
+.tl .mk{position:absolute;top:-22px;font-size:11px;color:var(--mute);transform:translateX(-50%);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl .mk::after{content:"";position:absolute;left:50%;top:18px;width:1px;height:16px;background:var(--dim)}
+.tllab{display:grid;grid-template-columns:20% 33.3% 1fr;font-size:11.5px;color:var(--mute);margin-top:10px}
+.tllab span{padding-right:6px}
+.log{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px}
+.log li{display:flex;gap:10px}
+.log time{color:var(--lite);font-variant-numeric:tabular-nums;min-width:4.2em}
+.meter{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+.meter b{color:var(--fg);font-variant-numeric:tabular-nums}
+.rules{margin:0;padding-left:1.2em;display:grid;gap:6px;font-size:14px;color:var(--mute)}
+.rules b{color:var(--fg)}
+
+/* phone */
+.phone{width:min(360px,100%);height:740px;border-radius:48px;padding:10px;background:#1b1c20;border:1px solid #2c2d33;box-shadow:0 30px 60px -30px #000}
+.phone.mini{height:640px;width:100%;max-width:360px}
+@media (max-width:400px){.screen>.tabbar{zoom:.92}}
+.screen{position:relative;height:100%;border-radius:38px;overflow:hidden;background:var(--bg)}
+.sb{position:absolute;inset:0 0 auto;height:44px;z-index:25;display:flex;justify-content:space-between;align-items:center;padding:0 26px 0 30px;font-size:14px;font-weight:600}
+.sb.solid{background:var(--bg)}
+.sb .ic{display:flex;gap:6px;align-items:center}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;display:flex;flex-direction:column}
+.view::-webkit-scrollbar{display:none}
+.view.pad{padding-top:44px}
+
+/* images (通常モードで読む画像・動画の代わり) */
+.img,.vid{background:
+  radial-gradient(110% 80% at 28% 18%,color-mix(in oklab,var(--c) 75%,#fff 25%),transparent 60%),
+  radial-gradient(90% 90% at 85% 95%,color-mix(in oklab,var(--c) 55%,#000),transparent 70%),
+  linear-gradient(160deg,color-mix(in oklab,var(--c) 70%,#000 30%),#121216);border-radius:10px}
+.vid{background-size:180% 180%;animation:pan 6s ease-in-out infinite alternate;border-radius:0}
+@keyframes pan{to{background-position:100% 100%}}
+.lg{aspect-ratio:1;border-radius:10px;background:#000;border:1px solid var(--line);display:grid;place-items:center;color:#fff}
+.lg svg{width:86%;height:86%;display:block}
+.ini{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:26px;letter-spacing:-.02em;
+  background:color-mix(in oklab,var(--c) 24%,var(--card));color:color-mix(in oklab,var(--c) 45%,#fff);border:1px solid color-mix(in oklab,var(--c) 30%,transparent)}
+.tapload{display:grid;place-items:center;border:1px dashed #4a4b52;border-radius:10px;color:var(--mute);font-size:11.5px;background:#1a1b1f;width:100%}
+.loaded{animation:fade .5s ease}
+@keyframes fade{from{opacity:0}}
+
+/* splash: ui_prototype/splash/splash_logined の移植（黒＋ブロブ＋Lottieロゴ → BWUの文字窓でズームして次画面へ） */
+.sp{position:absolute;inset:0;z-index:20;--m-logo: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 339 100'><path d='M291.001 0.290039V60.364C291.001 61.5195 290.055 62.4561 288.889 62.4561H288.754C287.587 62.4561 286.642 61.5195 286.642 60.364V0.290039H250.434C254.596 3.76871 256.916 9.32729 256.425 15.7859C255.64 26.076 248.359 39.1393 238.634 51.6552C238.733 78.2196 260.489 99.712 287.329 99.712H290.301C317.19 99.712 338.996 78.1101 338.996 51.4727V0.290039H290.988H291.001Z'/><path d='M73.0428 48.5293C86.4874 48.5293 97.3904 37.7283 97.3904 24.4096C97.3904 11.091 86.4874 0.290039 73.0428 0.290039H0V96.7685H73.0428C86.4874 96.7685 97.3904 85.9676 97.3904 72.6489C97.3904 59.3302 86.4874 48.5293 73.0428 48.5293ZM55.8902 74.7409H34.2192V70.5446H55.8902C57.0566 70.5446 58.002 71.4812 58.002 72.6367C58.002 73.7922 57.0566 74.7288 55.8902 74.7288V74.7409ZM55.8902 26.5017H34.2192V22.3054H55.8902C57.0566 22.3054 58.002 23.242 58.002 24.3975C58.002 25.553 57.0566 26.4896 55.8902 26.4896V26.5017Z'/><path d='M240.592 0.141907C228.781 -0.746006 221.316 6.95329 218.172 20.7585C215.422 32.1189 212.966 53.4045 205.44 69.9708C200.173 81.5501 185.292 96.3284 172.24 95.3432C166.641 94.9175 164.345 92.2781 164.787 86.5249C165.61 75.8456 183.548 61.9188 189.884 55.375C199.129 46.1553 212.303 28.6646 213.347 15.1148C213.973 6.90464 208.178 0.896025 200.099 0.287866C190.178 -0.356783 179.852 6.72219 168.286 24.444C164.738 29.9539 161.067 37.118 157.788 44.5011C141.606 73.4251 128.603 93.5066 115.343 92.5092C111.819 92.2416 109.241 90.5996 109.646 85.2721C111.045 67.003 157.96 44.9268 159.937 19.0678C161.03 4.89772 147.045 0.348682 137.64 0.0202755C121.741 -0.540968 111.811 10.61 102.046 25.9528C101.264 27.1813 100.801 28.5797 100.508 30.006C100.393 30.5635 100.263 31.1148 100.118 31.6567C109.818 16.0635 120.082 2.6232 131.341 3.47462C133.416 3.63274 134.386 4.53282 134.251 6.38162C133.318 18.63 106.736 33.2623 95.1575 55.5939C98.8778 60.301 101.088 66.2367 101.088 72.6589C101.088 79.081 99.0374 84.5545 95.575 89.1765C99.1602 92.7403 104.256 94.9905 110.346 95.4527C127.388 96.7298 142.613 78.8864 160.293 44.5984C155.787 54.3776 149.378 67.4165 148.653 76.8673C147.634 90.2103 153.442 98.7002 163.805 99.4787C177.176 100.488 196.452 88.8237 213.642 73.2427L214.599 72.3304C234.662 53.9154 251.63 30.3674 252.76 15.5405C253.386 7.33035 248.475 0.76223 240.605 0.178397L240.592 0.141907Z'/></svg>");}
+.sp-unit{position:absolute;inset:0;background:#000;transform-origin:50% 50%;will-change:transform,opacity}
+.sp-unit svg{display:block;width:100%;height:100%}
+.sp-unit rect{opacity:0;animation:layer-in .6s cubic-bezier(.4,0,.2,1) forwards}
+.sp-unit rect:nth-of-type(1){animation-delay:1s}.sp-unit rect:nth-of-type(2){animation-delay:1.3s}
+.sp-unit rect:nth-of-type(3){animation-delay:1.6s}.sp-unit rect:nth-of-type(4){animation-delay:1.9s}
+@keyframes layer-in{to{opacity:1}}
+.sp-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:232px;color:#fff;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.33,1,.68,1)}
+.sp-lottie{width:100%;aspect-ratio:960/400}
+.sp-static{display:none;width:164px;margin:0 auto}
+.sp-logo.fallback .sp-lottie{display:none}
+.sp-logo.fallback .sp-static{display:block;animation:fade .8s ease .2s both}
+.sp.crop .sp-unit{
+  -webkit-mask-image:var(--m-logo),linear-gradient(#fff 0 0);-webkit-mask-size:164px 48.38px,100% 100%;-webkit-mask-position:center,0 0;-webkit-mask-repeat:no-repeat;-webkit-mask-composite:xor;
+  mask-image:var(--m-logo),linear-gradient(#fff 0 0);mask-size:164px 48.38px,100% 100%;mask-position:center,0 0;mask-repeat:no-repeat;mask-composite:exclude}
+.sp.crop .sp-logo{opacity:0;transform:translate(-50%,-50%) scale(.9)}
+.sp.crop .hold{opacity:0;transition:opacity .2s ease}
+.sp.windup .sp-unit{-webkit-mask-size:147.6px 43.54px,100% 100%;mask-size:147.6px 43.54px,100% 100%;transition:-webkit-mask-size .3s cubic-bezier(.33,1,.68,1),mask-size .3s cubic-bezier(.33,1,.68,1)}
+.sp.zoom .sp-unit{-webkit-mask-size:5904px 1741.7px,100% 100%;mask-size:5904px 1741.7px,100% 100%;transform:scale(1.15);opacity:0;
+  transition:-webkit-mask-size .5s cubic-bezier(.65,0,.35,1),mask-size .5s cubic-bezier(.65,0,.35,1),transform .5s cubic-bezier(.65,0,.35,1),opacity .2s linear .3s}
+.view.arrive{transform:scale(1.2)}
+.view.arrive.go{transform:scale(1);transition:transform 1.5s cubic-bezier(.22,1,.36,1)}
+/* tabbar: 正式コンポーネント（tabbar-260726/dist）。アーティストTOP でだけ出す（Artists一覧には無い） */
+.screen:not(.tb)>.tabbar,.screen:not(.tb)>.tabbar-bg{display:none}
+.tbspace{flex:none;height:112px}
+.hold{position:absolute;z-index:1;left:24px;right:24px;bottom:72px;text-align:center;display:grid;gap:10px;animation:fade .4s ease}
+.hold b{font-size:16px}
+.hold p{margin:0;font-size:12.5px;color:var(--mute)}
+.dots{display:flex;gap:6px;justify-content:center;margin-bottom:6px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--mute);animation:dot 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes dot{50%{opacity:.25}}
+.liteBtn{position:relative;overflow:hidden;margin-top:6px;padding:14px;border-radius:999px;background:var(--fg);color:#111;font-weight:700;font-size:15px}
+.liteBtn::before{content:"";position:absolute;inset:0;width:calc(var(--p,0)*100%);background:color-mix(in oklab,var(--lite) 70%,#fff)}
+.liteBtn span{position:relative}
+.cd{font-variant-numeric:tabular-nums}
+.bar{height:3px;border-radius:2px;background:var(--card2);overflow:hidden;margin-top:6px}
+.bar::after{content:"";display:block;width:35%;height:100%;background:var(--lite);animation:indet 1.4s ease-in-out infinite}
+@keyframes indet{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.err{margin:auto 28px;text-align:center;display:grid;gap:12px}
+.err .mark{width:56px;height:56px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;background:var(--card);font-size:24px;font-weight:800;color:var(--mute)}
+.err h4{margin:0;font-size:18px}
+.err p{margin:0;font-size:13px;color:var(--mute)}
+.err .primary{padding:13px;border-radius:999px;background:var(--fg);color:#111;font-weight:700;margin-top:8px}
+
+/* lite banner */
+.lite-bar{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:10px;margin:0 12px 8px;padding:9px 10px 9px 14px;border-radius:12px;
+  background:color-mix(in oklab,var(--lite) 16%,#16161a);border:1px solid color-mix(in oklab,var(--lite) 40%,transparent);font-size:11.5px;line-height:1.4}
+.lite-bar div{flex:1;min-width:0;display:grid}
+.lite-bar b{color:var(--lite);font-size:12px}
+.lite-bar span{color:var(--mute)}
+.lite-bar button{flex:none;padding:6px 10px;border-radius:999px;background:var(--fg);color:#111;font-weight:700;font-size:11.5px}
+
+/* artists */
+.ttl{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 12px}
+.ttl h3{margin:0;font-size:28px;font-weight:800}
+.ttl .x,.hbtn{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:grid;place-items:center;padding:0;flex:none}
+.ttl .x svg,.hbtn svg{width:40px;height:40px;display:block;margin:-1px}
+.comm{margin:0 16px;padding:12px 14px 14px;background:var(--card);border-radius:16px}
+.lbl{font-size:13px;color:var(--mute);margin-bottom:8px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.all{padding:0 16px 32px;gap:20px 10px}
+.tile{text-align:left;display:grid;gap:4px;align-content:start;min-width:0}
+.tile .img{aspect-ratio:1}
+.tn{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.all .tn{font-size:14px}
+.tf{font-size:11px;color:var(--mute);margin-top:-4px}
+.badge{font-size:10.5px;line-height:1.35;background:var(--card2);border-radius:6px;padding:4px 6px}
+.filters{display:flex;gap:8px;padding:20px 16px 14px}
+.filters span{padding:4px 14px;border-radius:999px;color:var(--dim);font-weight:600;font-size:14px}
+.filters .on{background:var(--card2);color:var(--fg)}
+
+/* artist top */
+.hero{position:relative;flex:none;height:300px;display:grid;align-content:end;justify-items:center;padding-bottom:18px}
+.hero.vid::after,.hero.logo::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,var(--bg))}
+.hero>*{position:relative;z-index:1}
+/* 軽量モード: 背景動画の位置に、背景より少し明るい無地＋薄いグレーの同梱ロゴ。高さは通常と同じにして、戻したときに位置がずれないようにする */
+.hero.logo{background:#1a1b1f}   /* 背景（--bg）より少し明るい無地 */
+/* 軽量版アーティストTOP: ステータスバーと軽量モードの帯の後ろも上部と同じ色にする（下のカード部分は通常の背景色） */
+.screen.blk .sb.solid,.view.blk{background:#1a1b1f}
+.view.blk .secs,.view.blk .tbspace{background:var(--bg)}
+.hero.logo .lgbg{position:absolute;z-index:0;left:50%;top:44%;width:150px;height:150px;transform:translate(-50%,-50%);color:#5d5e66}
+.hero.logo .lgbg svg{width:100%;height:100%;display:block}
+.hero h3{margin:0;font-size:34px;font-weight:800;line-height:1.1}
+.hero small{color:#d6d6da;font-size:13px}
+.hbtn{position:absolute;top:54px;z-index:2}
+.hero.logo .hbtn{top:12px}
+.hbtn.l{left:12px}.hbtn.r{right:12px}
+/* 非会員のアーティストTOP（Figma 14:2084 artist_top（null_fcname））: 検索の右に「入会する」88×40 */
+.hbtn.r.withjoin{right:104px}
+.join{position:absolute;top:54px;right:12px;z-index:2;width:88px;height:40px;border-radius:20px;border:1px solid transparent;padding:0;color:#fff;font-size:14px;font-weight:700;letter-spacing:.02em;
+  background:linear-gradient(156deg,#812DFF,#FF6739) padding-box,linear-gradient(114deg,rgba(255,255,255,0),rgba(255,255,255,.5),rgba(255,255,255,0)) border-box}
+.hero.logo .join{top:12px}
+.vtag{position:absolute;right:12px;bottom:14px;font-size:10px;color:#fffb;background:#0007;padding:2px 7px;border-radius:999px;z-index:2}
+.secs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px 12px 0}
+.inner.row>.img,.inner.row>.tapload{flex:none;width:92px;height:56px}
+.card{background:var(--card);border-radius:16px;padding:14px}
+.row{display:flex;gap:10px;align-items:center;min-width:0}
+.row>div{min-width:0}
+.ttx{font-size:13px;font-weight:600;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mt{font-size:11.5px;color:var(--mute)}
+.bell{flex:none;width:24px;height:24px;border-radius:50%;background:linear-gradient(116deg,#812DFF,#FF6739)}
+.bell svg{width:24px;height:24px;display:block}
+.ur{flex:none;width:20px;height:20px;margin-left:auto}
+.ur svg{width:20px;height:20px;display:block}
+.sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:14px;font-weight:700}
+.sh a{display:flex;align-items:center;font-size:14px;color:rgba(255,255,255,.75);font-weight:500}
+.sh a svg{width:24px;height:24px;display:block}
+.livehd{display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px}
+.livehd b::before{content:"●";color:var(--mute);margin-right:4px}
+.inner{background:var(--card2);border-radius:12px;padding:10px}
+.pick{padding:0;overflow:hidden;border:1px solid var(--line)}
+.pick .img{height:170px;border-radius:0}
+.pick .tx{padding:12px 14px 14px}
+.chip{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:999px;background:#000a;margin-bottom:6px}
+.pick .chipwrap{position:relative}
+.pick .chipwrap .chip{position:absolute;left:10px;top:10px}
+.av{flex:none;width:40px;height:40px;border-radius:50%}
+.av.ini{font-size:13px;aspect-ratio:auto}
+.hs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none}
+.hs>*{flex:none}
+.lib{width:118px}.lib .img{height:150px}
+.shop{width:110px}.shop .img{height:110px;background-color:#eee}
+.free{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:999px;background:var(--card2);color:var(--mute);margin-top:4px}
+.tabs{display:flex;gap:8px;font-size:12.5px;margin-bottom:10px;white-space:nowrap;overflow:hidden}
+.tabs span{padding:4px 12px;border-radius:999px;color:var(--dim)}
+.tabs .on{background:var(--card2);color:var(--fg)}
+.clist{display:grid;gap:10px}
+.clist .img{flex:none;width:100px;height:58px}
+.tlist{display:grid}
+.tlist>div{padding:9px 0;border-top:1px solid var(--line)}
+.tlist>div:first-child{border-top:0;padding-top:0}
+.va{display:block;width:100%;margin-top:12px;padding:8px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;text-align:center}
+.lpill{display:inline-block;font-size:10.5px;border:1px solid var(--live);color:var(--live);border-radius:999px;padding:0 7px;margin-bottom:4px}
+.price{font-size:12px;color:var(--mute)}
+.so{font-size:10px;background:var(--card2);padding:1px 6px;border-radius:4px;margin-left:6px}
+.collapse{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mute)}
+.spacer{flex:1}
+
+/* article: badge/article.html のコピーを 390px で描画して画面幅に縮める */
+.artwrap{position:absolute;inset:0;overflow:hidden;background:#101010}
+.artframe{display:block;border:0;width:390px;height:calc(100% / var(--k,1));transform:scale(var(--k,1));transform-origin:0 0}
+
+/* compare */
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:28px 20px}
+.cmp figure{margin:0;display:grid;gap:10px;justify-items:center}
+.cmp figcaption{width:100%;max-width:360px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px;font-weight:700}
+.cmp figcaption span{font-size:12px;color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;padding:1px 8px;border-radius:999px;margin-left:6px;font-weight:700}
+.tag.n{background:var(--card2);color:var(--mute)}
+.tag.l{background:color-mix(in oklab,var(--lite) 22%,transparent);color:var(--lite)}
+
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.note h3{margin:0 0 6px;font-size:15px}
+.note p{margin:0;font-size:13.5px;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">B WITH U ・ モック v0.2</div>
+    <h1>低速遅延モード（軽量モード）</h1>
+    <p>起動時にデータがそろわないとき、ロゴの下に「軽量モードで開く」を出し、8秒で自動的に切り替えます。軽量モードのHomeは、Web版と同じくArtists一覧です。アーティスト画像はアプリに同梱した単色ロゴに、その他の画像・動画は文字に置き換え、必要なものだけタップで読み込みます。</p>
+  </header>
+
+  <section class="stage" aria-label="起動のシミュレーション">
+    <div class="phone" id="live"><div class="screen" id="liveScreen"><div class="sbslot"></div><div class="view"></div>
+      <div class="tabbar-bg" id="tabbarBg"><div class="tabbar-bg__blur"></div></div>
+  <div class="tabbar-scrim" id="tabbarScrim"></div>
+  <!-- TABBAR — bar verbatim from checkin_motion, Home active, center = More -->
+  <nav class="tabbar" id="tabbar">
+
+    <!-- 追加分: more menu (322:1202 Opened) : Check In / Library / Calendar -->
+    <div class="more-menu" id="moreMenu">
+      <button class="more-item" data-key="checkin">
+        <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
+        <span class="more-item__label">Check In</span>
+      </button>
+      <button class="more-item is-mid" data-key="gallery">
+        <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
+        <span class="more-item__label">Library</span>
+      </button>
+      <button class="more-item" data-key="calendar">
+        <span class="more-item__circle"><span class="tab-item__icon"><span class="tab-item__lottie"></span></span></span>
+        <span class="more-item__label">Calendar</span>
+      </button>
+    </div>
+
+    <div class="tabbar__row">
+      <button class="tab-item active" data-tab="0" data-key="home">
+        <span class="tab-item__icon"><span class="tab-item__lottie"></span></span>
+        <span class="tab-item__label">Home</span>
+      </button>
+
+      <button class="tab-item" data-tab="1" data-key="poppin">
+        <span class="tab-item__icon"><span class="tab-item__lottie"></span></span>
+        <span class="tab-item__label">Poppin'</span>
+      </button>
+
+      <!-- CENTER: More (frosted glass + HANA flower) — tap toggles the more menu -->
+      <button class="tab-item is-center is-more" data-tab="2" data-key="more" id="tabCenter">
+        <span class="tab-item__icon">
+          <svg class="ic-hana" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <g opacity="0.75" fill="#fff">
+              <path d="M15.5158 28.2887V25.5105C15.5158 25.1996 15.8231 24.7969 15.8231 24.7969C15.8231 24.7969 15.5816 24.8253 15.2925 24.9217V23.8315C15.3718 23.523 15.6814 23.5751 15.6814 23.5751C15.6814 23.5751 15.3718 23.1701 15.2925 22.6517V20.1333C15.2925 18.9535 15.0997 18.8139 15.2074 18.4759L15.7165 17.0238C15.1984 17.6137 13.7324 18.9716 13.2165 19.0783C13.2165 19.0783 13.9762 19.4935 13.9762 20.1333V22.4123C13.6269 22.5859 13.0567 22.7402 12.5022 22.8457C12.3821 22.7878 12.2653 22.6426 12.2653 22.6426C12.2653 22.6426 12.1009 22.8366 11.9376 22.9353C11.6292 22.975 11.3594 22.9909 11.1757 22.9784V22.2422C11.2369 21.3165 11.5544 21.4674 11.5544 21.4674C11.5544 21.4674 11.2675 20.9274 11.1757 20.2615V20.1344C11.1757 18.9546 10.983 18.8151 11.0907 18.477L11.3616 17.81C10.8435 18.3999 9.61561 18.9728 9.09974 19.0805C9.09974 19.0805 9.85938 19.4957 9.85938 20.1355V23.2552C9.43647 23.2098 9.04078 23.194 8.70405 23.2178C8.67684 23.515 8.14962 23.827 7.5011 24.1787C7.5011 24.1787 8.78228 23.5604 9.27207 23.5967C9.46822 23.6114 9.66436 23.6296 9.85938 23.65V24.4838L9.30382 23.9393C9.30382 23.9393 9.64055 24.6528 9.47956 24.8899C9.31856 25.1282 8.80722 25.7861 7.87071 26.2989C8.86504 26.5916 10.7369 28.8049 10.8254 29.262C10.9127 29.7192 10.5918 30.6517 10.5918 30.6517C11.4251 30.2864 11.8582 29.4299 12.0589 28.9342C11.8163 28.2955 11.2528 27.5513 10.7018 26.9512C11.1666 26.6994 11.6519 26.5167 11.9376 26.4566C11.9376 26.4566 11.178 26.0414 11.178 25.4016V23.844C11.9557 23.9971 12.678 24.2161 13.2902 24.5235C13.4342 24.6392 13.4796 24.8344 13.4875 24.9217C13.5873 24.8797 13.6644 24.7515 13.8435 24.848C13.8934 24.8843 13.9376 24.9206 13.9796 24.958V25.9676C13.9796 26.1923 13.636 26.5848 13.636 26.5848C13.7562 26.5621 13.958 26.4725 14.1757 26.3511V28.8083C14.1757 29.211 13.8684 30.3 13.7222 30.4101C14.3072 29.9529 14.6417 29.0204 15.1825 29.203C15.7233 29.3857 16.0158 29.0204 16.0158 29.0204C15.7823 29.0204 15.5181 28.8559 15.5181 28.2887H15.5158ZM9.89226 26.1605C9.70178 25.9971 9.54532 25.8837 9.44894 25.8395C9.44894 25.8395 9.70291 25.4844 9.85824 25.0885V25.4004C9.85824 25.7237 9.87298 25.9676 9.89226 26.1605ZM13.9365 24.4203C13.6338 24.2365 13.187 24.0482 12.6678 23.8758C12.5487 23.7635 12.3129 23.6398 12.2347 23.4413C12.1406 23.5071 11.839 23.5774 11.6156 23.5717C11.4694 23.5354 11.322 23.5014 11.1746 23.4696V23.2938C11.6893 23.262 12.7551 23.0295 13.5102 22.9353C13.6474 22.9671 13.7494 23.0624 13.7494 23.0624C13.7494 23.0624 13.8197 22.9523 13.9195 22.8979C13.9387 22.8979 13.958 22.8956 13.9762 22.8956V24.4452C13.9626 24.4373 13.9501 24.4294 13.9365 24.4214V24.4203Z"/>
+              <path d="M23.5125 28.028V25.6275C23.6032 25.2713 23.8923 25.336 23.8923 25.336C23.8923 25.336 23.6021 25.0206 23.5125 24.3649V23.1726C23.5125 22.5873 23.4762 22.1255 23.4138 21.7852C23.6667 21.6548 23.932 21.4245 24.1655 21.176C24.1655 21.176 23.8254 21.176 23.6928 21.0093C23.5601 20.8425 21.7064 18.1993 21.7801 17.9406C21.8538 17.682 22.0465 16.9979 22.0465 16.9979C21.8549 17.2384 20.5544 18.5873 20.0601 19.049C19.542 19.6389 18.3141 20.2118 17.7982 20.3195C17.7982 20.3195 18.5578 20.7347 18.5578 21.3746V22.1743C17.9195 22.1029 17.4547 22.1743 17.2971 22.2333C17.2971 22.2333 16.9909 22.4625 16.8821 22.737C16.7959 22.847 16.6928 22.9503 16.4966 23.1624C16.4966 23.1624 17.4138 22.5249 17.9694 22.5181C18.1655 22.5158 18.3628 22.5294 18.559 22.5544V24.7812C18.3617 25.4959 17.9796 25.8034 17.6055 26.0892C17.4637 26.1857 17.3129 26.2844 17.1497 26.3694C17.1497 26.3694 17.5987 26.5237 17.7665 26.644C18.1247 26.9004 19.8356 28.8788 20.1383 29.1919C20.4411 29.505 20.3889 30.2503 20.305 30.7075C21.1406 30.1063 21.1508 28.4171 21.1508 28.4171C21.0125 28.1539 20.3084 27.3451 19.6848 26.6791C20.0397 26.5657 20.39 26.5044 20.6349 26.4534C20.6349 26.4534 19.8753 26.0382 19.8753 25.3984V24.197C20.3776 24.3241 20.9717 24.3808 21.4569 24.416C21.6451 24.4625 21.8061 24.5839 21.8061 24.5839C21.8061 24.5839 21.8311 24.4863 21.9229 24.4466C22.0023 24.4523 22.0737 24.4568 22.1349 24.4625C22.1553 24.4863 22.1769 24.5124 22.1973 24.5373V28.0246C22.1973 29.2044 22.39 29.3439 22.2823 29.682L22.0114 30.349C22.5295 29.7591 23.7574 29.1862 24.2733 29.0785C24.2733 29.0785 23.5136 28.6633 23.5136 28.0234L23.5125 28.028ZM19.873 21.3757C19.873 21.2101 19.8685 21.0671 19.8628 20.9401C19.8628 20.1834 20.2132 19.3836 20.8197 18.8663C20.9411 19.0626 21.8685 20.6111 22.4036 21.378C22.059 21.4914 21.6746 21.6105 21.4354 21.6604C21.4354 21.6604 22.195 22.5328 22.195 23.1726V23.9713C22.1894 23.9656 22.1837 23.9588 22.178 23.9531C22.0907 23.7773 22.1191 23.5742 22.1191 23.5742C22.1191 23.5742 21.8912 23.6105 21.7007 23.5345C21.4694 23.3564 21.1871 23.1647 20.8367 22.9571C20.5057 22.762 20.1826 22.6111 19.8719 22.4942V21.3746L19.873 21.3757ZM20.8628 24.1199C20.7313 24.0348 20.7007 23.8612 20.7007 23.8612C20.7007 23.8612 20.5692 24.0314 20.2789 24.0042C20.1417 23.969 20.0068 23.9282 19.873 23.8816V22.9026C19.9252 22.9231 19.9762 22.9446 20.0261 22.965C20.1758 23.1023 20.2143 23.3473 20.2143 23.3473C20.2143 23.3473 20.449 23.1749 20.6712 23.2849C21.1962 23.581 21.5125 23.7864 21.9036 24.205C21.5805 24.1947 21.2245 24.1732 20.864 24.1199H20.8628Z"/>
+              <path d="M39.7404 28.028V25.6275C39.8311 25.2713 40.1202 25.336 40.1202 25.336C40.1202 25.336 39.8299 25.0206 39.7404 24.3649V23.1726C39.7404 22.5873 39.7041 22.1255 39.6417 21.7852C39.8946 21.6548 40.1599 21.4245 40.3934 21.176C40.3934 21.176 40.0533 21.176 39.9206 21.0093C39.788 20.8425 37.9342 18.1993 38.0079 17.9406C38.0816 17.682 38.2744 16.9979 38.2744 16.9979C38.0828 17.2384 36.7823 18.5873 36.288 19.049C35.7698 19.6389 34.5419 20.2118 34.0261 20.3195C34.0261 20.3195 34.7857 20.7347 34.7857 21.3746V22.1743C34.1474 22.1029 33.6825 22.1743 33.5249 22.2333C33.5249 22.2333 33.2188 22.4625 33.11 22.737C33.0238 22.847 32.9206 22.9503 32.7245 23.1624C32.7245 23.1624 33.6417 22.5249 34.1973 22.5181C34.3934 22.5158 34.5907 22.5294 34.7868 22.5544V24.7812C34.5896 25.4959 34.2075 25.8034 33.8333 26.0892C33.6916 26.1857 33.5408 26.2844 33.3775 26.3694C33.3775 26.3694 33.8265 26.5237 33.9943 26.644C34.3526 26.9004 36.0635 28.8788 36.3662 29.1919C36.6689 29.505 36.6168 30.2503 36.5329 30.7075C37.3685 30.1063 37.3787 28.4171 37.3787 28.4171C37.2404 28.1539 36.5363 27.3451 35.9127 26.6791C36.2676 26.5657 36.6179 26.5044 36.8628 26.4534C36.8628 26.4534 36.1032 26.0382 36.1032 25.3984V24.197C36.6054 24.3241 37.1995 24.3808 37.6848 24.416C37.873 24.4625 38.034 24.5839 38.034 24.5839C38.034 24.5839 38.059 24.4863 38.1508 24.4466C38.2302 24.4523 38.3016 24.4568 38.3628 24.4625C38.3832 24.4863 38.4048 24.5124 38.4252 24.5373V28.0246C38.4252 29.2044 38.6179 29.3439 38.5102 29.682L38.2392 30.349C38.7574 29.7591 39.9853 29.1862 40.5011 29.0785C40.5011 29.0785 39.7415 28.6633 39.7415 28.0234L39.7404 28.028ZM36.102 21.3757C36.102 21.2101 36.0975 21.0671 36.0918 20.9401C36.0918 20.1834 36.4422 19.3836 37.0488 18.8663C37.1701 19.0626 38.0975 20.6111 38.6327 21.378C38.288 21.4914 37.9036 21.6105 37.6644 21.6604C37.6644 21.6604 38.424 22.5328 38.424 23.1726V23.9713C38.4184 23.9656 38.4127 23.9588 38.407 23.9531C38.3197 23.7773 38.3481 23.5742 38.3481 23.5742C38.3481 23.5742 38.1202 23.6105 37.9297 23.5345C37.6984 23.3564 37.4161 23.1647 37.0658 22.9571C36.7347 22.762 36.4116 22.6111 36.1009 22.4942V21.3746L36.102 21.3757ZM37.0907 24.1199C36.9592 24.0348 36.9286 23.8612 36.9286 23.8612C36.9286 23.8612 36.797 24.0314 36.5068 24.0042C36.3696 23.969 36.2347 23.9282 36.1009 23.8816V22.9026C36.1519 22.9231 36.2041 22.9446 36.254 22.965C36.4036 23.1023 36.4422 23.3473 36.4422 23.3473C36.4422 23.3473 36.6769 23.1749 36.8991 23.2849C37.424 23.581 37.7404 23.7864 38.1315 24.205C37.8084 24.1947 37.4524 24.1732 37.0918 24.1199H37.0907Z"/>
+              <path d="M31.525 28.3205V26.3897C31.5782 25.9926 31.8481 25.954 31.8481 25.954C31.8481 25.954 31.6077 25.5422 31.525 24.9932V20.1333C31.525 18.9535 31.3322 18.8139 31.4399 18.4759L31.949 17.0238C31.4308 17.6137 29.9649 18.9716 29.449 19.0783C29.449 19.0783 30.2086 19.4935 30.2086 20.1333V25.0181C30.1565 25.0193 30.085 25.0147 30.017 24.992C29.8186 24.3965 29.6236 23.8451 29.4342 23.3403C29.3708 23.0953 29.5045 22.8854 29.5045 22.8854C29.5045 22.8854 29.2925 22.8037 29.1655 22.6415C28.6066 21.2246 28.1191 20.2229 27.7801 19.5887C27.7358 18.8979 27.6225 18.7527 27.712 18.4759L27.983 17.8088C27.4649 18.3987 26.237 18.9716 25.7211 19.0794C25.7211 19.0794 26.4807 19.4946 26.4807 20.1344V21.5672C26.4694 22.1514 26.1304 22.5099 26.1304 22.5099C26.1304 22.5099 26.4059 22.4589 26.4807 22.7572V25.4016C26.4807 25.5785 26.4853 25.7498 26.4921 25.9143C26.1825 25.405 25.9581 24.9875 25.9581 24.8446V24.4339C25.7392 24.983 25.4025 25.5127 25.373 26.1163C25.3435 26.7198 25.5601 27.0181 25.8231 27.4016C26.1803 27.9223 27.3469 29.4685 27.6395 29.9211C27.7846 30.1458 27.932 30.8355 27.9467 31C28.1803 30.2864 27.9172 29.591 28.0204 29.3358C28.1225 29.0794 28.2982 28.6404 28.2982 28.6404C28.2982 28.6404 28.0726 28.3182 27.7608 27.861C28.017 27.549 28.2687 27.2983 28.5556 27.2382C28.5556 27.2382 27.7959 26.0414 27.7959 25.4016V22.992C27.8515 23.0624 27.9082 23.1338 27.9683 23.2064C28.1168 23.439 28.0612 23.8043 28.0612 23.8043C28.0612 23.8043 28.3243 23.7464 28.4649 23.7918C28.8061 24.1832 29.1712 24.587 29.5147 24.9705C29.4909 25.2008 29.4127 25.3891 29.4127 25.3891C29.4127 25.3891 29.6395 25.3641 29.7857 25.5536C29.9479 26.0505 30.093 26.5156 30.2098 26.9081V28.3216C30.2098 29.5014 30.4025 29.6409 30.2948 29.979L30.0238 30.646C30.542 30.0561 31.7698 29.4832 32.2857 29.3755C32.2857 29.3755 31.5261 28.9603 31.5261 28.3205H31.525ZM27.7959 20.5428C27.8095 20.5644 27.8243 20.5859 27.8401 20.6097C27.8866 20.6801 27.9376 20.7663 27.9909 20.8673L27.9807 20.8616C28.1372 21.1667 28.0363 21.6194 28.0363 21.6194C28.0363 21.6194 28.2812 21.6194 28.432 21.8202C28.7234 22.5167 29.0476 23.3914 29.3515 24.266C28.7937 23.6545 28.2075 23.0488 27.7959 22.5791V20.5439V20.5428Z"/>
+            </g>
+          </svg>
+          <span class="more-selected"></span><!-- Moreで選択したアイコン(黒)がここに入る -->
+        </span>
+        <span class="tab-item__label">More</span>
+      </button>
+
+      <button class="tab-item" data-tab="3" data-key="shop">
+        <span class="tab-item__icon"><span class="tab-item__lottie"></span></span>
+        <span class="tab-item__label">Shop</span>
+      </button>
+
+      <button class="tab-item" data-tab="4" data-key="mypage">
+        <span class="tab-item__icon"><span class="tab-item__lottie"></span></span>
+        <span class="tab-item__label">Mypage</span>
+      </button>
+    </div>
+  </nav>
+    </div></div>
+    <template id="spTpl"><div class="sp"><div class="sp-unit"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <!-- マゼンタ #F53358（差し色・暖色） -->
+            <radialGradient id="Gradient1" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="10s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(245, 51, 88, 0.55)"></stop>
+              <stop offset="100%" stop-color="rgba(245, 51, 88, 0)"></stop>
+            </radialGradient>
+            <!-- オレンジ #EC5E16（差し色・暖色） -->
+            <radialGradient id="Gradient2" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="8s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(236, 94, 22, 0.5)"></stop>
+              <stop offset="100%" stop-color="rgba(236, 94, 22, 0)"></stop>
+            </radialGradient>
+            <!-- グリーン #1FD738（メイン） -->
+            <radialGradient id="Gradient3" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="7s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(31, 215, 56, 0.95)"></stop>
+              <stop offset="100%" stop-color="rgba(31, 215, 56, 0)"></stop>
+            </radialGradient>
+            <!-- ブルー #1F32D9（メインカラー・最前面） -->
+            <radialGradient id="Gradient4" cx="50%" cy="50%" fx="1%" fy="50%" r=".5">
+              <animate attributeName="fx" dur="9s" values="1%;5%;1%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+              <stop offset="0%" stop-color="rgba(31, 50, 217, 1)"></stop>
+              <stop offset="100%" stop-color="rgba(31, 50, 217, 0)"></stop>
+            </radialGradient>
+          </defs>
+
+          <!-- オレンジ -->
+          <rect x="-10%" y="10%" width="100%" height="100%" fill="url(#Gradient2)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="9s" values="-10%;0%;-10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="10s" values="10%;30%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="45 50 50;117 50 50;405 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- マゼンタ -->
+          <rect x="10%" y="5%" width="100%" height="100%" fill="url(#Gradient1)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="8s" values="10%;0%;10%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="9s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="135 50 50;207 50 50;495 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="4s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- グリーン -->
+          <rect x="5%" y="5%" width="100%" height="100%" fill="url(#Gradient3)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="10s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="7s" values="5%;15%;5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="675 50 50;603 50 50;315 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="5s" repeatCount="indefinite"></animateTransform>
+          </rect>
+          <!-- ブルー -->
+          <rect x="0%" y="-5%" width="100%" height="100%" fill="url(#Gradient4)" transform="rotate(0 50 50)">
+            <animate attributeName="x" dur="7s" values="0%;10%;0%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animate attributeName="y" dur="8s" values="-5%;5%;-5%" repeatCount="indefinite" keyTimes="0;0.667;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"></animate>
+            <animateTransform attributeName="transform" type="rotate" values="585 50 50;513 50 50;225 50 50" keyTimes="0;0.6;1" calcMode="spline" keySplines="0.2 0.4 0.8 0.6; 0.3 0.1 0.7 0.9" dur="6.5s" repeatCount="indefinite"></animateTransform>
+          </rect>
+        </svg></div><div class="sp-logo"><div class="sp-lottie"></div><svg class="sp-static" viewBox="0 0 164 49.3524" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M140.779 0.143555V29.8771C140.779 30.4491 140.322 30.9126 139.757 30.9126H139.692C139.128 30.9126 138.67 30.4491 138.67 29.8771V0.143555H121.154C123.167 1.86532 124.29 4.61654 124.052 7.81324C123.672 12.9063 120.15 19.372 115.445 25.5667C115.493 38.7148 126.018 49.3524 139.003 49.3524H140.44C153.449 49.3524 163.998 38.6606 163.998 25.4764V0.143555H140.773H140.779Z" fill="currentColor"/>
+        <path d="M35.3363 24.0195C41.8405 24.0195 47.1151 18.6736 47.1151 12.0815C47.1151 5.48946 41.8405 0.143555 35.3363 0.143555H0V47.8955H35.3363C41.8405 47.8955 47.1151 42.5496 47.1151 35.9575C47.1151 29.3654 41.8405 24.0195 35.3363 24.0195ZM27.0383 36.993H16.5544V34.916H27.0383C27.6026 34.916 28.06 35.3796 28.06 35.9515C28.06 36.5234 27.6026 36.987 27.0383 36.987V36.993ZM27.0383 13.117H16.5544V11.0401H27.0383C27.6026 11.0401 28.06 11.5036 28.06 12.0755C28.06 12.6474 27.6026 13.111 27.0383 13.111V13.117Z" fill="currentColor"/>
+        <path d="M116.393 0.070237C110.679 -0.369235 107.067 3.44153 105.547 10.2744C104.216 15.8972 103.028 26.4325 99.3869 34.632C96.8387 40.3632 89.6395 47.6777 83.3255 47.1901C80.6169 46.9794 79.5061 45.673 79.72 42.8254C80.1179 37.5397 88.7961 30.6467 91.8611 27.4078C96.3338 22.8445 102.707 14.1875 103.212 7.48106C103.515 3.41745 100.711 0.443487 96.803 0.142479C92.0036 -0.17659 87.0082 3.32715 81.4128 12.0985C79.6962 14.8257 77.9202 18.3715 76.3342 22.0258C68.5055 36.3417 62.2151 46.281 55.8001 45.7874C54.0953 45.6549 52.848 44.8422 53.044 42.2054C53.7211 33.1631 76.4174 22.2365 77.3737 9.43761C77.9023 2.42412 71.1368 0.17258 66.5869 0.0100353C58.5859 -0.278933 53.7092 5.70511 48.797 13.7721C48.7197 14.4163 48.595 15.0544 48.4346 15.6685C53.1271 7.95063 58.0929 1.29835 63.5397 1.71976C64.5436 1.79802 65.0128 2.24352 64.9475 3.15858C64.496 9.22089 51.6362 16.4631 46.0349 27.5162C47.8347 29.846 48.9039 32.7838 48.9039 35.9625C48.9039 39.1411 47.9119 41.8502 46.2369 44.1378C47.9713 45.9017 50.4364 47.0155 53.3825 47.2442C61.6271 47.8764 68.9925 39.0448 77.546 22.0739C75.366 26.9141 72.2654 33.3678 71.915 38.0454C71.4219 44.6496 74.2315 48.8516 79.2448 49.2369C85.7133 49.7366 95.0389 43.9633 103.355 36.2514L103.818 35.7999C113.524 26.6854 121.733 15.0303 122.279 7.69177C122.582 3.62815 120.206 0.377265 116.399 0.0882975L116.393 0.070237Z" fill="currentColor"/>
+      </svg></div><div class="hold-slot"></div></div></template>
+    <div class="panel">
+      <div>
+        <h2>起動のシミュレーション</h2>
+        <p class="sub">回線の状態を選んで再生してください。開いたあとは、アーティスト → アーティストTOP → Contentsの記事、と進めます。</p>
+        <div class="scen" role="radiogroup" aria-label="回線の状態">
+          <label><input type="radio" name="sc" id="sc-good" value="good"><b>回線が良好</b><span>2秒でデータがそろい、通常モードで開く</span></label>
+          <label><input type="radio" name="sc" id="sc-weak" value="weak" checked><b>回線が弱い（フェス会場）</b><span>データがそろわず、8秒で自動的に軽量モード</span></label>
+          <label><input type="radio" name="sc" id="sc-recover" value="recover"><b>途中で回復</b><span>5.5秒でそろう。ボタンが消えて通常モード</span></label>
+          <label><input type="radio" name="sc" id="sc-off" value="offline"><b>圏外・初めての起動</b><span>保存データがないので、15秒で再試行の画面</span></label>
+        </div>
+      </div>
+      <button class="play" id="play" type="button">最初から再生</button>
+      <div class="tlwrap">
+        <div class="tlhead"><span>起動からの経過</span><b id="tsec">0.0秒</b></div>
+        <div class="tl"><span class="mk" style="left:20%">3秒</span><span class="mk" style="left:53.3%">8秒</span><span class="mk" style="left:99%">15秒</span><span class="head" id="head"></span></div>
+        <div class="tllab"><span>スプラッシュ</span><span>ボタンを表示</span><span>自動で軽量モード → 15秒で再試行画面</span></div>
+      </div>
+      <ol class="log" id="log" aria-live="polite"></ol>
+      <div class="meter" id="meter"></div>
+      <ul class="rules">
+        <li><b>3秒・8秒・15秒はどれも仮の数値</b>です。Remote Configで後から変えられる前提です。</li>
+        <li>ボタンを出したあとも裏で読み込みを続けます。途中でそろえば、通常モードで開きます。</li>
+        <li>運営側からONにしている期間（フェス当日など）は、ボタンを出さずに最初から軽量モードで起動します。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>通常と軽量の比較</h2>
+    <p class="sub">Artists一覧（Web版のHome）とアーティストTOPはFigmaをもとにしています。スプラッシュは ui_prototype/splash/splash_logined、タブバーは正式コンポーネント（tabbar-260726）、記事詳細は collection/article（最新版）をそのまま使っています。各画面はスクロールできます。軽量モードの点線の枠は、タップすると画像・動画を読み込みます。</p>
+    <div class="cmp" id="cmp"></div>
+  </section>
+
+  <section class="notes">
+    <div class="note"><h3>軽量モードで止めるもの</h3><p>背景動画（同じ位置に薄いグレーのロゴを置く）、アーティスト画像、サムネイル、Libraryの表紙、Shopの商品画像、記事の写真と埋め込み動画。文字の情報とボタンの操作はすべて残します。スプラッシュ、タブバーのアイコン、記事のいいね・保存のアニメーションはアプリに入っている素材なので、軽量モードでもそのまま動かします。</p></div>
+    <div class="note"><h3>画像の代わりに出すもの</h3><p>アーティスト画像は、黒地に白の単色ロゴ（Design System V2 のロゴ）に置き換えます。12組で約21KBなのでアプリに同梱でき、通信なしで出せます。新しいアーティストのロゴは、回線が良いときに裏で取得して端末に保存します。</p></div>
+    <div class="note"><h3>入会導線は別の対応が必要</h3><p>入会ボタンから先はWebページ（bmsg.shop → Gate Page → ファンクラブLP → ログイン）です。アプリの軽量モードでは速くならないため、Gate Page を飛ばす対応や、軽い版のLPが別途必要です。</p></div>
+  </section>
+</div>
+
+<script src="vendor/tabbar.js"></script>
+<script>
+const ARTISTS=[
+  {n:'HANA',fc:"HONEY's",c:'#e2668e'},
+  {n:'BE:FIRST',fc:'BESTY',c:'#3d63d8',badge:'追加公演東京先行受付中📣'},
+  {n:'MAZZEL',fc:'MUZEUM',c:'#2e9e8d'},
+  {n:'STARGLOW',fc:'STARS',c:'#5c70e2'},
+  {n:'SKY-HI',fc:'FLYERS',c:'#c4453a'},
+  {n:'Novel Core',fc:'CORE HOUSE',c:'#8f6dcb'},
+  {n:'Aile The Shota',fc:'',c:'#cf7b3c'},
+  {n:'REIKO',fc:'R&Me',c:'#47a2c8'},
+  {n:'edhiii boi',fc:'CeN TeR',c:'#5f9b3e'},
+  {n:'Ayumu Imazu',fc:'',c:'#b58a3d'},
+  {n:'ふみの',fc:'',c:'#a05d93'},
+  {n:'TAKARA',fc:'',c:'#b24c4c'}
+];
+/* アーティストロゴ（Figma Design_System_V2 / 521:583 の Color=Light を svgo で軽量化した単色SVG、12組で約21KB）。
+   アプリに同梱する前提なので、軽量モードでも通信なしで出せる。fill は currentColor */
+const LOGOS={"HANA": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M15.5 28.3v-2.8l.3-.7-.5.1v-1q.2-.4.4-.3l-.4-1v-2.5c0-1.1-.2-1.3 0-1.6l.4-1.5c-.5.6-2 2-2.5 2 0 0 .8.5.8 1.1v2.3l-1.5.4-.2-.2-.4.3h-.7v-.7c0-.9.4-.7.4-.7l-.4-1.2V20c0-1.1-.2-1.3-.1-1.6l.3-.7A6 6 0 0 1 9.1 19s.8.4.8 1v3.2H8.7q-.2.3-1.2.9s1.3-.6 1.8-.6h.6v.9l-.6-.6s.3.8.2 1q-.3.5-1.6 1.4c1 .3 2.8 2.5 3 3l-.3 1.4c.8-.4 1.3-1.3 1.5-1.8a7 7 0 0 0-1.4-2l1.2-.4s-.7-.5-.7-1.1v-1.6q1.2.3 2 .7.3.2.3.4h.5v1q-.2.6-.4.7l.6-.2v2.4c0 .4-.3 1.5-.5 1.6.6-.4 1-1.4 1.5-1.2s.8-.2.8-.2q-.4.1-.5-.7m-5.5-2-.5-.4.5-.7zm4-1.8-1.2-.5-.5-.5-.6.2-.4-.1v-.2l2.3-.4.2.2.2-.2zm9.5 3.6v-2.4q.3-.4.4-.3l-.4-1v-2.5l.7-.6-.5-.2c-.1-.2-2-2.8-2-3 .2-.3.3-1 .3-1-.1.2-1.4 1.6-2 2-.5.6-1.7 1.2-2.2 1.3 0 0 .8.4.8 1v.9h-1.3l-.4.5-.4.5s1-.7 1.5-.7h.6v2.3q-.4 1-1 1.3l-.5.3.7.2 2.3 2.6q.4.6.2 1.5c.8-.6.9-2.3.9-2.3l-1.5-1.7 1-.2s-.8-.5-.8-1.1v-1.2l1.6.2.3.2.1-.2h.2l.1.1V28c0 1.2.2 1.3 0 1.7l-.2.6c.5-.5 1.8-1.1 2.3-1.2 0 0-.8-.4-.8-1M20 21.4v-.5q0-1.1 1-2c0 .2 1 1.7 1.5 2.5l-1 .3s.8.8.8 1.5v.8-.4h-.5L20 22.5zm1 2.7-.2-.2-.4.1-.4-.1v-1h.1l.2.4h.5l1.2.9zM39.7 28v-2.4q.3-.4.4-.3l-.4-1v-2.5l.7-.6-.5-.2c-.1-.2-2-2.8-1.9-3l.3-1-2 2c-.5.6-1.8 1.2-2.3 1.3 0 0 .8.4.8 1v.9h-1.3l-.4.5-.4.5s1-.7 1.5-.7h.6v2.3q-.4 1-1 1.3l-.4.3.6.2 2.4 2.6q.4.6.1 1.5c.9-.6.9-2.3.9-2.3l-1.5-1.7 1-.2s-.8-.5-.8-1.1v-1.2l1.6.2.3.2.2-.2h.2V28c0 1.2.2 1.3.1 1.7l-.3.6c.6-.5 1.8-1.1 2.3-1.2 0 0-.8-.4-.8-1m-3.6-6.6V21q0-1.1 1-2c0 .2 1 1.7 1.5 2.5l-1 .3s.8.8.8 1.5v.8-.4h-.5l-1.8-1.1zm1 2.7-.2-.2-.4.1-.4-.1v-1h.2l.1.4h.5l1.2.9zm-5.6 4.1v-2q.1-.4.3-.3l-.3-1v-5c0-1.1-.2-1.3 0-1.6l.4-1.5c-.5.6-2 2-2.5 2 0 0 .8.5.8 1.1v5H30l-.6-1.7.1-.4-.3-.3-1.4-3q-.2-.9 0-1.1l.2-.7c-.5.6-1.8 1.2-2.3 1.3 0 0 .8.4.8 1v1.5q-.2 1-.4 1 .1-.1.4.2v3.1l-.5-1v-.5q-.5.9-.6 1.7 0 .9.4 1.3l1.8 2.5c.2.2.3 1 .3 1.1.3-.7 0-1.4.1-1.7l.3-.7-.5-.7q.3-.6.8-.7s-.8-1.2-.8-1.8V23l.2.2v.6h.5l1 1.2v.4l.3.2.4 1.3v1.4c0 1.2.2 1.3 0 1.7l-.2.6c.5-.5 1.8-1.1 2.3-1.2 0 0-.8-.4-.8-1m-3.7-7.8.2.3v.7l.4.2 1 2.5-1.6-1.7z\"/></svg>", "BE:FIRST": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M27 11.5h1c3.9 0 6.7 3 6.7 6.6q-.1 2.8-2 4.7a7.5 7.5 0 0 1-4.4 13.7H20l1.6-3.3h6.7c2.4 0 4.3-2 4.3-4.3s-1.9-4.2-4.3-4.2h-2.9l1.5-3.3H28c1.9 0 3.3-1.5 3.3-3.3q-.2-2.4-2.3-3.1l-9.9 21.5h-3.7zm-1 0-1.5 3.3H18v6.6h3.5L20 24.7h-2v4.6l-3.4 7.2v-25z\"/></svg>", "MAZZEL": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M33.9 19.9v-6.5h-2.3l-2.1 2.1L24 10l-4.7 4.7 2.4 2.3 2.3-2.3 3.2 3.1L24 21l-7.6-7.6h-2.3v9h-2.4L10 24l4.1 4.1v5.1h3.3v-1.8L24 38l4.7-4.7-2.4-2.3-2.3 2.3-7.7-7.6h14.3v7.5h3.3v-7.5h2.5L38 24zm-16.5 2.4v-3.2l3.3 3.2zm9.9 0 3.3-3.2v3.2z\"/></svg>", "STARGLOW": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M38 21.2h-9.5l-3-9.2-1.5 5-4 13-1.8 1 1.5-5-4.1-3h5.1l2.6-8-1-3.1-3 9.2H10l7.7 5.6-3 9.2 6.8-5 4-12.9 1.7 5h5.1l-4.1 3 1.5 5-4.1-3 .3-1-1-3-1.8 6 1 3 .9-3.2 8.3 6.1-3-9.2z\"/></svg>", "SKY-HI": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M34.5 13.7H28c-.4-.1-2.3-.7-4.4-.7-1.8 0-3 .1-5.7.7H12v.5q1.5.2 1.9 1.1.2 1 .2 3.2v12.1c0 1.3 0 2.6-.2 3q-.4 1.1-1.9 1.2v.5h8c.3 0 2.6.6 3.7.7.9 0 4.5 0 6.4-.7H36v-.5q-1.6-.1-1.9-1.1t-.2-3.2V18.4c0-1.3 0-2.6.2-3q.3-1 1.9-1.2v-.5zM28 34.3a8 8 0 0 1-4.3 1q-1.7 0-3.3-.6h-.3c-1.7-1-2.5-2-2.5-2V25l2.6.7 1.7.5q5.3 1.5 6.6 3 .6.5.8 1.1l.2 1.2q0 1.7-1.5 2.8M30.4 24l-2.6-.7-1.7-.5q-5.2-1.5-6.6-3-.5-.5-.7-1.1l-.3-1.2q0-1.7 1.5-2.8a8 8 0 0 1 4.3-1q1.8 0 3.3.5l.3.2c1.8.9 2.5 1.9 2.5 1.9z\"/></svg>", "Novel Core": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"m29.6 34.6-3.2-3.2a7.8 7.8 0 0 1-9.8-9.8L12 17v16.9h4.2V33a12 12 0 0 0 13.4 1.5M36 24V14h-4.2v.8a12 12 0 0 0-13.4-1.5l3.1 3.2A7.8 7.8 0 0 1 31.8 24zm0 2.8h-4.2v2L17.1 14.3H12v.8L30.9 34H36z\"/></svg>", "Aile The Shota": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M29.1 33.1c-1-.9-4.2-2.3-6-3.2V29c0-1.3 2 1 2 0v-3h3.1c-1.4 1-1.4 3-1.4 3h1c-.3-1.2 1.5-3 3.2-3l.3-.1h-2l3.4-4h-.9q-.4 0-1-.7l-.2-.5-5.5-12.3c-.2-.8.5-1 1-1h1.8v-.1h-7.3c-3.3 0-5.7 3.1-5.2 5.6.4 1.9 2.7 3 5 3.3l-2 4.5a2 2 0 0 1-1.7 1.3h-1.4l3.3 3.9h.3c-1.2-1.4-2.3-3.6 1-3.6h1.4c.4 0 1.4.2 1.4 1.2v2.4h-.4c-3.5 0-4.9.4-5.3 1.9-.7 2.6 2 3.4 3.3 4.3l3.5 1.9.4.3c.5.6.1.8-.3.5q-1-.5-1.2.2v.4c0 1-1 1.3-1.4 1.3h-1.2v.2h6.6v-.2h-.2c-.4 0-1.4-.3-1.4-1.3v-.7l.8.5c.8.7 1.6 1.5 1.5 2.3q0 2.7-3.4 2.7c-2.4 0-6.4-2.3-6.7-4.2v-.2h-.4l.6 4.7h.4c0-.2 0-1 .2-1.4q.3-.7.9-.4a8 8 0 0 0 5 2c2 0 7.3-.2 7.3-4.2q-.2-2-2.2-3.4M29 26h-3.8v-2.4c0-1 1-1.2 1.4-1.2h1.3c3.4 0 2.3 2.2 1.1 3.6m-6.8-11h-1l2.1-4.7 2.3 5.1q-.6-.3-1.5-.4zm-1.5-7.6h2c.5 0 1.1 0 1 1l-3 6.6c-2.3 0-5.1-.7-5.1-2.9s2.2-4.7 5-4.7m0 8.8H25q1.2 0 1.5 1l1.7 3.6c.3.8-.9 1-1.2 1h-7.3c-.3 0-1.1-.3-.8-1.1zm.3 11.2c0-.6.1-1.2 1.7-1.4v3.5l-.6-.4q-1.1-1-1.1-1.7\"/></svg>", "REIKO": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"m36 33.5-9.2-10.3 7.8-8.7H34l-8.8 9.7v-9.5h-1.9v9.7a6 6 0 0 1-3.9 1.5 5.6 5.6 0 0 1-5.7-5.5 5.6 5.6 0 0 1 6.7-5.4q.8 0 1.4.4-1.4-.9-3.3-.9a6.5 6.5 0 0 0-6.6 6.4 6.5 6.5 0 0 0 7.3 6.4l-5.7 6.2h2.6l7.3-8v7.8h1.8v-9l8.1 9.2z\" clip-rule=\"evenodd\"/></svg>", "edhiii boi": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M36.5 21.3q-.4-1.1-1.5-1.5a10 10 0 0 0-3.6-.4h-2.8v-6h-4.4v14.7h-8.1q-1 .2-.8-.7V27h8v-3.2q0-2.5-1-3.4c-.7-.8-1.7-1-4.5-1H17c-3.3 0-4.4.2-5 1-.8.9-1 2.2-1 6 0 3 .2 4 .8 4.8.8.8 1.8 1 5.1 1h13.7c3.4 0 4.3-.1 5-.8 1-.8 1.2-1.7 1.2-4.8v-1.4q0-3-.3-4m-21.2 2.4q-.1-1 1.2-.8h1q1.8-.1 1.6.8v.8h-3.8zM32.6 26c0 2 0 2.1-1.8 2.1h-2.2V24H31c1.4 0 1.5 0 1.5 1.4z\"/></svg>", "Ayumu Imazu": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><path fill=\"currentColor\" d=\"M10.5 29.8H8.3l2-5.8h2zm3.7-3.5-1.1 3.5h-1.7l1.8-5.8h3.1l-.3 5.8h-2zm4 0L16.5 29v-3l1.2-2h3L19 30h-2zm5.2 1-2.7 3.5h-2.1l4.7-6.1zm.4-3.3H26l.2 5.8H24zm12 3.6q-.2.6.3.6h.7q.6 0 .8-.5L39 23h2l-1.5 5q-.7 1.6-2.4 1.7h-2q-2.1 0-1.6-2.1l1.2-3.7h2.1zM15.2 20l1.5-1.4-.6-1.3H14zm3.7-2.7-6 5.6h4l.8-2.2 3.6-3.4zm6.7 0-1.2 3.6q-.1.5-.7.5H23q-.6 0-.4-.6l1.1-3.5h-2.1l-1.2 3.6q-.6 2 1.6 2.1h2q1.7-.1 2.4-1.7l1.3-4zm2.8 0-1.8 5.6h1.7l1.1-3.4-.1 3.4h2l.2-5.6zm4.6 0L32 19v3l1.4-2.6-1 3.4h2l1.7-5.6zm7.8 0-1.2 3.6q-.2.5-.8.5h-.7q-.5 0-.3-.6l1.1-3.5H37l-1.2 3.6q-.5 2 1.6 2.1h2q1.7-.1 2.4-1.7l1.3-4zm-30.8 0-5 6.5h2.2l3.2-4.4.1 3.4h2.2l-.3-5.6zm19.4 12.6h2.8l.5-1.6h-2zM28 24l-.5 1.6h2.3l-3.5 4.2h2.6l5-5.8z\"/></svg>", "ふみの": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><g fill=\"currentColor\" clip-path=\"url(#a)\"><path d=\"m32.1 33.6-1.4-.3-.9-.2.3-1.1.2-1.5q.1-.6-.5-.7t-.7.5l-.6 2.7h-3.4l.6-1.4.8-1.7v-.2q1.1-.9 1.6-2.5c.6-2 .4-4.7-2-6.5q-1-.9-.7-1 .3-.5 1.3-.9c1.3-.6 3.1-1.4 3.5-3.9v-2.4q-.3-1.6-1.2-2.8Q27.5 8 24.8 8a5 5 0 0 0-4.9 3 8 8 0 0 0-.7 3q0 .7.8.8.7-.1.8-.8s0-1.2.5-2.3q1-2 3.5-2 2 0 3 1c.9 1 1 2.8.8 4-.2 1.6-1.3 2.1-2.5 2.6q-1.6.5-2.2 1.8c-.4 1.4.5 2.3 1.4 3 1.6 1.2 1.7 3.2 1.3 4.6q-.7 1.8-1.8 2c-.7 0-2-.2-2.5-1.1a1 1 0 0 0-1.1-.3q-.6.4-.3 1 .1.4.4.6-.6.1-.7.8.1.6.8.7h3.3l-1.3 2.8q-.5 0-.8.2a9 9 0 0 0-4 2.3l-.6.5-.6 1.4-.1.5.2.8q0 .3.3.5l.6.2.7.2.8-.2 1.4-.8 1-1.1 2-3.2h3.8l-.4 1.4q-.7 0-1.2.2l-1.2.7A4 4 0 0 0 24 39v.7l.3.5.4.3h1l.7-.4.6-.3.8-1 .7-1.5h.1l.4.1.1.2q.2 0 .2.2v.9q0 .5-.3.6l-.3.3-.5.2q-.7 0-.6.7t.6.6h.4l1.1-.7q.4-.3.7-.9l.2-1.4v-.5a2 2 0 0 0-.9-1.2q-.3-.3-.7-.3l.4-1.4 2.2.4q.7.2 1-.4.1-.6-.4-1M22.4 35l-.9 1.4-1.3 1.4-.6.4-.5.1h-.3l-.1-.1v-.3l.2-.4.5-.6a7 7 0 0 1 3-2zm4.5 2.7-.6.8q-.2.3-.4.3l-.6.3.8-1.3 1-.5z\"/><path d=\"M32.8 23.3c-.7-1-1.6-1.5-1.7-1.6a1 1 0 0 0-1 .4q-.2.7.4 1s2.6 1.4 1.9 5a1 1 0 0 0 .7 1q.7 0 .7-.7c.5-2.5-.2-4.2-1-5.1m-15.1 10v-.4q-1.2-1.5-.4-5.2 1.7-.4 1.9-2.1-.1-1.4-1.4-2a8 8 0 0 1 2.1-3q.6-.6.1-1.2a1 1 0 0 0-1 0c-.1 0-2.1 1.8-2.7 4-1 .3-2 1.2-2 2.2q0 .8.7 1.4a32 32 0 0 0-2 6.4 6 6 0 0 0 3 5h.3v-.3c0-.1-.7-2.7 1.4-4.8m-.9-6.2-.1.6q-.7 3.3.2 5l-1.5-.4a23 23 0 0 1 1.1-5.2l.8-1.7zm-.6-3a2 2 0 0 1 1.5.2q.8.4.9 1.3-.1 1-1.1 1.4 0-.7.4-1.7l-.1-.3c-.7-.5-1.7-.2-1.8-.1l-.2.1-.6 1.4-.2-.8q0-1 1.2-1.4m-.7 3.3 1-2a59 59 0 0 0-1.6 7q-.5 0-1.2.6.7-3.2 1.8-5.6m-1.9 6.3L15 33v.1q.1 3 .7 4.4a5 5 0 0 1-2-3.7m2.1 2.2-.3-3 1.5.3q-1 1.3-1.2 2.7\"/></g><defs><clipPath id=\"a\"><path fill=\"currentColor\" d=\"M13 8h21v33H13z\"/></clipPath></defs></svg>", "TAKARA": "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 48 48\"><g fill=\"currentColor\" clip-path=\"url(#a)\"><path d=\"m19 24.3.2-.1.1-.1V24h.2v-.2l.2-.2.2-.2.1-.1.2-.2h.1q0-.2.2-.3v-.1h.2v-.2h.2l.1-.1h.1q0 .2.1 0l.4-.2.1-.2h.2v-.2h-.2l.2-.2h.2v-.1l.2-.2h.2V21h.3l.2-.3h.1l.3-.2.2-.1h.2l.1-.2h.1v.1h.3v-.2h.4v.1q.2 0 .2.3v.6l.1.1-.1.2-.2.1h-.1l-.4.3v.1h-.3l-.2.2-.1.2h-.1v-.2l-.1.1-.2.1-.5.3-.2.2h-.3v.2H22v.1l-.2.1-.1.2h.2l2-.4H25l.3.1h.2v.2l.2.1v.1h.1v-.1h.1v-.1l.2-.1v-.1l.2-.2.1-.2q.2 0 .3-.2l.2-.2h.1l.2-.2h.1V22h.1v-.2h.2l.1-.1.2-.2h.2v-.1l.1-.2h.1V21l-.1-.2v-.1H28v-.4h.2l.1.1v.1l.1-.1.1.1h-.1v.2l-.1.1v.2l.2-.2h.2l.2-.1h.3l.1.1v.1q.2 0 .2.2v.1h-.1v.2h-.1l-.2.1v.3l-.2.3v.1l-.1.1v.3l-.1.2-.2.1v.5h.2l.2-.2h1.3-.2l.2-.1h.8-.4l.1-.1h-1 .1-.1l-.2.1h-.4l-.1-.2V22q.2 0 .3-.2v-.3h.2v.1h.1l.2-.2v-.1l.2-.2h.1l.2-.3h.1l-.2.2v.1l-.2.2v.2l.1-.1h.1l.5-.4.2-.1.9-.5.5-.2.7-.3h.3-.2l-.2.1-.4.2h-.3v.1l-.3.1h.4l.2-.2h.4l.2-.2h1l.2-.1.4-.1h.2l.1-.1h.5v-.1h.6l.1-.1h.1l.2-.1h-.1.5l.3.2v.1l.2.1v.2h.1l.1.2v.1h.1v.2l.1.1v.2l.2-.1v-.2h.2v-.2h.1v-.1q0-.2.1 0v.1l-.2.1-.1.3-.1.1-.2.2v.2-.2.1l-.2.2-.1.1v.2h-.2v-.1H37l-.1.1h-.3v.1h-.1l-.3.2-.2.1-.2.1-.2.2h-.1l-.1.1-.1.1h-.1l-.1.1H35v.1l-.1.2v-.1h-.2v.1h.1-.2l.1.2h-.3l-.1.2-.2.1-.1.1-.2.2-.1.1h-.1l-.1.1v.1h-.1l-.1.1-.1.1-.2.2-.2.1h-.1l-.1.2.1.2h.2l.2.4.7.5.2.2h.1l.2.2h.1v.1q.2 0 .3.2h.2v.1h.2v.1l.1.1h.2v.1h.1l.2.1v.1h.2l.3.2.2.1h.1l.3.2h.3v.1l.4.1h.1-1l-.3-.1h-1v-.1H35l-.1-.1h-.2l-.1-.1h-.1v-.1l-.2-.1H34l-.3-.3h-.1v-.1h-.1v.1h-.3.2v.1h.1v.1h.2v.1h-.2l-.2-.1H33V27l-.5-.4-.3-.2-.4-.3h-.2l-.2.2h-.2l-.2.2v.2l-.3.2-.1.2-.2.2-.2.2v.3l-.1.1-.3.1h-.1l-.2.2-.1-.1h-.2V28H29v-1.1l.1-.2.1-.3.1-.2.2-.2v-.2l.1-.1v-.1l.1-.1v-.2h.1l.1-.2.2-.2.1-.2.1-.2h.1l.1-.2.2-.3h-.1l-.2.2h-.1l.2-.2.2-.2h.1v-.1l.2-.1q0-.2-.3-.2h-.1v.1q-.2 0 0 0h-1.1l-.4.1-.4.1-.2.1h-.1v.5h-.1V24v.1l-.1.1h.2v.1h-.1v.3H28v.5h-.1V25v.8q-.1 0 0 .1v.2-.7.9h.2v.2-.4l.1-.2v.1h.1v.4h.2v.3h-.1v.1h-.1v.4l.1.1v.2l.1.1v.5l-.2.2h-.5l-.1-.1V28l-.1-.1q0-.2-.2-.2v-.1l-.1-.1-.3-.3-.3-.1-.3-.1-.3-.1h-1.3v.3l-.1.2-.1.1-.1.1-.2.2H24l-.2.1-.1.1h-.2l-.2-.1-.1-.2-.2-.1-.2-.2V27l-.2-.2.1-.1v.1h.4v-.2H23l-.2.1v-.2h-1.4l.2-.1h.2l.1-.1h1.2l.1-.2h-.7V26h-1.2l-.3.1-.1.1h-.5l-.1.1-.2-.1h-.6q0 .2-.1 0l-.1.1h.1v.1l-.1.2-.2.1v.3H19q0 .2.2 0h.1l.1-.1v.5h-.1l-.3.1v.2l-.3.2-.1.1h-.2v.1l-.1.2h-.1l-.3.1v.1l-.3.1v-.2h-.2v-.2l-.2-.4v-.4l.1-.2V27l.1-.2.1-.1q0-.2.2-.3v-.2h.1l-.1.3.1-.1v-.2l.2-.1.2-.3v-.1l.1-.5h-.6v.2l-.2.2h-.1l-.1.3v.1h-.1l-.1.2v.1l-.2.3v.4l-.2.3v.6l-.1.2v.3q-.2 0 0 0 0 .3-.2.2h-.2l-.2-.1h-.2l-.2-.3v-.4h-.1v-.3l-.1-.3v-.1l-.2-.2v-.1l-.4-.3h-.3v.1h-.1l-.3.2-.2.3-.3.2v.2h-.1v.2l-.1.1-.1.2h-.1l-.2.2h-1v.1h-.3l-.2-.2h-.2l-.1-.2-.1-.1v-.3l-.1-.1v-.2l.1-.2.1-.2.2-.2.1-.3h.1l.1-.1V26q.2 0 .3-.2v-.1q.2 0 .3-.2h.1l.1-.2.2-.1v-.1l-.2.1-.2.2-.1.1H12l-.4.2-.1.1-.2.2-.2.1-.2.1-.2.1-.2.2v.1h-.3q0 .2-.2.3v.1l-.1.1-.2.3.2-.1v.1h-.2v.2l-.2.1h.1v.1l-.1.2-.2.2h.5V28h.4l-.3.1q0 .3-.2.3v.1l-.3.2v.1l-.2.2-.1.1v.1H9v.2l-.1.1h-.1l-.1.2h-.1v.1h-.3l-.1-.1v-.1H8v.1h-.2v-.1.1h-.2V29l-.1-.1-.2-.2-.1-.4v-.2l.2-.3.1-.1v-.3l.1-.3V27l.1-.1.2-.2H8l.2.1v-.1h.2v-.3h.1l.3-.1.2-.2h-.3V26H9q.1-.2.2 0h.2l.1-.1.2-.3.3-.3.1-.2v-.3l.1-.1.2.1.4-.4.5-.5.2-.2.7-.7.2-.2.4-.4.6-.4v-.1l.3-.1.1-.1.2-.2.2-.2.2-.1V21h-.1l.2-.2H14l.4-.1.1-.2h.1l.1-.1h.1l.2-.2.3-.2h.3-.2v.2h-.2l-.1.1.1-.1v-.1l-.2.2.1.1.2.3.1.1v.1l.3.1v.1l.2.3v.7h-.1v.1h-.1l-.3.4-.1.2H15q0 .3-.3.2l-.2.2-.2.1v.2l-.2-.1-1.2 1-.4.2-.2.1v.1l-.2.1v.1l-.1.1-.2.2-.2.2.5-.1.2-.1.3-.1.1-.2h.3l.5-.5.7-.6.2-.2h.1l.1-.2h.2l.1-.2 1.1-.7.1-.1.2-.1h.2-.1l-.2.2H16l-.1.1-.2.1-.4.3-.2.2.7-.4.3-.2.3-.1.2-.2h.1l-.1.1h-.1l-.1.1-.2.1-.1.1-.1.1h.1l.4-.2.2-.1.1-.1h.1l.2-.1.2-.1h.1l.2-.2h.3l.1-.1h.1l.2-.2.1-.1.1-.1H18l-.2.2h-.2l-.1.1.5-.3h.3l.2-.2.2-.1.2-.1h.2l.1.1.1.1.1.1.3.2q0 .2.2.2v.8h-.1v.1l-.2.1v.1l-.2.1h-.2q0 .2-.3.3l-.4.5-.2.3-.1.1v.1l-.1.1q0 .2 0 0v.1l-.2.2v.1h.5l-.4.1h.5l.1-.2.2-.2h.1v-.1zm9.4-.5v.2zm-1 0 .1-.1zm3.4-1h-.3zm-22.1 4 .1-.1-.3.1zm13-3.1h-.1zh.2l.4-.1h.1l.2-.1h.2l.2-.1h.3l.3-.1h.3v-.1h.1l-1.6.1h.1l-.1.1-.2.1H22zm-5 0-.4.3-.4.3h-.1l-.3.4h.4l.3-.1h.2-.2q0 .2.1 0h.3v-.1l.2-.3.2-.1V24l.1-.2.2-.3.2-.2h-.3l-.2.2zm11-1.5h-.2l-.2.2-.2.2H27v.1h-.2v.2l-.3.2v.1l-.2.2-.1.1-.2.2-.2.2v.2h-.2v.1l-.1.2-.2.2.2-.2h.2l.4-.3.1-.1.2-.1.5-.3.3-.1.4-.2v-.1l.1-.2v-.2l.1-.2v-.2q.2 0 0-.2zV22l-.2.1m5-1.1.1-.1.1-.1h-.2l-.2.2-.2.1H32v.1l-.1.1-.1.1h-.1l-.1.1h-.1v.1q-.2 0-.3.2l-.1.1-.2.2-.2.2-.1.2h.2l.4.3.1.1.1.2.2-.3.2-.2.3-.2.2-.2.1-.2.1-.1.2-.2v-.1h-.1v-.2h.3l.1.1.1.1v.1l.1.2v.8l-.1.1h.3-.2l.1-.1.2-.1h.3l.1-.1v-.2h.2v-.1H34V22h.1v.1h.1l.2-.1v-.2h.2l.1-.1.1-.1.1-.1.1-.1.1-.1.2-.1v-.1l.2-.2.2-.2.2-.2h-.1l.3-.2v-.1h-1.3v.1h-.2v.1h-.3v.1H34l-.1.2v-.2h.1-.7l-.1.2H33v.1h.2-.2v.2zm-9.4 3-.2.1h-.3l-.1.1h-.4l-.2.1h.1l.2.1h-.3l-.1.1-.1.1v.3h.7v.1h.6l.2.1h.2l.4.2v-.1h.2v-.1.3h.2l.3-.3.1-.2h.1l.2-.2.1-.2.2-.1v-.2h.2V24H25l-.1.1h-.1l.1-.1zm2.8 1.2-.1.2-.2.3-.2.1v.2h.9l.4.1.3.1h.1V26H27v-1.4l.2-.4H27l-.3.3-.3.1-.4.4zm-10 .3-.2.1-.2.1-.2.1-.1.1-.4.2.1.1h.3v.1l.3.1.2.1.1-.2v-.1h.1V26h.1l.1-.4zm14.8.2-.3.5h.4l.2-.2v.1h.1V26v.2l.3-.1v-.2h-.1v-.1h-.2l-.2-.1zm4 1.6h-.2l-.3-.2h.4zh-.2l-.2-.1-.3-.2-.4-.2h-.1v.1h.1l.3.3h.3l.3.2zv.1l.3.1v-.1zm-14.5-4.2.2-.2.2-.2h.1l.1-.1v-.1l-.3.2-.1.1-.1.2zl-.1.2zm-2.5 2h.4l.2-.1h.1v-.2h.2l.1-.1h-.2v.2h-.2l-.5.1zm18 2.4h-.5l-.2-.1h-.1.1l.2.1zl.2.1zm-3.5-1.3q0 .3.3.4l.3.2h.1-.1l-.1-.2h-.1l-.2-.2zm-13-.1V26zl-.2.3h.1q0-.2.2-.3m-2.6-2.8h.1l.1-.2h-.2zm3 .4.1-.1zl-.2.1q0 .2 0 0zm-.4.3-.1.2-.2.2.2-.1zm7.7-.5.4-.1v-.1zm6.4 3 .2.2v-.1zM8 27.1v.1zV27zm10.3-1.7v.2l.1-.2m10 1.2v.1-.3zm4.9-3.6H33zm-18.1.6v-.1zm1.4-.1h.1m14.6-.5.1.1M24 20.4h-.1m-15 6.2v-.1h-.1M19 24.7v-.1zm1-1.2h.1m15.5 4.3-.1-.1zm-12.3-1.9h.1zm4.7-1.4h.1m.2 0v.1m.1 0q0-.2-.1 0m-10.9 2.7V27m10-3.4h-.1m7.7 3.6h.1M23 26\"/><path d=\"M42 31.7h.1l.1.1h.1l-.1-.1v-.1l-.2-.2-.2-.3v-.2h-.1q0-.2-.2-.3v-.1l-.1-.2-.1-.3h-.1v-.4l-.2-.2-.1-.3-.2-.6-.1-.2v-.1l-.3-.5v-.1l-.2-.6v-.2l-.1-.3v-.3l-.2-.3v-.3l-.2-.5v-.4l-.1-.4V24h-.1l-.2.2-.1.1-.1.2-.1.1-.1.2v.2h-.2v.2h-.2v.4l-.7.4h-.2l-.1-.1-.1-.1-.1-.1-.1-.1v-.1h-.3v.2l-.2.2v.1l-.1.2v.4h-.1v.2h-.2v.1h-.3q0 .2-.1 0l-.3-.1h-.1v-.2h-.1v-.1l-.1-.1H35v-.7h-.1v-.5l.2-.4v-.2l.1-.2h-.1l-.4.3-.2.1v.3l-.2.1-.1.5v.1q0 .2 0 0H34v-.4l.2-.2V25l.1-.2v-.1H34l.4-.2.1-.1.3-.3V24l.1-.1.2-.3-.1.3v.2l-.1.2h.4V24l.2-.2.3-.4v-.2l.2-.2.1-.2v-.1l.2-.2.1-.2v.2h.1l-.1.1v.2h-.1l-.2.3-.1.1-.1.1-.1.3-.2.2v.2l-.1.1v.4l.1-.3h.1l.1-.3.1-.2h.1v-.2h.1v-.1l.2-.3.2-.3.3-.4.1-.2.2-.2.1-.2.1-.1h.1v.2l.1-.3h.1v.1l.1-.2.2-.2v-.1l.3-.3.3-.5.3-.3.4-.6.2-.3.2-.2v-.2l.1-.2-.1.2v.2l-.1-.1-.2.1v.2H39v.1-.2l.2-.2v-.2h.1l.2-.3.1-.2V18h.2v-.5l.2-.2.1-.1h.1V17h.6l.2.1.3.1.2.1.2.2.2.2v.5l-.2.3-.2.1v.3l-.1.2v.2h-.1l-.1.5v.1l-.2.4v.5l-.2.5v.4l-.1.4v.4l-.1.2v.2h.3l.1-.1h.3v-.1h.2v.1h-.2l-.5.2h-.2v1.6l.2.3v.7l.1.2v.2l.2.4v.3H41v-.2.4l.1.1v-.2l.1.2v.3h.1l.1.4v.2l.2.1v.4h-.1V28l-.1-.2-.1-.3v-.1l-.1-.3h-.1v.5q.1 0 0 0v-.1h.1v.3-.1.1l.1.2v.2l.1.2v.4l.1.1.1.2v.2h.1v.1l.1.3v.2l.2.2v.2h.2v.4l.2.2.1.2-.1-.4.1.1v.1l.2.2h.1l-.1.1.2.3v.2h-.4v.1h.2v.1h-.4q0 .1-.1 0h-.1.2-.3zl-.1-.1m-3.4-8h.1l.2-.1h.2l.2-.1h.1V23l-.3.3h-.2.1zm.7-3.2h-.1v.1l-.1.2-.2.2v.2h-.2l-.1.2-.1.2v.2l-.1.1v.1l-.2.2H38v.4l-.1.1-.1.2-.1.1v.2h-.1q0 .2-.2.3l-.2.4v.1l-.1.3h.1l.2-.2.1-.2v-.1l.2-.1.2-.3.4-.2.1-.1q.1 0 0 0v.2h-.2v.1l.2-.2.2-.1.5-.3h.1l.2-.1v-1.4l.1-.4v-.6h-.1zm-.4 0 .2-.2.1-.1V20l.3-.3.1-.2-.1.1-.1.2-.2.2v.1zl-.2.3-.1.2zm2.3 8.6v.3h.1l-.2-.5zM39 23l.2-.1v-.1H39l-.2.2zm-4 2v.1zm4.7-7h.1zm1.8 12.6v-.1m0-.4.2.1zM39 20.5v-.1M7.7 19.3h.4l.1.1v.1l.2.1v.3h-.2l-.1-.1h-.2v.1q-.2 0-.1.2h-.1v.2l-.1.1.1.2h.1v.2h-.1v-.2h-.2v.1l-.1.2h.3-.2l-.1.1v.2h.7l.4-.2.3-.1h.1l.2-.2h.3l-.1.1-.5.3h-.2v.2h.1q.1-.2.4-.3l.5-.2h.2l.1-.1v-.1h.1l.3-.1.1-.1h.1l.5-.1.2-.1-.1.2h.3l-.2.2-.2.1h.2l.3-.2.5-.2.1-.1h.3V20l.5-.2h.3l.3-.2.3-.1.5-.2.5-.2.5-.2.3-.1.6-.2h.3-.2l-.2.1h-.2l-.1.1h-.1l-.3.1-.2.1-.2.1h-.2l-.1.2h-.2l-.1.1H14v.1l-.4.1h-.2l-.1.1-.2.1-.2.1h-.1l-.1.2h-.2l-.4.2H12h.3l.2-.1h.2l.5-.2h.4l.2-.1.2-.1h.1l.4-.2.5-.2h.2l.2-.1.3-.1h.2l.4-.2h.4l.5-.2.4-.1h.3l.1-.1h.2l.5-.1h.4l.1-.1h.7l.1-.1h1.5l.3.1-.1-.2h-.2l-.1-.1h-.2V18h.5v.2h.1l.3.1.2.1v.1h.2l.3.1v.3l.1.2-.1.1v.7h-.1v-.2.1h-.3v.1h-.2.2-.1v-.1H22v-.2l-.2.1.1-.1v-.1h-.1l.1-.2h-.1l-.2.1h-.1q0-.2.2 0v-.1h-.3l-.1-.1h.3V19h.3v-.2h-1.6.1-.6v.1h.2-.3l-.1.1h-.2l-.1.1H19l-.2.1h-.2v-.1h.2-.2v.2h-.4l-.2.1v-.1h-.1v.2h.1l.1-.1h.1v.1H18l-.2.1h-.2.2l.1-.1h-.4v.1-.2h.2l.2-.1h.1l.2-.1h.1v-.1H18l-.2.1h-.2v.1h-.4l-.2.1-.4.1-.1.1h-.2l-.2.1v.1h.2l-.2.1-.2.1-.2.1V20h.1l.1-.1h-.3l-.1.1h-.1l-.1.1h-.1q0 .2-.2.2v-.1l-.2.1-.2.1h-.1l-.1.1-.3.1h-.2l-.2.1-.2.2h-.2l-.1.1-.1.1H13v.1l-.4.3h-.2v.1h.1l.2-.1h.2v-.1h.1l.2-.1.2-.1h.2l.3-.2h.1l-.1.1h-.1l-.3.2-.4.1-.2.2h-.4l-.3.2-.2.1-.1.2h-.2l-.2.1-.2.2-.4.2-.3.1-.4.3-.1.1-.5.4-.3.1-.1.1H9l-.2.2-.1.1-.1.1-.2.2v.1l.1.2.1.1.1.2h.1l.2.1q0 .2-.2.1V25h-.4l-.1-.2h-.1l-.2-.2v.1H7l-.2.1h-.5l-.1-.1v-.1l-.2-.1v-.3l-.1-.2v-.1l-.1-.2-.2-.2q-.2 0-.2-.2V23h-.1.1l.2-.2v-.4l.1-.1.1-.1v-.6l.2-.2h.1l.1-.1h.1V21l-.2-.2h.1l.2.2.2-.1V20h.1v.4l.1-.1V20H7l.2-.3v-.1l.2-.1v-.2zm9 0h-.2zm.2 0h.1l.2-.1h-.3m2.9-.4-.3.1h-.3.2v.1h.2zm.5-.3h-.5v.1zh.4zM19 19h-.1zm-8.1 1.5\"/><path d=\"M42 22.7v-.1h.3v-.2H42v-.1l-.2-.1h-.1l-.1-.1h-.2q0 .2-.2 0H41h.2V22h.6l.2.2.2.1v.2l.1.2h.2v.6-.2.2h-.1l-.1-.1v-.4H42zM20 20v-.1h.2zh.4l.2-.2h.2v-.1h-.1l.2-.1h.3-.2v.2-.1h-.2v.1h-.1v.1h.1-.3l-.2.1-.3.2h-.5l.2-.1h.2zm7.8-1.4h-.2v-.1l-.1-.1v-.2q0-.2.3-.1l.1.2v.3m13.8 9.8h.1v.2l.1.1v.3h.1v.3q.3.1.2.2v.1l.1.2-.1-.2v-.1q-.3-.1-.2-.3v-.1l-.2-.5zm-31.4-9.1V19l.3.1v.2zm-2 1V20h.2v.3zm8.5 2.1.7-.3.4-.2h.2l-.1.1h-.2l-.2.1-.2.1-.3.2-.2.1M10 24.8h-.2q-.2-.1 0-.2h.2zM42.4 30l.2.1v.2l.1.2.1.1v.4-.4h-.1l-.1-.2v-.2zM8.7 20.5v.1h-.1l-.1.1h-.2v-.3h.3zm8.3-.6h-.2l-.2.2h-.3l.1-.1h.1l.2-.2h.2l.2-.2v.1zm-6.9.4h.2zl-.1.1h-.2l-.2.1h-.1l.4-.2zm3.6 7.9V28l.1-.1h.1v.2h.2v.1zM39 19.6l-.2.2v.1h-.1l-.1.2V20l.1-.2.1-.2.1-.1zm-18.6 1.8v-.2h.2v.3zm7.6-4q.2.1 0 .2h-.1q-.2-.1 0-.2zm-22.7 3-.2.1v-.2zm2.9 4.9v.2H8v-.2zm10.6-7.2-.3.1h-.2zh.6-.5m1.7-.1h.3-.9zm7.5 7.3V25h.1v-.3l.1.1v.3zv.4H28v-.3m3.3 1.9h-.2V27h.1z\"/><path d=\"m20.1 19.9.1-.1.3-.2.4-.1-.3.1-.1.1v.1H20m8.1 6.2v-.3l.1-.3v-.1.7zm-10.7 4.6-.1-.2-.2-.1q0-.2 0 0h.3v.2zm4-11.6h-.6zm-7 9.8-.1-.2q.2 0 .3.3zm-4.7-4.4v.1h-.2v-.1l.1-.1zM28 19.8h.2v.2H28zm-8.2 7.1v-.2l.1-.1h.2-.1v.1zh-.1zm-7.3 1.6v-.1h.2q0 .2-.2.1M25.8 27h.2v.2h-.2zm-9.1-4.7.2-.1V22h.2l-.3.2zm21.6 6.5-.1.1H38v-.2zM13.1 20h.3-.1l-.1.1-.2.1zm15.7 4.7q.3 0 .1.1-.3 0-.1-.1m-19.1-.6h.2zm8.5 4.3h.1l.2-.1h.1-.2l-.1.1zM18 26l-.1.1zv-.2l.2-.1v.1zm-2.6-6.9v.1h-.2m-6.2.2h.2v.1H9m8.4-1.1h.4v-.1h-.2v.1zm3.8 1.3h.2zl-.1.1H21zm14.7-.4h.3-.5l-.1.1zM18 21v-.1h.1zm2.2 1H20v-.1zm-8.8-1.7v-.1h.1zm10.1.3v-.1h.1v.1m4 .4h-.1v-.2zm3.4 2.2h.2zm-12.1-4.7h.2zm4.5 1.8v-.1h.1zM8.3 26.6v-.1zm8.9-6.8H17v.1zM13.8 21l.1-.2h.1v.1zq0 .2-.1 0m28.7 2.8h-.1v-.1h.2zm-28.1-4.2v.1H14zm7.4-.1-.1.1h-.1v-.1zm9.1.8-.1.2zm8.3-1.7v-.1zv.2zm-1 2.2v.3zm-4.1-1h-.2l.5-.2zm-4.7.7h-.1q0-.2 0 0m1.3.3-.2.1v-.2zm-11.9 3.8v.1h-.1v-.1zm6.4-2.3h-.1zm9.5 3.7v.1q0 .2 0 0h-.1m-4.1-1.9h-.2zm8.3-4.8-.1.2v-.3z\"/><path d=\"m21.2 19.7.1-.2h.2l-.1.1zM39.6 18v.2h-.1zm-18.8 1h-.2zm.5.5H21l.2-.1zm13.7 0h-.3.4m6.9 3.2h-.2v-.1zM19.7 18h-.2.4zm21.1 5.5v-.2zv.1zM28 19.3v.1h-.1q0-.2.1 0m-6.5-.4h-.2.5zm-6.5.3q.2 0 0 .1m5.3 7v.1l-.2.1zm8.1-5.5h.2zm10.4-1.6V19zM19.6 27v-.2zm17.9-7.7v-.1m-25.9 1V20zm8.9-2.9q-.2 0 0 0m-.5 9h.1zh-.1m-1.9-8h-.1.3zm-.6 3.7h-.2l.1-.1m8 1.1h.1v.1zm-14.8-2.8h-.2zm31.9 3.2v.2zm-28.6-3.6.1-.1q.1 0 0 0zM29 24.4h-.1q0-.2 0 0zm-16.3-4.8.2-.1zm15.7 6.5h.1v.1m6.1-6.6h-.2zm-1.1 5.6h-.1v-.1M21.2 18H21zm.4 3.8v.1h-.1m-4.8.1v-.2zm-1.5 7.2q0-.2.1 0M26 22.9v-.1q.2 0 0 0m-4.8-3.5h.1zm-10.7 1.1.1-.1h.2zm23-.4v-.1h.2zM9.2 23.8H9zM6 20.6l.1.1zm34.6 7.9v.2zm-10.9-5.3h.1zm-8.6 3.2v-.1h.1M39 19.7v-.1zm2.9 4.7h.1zm-24.6-4.9h.2zm1 .1v-.1m22.6 5.1v-.1zM20 19.3h-.3zm22 3v.1h-.1m-20.2-4.2.2.1zM36.8 22h-.1M10 27.4v-.1zM5 24v-.1m30.4-4.5h-.2M28.5 27h-.1m-11-5.5v.1M38 20h.2zm-19.5.6h-.1M41.9 29v.2zm.5-5.6h.1v.1M20 19h.2zm-9 1h.2zm6 .7v-.1h.2zm-1.7-.2h.2zM28 26.2V26m-4.6-3.4v-.1m2.4.2v.2zm2.3 2.2v.1l-.1.1zM15 28.4v.1m26.5-6.1h.1zm-24.1-2.9v.1q-.2 0 0 0m23.5 4.9v-.1zm-2.5-4.9v-.1m-20.2 2.3h.1m-1.6 7.3h.1M33.9 24l-.1.1M35 24l.1.1m-14 2.3h.2zm4.5-5.7v.1m-6.1-1.5h-.2zm3-1v.1m-2.4 8.2v.1q-.2 0 0 0M38.3 20v-.1m-22.1.1q0 .2-.1.1zM12 20l.1-.2zm5.4-.3v.1m20.2 8v.1m3.2-3.8v.1m-10.1-1h-.1zM9.5 24v-.2zm16.3-1v.1h-.1zm2.5 2.6v.1M42.2 24v.2zm-8.1 3.4H34zM28 21v-.1h.1m-14.9.4v-.1m12.6 1.7h-.1m-12.2-3v-.1m8.4-.9h-.1m-1.2.1h-.1m6.9-.2h-.1m6.7 8.4h-.2zm-17.6-7.3v-.1m12 4.1q0-.1 0 0M30 23h-.1m5.1 0v-.1m-6.4 1v.1m-8.2-4h.1m9.4 3.2h.1m-4.1 0h.1m-.5-.2v.1M14.8 19v.1m13 1.9v.1m-8.6-1.7h.1m13.2 1.8-.1.1-.1.1-.2.1.2-.1v-.1zl.2-.1h.1l-.2.2zm.9-.4h.2v-.1h.1l-.2.1-.2.2zm-.1.9h.1zm.5.9h-.2v-.1zm.6-.8-.1.2z\"/><path d=\"M33.8 20.7v.1h-.2zm-2.3 1.2.1-.2zm1.7 0v.1m2.2-1.1h-.1m-1.6 1.6q.1 0 0 0m-2.1.4v.1m-.7-.5-.1.1zm2.2-1.3H33m0 0v.1m-.2-.1v.1m-8.8 4V25h.1v.1m.3-.3-.1.2q-.2 0 0 0zh.1m-.6.3V25zm.6-.6v.1m-.2 0v.1M23 25v.1m3.5.3h-.1m1.2-3.2v.1zm11-.8.2-.1zh-.1m.2 1.6h-.2zm.6-.3h-.1l.2-.1zm-.3.2h-.1zM19.5 19\"/></g><defs><clipPath id=\"a\"><path fill=\"currentColor\" d=\"M5 17h39v15H5z\"/></clipPath></defs></svg>"};
+/* アイコン（Figma Renewal_UI_Design の artist_top 7442:35504 / Artists 1053:12301 から書き出し。寸法もFigmaのまま） */
+const ICONS={
+  back:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M23 27L16 20L23 13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  search:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M23 23L29 29M18 25C14.134 25 11 21.866 11 18C11 14.134 14.134 11 18 11C21.866 11 25 14.134 25 18C25 21.866 21.866 25 18 25Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  close:'<svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M26 26L20 20M20 20L14 14M20 20L26 14M20 20L14 26" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 15.3333V16C14 17.1046 13.1046 18 12 18C10.8954 18 10 17.1046 10 16V15.3333M14 15.3333H10M14 15.3333H16.3937C16.6487 15.3333 16.7768 15.3333 16.8801 15.2985C17.0773 15.232 17.2316 15.0771 17.2982 14.8799C17.3332 14.7762 17.3332 14.6477 17.3332 14.3906C17.3332 14.2782 17.333 14.2219 17.3242 14.1683C17.3076 14.067 17.2683 13.9709 17.2084 13.8875C17.1767 13.8434 17.1365 13.8032 17.0572 13.7239L16.7975 13.4642C16.7137 13.3804 16.6667 13.2668 16.6667 13.1483V10.6667C16.6667 8.08933 14.5773 5.99999 12 6C9.42268 6.00001 7.33334 8.08934 7.33334 10.6667V13.1483C7.33334 13.2668 7.28617 13.3804 7.20238 13.4642L6.94271 13.7239C6.86318 13.8034 6.82337 13.8434 6.79167 13.8875C6.73178 13.9709 6.6921 14.067 6.67547 14.1683C6.66667 14.2219 6.66667 14.2782 6.66667 14.3906C6.66667 14.6477 6.66667 14.7762 6.70164 14.8798C6.76817 15.0771 6.9232 15.232 7.12045 15.2985C7.22371 15.3333 7.35135 15.3333 7.60638 15.3333H10" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  arrowUR:'<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5.83333 14.1666L14.1667 5.83325M14.1667 12.4999V5.83325H7.49999" stroke="#fff" stroke-opacity=".5" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chevron:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 8L14 12L10 16" stroke="#fff" stroke-opacity=".75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+const COMMUNITY=[0,1,2,3,4,6];
+const NOT_JOINED=['Aile The Shota'];   // Figma 14:2084 と同じく Aile The Shota を非会員の例にする
+const SC={
+  good:{ready:2.2,cache:true,bars:()=>4},
+  weak:{ready:Infinity,cache:true,bars:()=>1},
+  recover:{ready:5.5,cache:true,bars:t=>t<5.5?1:3},
+  offline:{ready:Infinity,cache:false,bars:()=>0}
+};
+const BTN_AT=3, AUTO_AT=8, FAIL_AT=15;
+
+function ini(n){const w=n.replace(/[^A-Za-z0-9぀-ヿ一-鿿]+/g,' ').trim().split(' ');return (w.length>1?w[0][0]+w[1][0]:n.slice(0,2)).toUpperCase()}
+function sb(bars,solid){
+  const r=[0,1,2,3].map(i=>`<rect x="${i*4.5}" y="${9-i*3}" width="3" height="${3+i*3}" rx=".8" fill="currentColor" opacity="${i<bars?1:.28}"/>`).join('');
+  return `<div class="sb${solid?' solid':''}"><span>9:41</span><span class="ic"><svg width="17" height="12" aria-label="電波 ${bars}本">${r}</svg><svg width="25" height="12" aria-hidden="true"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="15" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="1.5" height="4" rx=".7" fill="currentColor" opacity=".5"/></svg></span></div>`;
+}
+const img=(c,cls='')=>`<div class="img ${cls}" style="--c:${c}"></div>`;
+const tap=(c,cls,label='タップで画像を表示')=>`<button type="button" class="tapload ${cls}" style="--c:${c}">${label}</button>`;
+function banner(auto){
+  return `<div class="lite-bar"><div><b>${auto?'回線が混み合っているため軽量モードで表示中':'軽量モードで表示中'}</b><span>画像・動画を読み込んでいません</span></div><button type="button" data-normal>通常に戻す</button></div>`;
+}
+
+/* ---------- screens ---------- */
+function holdUI(stage){
+  if(stage==='hold') return `<div class="hold"><b>回線が混み合っています</b><p>画像と動画を読み込まずに、すぐ使える状態で開けます</p>
+    <button type="button" class="liteBtn" data-lite><span>軽量モードで開く</span></button><p class="cd" id="cd">あと5秒で自動的に切り替わります</p></div>`;
+  if(stage==='connecting') return `<div class="hold"><b>軽量モードで接続中…</b><p>前回のデータがないため、文字の情報だけを取得しています</p><div class="bar"></div></div>`;
+  return '';
+}
+function errorScreen(){
+  return `<div class="err"><div class="mark">!</div><h4>接続できませんでした</h4><p>電波の良い場所に移動するか、少し時間をおいて再試行してください。</p><button type="button" class="primary" data-retry>再試行</button></div>`;
+}
+function tile(i,mode,small){
+  const a=ARTISTS[i];
+  const pic=mode==='lite'?`<div class="lg">${LOGOS[a.n]}</div>`:img(a.c);
+  return `<button type="button" class="tile" data-artist="${i}">${pic}<div class="tn">${a.n}</div>${!small&&a.fc?`<div class="tf">${a.fc}</div>`:''}</button>`;
+}
+function artists(mode,auto){
+  return `${mode==='lite'?banner(auto):''}
+  <div class="ttl"><h3>Artists</h3><button type="button" class="x" aria-label="閉じる">${ICONS.close}</button></div>
+  <section class="comm"><div class="lbl">Your Community</div><div class="g3">${COMMUNITY.map(i=>tile(i,mode,true)).join('')}</div></section>
+  <div class="filters"><span class="on">ALL</span><span>BMSG</span><span>B-RAVE</span></div>
+  <div class="g3 all">${ARTISTS.map((a,i)=>tile(i,mode,false)).join('')}</div>`;
+}
+function artistTop(mode,i,auto){
+  const a=ARTISTS[i], c=a.c, L=mode==='lite';
+  const joined=!NOT_JOINED.includes(a.n);   // 非会員はファンクラブ名を出さず「入会する」を出す
+  const pop=i===1?{n:'SOTA',r:'SOTAの語り部屋'}:{n:a.n,r:`${a.n}の部屋`};
+  const contents=[
+    `【アーカイブ】11/02(日) ${a.n} 生配信`,
+    `『BMSG FES'26』チェックインスタンプ再取得のご案内`,
+    `${a.n} VLOG #12 ツアーリハーサルの裏側`,
+    `TV出演情報 11/08(土) 音楽番組に出演`,
+    `メンバーからのメッセージ（10月）`
+  ];
+  const dates=['2026.10.27','2026.10.25','2026.10.22','2026.10.20','2026.10.16'];
+  const libs=['World Tour 2026 "THE ABC"','Fan Meeting 2026 Day1','Behind the Scenes vol.3'];
+  const shop=[['アクリルスタンド','¥2,800',true],['アクリルキーホルダー','¥1,800'],['ロゴTシャツ','¥5,500']];
+  const hero=L
+    ? `<div class="hero logo"><div class="lgbg">${LOGOS[a.n]}</div><button type="button" class="hbtn l" data-back aria-label="戻る">${ICONS.back}</button><button type="button" class="hbtn r${joined?'':' withjoin'}" aria-label="検索">${ICONS.search}</button>${joined?'':'<button type="button" class="join" data-join>入会する</button>'}<h3>${a.n}</h3>${joined&&a.fc?`<small>${a.fc}</small>`:''}</div>`
+    : `<div class="hero vid" style="--c:${c}"><button type="button" class="hbtn l" data-back aria-label="戻る">${ICONS.back}</button><button type="button" class="hbtn r${joined?'':' withjoin'}" aria-label="検索">${ICONS.search}</button>${joined?'':'<button type="button" class="join" data-join>入会する</button>'}<h3>${a.n}</h3>${joined&&a.fc?`<small>${a.fc}</small>`:''}<span class="vtag">背景動画</span></div>`;
+  const contentsCard=`<div class="card"><div class="sh">Contents</div><div class="tabs"><span class="on">New Contents</span><span>Artist Blog</span><span>Staff's Blog</span></div>
+      ${L?`<div class="tlist">${contents.map((t,k)=>`<button type="button" data-article style="text-align:left;display:block;width:100%;padding:9px 0;border-top:${k?'1px solid var(--line)':'0'}"><div class="ttx">${t}</div><div class="mt">${dates[k]}</div></button>`).join('')}</div>`
+         :`<div class="clist">${contents.map((t,k)=>`<button type="button" class="row" data-article style="text-align:left">${img(c)}<div><div class="ttx">${t}</div><div class="mt">${dates[k]}</div></div></button>`).join('')}</div>`}
+      <span class="va">View All</span></div>`;
+  return `${L?banner(auto):''}${hero}
+  <div class="secs">
+    <div class="card row" style="align-items:flex-start"><span class="bell">${ICONS.bell}</span><div style="flex:1"><div class="row" style="align-items:flex-start"><div class="ttx">${a.n} 5th ANNIVERSARY DOME TOUR 2027 開催決定！</div><span class="ur">${ICONS.arrowUR}</span></div><div class="mt">ファンクラブ先行受付中 ・ 11/10(月) 23:59まで</div></div></div>
+    ${contentsCard}
+    <div class="card"><div class="livehd"><b>LIVE</b><span class="mt">2026.11.05 20:00 配信予定</span></div>
+      <div class="inner row">${L?'':img(c)}<div class="ttx">${a.n} ARENA TOUR 2026 "ABC LIVE" 生配信</div></div></div>
+    ${L
+      ? `<div class="card"><span class="chip" style="background:var(--card2)">PICK UP</span><div class="ttx">2026/11/26(水)発売 ${a.n} ニューシングル</div><div class="mt">2026.10.24</div></div>`
+      : `<div class="card pick"><div class="chipwrap">${img(c)}<span class="chip">PICK UP</span></div><div class="tx"><div class="ttx">2026/11/26(水)発売 ${a.n} ニューシングル</div><div class="mt">2026.10.24</div></div></div>`}
+    <div class="card"><div class="sh">Poppin'<a>View All${ICONS.chevron}</a></div><div class="inner row">${L?'':img(c,'av')}<div style="flex:1"><div class="ttx">${pop.n}</div><div class="mt">${pop.r}</div></div><span class="mt">10:03 更新</span></div></div>
+    <div class="card"><div class="sh">Library<a>View All${ICONS.chevron}</a></div>
+      ${L?`<div class="tlist">${libs.map(t=>`<div class="row" style="justify-content:space-between"><span class="ttx">${t}</span><span class="free" style="margin:0">Free</span></div>`).join('')}</div>`
+         :`<div class="hs">${libs.map(t=>`<div class="lib">${img(c)}<div class="ttx" style="margin-top:6px">${t}</div><span class="free">Free</span></div>`).join('')}</div>`}</div>
+    <div class="card"><div class="sh">Calendar<a>View All${ICONS.chevron}</a></div><div class="inner"><span class="lpill">LIVE</span><div class="ttx">${a.n} ARENA TOUR 2026 [福岡 Day1]</div><div class="mt">2026.11.15 17:00 - 20:00</div></div></div>
+    <div class="card"><div class="sh">Shop<a>View All${ICONS.chevron}</a></div>
+      ${L?`<div class="tlist">${shop.map(s=>`<div class="row" style="justify-content:space-between"><span class="ttx">${s[0]}</span><span class="price">${s[1]}${s[2]?'<span class="so">SOLD OUT</span>':''}</span></div>`).join('')}</div>`
+         :`<div class="hs">${shop.map(s=>`<div class="shop">${img(c)}<div class="ttx" style="margin-top:6px">${s[0]}</div><span class="price">${s[1]}${s[2]?'<span class="so">SOLD OUT</span>':''}</span></div>`).join('')}</div>`}</div>
+  </div>
+  <div class="tbspace"></div>`;
+}
+
+function article(mode,auto,bars){
+  const q=`embed=1&lite=${mode==='lite'?1:0}&auto=${auto?1:0}&bars=${bars}`;
+  return `<div class="artwrap"><iframe class="artframe" title="記事詳細" src="article/index.html?${q}"></iframe></div>`;
+}
+
+/* ---------- phone renderer ---------- */
+const TABBAR_SCREENS=['top'];
+function mount(el){
+  el.innerHTML=`<div class="screen"><div class="sbslot"></div><div class="view"></div></div>`;
+  const screen=el.querySelector('.screen');
+  return {el,screen,sbslot:el.querySelector('.sbslot'),view:el.querySelector('.view'),counts:null};
+}
+/* 比較用の静止タブバー: 実機モックの正式コンポーネントを複製し、アイコンは Lottie の先頭フレームで止める */
+function staticTabbar(p){
+  const bg=document.getElementById('tabbarBg').cloneNode(true), nav=document.getElementById('tabbar').cloneNode(true);
+  [bg,nav,...nav.querySelectorAll('[id]')].forEach(e=>e.removeAttribute('id'));
+  nav.classList.remove('is-offscreen','more-open','has-selection');
+  nav.querySelectorAll('[data-key]').forEach(item=>{
+    const h=item.querySelector('.tab-item__lottie'); if(!h) return;
+    h.innerHTML='';
+    const data=TABBAR_ICONS[item.dataset.key==='poppin'?'talk':item.dataset.key];
+    if(data) lottie.loadAnimation({container:h,renderer:'svg',loop:false,autoplay:false,animationData:data}).goToAndStop(0,true);
+  });
+  p.screen.append(bg,nav);
+}
+function paint(p,screen,mode,opts={}){
+  const v=p.view, bars=opts.bars??(mode==='lite'?1:4);
+  let html='',pad=false,solid=false,noSb=false;
+  if(screen==='error'){html=errorScreen();pad=true;solid=true}
+  else if(screen==='artists'){html=artists(mode,opts.auto);pad=true;solid=true}
+  else if(screen==='top'){html=artistTop(mode,opts.art??1,opts.auto);solid=pad=mode==='lite'}
+  else if(screen==='article'){html=article(mode,opts.auto,bars);noSb=true}
+  p.sbslot.innerHTML=noSb?'':sb(bars,solid&&!opts.overSplash);
+  v.className='view'+(pad?' pad':'');
+  v.style.setProperty('--k',v.clientWidth/390);
+  p.counts=null;
+  v.innerHTML=html; v.scrollTop=0;
+  p.screen.classList.toggle('tb',TABBAR_SCREENS.includes(screen));
+  const blk=screen==='top'&&mode==='lite';
+  p.screen.classList.toggle('blk',blk); v.classList.toggle('blk',blk);
+}
+function count(p){
+  const v=p.view;
+  if(v.querySelector('.artframe')) return p.counts||{img:0,vid:0,tap:0};
+  return {img:v.querySelectorAll('.img:not(.vid)').length,vid:v.querySelectorAll('.vid').length,tap:v.querySelectorAll('.tapload').length};
+}
+function onTapload(e){
+  const t=e.target.closest('.tapload'); if(!t) return false;
+  const d=document.createElement('div');
+  d.className='img loaded '+[...t.classList].filter(x=>x!=='tapload').join(' ');
+  d.style.cssText=t.style.cssText;
+  const r=t.getBoundingClientRect(); d.style.width=r.width+'px'; d.style.height=(t.classList.contains('pk')?160:r.height)+'px'; d.style.flex='none';
+  t.replaceWith(d); return true;
+}
+
+/* ---------- interactive phone ---------- */
+const liveEl=document.getElementById('live'), liveScreen=document.getElementById('liveScreen');
+const live={el:liveEl,screen:liveScreen,sbslot:liveScreen.querySelector('.sbslot'),view:liveScreen.querySelector('.view'),counts:null};
+const SPLASH=['splash','hold','connecting'];
+let sp=null, spAnim=null, spTimers=[];
+const S={sc:'weak',t:0,screen:'splash',mode:'normal',auto:false,art:1,iv:null};
+const logEl=document.getElementById('log');
+function log(msg){const li=document.createElement('li');li.innerHTML=`<time>${S.t.toFixed(1)}秒</time><span>${msg}</span>`;logEl.appendChild(li)}
+function bars(){return SC[S.sc].bars(S.t)}
+/* スプラッシュ: 開始時に template から差し込み、抜けるときは BWU の文字窓でズーム（splash_logined と同じ 0.3s 溜め → 0.5s 拡大） */
+function startSplash(){
+  spTimers.forEach(clearTimeout); spTimers=[];
+  if(spAnim){spAnim.destroy();spAnim=null}
+  if(sp) sp.remove();
+  sp=document.getElementById('spTpl').content.firstElementChild.cloneNode(true);
+  liveScreen.appendChild(sp);
+  const logo=sp.querySelector('.sp-logo');
+  if(window.lottie){
+    spAnim=lottie.loadAnimation({container:sp.querySelector('.sp-lottie'),renderer:'svg',loop:false,autoplay:false,path:'vendor/bwu-splash.json'});
+    spAnim.addEventListener('data_failed',()=>logo.classList.add('fallback'));
+    spTimers.push(setTimeout(()=>spAnim&&spAnim.play(),200));
+  }else logo.classList.add('fallback');
+}
+function exitSplash(){
+  const el=sp, v=live.view; if(!el) return;
+  sp=null;
+  v.classList.add('arrive');
+  el.classList.add('crop');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('windup')));
+  spTimers.push(setTimeout(()=>{el.classList.add('zoom');v.classList.add('go')},300));
+  spTimers.push(setTimeout(()=>{
+    el.remove(); if(spAnim){spAnim.destroy();spAnim=null}
+    live.sbslot.innerHTML=sb(bars(),!!live.view.querySelector('.ttl,.err')||S.mode==='lite'&&S.screen==='top');
+    if(liveScreen.classList.contains('tb')) Tabbar.enter();
+  },800));
+  spTimers.push(setTimeout(()=>v.classList.remove('arrive','go'),2300));
+}
+let shown=null;
+function draw(){
+  if(window.Tabbar&&Tabbar.closeMore) Tabbar.closeMore();
+  if(SPLASH.includes(S.screen)){
+    sp.querySelector('.hold-slot').innerHTML=holdUI(S.screen);
+    live.sbslot.innerHTML=sb(bars(),false);
+  }else{
+    const fromSplash=!!sp;
+    const wasTb=liveScreen.classList.contains('tb');
+    paint(live,S.screen,S.mode,{bars:bars(),auto:S.auto,art:S.art,overSplash:fromSplash});
+    if(fromSplash) exitSplash();
+    else if(!wasTb&&liveScreen.classList.contains('tb')) Tabbar.enter();
+  }
+  meter();
+}
+function meter(){
+  const m=document.getElementById('meter');
+  if(!['artists','top','article'].includes(S.screen)){m.innerHTML='';return}
+  const c=count(live);
+  m.innerHTML=`<span>この画面で読み込む画像 <b>${c.img}枚</b></span><span>動画 <b>${c.vid}本</b></span>${c.tap?`<span>タップで読み込む枠 <b>${c.tap}か所</b></span>`:''}`;
+}
+function timeline(){
+  document.getElementById('tsec').textContent=S.t.toFixed(1)+'秒';
+  document.getElementById('head').style.left=Math.min(S.t/FAIL_AT,1)*100+'%';
+}
+function stop(){clearInterval(S.iv);S.iv=null}
+function play(){
+  stop(); Object.assign(S,{t:0,screen:'splash',mode:'normal',auto:false,art:1});
+  logEl.innerHTML=''; log('起動。スプラッシュを再生');
+  live.view.innerHTML=''; live.view.className='view'; liveScreen.classList.remove('tb');
+  startSplash(); draw(); timeline();
+  S.iv=setInterval(tick,100);
+}
+function openNormal(why){log(why);S.mode='normal';S.screen='artists';stop();draw()}
+function toLite(auto){
+  S.mode='lite';S.auto=auto;
+  if(!SC[S.sc].cache){log('保存データがないため、文字の情報を取得しながら待つ');S.screen='connecting';draw();return}
+  S.screen='artists';stop();draw();
+}
+function tick(){
+  S.t=Math.round((S.t+0.1)*10)/10;
+  const sc=SC[S.sc];
+  if(S.screen==='splash'&&S.t>=BTN_AT){
+    if(S.t>=sc.ready) openNormal('スプラッシュ終了。データはそろっている → 通常モードで開く');
+    else{S.screen='hold';log('データがまだそろわない → 「軽量モードで開く」を表示');draw()}
+  }else if(S.screen==='hold'){
+    if(S.t>=sc.ready) openNormal('データがそろった → ボタンを消して通常モードで開く');
+    else if(S.t>=AUTO_AT){log('誰も押さなかった → 自動で軽量モードへ');toLite(true)}
+    else{
+      const b=liveScreen.querySelector('.liteBtn'); if(b) b.style.setProperty('--p',(S.t-BTN_AT)/(AUTO_AT-BTN_AT));
+      const cd=liveScreen.querySelector('#cd'); if(cd) cd.textContent=`あと${Math.ceil(AUTO_AT-S.t-1e-9)}秒で自動的に切り替わります`;
+      live.sbslot.innerHTML=sb(bars(),false);
+    }
+  }else if(S.screen==='connecting'&&S.t>=FAIL_AT){
+    S.screen='error';log('接続できない → 再試行の画面');stop();draw();
+  }
+  timeline();
+}
+liveEl.addEventListener('click',e=>{
+  if(onTapload(e)){meter();return}
+  const q=s=>e.target.closest(s);
+  if(q('[data-lite]')){log('「軽量モードで開く」が押された');toLite(false)}
+  else if(q('[data-retry]')) play();
+  else if(q('[data-normal]')){log('「通常に戻す」が押された → 画像・動画を読み込む');S.mode='normal';S.auto=false;draw()}
+  else if(q('[data-artist]')){S.art=+q('[data-artist]').dataset.artist;S.screen='top';draw()}
+  else if(q('[data-join]')){log('「入会する」が押された → bmsg.shop の入会ページ（Webビュー）へ。ここは軽量モードでも速くならない')}
+  else if(q('[data-back]')){S.screen='artists';draw()}
+  else if(q('[data-article]')){S.screen='article';draw()}
+  else if(q('[data-backtop]')){S.screen='top';draw()}
+});
+document.querySelectorAll('input[name=sc]').forEach(r=>r.addEventListener('change',()=>{S.sc=r.value;play()}));
+document.getElementById('play').addEventListener('click',play);
+
+/* ---------- comparison phones ---------- */
+const cmp=document.getElementById('cmp'), minis=[];
+[['Artists（Home）','normal','artists'],['Artists（Home）','lite','artists'],['アーティストTOP','normal','top'],['アーティストTOP','lite','top'],['記事','normal','article'],['記事','lite','article']].forEach(([name,mode,screen])=>{
+  const f=document.createElement('figure');
+  f.innerHTML=`<figcaption><b>${name}<span class="tag ${mode==='lite'?'l':'n'}">${mode==='lite'?'軽量':'通常'}</span></b><span class="cnt"></span></figcaption><div class="phone mini"></div>`;
+  cmp.appendChild(f);
+  const p=mount(f.querySelector('.phone')); minis.push(p);
+  if(TABBAR_SCREENS.includes(screen)) staticTabbar(p);
+  paint(p,screen,mode,{art:1,auto:false});
+  const upd=p.onCount=()=>{const c=count(p);f.querySelector('.cnt').textContent=`画像 ${c.img}枚・動画 ${c.vid}本`};
+  upd();
+  f.querySelector('.phone').addEventListener('click',e=>{if(onTapload(e))upd()});
+});
+
+/* 記事（iframe）からの通知: 読み込んだ画像・動画の数 / 戻る / 通常に戻す */
+window.addEventListener('message',e=>{
+  const d=e.data; if(!d||!d.bwu) return;
+  const phones=[live,...minis];
+  const p=phones.find(x=>{const f=x.view.querySelector('.artframe');return f&&f.contentWindow===e.source}); if(!p) return;
+  if(d.type==='count'){p.counts={img:d.img,vid:d.vid,tap:d.tap}; p===live?meter():p.onCount&&p.onCount()}
+  else if(p===live&&d.type==='back'){S.screen='top';draw()}
+  else if(p===live&&d.type==='normal'){log('「通常に戻す」が押された → 画像・動画を読み込む');S.mode='normal';S.auto=false;draw()}
+});
+
+play();
+</script>
