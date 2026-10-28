@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../gate.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>混在グループトーク審査フロー</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 上に操作バー、中段に4画面（SOTA投稿アプリ / SOTAのマネ審査アプリ / Novel Core投稿アプリ / ファン）、下にログと仕様メモ。
+   スマホ画面は Figma【WIP】BwithU_UI のトークルーム（明るいグレー地・白バブル）に寄せる */
+:root{
+  --bg:#f3f3f6; --surface:#ffffff; --sunk:#e9e9ef; --fg:#18181f; --muted:#666675; --line:#d9d9e2;
+  --a:#6a4cf0; --a-soft:#ece8ff; --b:#0f8f7f; --b-soft:#dcf4f0; --mgr:#b86a00; --mgr-soft:#fff1dc;
+  --ok:#1f8a4c; --warn:#b86a00; --bad:#c23a3a; --bad-soft:#fde8e8;
+  /* アプリ画面（Figma準拠・テーマ固定） */
+  --ph-bg:#eeeeee; --ph-bar:#f8f8f8; --ph-fg:#1a1a1a; --ph-muted:#8a8a8a; --ph-card:#ffffff; --ph-own:#e2e2e2; --ph-line:#dcdcdc;
+  --ph-ok:#3dae4f; --ph-ng:#ff4560; --ph-dark:#1a1a1a;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --a:#9d88ff; --a-soft:#2a2448; --b:#3fcbb6; --b-soft:#143430; --mgr:#f0a43a; --mgr-soft:#3a2a12;
+  --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; --bad-soft:#3d1c1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --a:#9d88ff; --a-soft:#2a2448; --b:#3fcbb6; --b-soft:#143430; --mgr:#f0a43a; --mgr-soft:#3a2a12;
+  --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; --bad-soft:#3d1c1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6}
+.wrap{max-width:1440px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+h1{font-size:24px;font-weight:700;margin:0;text-wrap:balance;letter-spacing:.01em}
+h2{font-size:16px;font-weight:700;margin:0}
+.lead{color:var(--muted);margin:6px 0 0;max-width:76ch}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.conds{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cond{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.cond b{color:var(--a);margin-right:6px;font-family:var(--f-mono)}
+
+/* 方式切替 */
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mode{all:unset;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mode:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.mode[aria-pressed="true"]{border-color:var(--a);box-shadow:0 0 0 3px var(--a-soft)}
+.mode .mt{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.mode .mt small{font-family:var(--f-body);color:var(--muted);font-weight:400;font-size:12px}
+.mode .md{color:var(--muted);font-size:12.5px}
+.score{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.score span{font-size:12px;border-radius:6px;padding:1px 8px;background:var(--sunk)}
+.score .g{color:var(--ok)} .score .m{color:var(--warn)} .score .x{color:var(--bad)}
+.tag-rec{font-size:11px;background:var(--a);color:#fff;border-radius:4px;padding:0 6px;font-weight:500}
+
+/* 操作バー */
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.btn{all:unset;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;background:var(--sunk);color:var(--fg);white-space:nowrap}
+.btn:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.btn.pri{background:var(--a);color:#fff}
+.clock{font-family:var(--f-mono);font-size:20px;font-weight:500;letter-spacing:.02em}
+.sep{width:1px;height:22px;background:var(--line)}
+.ctl{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.ctl select{font:inherit;color:var(--fg);background:var(--sunk);border:0;border-radius:6px;padding:3px 6px}
+.scn{font-size:12.5px;color:var(--muted);flex:1;min-width:220px}
+
+/* 4画面 */
+.stage{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:1180px){.stage{grid-template-columns:repeat(2,minmax(0,1fr))}.modes{grid-template-columns:1fr}}
+@media (max-width:640px){.stage{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;flex-wrap:wrap}
+.cap .dot{width:10px;height:10px;border-radius:50%}
+.cap small{font-weight:400;color:var(--muted);font-size:12px}
+
+.phone{background:var(--ph-bg);color:var(--ph-fg);border-radius:24px;height:600px;display:flex;flex-direction:column;overflow:hidden;border:6px solid #1a1a1a;position:relative;color-scheme:light}
+.ph-head{background:var(--ph-bar);padding:10px 12px;display:grid;grid-template-columns:24px 1fr 24px;align-items:center;font-size:14px;font-weight:700;text-align:center;border-bottom:1px solid var(--ph-line)}
+.ph-head .back{font-size:16px;font-weight:400;text-align:left}
+.ph-sub{font-size:10.5px;color:var(--ph-muted);text-align:center;padding:4px 8px;background:var(--ph-bar);border-bottom:1px solid var(--ph-line)}
+.feed{flex:1;overflow-y:auto;padding:12px 10px 16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.empty{color:var(--ph-muted);font-size:12px;text-align:center;margin:auto 0}
+
+.msg{display:flex;gap:7px;align-items:flex-start;min-width:0}
+.av{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.av.A{background:var(--a)} .av.B{background:var(--b)}
+.mb{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:84%}
+.nm{font-size:11px;font-weight:700;display:flex;gap:6px;align-items:baseline}
+.nm .st{font-weight:400;color:var(--ph-muted)}
+.role{font-size:9.5px;font-weight:700;border-radius:4px;padding:0 5px;line-height:1.6}
+.role.A{background:#ece8ff;color:#5a40d6} .role.B{background:#dcf4f0;color:#0b7466}
+.nm .st.ng{color:var(--ph-ng)}
+.brow{display:flex;gap:6px;align-items:flex-end;min-width:0}
+.bub{background:var(--ph-card);border-radius:16px;padding:8px 12px;font-size:13px;line-height:1.55;overflow-wrap:anywhere;min-width:0}
+.bub.pend,.mine .bub.pend{background:#e4e4e4;color:#9a9a9a}
+.bub.pend .q{color:#aaa}
+.side{font-size:10px;color:var(--ph-muted);white-space:nowrap;line-height:1.3;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.side.l{align-items:flex-start}
+.side .ok{color:var(--ph-ok)} .side .ng{color:var(--ph-ng)} .side .rv{color:#c48a00}
+.mine{justify-content:flex-end}
+.mine .mb{align-items:flex-end}
+.mine .bub{background:var(--ph-dark);color:#fff}
+.mine .bub .q{color:#bdbdbd;border-color:#666}
+.bub.dim{opacity:.4}
+.bub.struck{opacity:.4;text-decoration:line-through}
+.q{border-left:2px solid #bdbdbd;padding-left:7px;margin-bottom:5px;font-size:11px;color:var(--ph-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;contain:inline-size;min-width:120px}
+.brow,.bub{max-width:100%}
+.q.broken{border-color:var(--ph-ng);color:var(--ph-ng);white-space:normal}
+.under{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:var(--ph-muted)}
+.wpill{background:#dedede;color:#666;border-radius:999px;padding:1px 8px;font-size:10px;white-space:nowrap}
+.why{font-size:10.5px;color:var(--ph-ng);max-width:100%}
+.rep{all:unset;cursor:pointer;font-size:10.5px;color:var(--ph-muted)}
+.rep:hover{color:var(--ph-fg)}
+.rep:focus-visible{outline:1px solid var(--ph-fg)}
+.rbtn{all:unset;cursor:pointer;flex:none;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid var(--ph-line);display:grid;place-items:center;font-size:13px;color:#555;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.rbtn:hover{background:var(--ph-dark);color:#fff;border-color:var(--ph-dark)}
+.rbtn:focus-visible{outline:2px solid var(--ph-fg);outline-offset:1px}
+.bub.sel{box-shadow:0 0 0 2px #5a40d6}
+.late{font-size:10px;background:#ece8ff;color:#5a40d6;border-radius:4px;padding:0 5px}
+.flash{animation:flash 1.4s ease-out}
+@keyframes flash{from{box-shadow:0 0 0 2px #ffb800}to{box-shadow:0 0 0 2px transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}.feed{scroll-behavior:auto}}
+
+.pbtn{all:unset;cursor:pointer;border-radius:999px;padding:3px 14px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap}
+.pbtn:focus-visible{outline:2px solid var(--ph-fg);outline-offset:1px}
+.pbtn.ok{background:var(--ph-ok)} .pbtn.ng{background:var(--ph-ng)} .pbtn.dk{background:var(--ph-dark)} .pbtn.gh{background:#fff;color:var(--ph-fg);border:1px solid var(--ph-line)}
+.prow{display:flex;gap:6px;flex-wrap:wrap}
+.hold{font-size:10.5px;color:#a36a00;background:#fff4d9;border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;gap:4px;max-width:100%}
+.meter{height:4px;border-radius:2px;background:#f0dcae;overflow:hidden}
+.meter i{display:block;height:100%;background:#e09a00;width:0}
+.notice{background:#fff;border:1px solid #ffc2cb;border-radius:12px;padding:10px;font-size:11.5px;display:flex;flex-direction:column;gap:8px;max-width:100%}
+
+.compose{background:var(--ph-bar);border-top:1px solid var(--ph-line);padding:8px;display:flex;flex-direction:column;gap:6px}
+.replying{font-size:11px;color:var(--ph-muted);display:flex;gap:6px;align-items:center;min-width:0}
+.replying span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.replying button{all:unset;cursor:pointer;color:var(--ph-fg)}
+.crow{display:flex;gap:6px;align-items:center}
+.crow input{flex:1;min-width:0;font:inherit;font-size:13px;background:#fff;color:var(--ph-fg);border:1px solid var(--ph-line);border-radius:999px;padding:7px 12px}
+.crow input:focus{outline:none;border-color:#999}
+.send{all:unset;cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;color:#999}
+.send:hover{color:var(--ph-fg)}
+.send:focus-visible{outline:2px solid var(--ph-fg)}
+.status{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--ph-line);border-radius:999px;padding:4px 6px 4px 8px;font-size:11px}
+.status .n{background:var(--ph-ng);color:#fff;border-radius:50%;width:16px;height:16px;display:grid;place-items:center;font-size:10px;font-weight:700}
+.status .lb{color:var(--ph-ng);font-weight:700}
+.status .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status .pbtn{padding:2px 10px;font-size:11px}
+
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:16px;z-index:5}
+.sheet{background:#fff;border-radius:16px;padding:18px 16px 12px;width:100%;display:flex;flex-direction:column;gap:10px;text-align:center}
+.sheet h4{margin:0;font-size:15px}
+.sheet .src{font-size:12px;background:#f4f4f4;border-radius:8px;padding:8px;text-align:left}
+.sheet .lbl{font-size:11px;text-align:left;font-weight:700}
+.reasons{display:flex;gap:6px;flex-wrap:wrap}
+.reasons button{all:unset;cursor:pointer;font-size:11.5px;border:1px solid var(--ph-line);border-radius:999px;padding:3px 10px}
+.reasons button[aria-pressed="true"]{border-color:var(--ph-ng);color:var(--ph-ng)}
+.sheet .pbtn{padding:9px 0;text-align:center;font-size:13px}
+.sheet .cancel{all:unset;cursor:pointer;font-size:12.5px;padding:4px}
+
+/* ファン */
+.pill{all:unset;cursor:pointer;position:absolute;top:56px;left:50%;transform:translateX(-50%);background:var(--ph-dark);color:#fff;font-size:11.5px;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2}
+.ftime{font-size:10px;color:var(--ph-muted);align-self:flex-end;white-space:nowrap}
+
+/* 下段 */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px}
+@media (max-width:900px){.lower{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.log{font-family:var(--f-mono);font-size:12px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.log div{display:flex;gap:10px}
+.log .t{color:var(--muted);flex:none}
+.log .A{color:var(--a)} .log .B{color:var(--b)} .log .M{color:var(--mgr)} .log .F{color:var(--ok)} .log .X{color:var(--bad)}
+.spec ol,.spec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.spec li{max-width:72ch}
+.spec h3{font-size:14px;margin:6px 0 0}
+.note{font-size:12.5px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:10px 12px;max-width:none}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>混在グループトーク審査フロー</h1>
+    <p class="lead">審査ありのSOTA（SOTAのマネが審査アプリのトークルーム内で承認）と、審査なしのNovel Core（即反映）が同じグループトークで話すケースです。投稿はアーティスト用の別アプリから行います。アーティスト同士は審査待ちのテキストも見え、未審査の投稿への返信は大元の承認後に10秒ずつ続けて送られます。返信でない投稿はすぐ送られます。「シナリオ再生」で流れを確認できます。各画面は手で操作もできます。</p>
+    <div class="conds">
+      <span class="cond"><b>1</b>審査が必要な人の審査は外せない</span>
+      <span class="cond"><b>2</b>LINEのような会話のテンポ</span>
+      <span class="cond"><b>3</b>投稿順を守る</span>
+    </div>
+  </header>
+
+
+  <div class="bar">
+    <span class="clock" id="clock">20:00:00</span>
+    <button class="btn" id="pause">一時停止</button>
+    <span class="sep"></span>
+    <button class="btn pri" id="play">シナリオ再生</button>
+    <button class="btn" id="reset">リセット</button>
+    <span class="sep"></span>
+    <label class="ctl" for="speed">速度
+      <select id="speed"><option value="1">×1</option><option value="2" selected>×2</option><option value="4">×4</option></select>
+    </label>
+    <span class="scn">シナリオ：フェス終演後のトーク。SOTA投稿 → Novel Coreが返信 → Novel Coreが告知 → SOTAのマネが承認 → SOTAが2件目を投稿 → Novel Coreが返信 → SOTAのマネが否認。前提：送信日時＝承認した時刻（変更しない）</span>
+  </div>
+
+  <div class="stage">
+    <div class="col">
+      <div class="cap"><span class="dot" style="background:var(--a)"></span>SOTA <small>投稿アプリ・審査あり</small></div>
+      <div class="phone">
+        <div class="ph-head"><span class="back">‹</span>フェス楽屋トーク<span></span></div>
+        <div class="ph-sub" id="viewA"></div>
+        <div class="feed" id="feedA"></div>
+        <div class="compose">
+          <div class="replying" id="repA" hidden><span></span><button data-act="unreply" data-who="A" aria-label="返信をやめる">✕</button></div>
+          <div class="crow"><input id="inA" placeholder="コメントする（審査に送られます）" autocomplete="off"><button class="send" data-act="send" data-who="A" aria-label="審査に送る">➤</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="cap"><span class="dot" style="background:var(--mgr)"></span>SOTAのマネジメント <small>審査アプリ・トークルーム内で承認</small></div>
+      <div class="phone" id="mgrPhone">
+        <div class="ph-head"><span class="back">‹</span>フェス楽屋トーク<span></span></div>
+        <div class="ph-sub">審査担当：SOTA の投稿のみ</div>
+        <div class="feed" id="feedM"></div>
+        <div class="compose"><div class="status" id="mstatus"></div></div>
+        <div id="modal"></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="cap"><span class="dot" style="background:var(--b)"></span>Novel Core <small>投稿アプリ・審査なし</small></div>
+      <div class="phone">
+        <div class="ph-head"><span class="back">‹</span>フェス楽屋トーク<span></span></div>
+        <div class="ph-sub" id="viewB"></div>
+        <div class="feed" id="feedB"></div>
+        <div class="compose">
+          <div class="replying" id="repB" hidden><span></span><button data-act="unreply" data-who="B" aria-label="返信をやめる">✕</button></div>
+          <div class="crow"><input id="inB" placeholder="コメントする" autocomplete="off"><button class="send" data-act="send" data-who="B" aria-label="送信">➤</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="cap"><span class="dot" style="background:var(--ok)"></span>ファン <small>BwU アプリのグループトーク</small></div>
+      <div class="phone">
+        <div class="ph-head"><span class="back">‹</span>フェス楽屋トーク<span></span></div>
+        <div class="ph-sub">SOTA・Novel Core</div>
+        <div class="feed" id="feedF"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lower">
+    <section class="panel">
+      <h2>イベントログ</h2>
+      <div class="log mono" id="log"></div>
+    </section>
+    <section class="panel spec">
+      <h2>ルール：承認後に続けて送る</h2>
+      <ol>
+        <li><b>送信日時は承認した時刻</b>：今の仕様のまま。SOTAの投稿は承認された瞬間にトークの末尾に入る。</li>
+        <li><b>楽屋ビュー</b>：アーティスト用アプリでは、同じグループの審査待ちのテキストが「未審査」付きで見える。ファンには見えない。</li>
+        <li><b>審査待ちへの返信は「承認後に送信」</b>：紐づけるのは LINE の返信のように返信ボタンを使ったときだけ。普通に送った投稿（「自分もみんなありがとう」など）は紐づけないので、SOTAが否認されても消えない。Novel Coreが未審査の投稿に返信すると、その返信は送信待機中になる。SOTAの投稿は承認した時刻に送信され、返信はそこから10秒ずつ順にファンへ届く。ファンには必ず SOTSOTA → Novel Core の順で、会話らしい間で表示される。</li>
+        <li><b>大元が承認されるまで出さない</b>：返信を先に承認しても、返信先（返信への返信なら大元）が承認されるまでは送信待機中のまま。大元が否認されると、連なる返信はすべて送信されず、それぞれの投稿者に戻る。</li>
+        <li><b>独立した投稿はすぐ送る</b>：返信でない投稿は待たない。審査なしのテンポは落ちない。</li>
+        <li><b>否認されたら返信はNovel Coreに戻る</b>：SOTAが否認されると、紐づいた返信は送信されない。黙って消さずにNovel Coreへ「送信されませんでした」と知らせ、「引用を外して送る／書き直す／破棄」を選んでもらう。</li>
+        <li><b>待ちはNovel Coreがいつでも解除できる</b>：送信待機中の返信に「待たずに送る」を出す。審査が長引いたときの逃げ道になる。</li>
+        <li><b>マネには待っている返信の数を見せる</b>：未審査バブルの下に「この投稿の承認を待っている返信 ◯件」を出し、承認を急ぐ理由が分かるようにする。</li>
+      </ol>
+      <p class="note">現行デザインとの関係：マネアプリの「先に審査した投稿から送信されます」（承認順に送信）と、アーティスト側の「承認済・送信待機中」表示はそのまま使えます。追加するのは、審査なしアーティストの返信を審査待ちの投稿に紐づける部分と、否認時にその返信をNovel Coreに戻す部分です。</p>
+      <h3>定例で決めたいこと</h3>
+      <ul>
+        <li>否認されたときの返信の扱い：Novel Coreに戻して選んでもらう（この案）か、自動で破棄して通知だけにするか。</li>
+        <li>送り方を2種類（通常／返信）にするか、3種類目として「SOTAの後に送る（引用なし・否認されても送る）」を加えるか。</li>
+        <li>マネが本文を編集して承認した場合：紐づいた返信をそのまま送るか、Novel Coreに確認するか。</li>
+        <li>楽屋ビュー：審査前のテキストを他事務所のアーティストに見せてよいか（情報管理上の可否）。</li>
+        <li>フェス当日の運用：審査担当を張り付ける時間帯と通知の出し方。</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+const NAME={A:'SOTA',B:'Novel Core'};
+const AV={A:'S',B:'N'};
+const ROLE={A:'審査あり',B:'審査なし'}; /* アーティスト・マネの画面だけに出す（ファンには出さない） */
+const BASE=20*3600;
+const REASONS=['ネタバレ','表現の修正','告知前の情報','その他'];
+const S={mode:'proposal',now:0,speed:2,paused:false,posts:[],log:[],seq:0,reply:{A:null,B:null},
+  scenario:null,rejecting:null,rejReason:null,flash:new Set(),sig:{},pubSeq:0};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=t=>{t=Math.floor(BASE+t);const h=Math.floor(t/3600)%24,m=Math.floor(t/60)%60,s=t%60;return [h,m,s].map(n=>String(n).padStart(2,'0')).join(':')};
+const hm=t=>fmt(t).slice(0,5);
+const byId=id=>S.posts.find(p=>p.id===id);
+const short=s=>s.length>18?s.slice(0,18)+'…':s;
+/* 返信先がまだ審査待ち（＝この返信は承認後に送る対象） */
+const GAP=10; /* 承認後、返信をファンに出す間隔（秒） */
+const linked=p=>!!p.link&&!p.detached;
+/* 返信の連鎖をたどった大元（まだ送信されていない最初の投稿） */
+const root=p=>{let q=p;while(linked(q)&&byId(q.link).fan!=='published')q=byId(q.link);return q};
+const waitsParent=p=>linked(p)&&byId(p.link).fan==='wait';
+
+function log(k,msg){S.log.unshift({t:S.now,k,msg});renderLog()}
+
+function post(author,text,replyTo){
+  text=text.trim(); if(!text) return;
+  const p={id:'p'+(++S.seq),author,text,replyTo:replyTo||null,postedAt:S.now,
+    review:author==='A'?'pending':'none',fan:'wait',publishedAt:null,detached:false,reason:null,link:null};
+  const par=replyTo&&byId(replyTo);
+  if(S.mode==='proposal'&&par&&par.fan==='wait') p.link=par.id;
+  S.posts.push(p);
+  let r=par?`（${NAME[par.author]}「${short(par.text)}」への返信）`:'';
+  if(p.link) r+=` → ${NAME[root(p).author]}の投稿の承認後に送信`;
+  log(author,`${NAME[author]} 投稿：「${short(text)}」${r}${author==='A'?' → 審査依頼':''}`);
+  step();
+}
+
+function decide(id,ok,reason){
+  const p=byId(id); if(!p||p.review!=='pending') return;
+  p.review=ok?'approved':'rejected'; p.reason=reason||null; p.decidedAt=S.now;
+  log('M',`SOTAのマネ ${ok?'承認':'否認（'+reason+'）'}：「${short(p.text)}」 審査まで ${Math.round(S.now-p.postedAt)}秒`);
+  S.rejecting=null; S.rejReason=null; step();
+}
+
+function publish(p,at){
+  p.fan='published'; p.publishedAt=at??S.now; p.pubSeq=++S.pubSeq;
+  S.flash.add(p.id);
+  let note='';
+  if(p.replyTo&&!p.detached){const par=byId(p.replyTo); if(par.fan!=='published') note=par.fan==='rejected'?'（⚠ 返信先は否認されて非公開）':'（⚠ 返信先がまだファンに見えていない）';}
+  log('F',`ファンに送信：${NAME[p.author]}「${short(p.text)}」${note}`);
+}
+
+function step(){
+  const ps=S.posts;
+  for(let i=0;i<ps.length;i++){
+    const p=ps[i];
+    if(p.fan!=='wait') continue;
+    if(p.review==='rejected'){p.fan='rejected';continue}
+    if(p.review==='pending') continue;
+    if(S.mode==='strict'){
+      if(ps.slice(0,i).some(q=>q.fan==='wait')) continue;
+      publish(p);continue;
+    }
+    if(linked(p)){
+      const par=byId(p.link);
+      if(par.fan==='wait') continue;
+      if(['rejected','returned','withdrawn'].includes(par.fan)){p.fan='returned';log('X',`返信先が送信されなかった → 返信は送信せず${NAME[p.author]}に戻す：「${short(p.text)}」`);continue}
+      const sibs=S.posts.filter(q=>q.link===par.id&&!q.detached&&q.fan!=='withdrawn'&&q.fan!=='returned');
+      const at=par.publishedAt+GAP*(sibs.indexOf(p)+1);
+      if(S.now<at){p.dueAt=at;continue}
+      publish(p,at);continue;
+    }
+    publish(p);
+  }
+  render();
+}
+
+/* ---------- 描画 ---------- */
+function waitReason(p){
+  if(!linked(p)) return '前の投稿の審査待ち';
+  if(byId(p.link).fan==='wait') return `${NAME[root(p).author]}の投稿の承認後に送信されます`;
+  return `${NAME[byId(p.link).author]}の投稿に続けて送信（あと${Math.max(0,Math.ceil(p.dueAt-S.now))}秒）`;
+}
+function quote(p,viewer){
+  if(!p.replyTo||p.detached) return '';
+  const par=byId(p.replyTo);
+  if(viewer==='F'&&par.fan!=='published') return `<div class="q broken">${par.fan==='rejected'?'返信先の投稿は表示できません':'まだ表示されていない投稿への返信'}</div>`;
+  return `<div class="q">${esc(NAME[par.author])}：${esc(par.text)}</div>`;
+}
+function fl(p,v){return S.flash.has(p.id+v)?' flash':''}
+/* 返信ボタン：アーティストの画面で、送信済み・送信待機中・未審査のバブルに付ける */
+function replyBtn(p,v){
+  if(v!=='A'&&v!=='B') return '';
+  if(['rejected','withdrawn','returned'].includes(p.fan)) return '';
+  return `<button class="rbtn" data-act="reply" data-who="${v}" data-id="${p.id}" aria-label="この投稿に返信" title="返信">↩</button>`;
+}
+function sel(p,v){return S.reply[v]===p.id?' sel':''}
+
+/* 自分の投稿（Figma: 右寄せグレー、左に状態、下に送信待機中） */
+function ownBubble(p,v,extra){
+  let side='',under='';
+  if(p.fan==='withdrawn') side='<span class="ng">破棄</span>';
+  else if(p.review==='pending') side='<span class="rv">審査中</span>';
+  else if(p.fan==='rejected'){side='<span class="ng">否認</span>';under=`<span class="why">否認理由：${esc(p.reason)}</span>`}
+  else if(p.fan==='returned') side='<span class="ng">未送信</span>';
+  else if(p.fan==='wait'){
+    side=p.review==='approved'?'<span class="ok">承認済</span>':'';
+    under=`<span class="wpill">送信待機中</span><span>${waitReason(p)}</span>`;
+    if(waitsParent(p)) under+=`<button class="rep" data-act="detach" data-id="${p.id}">待たずに送る</button>`;
+  } else side=`${p.review==='approved'?'<span class="ok">承認済</span>':''}<span>${hm(p.publishedAt)}</span>`;
+  const dim=p.fan==='withdrawn'?' struck':'';
+  const pend=p.fan!=='published'?' pend':'';
+  return `<div class="msg mine" id="${v}-${p.id}"><div class="mb">
+    <div class="brow"><div class="side">${side}</div>${replyBtn(p,v)}<div class="bub${pend}${dim}${sel(p,v)}${fl(p,v)}">${quote(p,v)}${esc(p.text)}</div></div>
+    ${under?`<div class="under">${under}</div>`:''}${extra}</div></div>`;
+}
+
+/* 他人の投稿（Figma: アバター＋名前＋状態、白バブル） */
+function otherBubble(p,v,extra){
+  let st='',side='';
+  if(p.review==='pending') st='<span class="st">未審査</span>';
+  else if(p.fan==='rejected') st='<span class="st ng">否認</span>';
+  else if(p.fan==='withdrawn'||p.fan==='returned') st='<span class="st">未送信</span>';
+  else if(p.fan==='wait') st=`<span class="st">送信待機中${waitsParent(p)?`・${NAME[root(p).author]}の承認待ち`:''}</span>`;
+  if(p.fan==='published') side=hm(p.publishedAt);
+  const dim=p.fan==='withdrawn'?' struck':'';
+  const pend=p.fan!=='published'?' pend':'';
+  return `<div class="msg" id="${v}-${p.id}"><div class="av ${p.author}">${AV[p.author]}</div><div class="mb">
+    <div class="nm">${NAME[p.author]}<span class="role ${p.author}">${ROLE[p.author]}</span>${st}</div>
+    <div class="brow"><div class="bub${pend}${dim}${sel(p,v)}${fl(p,v)}">${quote(p,v)}${esc(p.text)}</div>${replyBtn(p,v)}<div class="side l">${side}</div></div>
+    ${extra}</div></div>`;
+}
+
+/* アーティストの画面：楽屋ビュー（未審査も見える）。並びは送信順＋未送信は末尾 */
+function artistOrder(list){
+  return [...list].sort((a,b)=>(a.pubSeq||1e9+a.postedAt)-(b.pubSeq||1e9+b.postedAt));
+}
+function artistFeed(who){
+  const backstage=S.mode==='proposal';
+  const list=artistOrder(S.posts.filter(p=>backstage||p.author===who||p.fan==='published'));
+  const html=list.map(p=>{
+    let extra='';
+    if(p.author===who&&p.fan==='returned')
+      extra=`<div class="notice">返信先の${NAME[byId(p.link).author]}の投稿が送信されなかったため、この返信も送信されませんでした。
+        <div class="prow"><button class="pbtn dk" data-act="resend" data-id="${p.id}">引用を外して送る</button><button class="pbtn gh" data-act="rewrite" data-who="${who}" data-id="${p.id}">書き直す</button><button class="pbtn gh" data-act="withdraw" data-id="${p.id}">破棄</button></div></div>`;
+    if(who==='A'&&p.author==='A'&&p.fan==='rejected'&&!p.rewritten)
+      extra=`<div class="prow" style="justify-content:flex-end"><button class="pbtn gh" data-act="rewrite" data-who="A" data-id="${p.id}">書き直す</button></div>`;
+    return p.author===who?ownBubble(p,who,extra):otherBubble(p,who,extra);
+  }).join('');
+  return html||'<div class="empty">まだ投稿はありません</div>';
+}
+
+function mgrFeed(){
+  const html=artistOrder(S.posts).map(p=>{
+    let extra='';
+    if(p.author==='A'&&p.review==='pending'){
+      const i=S.posts.indexOf(p);
+      let hold='';
+      if(S.mode==='proposal'){
+        if(waitsParent(p)) hold+=`<div class="hold"><b>返信先が未審査です</b><span>承認しても、${NAME[root(p).author]}の大元の投稿が承認されるまで送信されません</span></div>`;
+        const n=S.posts.filter(q=>q.link===p.id&&q.fan==='wait'&&!q.detached).length;
+        if(n) hold+=`<div class="hold"><b>この投稿の承認を待っている返信 ${n}件</b><span>承認すると${GAP}秒ずつ順にファンへ届きます。否認すると返信した人に戻ります</span></div>`;
+      }
+      if(S.mode==='strict'){
+        const n=S.posts.slice(i+1).filter(q=>q.fan==='wait'&&q.review!=='pending').length;
+        if(n) hold=`<div class="hold"><b>後続 ${n}件が送信待機中</b><span>承認するまでグループ全体が止まります</span></div>`;
+      }
+      extra=`<div class="prow"><button class="pbtn ok" data-act="approve" data-id="${p.id}">承認</button><button class="pbtn ng" data-act="askrej" data-id="${p.id}">否認</button></div>${hold}`;
+    }
+    return otherBubble(p,'M',extra);
+  }).join('');
+  return html||'<div class="empty">まだ投稿はありません</div>';
+}
+
+function mgrStatus(){
+  const n=S.posts.filter(p=>p.author==='A'&&p.review==='pending').length;
+  if(!n) return '<span class="tx" style="color:var(--ph-muted)">未審査の投稿はありません</span>';
+  return `<span class="n">${n}</span><span class="lb">未審査</span><span class="tx">審査を待っている投稿が${n}件あります</span><button class="pbtn dk" data-act="jump">詳細</button>`;
+}
+
+function modalHtml(){
+  if(!S.rejecting) return '';
+  const p=byId(S.rejecting);
+  const n=S.mode==='proposal'?S.posts.filter(q=>q.link===p.id&&q.fan==='wait'&&!q.detached).length:0;
+  return `<div class="modal"><div class="sheet">
+    <h4>投稿申請を否認しますか？</h4>
+    <div class="src">${esc(p.text)}</div>
+    ${n?`<div class="why" style="text-align:left">この投稿への返信 ${n}件は送信されず、返信したアーティストに戻ります。</div>`:''}
+    <div class="lbl">否認理由</div>
+    <div class="reasons">${REASONS.map(r=>`<button data-act="pickr" data-r="${r}" aria-pressed="${S.rejReason===r}">${r}</button>`).join('')}</div>
+    <button class="pbtn ng" data-act="reject" data-id="${p.id}" ${S.rejReason?'':'style="opacity:.4;pointer-events:none"'}>否認</button>
+    <button class="cancel" data-act="cancelrej">キャンセル</button>
+  </div></div>`;
+}
+
+function fanFeed(){
+  const list=S.posts.filter(p=>p.fan==='published').sort((a,b)=>a.pubSeq-b.pubSeq);
+  let html=list.map(p=>`<div class="msg" id="F-${p.id}"><div class="av ${p.author}">${AV[p.author]}</div><div class="mb">
+      <div class="nm">${NAME[p.author]}</div>
+      <div class="brow"><div class="bub${fl(p,'F')}">${quote(p,'F')}${esc(p.text)}</div><span class="ftime">${hm(p.publishedAt)}</span></div></div></div>`).join('');
+  return html||'<div class="empty">トークが始まるのを待っています</div>';
+}
+
+function paint(id,html,stick){
+  if(S.sig[id]===html) return;
+  S.sig[id]=html;
+  const el=$(id); const atBottom=el.scrollHeight-el.scrollTop-el.clientHeight<80;
+  el.innerHTML=html;
+  if(stick&&atBottom) el.scrollTop=el.scrollHeight;
+}
+
+function render(){
+  const fresh=[...S.flash]; S.flash.clear();
+  for(const id of fresh) for(const v of ['A','B','M','F']) S.flash.add(id+v);
+  paint('feedA',artistFeed('A'),true);
+  paint('feedB',artistFeed('B'),true);
+  paint('feedM',mgrFeed(),true);
+  paint('feedF',fanFeed(),true);
+  paint('mstatus',mgrStatus(),false);
+  paint('modal',modalHtml(),false);
+  S.flash.clear();
+  const v=S.mode==='proposal'?'楽屋ビュー：未審査の投稿も見えます（ファンには非公開）':'ファンに送信済みの投稿と自分の投稿だけが見えます';
+  $('viewA').textContent=v; $('viewB').textContent=v;
+  for(const w of ['A','B']){
+    const r=S.reply[w]; const box=$('rep'+w);
+    box.hidden=!r;
+    if(r){const p=byId(r);box.querySelector('span').textContent=`↩ ${NAME[p.author]}「${p.text}」に返信${S.mode==='proposal'&&p.fan==='wait'?`（${NAME[root(p).author]}の投稿の承認後に送信。否認されたら送信されません）`:''}`;}
+  }
+  $('clock').textContent=fmt(S.now);
+}
+
+function renderLog(){
+  $('log').innerHTML=S.log.map(l=>`<div><span class="t">${fmt(l.t)}</span><span class="${l.k}">${esc(l.msg)}</span></div>`).join('')||'<div><span class="t">—</span><span>「シナリオ再生」を押すか、各画面から投稿してください</span></div>';
+}
+
+/* ---------- シナリオ ---------- */
+const find=pre=>S.posts.find(p=>p.text.startsWith(pre)).id;
+const SCENARIO=[
+  {at:0,  f:()=>post('A','今日のステージ、来てくれたみんなありがとう！')},
+  {at:3,  f:()=>post('B','SOTAくんお疲れさま！ラストの曲やばかった',find('今日のステージ'))},
+  {at:6,  f:()=>post('B','明日も同じステージ楽しみにしてます！',find('今日のステージ'))},
+  {at:9,  f:()=>post('B','このあと21時からアフタートーク配信やります〜')},
+  {at:20, f:()=>decide(find('今日のステージ'),true)},
+  {at:25, f:()=>post('A','Coreくんの客席降り、楽屋のモニターで見てた笑 明日はあの曲もやるよ')},
+  {at:29, f:()=>post('B','見られてたの恥ずかしい笑',find('Coreくんの'))},
+  {at:37, f:()=>decide(find('Coreくんの'),false,'ネタバレ')},
+];
+function play(){reset();S.scenario={start:S.now,i:0};$('play').textContent='再生中…';log('M','— シナリオ開始 —')}
+function runScenario(){
+  const sc=S.scenario; if(!sc) return;
+  while(sc.i<SCENARIO.length&&S.now-sc.start>=SCENARIO[sc.i].at){SCENARIO[sc.i].f();sc.i++}
+  if(sc.i>=SCENARIO.length){S.scenario=null;$('play').textContent='シナリオ再生'}
+}
+
+function reset(){
+  Object.assign(S,{now:0,posts:[],log:[],seq:0,pubSeq:0,reply:{A:null,B:null},scenario:null,rejecting:null,rejReason:null,sig:{}});
+  $('play').textContent='シナリオ再生'; renderLog(); render();
+}
+
+function setMode(m){
+  S.mode=m;
+  reset();
+}
+
+/* ---------- 入力 ---------- */
+function sendFrom(w){const inp=$('in'+w);post(w,inp.value,S.reply[w]);inp.value='';S.reply[w]=null;render()}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t) return;
+  const {act,who,id}=t.dataset;
+  if(act==='send') sendFrom(who);
+  if(act==='reply'){S.reply[who]=id;render();$('in'+who).focus()}
+  if(act==='unreply'){S.reply[who]=null;render()}
+  if(act==='approve') decide(id,true);
+  if(act==='askrej'){S.rejecting=id;S.rejReason=null;render()}
+  if(act==='pickr'){S.rejReason=t.dataset.r;render()}
+  if(act==='cancelrej'){S.rejecting=null;render()}
+  if(act==='reject') decide(id,false,S.rejReason);
+  if(act==='jump'){const p=S.posts.find(q=>q.author==='A'&&q.review==='pending');const el=p&&$('M-'+p.id);if(el)el.scrollIntoView({block:'center'})}
+  if(act==='detach'){const p=byId(id);p.detached=true;log('B','Novel Core：承認を待たずに引用なしで送信');step()}
+  if(act==='resend'){const p=byId(id);p.detached=true;p.fan='wait';log('B','Novel Core：引用を外して送信');step()}
+  if(act==='withdraw'){const p=byId(id);p.fan='withdrawn';log('B','Novel Core：返信を破棄');render()}
+  if(act==='rewrite'){const p=byId(id);p.rewritten=true;if(p.fan==='returned')p.fan='withdrawn';$('in'+who).value=p.text;$('in'+who).focus();render()}
+});
+['A','B'].forEach(w=>$('in'+w).addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();sendFrom(w)}}));
+$('play').addEventListener('click',play);
+$('reset').addEventListener('click',reset);
+$('pause').addEventListener('click',()=>{S.paused=!S.paused;$('pause').textContent=S.paused?'再開':'一時停止'});
+$('speed').addEventListener('change',e=>S.speed=+e.target.value);
+
+let last=performance.now();
+setInterval(()=>{
+  const n=performance.now(),dt=(n-last)/1000;last=n;
+  if(S.paused) return;
+  S.now+=dt*S.speed;
+  runScenario(); step();
+},200);
+
+setMode('proposal');
+</script>
+
+</body>
+</html>
