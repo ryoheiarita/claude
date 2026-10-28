@@ -149,6 +149,9 @@ h2{font-size:20px;margin:0 0 4px;font-weight:700}
 .ttl h3{margin:0;font-size:28px;font-weight:800}
 .ttl .x,.hbtn{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:grid;place-items:center;padding:0;flex:none}
 .ttl .x svg,.hbtn svg{width:40px;height:40px;display:block;margin:-1px}
+/* Artists一覧（Home）右上のマイページ導線: タブバーが無いので、ここから Mypage へ。アイコンはタブバーの Mypage と同じ Lottie の先頭フレーム */
+.ttl .x .mp-ic{width:24px;height:24px;display:block;transform:scale(1.3)}
+.ttl .x .mp-ic svg{width:24px!important;height:24px!important;margin:0}
 .comm{margin:0 16px;padding:12px 14px 14px;background:var(--card);border-radius:16px}
 .lbl{font-size:13px;color:var(--mute);margin-bottom:8px}
 .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -483,7 +486,7 @@ function tile(i,mode,small){
 }
 function artists(mode,auto){
   return `${mode==='lite'?banner(auto):''}
-  <div class="ttl"><h3>Artists</h3><button type="button" class="x" aria-label="閉じる">${ICONS.close}</button></div>
+  <div class="ttl"><h3>Artists</h3><button type="button" class="x" data-mypage aria-label="マイページ"><span class="mp-ic"></span></button></div>
   <section class="comm"><div class="lbl">Your Community</div><div class="g3">${COMMUNITY.map(i=>tile(i,mode,true)).join('')}</div></section>
   <div class="filters"><span class="on">ALL</span><span>BMSG</span><span>B-RAVE</span></div>
   <div class="g3 all">${ARTISTS.map((a,i)=>tile(i,mode,false)).join('')}</div>`;
@@ -567,6 +570,7 @@ function paint(p,screen,mode,opts={}){
   v.style.setProperty('--k',v.clientWidth/390);
   p.counts=null;
   v.innerHTML=html; v.scrollTop=0;
+  v.querySelectorAll('.mp-ic').forEach(h=>{ if(window.lottie&&window.TABBAR_ICONS) lottie.loadAnimation({container:h,renderer:'svg',loop:false,autoplay:false,animationData:TABBAR_ICONS.mypage}).goToAndStop(0,true) });
   p.screen.classList.toggle('tb',TABBAR_SCREENS.includes(screen));
   const blk=screen==='top'&&mode==='lite';
   p.screen.classList.toggle('blk',blk); v.classList.toggle('blk',blk);
@@ -687,6 +691,7 @@ liveEl.addEventListener('click',e=>{
   else if(q('[data-retry]')) play();
   else if(q('[data-normal]')){log('「通常に戻す」が押された → 画像・動画を読み込む');S.mode='normal';S.auto=false;draw()}
   else if(q('[data-artist]')){S.art=+q('[data-artist]').dataset.artist;S.screen='top';draw()}
+  else if(q('[data-mypage]')){log('マイページへ（Artists一覧にはタブバーが無いので、右上のボタンから移動）')}
   else if(q('[data-join]')){log('「入会する」が押された → bmsg.shop の入会ページ（Webビュー）へ。ここは軽量モードでも速くならない')}
   else if(q('[data-back]')){S.screen='artists';draw()}
   else if(q('[data-article]')){S.screen='article';draw()}
