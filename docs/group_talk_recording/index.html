@@ -65,6 +65,9 @@ h2{font-size:16px;font-weight:700;margin:0}
 .phase.pub{background:#dff3e6;color:#1f7a44}
 
 /* 5画面：アプリは Figma【WIP】BwithU_UI 872-1919（B with U Manager トークルーム）準拠。375pt 幅で組み、列幅に合わせて zoom で縮小 */
+.skip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.skip .lb{font-size:13px;font-weight:700;margin-right:4px}
+.skip .hint{font-size:12px;color:var(--muted);flex-basis:100%}
 .stage{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;flex-wrap:wrap}
@@ -295,9 +298,11 @@ h2{font-size:16px;font-weight:700;margin:0}
     <button class="btn" id="bReset">リセット</button>
     <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
     <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
-    <label class="ctl">収録中のファン画面<select id="teaser"><option value="on">収録中と知らせる</option><option value="off">何も出さない</option></select></label>
   </div>
 
+  <div class="skip" id="skip"><span class="lb">状態へスキップ</span>
+    <button class="btn" data-jump="idle">収録前</button><button class="btn" data-jump="rec">収録中</button><button class="btn" data-jump="review">確認中</button><button class="btn" data-jump="done">確認後・公開前</button><button class="btn" data-jump="pub">公開後</button>
+    <span class="hint">今のシナリオ（A／B）をその状態まで進めて一時停止します。「再開」で続きから動きます</span></div>
   <div class="stage" id="stage"></div>
 
   <div class="lower">
@@ -308,7 +313,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>開始はマネがナビ右上の「収録」ボタンから。アクションシートで「今すぐ収録を開始」か「日時を指定して予約」（終了は任意）を選ぶ。予約は時刻になると自動で開始</li><li>収録前（予約なし）は上部バーを出さない</li>
         <li>予約中は、全員の画面の上部バーに「2026年11月18日 20:00 から収録を開始します」、ナビ右上に開始時刻を表示。予約するとアーティストに通知（ログに表示）。予約後はナビ右上が「予約済み 20:00」になり、そこから前倒し開始・変更・取消ができる</li>
         <li>準備完了の確認はしない。マネの画面で誰がルームにいるかだけ見える。遅れて来ても話した順に公開される</li>
-        <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
+        <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない（ファン画面では収録していることも知らせない）。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
         <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
         <li>収録中はナビ右上が「収録終了」、確認中は「公開」になる。終了後はマネが確認（削除・書き換え）→「公開」から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
         <li>投稿の時刻表示は、収録中・確認中は収録開始からの経過時間（0:21 など）。公開後はアーティスト・マネ・ファンとも公開時刻を起点にした時刻（20:05 公開なら 20:05〜）</li>
@@ -320,7 +325,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>収録予約を設定できるのはマネだけか（アーティストからの申請も受けるか）</li>
         <li>予約の項目は「開始日時だけ」か「開始＋終了（任意）」か</li>
         <li>準備完了制は入れず、在室の表示だけでよいか</li>
-        <li>送信予約のとき、ファンに「◯時公開予定」と出すか。公開時の流し方（話した間隔で流す／まとめて出す）は今すぐ公開と同じでよいか</li>
+        <li>送信予約のときの流し方（話した間隔で流す／まとめて出す）は、今すぐ公開と同じでよいか</li>
         <li>公開前に次の収録を始めてよいか</li>
         <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか／書き換えを本人に通知するか</li>
       </ul>
@@ -632,11 +637,7 @@ function mgrModal(){
     <button class="ab dk wide" data-act="save" data-id="${p.id}">保存</button><button class="cancel" data-act="cancel">キャンセル</button></div>`;
 }
 function fanFeed(){
-  const P=st.phase, teaser=$('teaser').value==='on';
-  if(teaser&&P==='idle'&&st.rsv) return `<div class="teaser"><div class="ic">📅</div><b>${hm(st.rsv.start)} からアーティストが収録予定</b><span>収録が終わり次第、このトークルームに公開されます</span></div>`;
-  if(P==='idle'||(!teaser&&P!=='pub')) return `<div class="empty">トークが始まるのを待っています</div>`;
-  if(P==='rec') return `<div class="teaser"><div class="ic">🎙</div><b>アーティストが収録中</b><span>終わり次第、このトークルームに公開されます</span></div>`;
-  if(P==='review') return `<div class="teaser"><div class="ic">⏳</div><b>${st.pubRsv?`${hm(st.pubRsv)} 公開予定`:'まもなく公開'}</b><span>収録が終わりました</span></div>`;
+  if(st.phase!=='pub') return `<div class="empty">メッセージはまだありません</div>`;
   const list=fanList();
   const all=st.posts.filter(p=>!p.del).length;
   const html=list.map(({p,at})=>{
@@ -684,6 +685,23 @@ function statusBar(k){
   return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>`;
 }
 
+/* ---- 状態へスキップ：シナリオを早送りして止める ---- */
+const JUMP={
+  idle:()=>st.now-T0>=12,
+  rec:()=>st.phase==='rec'&&st.now-T0>=90,
+  review:()=>st.phase==='review'&&st.now-st.recEnd>=12,
+  done:()=>st.phase==='review'&&st.now-st.recEnd>=(st.trig==='schedule'?29:20),
+  pub:()=>st.phase==='pub'&&fanList().length===st.posts.filter(p=>!p.del).length,
+};
+function jump(k){
+  reset(st.trig,true);
+  for(let i=0;i<20000&&!JUMP[k]();i++) advance(0.5);
+  st.run=false; st.sheet=null; st.dlg=null; st.editing=null;
+  for(const c in cache) delete cache[c];
+  render();
+  ['D',...ART,'F'].forEach(x=>{const f=$('feed-'+x); if(f) f.scrollTop=f.scrollHeight});
+}
+
 /* ---- 組み立て ---- */
 function buildModes(){
   $('modes').innerHTML=Object.entries(TRIG).map(([id,m])=>`<button class="mode" data-trig="${id}" aria-pressed="${st.trig===id}">
@@ -721,6 +739,7 @@ function reset(trig,scn=false){
 }
 
 document.addEventListener('click',e=>{
+  const jb=e.target.closest('[data-jump]'); if(jb){jump(jb.dataset.jump);return}
   const m=e.target.closest('[data-trig]'); if(m){reset(m.dataset.trig,true);return}
   const b=e.target.closest('[data-act]'); if(!b) return;
   const k=b.dataset.k, id=+b.dataset.id;
@@ -760,7 +779,7 @@ function sendFrom(k){
 $('bPause').onclick=()=>{st.run=!st.run;render()};
 $('bReset').onclick=()=>reset();
 $('bScn').onclick=()=>reset(null,true);
-['delivery','teaser'].forEach(id=>$(id).onchange=()=>render());
+['delivery'].forEach(id=>$(id).onchange=()=>render());
 
 buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
 let last=performance.now();
