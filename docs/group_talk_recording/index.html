@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../gate.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>グループトーク収録モード</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 上に「収録を何で始めるか」4案、操作バー、中段に5画面（アーティスト3人 / 審査マネD / ファン）、下にログと決まりごと。
+   アプリ画面は Figma【WIP】BwithU_UI（明るいグレー地）、ファン画面は Renewal_UI_Design（黒地）に寄せる */
+:root{
+  --bg:#f3f3f6; --surface:#ffffff; --sunk:#e9e9ef; --fg:#18181f; --muted:#666675; --line:#d9d9e2;
+  --acc:#6a4cf0; --acc-soft:#ece8ff;
+  --S:#6a4cf0; --N:#0f8f7f; --A:#d0602a; --mgr:#b86a00;
+  --ok:#1f8a4c; --warn:#b86a00; --bad:#c23a3a;
+  --ph-bg:#eeeeee; --ph-bar:#f8f8f8; --ph-fg:#1a1a1a; --ph-muted:#8a8a8a; --ph-card:#ffffff; --ph-line:#dcdcdc;
+  --ph-ok:#3dae4f; --ph-ng:#ff4560; --ph-dark:#1a1a1a; --rec:#e5243b;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --acc:#9d88ff; --acc-soft:#2a2448; --mgr:#f0a43a; --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --acc:#9d88ff; --acc-soft:#2a2448; --mgr:#f0a43a; --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6;margin:0}
+.wrap{max-width:1500px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+h1{font-size:24px;font-weight:700;margin:0;text-wrap:balance}
+h2{font-size:16px;font-weight:700;margin:0}
+.lead{color:var(--muted);margin:6px 0 0;max-width:80ch}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.conds{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cond{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.cond b{color:var(--acc);margin-right:6px;font-family:var(--f-mono)}
+
+/* 開始トリガー */
+.sec{display:flex;flex-direction:column;gap:10px}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.modes{grid-template-columns:1fr}}
+.mode{all:unset;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mode:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.mode[aria-pressed="true"]{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.mt{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mt .k{font-family:var(--f-mono);color:var(--acc)}
+.md{color:var(--muted);font-size:12.5px}
+.pc{font-size:12px;display:flex;flex-direction:column;gap:2px}
+.pc .g{color:var(--ok)} .pc .x{color:var(--bad)} .pc .e{color:var(--muted)}
+.rec-tag{font-size:11px;background:var(--acc);color:#fff;border-radius:4px;padding:0 6px;font-weight:500}
+
+/* 操作バー */
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.btn{all:unset;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;background:var(--sunk);color:var(--fg);white-space:nowrap}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn.pri{background:var(--acc);color:#fff}
+.clock{font-family:var(--f-mono);font-size:20px;font-weight:500}
+.ctl{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.ctl select{font:inherit;color:var(--fg);background:var(--sunk);border:0;border-radius:6px;padding:3px 6px}
+.phase{font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--sunk)}
+.phase.rec{background:var(--rec);color:#fff}
+.phase.review{background:#fff1dc;color:#9a5a00}
+.phase.pub{background:#dff3e6;color:#1f7a44}
+
+/* 5画面：アプリは Figma【WIP】BwithU_UI 872-1919（CMS App トークルーム）準拠。375pt 幅で組み、列幅に合わせて zoom で縮小 */
+.stage{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;flex-wrap:wrap}
+.cap .dot{width:10px;height:10px;border-radius:50%}
+.cap small{font-weight:400;color:var(--muted);font-size:12px}
+
+.phone{width:387px;height:812px;zoom:var(--z,1);background:#efefef;color:#191919;border-radius:46px;border:6px solid #1a1a1a;display:flex;flex-direction:column;overflow:hidden;position:relative;color-scheme:light;
+  font-family:-apple-system,"SF Pro Text","Hiragino Sans","Noto Sans JP",var(--f-body);font-size:14px;line-height:20px}
+.sbar{height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 26px 0 46px;font-size:17px;font-weight:600;letter-spacing:-.408px}
+.sbar img{width:77px;height:13px;display:block}
+.nav{background:#fafafa;border-bottom:1px solid #dfdfdf;flex:none}
+.navc{height:42px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.nr{justify-self:end;padding-right:12px;display:flex;align-items:center}
+.nrsv{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;font-size:15px;font-weight:600;letter-spacing:-.24px}
+.nrsv small{font-size:10px;font-weight:600;color:#ff3e55}
+.nrrec{display:inline-flex;align-items:center;gap:4px;background:#ff3e55;color:#fff;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.nrrec::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+.recbn{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:#f6f6f6;border-bottom:1px solid #dfdfdf;font-size:12px;line-height:1.4;min-width:0}
+.recbn .l{display:flex;align-items:center;gap:8px;min-width:0}
+.recbn.rec{background:#fff0f2;border-color:#ffd6dc}
+.recbn.review{background:#fff6e6;border-color:#ffe2b3}
+.recbn.pub{background:#eef8f1;border-color:#cfeadb}
+.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;padding:10px 0 16px;display:flex;flex-direction:column;gap:16px}
+.sess .fa,.sess .me{padding:0 8px}
+.shd.sft{justify-content:flex-end}
+.shd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px;font-size:11px;line-height:1.4;color:#838383;white-space:nowrap}
+.shd .pubt{font-weight:600;color:#1f7a44}
+.shd .pend{font-weight:600;color:#b86a00}
+.shd .recn{font-weight:600;color:#ff3e55}
+.recbn .mono{font-size:12px;flex:none}
+.recbn .l .t{color:#5a5a5a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navc img{margin-left:16px;width:28px;height:28px;display:block}
+.navc b{font-size:17px;font-weight:600;letter-spacing:-.408px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed{flex:1;overflow-y:auto;padding:16px 0 12px;display:flex;flex-direction:column;gap:16px}
+.empty{color:#9f9f9f;font-size:13px;text-align:center;margin:auto 0;padding:0 24px}
+
+/* 他メンバーの投稿（talkroom/bubble/from_artist/text） */
+.fa{display:flex;gap:6px;align-items:flex-start;padding:0 16px;min-width:0}
+.av{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
+.av.S{background:var(--S)} .av.N{background:var(--N)} .av.A{background:var(--A)}
+.fcol{display:flex;flex-direction:column;gap:4px;max-width:280px;min-width:0}
+.nmr{display:flex;gap:4px;font-size:12px;line-height:normal;letter-spacing:-.408px;white-space:nowrap}
+.nmr b{font-weight:600}
+.nmr .s{color:#9f9f9f} .nmr .s.ng{color:#ff3e55}
+.brow{display:flex;gap:8px;align-items:flex-end;min-width:0}
+.bub{font-size:14px;line-height:20px;border-radius:12px;overflow:hidden;overflow-wrap:anywhere;min-width:0}
+.bub .tx{padding:12px}
+.fa .bub{background:#fff;max-width:243px}
+.bub.off{background:#f7f7f8!important;color:#191919!important;box-shadow:none;border:1px dashed #b9b9bf}
+.bub.off .tx{text-decoration:line-through;color:#838383}
+.tm{font-size:11px;line-height:normal;color:#838383;letter-spacing:-.24px;white-space:nowrap}
+.tm.ng{color:#ff3e55}
+.side{display:flex;flex-direction:column;gap:6px;align-items:flex-start;flex:none}
+
+/* 自分の投稿（talkroom/bubble/send_from_artist） */
+.me{display:flex;gap:6px;align-items:flex-end;justify-content:flex-end;padding:0 16px;min-width:0}
+.me .side{align-items:flex-end}
+.me .bub{background:#191919;color:#fff;max-width:280px}
+.more{all:unset;cursor:pointer;width:24px;height:24px;display:block;border-radius:50%}
+.more img{width:24px;height:24px;display:block}
+.more:hover{background:rgba(0,0,0,.08)}
+.more:focus-visible{outline:2px solid #191919}
+
+/* 返信（talkroom/bubble/send_from_artist/reply） */
+.rq{display:flex;gap:6px;align-items:center;padding:12px;border-bottom:1px solid #dfdfdf;min-width:0}
+.me .rq{border-color:#3d3d3d}
+.rt{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:12px;line-height:normal;letter-spacing:-.408px}
+.rt b{font-weight:600}
+.rt span{color:#9f9f9f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:18px}
+
+/* 下部（投稿者チップ＋TabBar） */
+.foot{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:8px}
+.as{background:#fff;border-radius:30px;padding:6px 12px 6px 8px;display:flex;gap:5px;align-items:center;font-size:14px;font-weight:600;letter-spacing:-.408px;line-height:normal}
+.as .av{width:32px;height:32px;font-size:13px}
+.tab{background:#fff;border-top:1px solid #dfdfdf;width:100%;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px}
+.pillbar{background:#efefef;border:1px solid #dfdfdf;border-radius:28px;padding:4px 8px 4px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.6;min-height:34px}
+.pillbar:empty{display:none}
+.pillbar .l{display:flex;gap:8px;align-items:center;min-width:0}
+.pillbar .l>span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pillbar .mono{font-size:12px}
+.st-rec{color:#ff3e55;display:inline-flex;gap:5px;align-items:center;font-weight:700;white-space:nowrap}
+.st-rec::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff3e55;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.st-rv{color:#b86a00;font-weight:700;white-space:nowrap}
+.st-ok{color:#47b152;font-weight:700;white-space:nowrap}
+.st-wait{font-weight:700;white-space:nowrap}
+.replying{display:flex;gap:8px;align-items:center;font-size:12px;line-height:normal;color:#838383;min-width:0;padding:0 4px}
+.replying[hidden]{display:none}
+.replying span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.replying b{color:#191919;font-weight:600}
+.replying button{all:unset;cursor:pointer;color:#191919;font-size:16px;padding:0 4px}
+.crow{display:flex;gap:10px;align-items:center}
+.crow .ic{width:24px;height:24px;padding:8px 0;flex:none;display:block;box-sizing:content-box}
+.crow input{flex:1;min-width:0;font:inherit;font-size:14px;line-height:20px;border:1px solid #dfdfdf;border-radius:12px;padding:9px 16px;background:#fff;color:#191919}
+.crow input::placeholder{color:#9f9f9f}
+.crow input:disabled{background:#f6f6f6}
+.crow input:focus{outline:none;border-color:#9f9f9f}
+.send{all:unset;cursor:pointer;flex:none;padding:8px 0;display:block}
+.send img{width:24px;height:24px;display:block}
+.send:focus-visible{outline:2px solid #191919}
+.home{height:34px;position:relative;width:calc(100% + 32px);margin:0 -16px;background:#fff;flex:none}
+.home::after{content:"";position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:100px;background:#191919}
+
+/* 審査マネ */
+.racts{display:flex;gap:4px;flex-wrap:wrap}
+.ab{all:unset;cursor:pointer;border-radius:12px;padding:6px 16px;font-size:14px;font-weight:700;line-height:normal;letter-spacing:-.24px;color:#fff;white-space:nowrap;text-align:center}
+.ab:focus-visible{outline:2px solid #191919;outline-offset:1px}
+.ab.ng{background:#ff3e55} .ab.dk{background:#191919} .ab.ok{background:#47b152} .ab.rec{background:#ff3e55}
+.ab.gh{background:#fff;color:#191919;box-shadow:inset 0 0 0 1px #dfdfdf}
+.ab.wide{display:block;padding:12px 0;border-radius:24px;width:100%;box-sizing:border-box;font-size:15px}
+.ab.sm{padding:4px 12px;font-size:12px}
+.orig{font-size:11px;line-height:1.5;color:#838383;text-decoration:line-through;overflow-wrap:anywhere}
+.warn{font-size:12px;line-height:1.5;color:#a36a00;background:#fff4d9;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ntc{margin:0 16px;background:#fff;border:1px solid #ffd2a0;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5}
+.mact{width:100%;display:flex;flex-direction:column;gap:6px}
+.mact:empty{display:none}
+
+/* 書き換えモーダル（審査：編集 の「投稿申請を編集して投稿」準拠） */
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:24px;z-index:5}
+.modal:empty{display:none}
+.sheet{background:#fff;border-radius:16px;padding:24px 16px 12px;width:100%;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.sheet h4{margin:0;font-size:17px;font-weight:600;letter-spacing:-.408px}
+.sheet .av{width:56px;height:56px;font-size:22px}
+.sheet .who{font-size:14px;font-weight:600;margin-top:-6px}
+.sheet textarea{width:100%;font:inherit;font-size:14px;line-height:20px;border:1px solid #dfdfdf;background:#fafafa;border-radius:12px;padding:10px 12px;min-height:88px;resize:vertical;color:#191919;box-sizing:border-box}
+.sheet .note{font-size:11px;color:#838383;align-self:stretch;text-align:left;line-height:1.5}
+.sheet .cancel{all:unset;cursor:pointer;font-size:14px;padding:8px}
+.sheet .lbl{align-self:flex-start;font-size:12px;font-weight:700;margin-bottom:-4px}
+.opts{display:flex;flex-wrap:wrap;gap:6px;align-self:stretch}
+.opt{all:unset;cursor:pointer;border:1px solid #dfdfdf;border-radius:999px;padding:6px 12px;font-size:13px;line-height:normal;background:#fff}
+.opt[aria-pressed="true"]{background:#191919;color:#fff;border-color:#191919}
+.opt:focus-visible{outline:2px solid #191919;outline-offset:1px}
+.tin{align-self:stretch;font:inherit;font-size:16px;border:1px solid #dfdfdf;border-radius:12px;padding:8px 12px;background:#fafafa;color:#191919}
+@media (prefers-reduced-motion:reduce){.st-rec::before{animation:none}}
+
+/* ファン画面（Figma Renewal_UI_Design: 黒地・#232323 バブル） */
+.phone.fan{width:auto;zoom:1;height:calc(812px*var(--z,1));border-radius:24px;background:#101010;color:#fff;font-family:var(--f-body);font-size:13px;line-height:1.6}
+.fhead{background:#060606;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;padding:10px 10px 12px;text-align:center}
+.fback{width:34px;height:34px;border-radius:50%;border:1px solid #2a2a2a;display:grid;place-items:center;font-size:20px;line-height:1}
+.ftitle{font-size:14px;font-weight:700}
+.fan .feed{gap:16px;padding:12px 12px 20px}
+.fan .empty{color:#777}
+.fdate{align-self:center;background:#232323;color:#9a9a9a;font-size:10.5px;border-radius:999px;padding:3px 12px}
+.fmsg{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fnm{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700}
+.fnm .av{width:26px;height:26px;font-size:11px}
+.frow{display:flex;align-items:flex-end;gap:6px;padding-left:34px;min-width:0}
+.fbub{background:#232323;border-radius:18px;overflow:hidden;max-width:86%;min-width:0}
+.fbody{padding:9px 12px 8px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.ftr{font-size:10px;color:#676767;margin-top:4px}
+.fq{padding:9px 12px;border-bottom:1px solid #444;display:flex;flex-direction:column;gap:2px}
+.fql{font-size:10.5px}
+.fqt{font-size:11px;color:#cfcfcf;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ftime{font-size:9.5px;color:#8a8a8a;white-space:nowrap}
+.facts{display:flex;gap:6px;padding-left:34px}
+.fbtn{border:1px solid #2c2c2c;border-radius:999px;padding:3px 11px;font-size:10.5px;color:#cfcfcf}
+.teaser{margin:auto 0;align-self:center;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 16px}
+.teaser .ic{width:56px;height:56px;border-radius:50%;background:#232323;display:grid;place-items:center;font-size:24px}
+.teaser b{font-size:14px}
+.teaser span{font-size:11.5px;color:#9a9a9a}
+.typing{align-self:flex-start;margin-left:34px;background:#232323;border-radius:18px;padding:8px 14px;font-size:12px;color:#9a9a9a;letter-spacing:2px}
+
+/* 下段 */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px}
+@media (max-width:900px){.lower{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.log{font-family:var(--f-mono);font-size:12px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.log div{display:flex;gap:10px}
+.log .t{color:var(--muted);flex:none}
+.log .S{color:var(--S)} .log .N{color:var(--N)} .log .A{color:var(--A)} .log .M{color:var(--mgr)} .log .F{color:var(--ok)} .log .R{color:var(--bad)}
+.spec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.spec li{max-width:72ch}
+.spec h3{font-size:14px;margin:6px 0 0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>グループトーク 収録モード</h1>
+    <p class="lead">アーティスト同士は決まった時間内に自由に話し、そのあいだファンにはまだ出しません。収録が終わったら審査マネが中身を見て、消す投稿だけを選び（必要なら書き換えて）、話した順番のままファンに公開します。</p>
+    <div class="conds">
+      <span class="cond"><b>①</b>審査は外せない → 公開前に必ずマネが見る</span>
+      <span class="cond"><b>②</b>LINEのようなテンポ → アーティスト同士はリアルタイム</span>
+      <span class="cond"><b>③</b>投稿順を守る → 話した順で公開</span>
+    </div>
+  </header>
+
+  <section class="sec">
+    <h2>収録を何で始めるか</h2>
+    <div class="modes" id="modes"></div>
+  </section>
+
+  <div class="bar">
+    <span class="clock" id="clock">19:59:40</span>
+    <span class="phase" id="phase">収録前</span>
+    <button class="btn" id="bPause">一時停止</button>
+    <button class="btn pri" id="bScn">▶ シナリオ再生</button>
+    <button class="btn" id="bReset">リセット</button>
+    <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
+    <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
+    <label class="ctl">表示時刻<select id="timeMode"><option value="spoken">話した時刻</option><option value="pub">公開した時刻</option></select></label>
+    <label class="ctl">収録中のファン画面<select id="teaser"><option value="on">収録中と知らせる</option><option value="off">何も出さない</option></select></label>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="lower">
+    <div class="panel"><h2>ログ</h2><div class="log" id="log"></div></div>
+    <div class="panel spec">
+      <h2>このプロトの決まりごと</h2>
+      <ul>
+        <li>収録中、アーティスト同士の投稿はお互いにすぐ見える。ファンには出ない</li>
+        <li>終わり方は、予約なら「予約した終了時刻」、マネ開始なら「開始ダイアログで決めた終了時刻（指定しなくてもよい）」。どちらもマネが手動で終了でき、上限は30分</li><li>収録中はトークルームの上部に「収録中」を表示。予約の場合は、始まるまで画面右上に収録開始時刻を表示</li>
+        <li>マネは収録中から削除を選び始められる。終了後は「削除」と「書き換え」だけ行い、問題なければ何もしない（＝全部公開）</li>
+        <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
+        <li>公開後、アーティストのアプリには削除・書き換えの結果が表示される</li>
+      </ul>
+      <h3>決めたいこと</h3>
+      <ul>
+        <li>予約とマネ開始のどちらを基本にするか（両方持つか）と、終わり方の組み合わせ</li>
+        <li>ファンへの公開を「話した間隔で流す」か「まとめて出す」か</li>
+        <li>表示時刻を「話した時刻」にするか「公開した時刻」にするか（現行の「送信日時＝承認時刻」の変更になる）</li>
+        <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか</li>
+        <li>書き換えを本人に通知するか、了承を取るか</li>
+        <li>収録中、ファンに「収録中」と知らせるか</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const ART=['S','N','A'];
+const NAME={S:'SOTA',N:'Novel Core',A:'Aile The Shota'};
+const AV={S:'S',N:'N',A:'A'};
+const DATE='2026/11/13';
+const T0=71980, START=72000, SCHED_END=72180, IDLE=60;
+const TRIG={
+  schedule:{k:'A',t:'予約',rec:true,d:'ルームに収録の開始・終了時刻を入れておく。時刻になったら自動で始まり、自動で終わる',
+    g:['審査する人を先に押さえられる','フェスなど決まった企画と相性が良い'],x:['予定外の盛り上がりは拾えない'],e:'終了：予約した終了時刻（マネが早めに終了も可）'},
+  manual:{k:'B',t:'マネが開始',d:'審査マネが「収録を開始」を押し、ダイアログで終了時刻を決める',
+    g:['審査できる状態でしか始まらない','予定外の盛り上がりにも対応できる'],x:['マネがいないと始められない'],e:'終了：開始時のダイアログで決める（決めなくてもよい）'},
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const hms=t=>{t=Math.floor(t);return `${p2(Math.floor(t/3600)%24)}:${p2(Math.floor(t/60)%60)}:${p2(t%60)}`};
+const hm=t=>hms(t).slice(0,5);
+const mmss=t=>{t=Math.max(0,Math.floor(t));return `${p2(Math.floor(t/60))}:${p2(t%60)}`};
+
+let st=null;
+function fresh(trig){
+  return {now:T0,run:true,trig,phase:'idle',recStart:null,recEnd:null,lastPost:null,pubAt:null,
+    posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null};
+}
+const byId=id=>st.posts.find(p=>p.id===id);
+function log(cls,txt){st.log.push({t:st.now,cls,txt})}
+
+/* ---- 状態遷移 ---- */
+function startRec(by,endAt=null){
+  if(st.phase!=='idle') return;
+  st.phase='rec';st.recStart=st.now;st.lastPost=st.now;st.startedBy=by;st.endAt=endAt;
+  log('R',`● 収録開始（${by}）・${endAt?`${hm(endAt)} に終了予定`:'終了時刻は指定なし'}`);
+}
+function confirmStart(){
+  const d=st.dlg; if(!d) return;
+  let endAt=null;
+  if(d.sel==='at'){
+    const v=($('dt')&&$('dt').value)||d.at0; const [h,m]=v.split(':').map(Number);
+    if(!isNaN(h)&&!isNaN(m)){ endAt=h*3600+m*60; if(endAt<=st.now) endAt+=86400; }
+  } else if(d.sel!=='none') endAt=st.now+(+d.sel)*60;
+  st.dlg=null; startRec('マネD',endAt);
+}
+const endText=()=>st.endAt?`${hm(st.endAt)} に終了予定`:'終了時刻は未定（マネが終了）';
+function endRec(by){
+  if(st.phase!=='rec') return;
+  st.phase='review';st.recEnd=st.now;
+  log('R',`■ 収録終了（${by}）→ マネの審査へ`);
+}
+function publish(){
+  if(st.phase!=='review') return;
+  st.phase='pub';st.pubAt=st.now;st.editing=null;
+  const d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
+  log('M',`マネD：公開（削除${d}件・書き換え${e}件）`);
+  log('F',$('delivery').value==='replay'?'ファン：話した間隔で順に表示':'ファン：まとめて表示');
+}
+function post(k,text,replyTo=null){
+  text=text.trim(); if(!text) return null;
+  if(st.phase!=='rec') return null;
+  const p={id:++st.seq,author:k,text,orig:text,replyTo,t:st.now,del:false,edited:false};
+  st.posts.push(p);st.lastPost=st.now;
+  log(k,`${NAME[k]}：${replyTo?'↩ ':''}${text}`);
+  return p;
+}
+function toggleDel(id){
+  const p=byId(id); if(!p||st.phase==='pub') return;
+  p.del=!p.del; log('M',`マネD：${p.del?'削除に選択':'削除を取り消し'}「${p.text}」`);
+}
+function delReplies(id){
+  st.posts.filter(q=>q.replyTo===id&&!q.del).forEach(q=>{q.del=true;log('M',`マネD：返信も削除「${q.text}」`)});
+}
+function saveEdit(id,text){
+  const p=byId(id); text=text.trim(); if(!p||!text) return;
+  p.text=text; p.edited=text!==p.orig; st.editing=null;
+  log('M',p.edited?`マネD：書き換え「${p.orig}」→「${text}」`:'マネD：書き換えを元に戻した');
+}
+
+/* ---- シナリオ ---- */
+const OPEN='収録はじまりました！今日のフェスおつかれさま！';
+const SCN=[
+  {at:16,f:()=>{ if(st.trig==='manual') st.dlg={sel:'2',at0:hm(st.now+180)}; }},
+  {at:20,f:()=>{ if(st.trig==='manual') confirmStart(); }},
+  {at:21,f:()=>{ st.ref.open=post('S',OPEN); }},
+  {at:28,f:()=>post('N','おつかれ〜！めっちゃ楽しかった')},
+  {at:35,f:()=>st.ref.goose=post('A','2曲目のとこ、客席の声で鳥肌立った')},
+  {at:42,f:()=>post('S','あそこ練習した甲斐あった😂',st.ref.goose?.id)},
+  {at:55,f:()=>st.ref.leak=post('N','ちなみに来月の新曲、タイトル「〇〇」でいくらしい')},
+  {at:62,f:()=>post('S','それまだ言っちゃダメなやつ笑',st.ref.leak?.id)},
+  {at:75,f:()=>st.ref.typo=post('A','みんな最後までみてくれてありがと！！')},
+  {at:85,f:()=>post('N','このあと打ち上げいってきます🍻')},
+];
+const SCN_R=[
+  {at:6,f:()=>{ const p=st.ref.leak; if(p&&!p.del) toggleDel(p.id); }},
+  {at:11,f:()=>{ const p=st.ref.leak; if(p) delReplies(p.id); }},
+  {at:17,f:()=>{ const p=st.ref.typo; if(p) saveEdit(p.id,'みんな最後まで見てくれてありがとう！！'); }},
+  {at:26,f:()=>publish()},
+];
+function runScn(){
+  if(!st.scn) return;
+  SCN.forEach((s,i)=>{ if(!st.done.has('a'+i)&&st.now-T0>=s.at){st.done.add('a'+i);s.f()} });
+  if(st.recEnd!=null) SCN_R.forEach((s,i)=>{ if(!st.done.has('r'+i)&&st.now-st.recEnd>=s.at){st.done.add('r'+i);s.f()} });
+}
+
+/* ---- 時計 ---- */
+function advance(dt){
+  const target=st.now+dt;
+  while(st.now<target){
+    st.now=Math.min(target,st.now+0.5);
+    if(st.phase==='idle'&&st.trig==='schedule'&&st.now>=START) startRec('予約時刻',SCHED_END);
+    if(st.phase==='rec'){
+      if(st.endAt&&st.now>=st.endAt) endRec('終了時刻');
+      else if(st.now-st.recStart>=1800) endRec('上限30分');
+    }
+    runScn();
+  }
+}
+
+/* ---- ファンに見えるもの ---- */
+function fanList(){
+  if(st.phase!=='pub') return [];
+  const vis=st.posts.filter(p=>!p.del);
+  if(!vis.length) return [];
+  const replay=$('delivery').value==='replay', base=vis[0].t;
+  return vis.map(p=>({p,at:replay?st.pubAt+(p.t-base):st.pubAt})).filter(x=>x.at<=st.now);
+}
+
+/* ---- 描画 ---- */
+const ICON={more:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJtb3JlX2hvcml6Ij4KPG1hc2sgaWQ9Im1hc2swXzBfODgiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF84OCkiPgo8cGF0aCBpZD0ibW9yZV9ob3Jpel8yIiBkPSJNNi4yMzA3NSAxMy41QzUuODE4MjUgMTMuNSA1LjQ2NTE3IDEzLjM1MzEgNS4xNzE1IDEzLjA1OTJDNC44Nzc2NyAxMi43NjU2IDQuNzMwNzUgMTIuNDEyNSA0LjczMDc1IDEyQzQuNzMwNzUgMTEuNTg3NSA0Ljg3NzY3IDExLjIzNDQgNS4xNzE1IDEwLjk0MDhDNS40NjUxNyAxMC42NDY5IDUuODE4MjUgMTAuNSA2LjIzMDc1IDEwLjVDNi42NDMyNSAxMC41IDYuOTk2NDIgMTAuNjQ2OSA3LjI5MDI1IDEwLjk0MDhDNy41ODM5MiAxMS4yMzQ0IDcuNzMwNzUgMTEuNTg3NSA3LjczMDc1IDEyQzcuNzMwNzUgMTIuNDEyNSA3LjU4MzkyIDEyLjc2NTYgNy4yOTAyNSAxMy4wNTkyQzYuOTk2NDIgMTMuMzUzMSA2LjY0MzI1IDEzLjUgNi4yMzA3NSAxMy41Wk0xMiAxMy41QzExLjU4NzUgMTMuNSAxMS4yMzQ0IDEzLjM1MzEgMTAuOTQwOCAxMy4wNTkyQzEwLjY0NjkgMTIuNzY1NiAxMC41IDEyLjQxMjUgMTAuNSAxMkMxMC41IDExLjU4NzUgMTAuNjQ2OSAxMS4yMzQ0IDEwLjk0MDggMTAuOTQwOEMxMS4yMzQ0IDEwLjY0NjkgMTEuNTg3NSAxMC41IDEyIDEwLjVDMTIuNDEyNSAxMC41IDEyLjc2NTYgMTAuNjQ2OSAxMy4wNTkzIDEwLjk0MDhDMTMuMzUzMSAxMS4yMzQ0IDEzLjUgMTEuNTg3NSAxMy41IDEyQzEzLjUgMTIuNDEyNSAxMy4zNTMxIDEyLjc2NTYgMTMuMDU5MyAxMy4wNTkyQzEyLjc2NTYgMTMuMzUzMSAxMi40MTI1IDEzLjUgMTIgMTMuNVpNMTcuNzY5MyAxMy41QzE3LjM1NjggMTMuNSAxNy4wMDM2IDEzLjM1MzEgMTYuNzA5OCAxMy4wNTkyQzE2LjQxNjEgMTIuNzY1NiAxNi4yNjkzIDEyLjQxMjUgMTYuMjY5MyAxMkMxNi4yNjkzIDExLjU4NzUgMTYuNDE2MSAxMS4yMzQ0IDE2LjcwOTggMTAuOTQwOEMxNy4wMDM2IDEwLjY0NjkgMTcuMzU2OCAxMC41IDE3Ljc2OTMgMTAuNUMxOC4xODE4IDEwLjUgMTguNTM0OCAxMC42NDY5IDE4LjgyODUgMTAuOTQwOEMxOS4xMjIzIDExLjIzNDQgMTkuMjY5MyAxMS41ODc1IDE5LjI2OTMgMTJDMTkuMjY5MyAxMi40MTI1IDE5LjEyMjMgMTIuNzY1NiAxOC44Mjg1IDEzLjA1OTJDMTguNTM0OCAxMy4zNTMxIDE4LjE4MTggMTMuNSAxNy43NjkzIDEzLjVaIiBmaWxsPSIjODM4MzgzIi8+CjwvZz4KPC9nPgo8L3N2Zz4K',back:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiB2aWV3Qm94PSIwIDAgMjggMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJHcm91cCAyIj4KPGNpcmNsZSBpZD0iRWxsaXBzZSAxIiBjeD0iMTQiIGN5PSIxNCIgcj0iMTQiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8ZyBpZD0iQmFjayBJY29uIj4KPHBhdGggaWQ9Ikljb24gLyBjaGV2cm9uLmxlZnQiIGQ9Ik05IDE0QzkgMTQuMjY4OSA5LjEwMjI2IDE0LjQ5ODMgOS4zMTQ2NSAxNC43MDRMMTUuNDUwMyAyMC43MzlDMTUuNjE1NSAyMC45MTMgMTUuODM1OCAyMSAxNi4wODc1IDIxQzE2LjU5ODggMjEgMTcgMjAuNjA0NSAxNyAyMC4wODI1QzE3IDE5LjgyOTQgMTYuODk3NyAxOS42IDE2LjcyNDcgMTkuNDI2TDExLjE5NDcgMTRMMTYuNzI0NyA4LjU3NDAxQzE2Ljg5NzcgOC4zOTIwOSAxNyA4LjE2MjcxIDE3IDcuOTA5NkMxNyA3LjM5NTQ4IDE2LjU5ODggNyAxNi4wODc1IDdDMTUuODM1OCA3IDE1LjYxNTUgNy4wODcwMSAxNS40NTAzIDcuMjYxMDJMOS4zMTQ2NSAxMy4yOTZDOS4xMDIyNiAxMy41MDE3IDkuMDA3ODcgMTMuNzMxMSA5IDE0WiIgZmlsbD0iIzE5MTkxOSIvPgo8L2c+CjwvZz4KPC9zdmc+Cg==',img:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJpbWFnZXNtb2RlIj4KPG1hc2sgaWQ9Im1hc2swXzBfNzUiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF83NSkiPgo8cGF0aCBpZD0iaW1hZ2VzbW9kZV8yIiBkPSJNNSAyMUM0LjQ1IDIxIDMuOTc5MTcgMjAuODA0MiAzLjU4NzUgMjAuNDEyNUMzLjE5NTgzIDIwLjAyMDggMyAxOS41NSAzIDE5VjVDMyA0LjQ1IDMuMTk1ODMgMy45NzkxNyAzLjU4NzUgMy41ODc1QzMuOTc5MTcgMy4xOTU4MyA0LjQ1IDMgNSAzSDE5QzE5LjU1IDMgMjAuMDIwOCAzLjE5NTgzIDIwLjQxMjUgMy41ODc1QzIwLjgwNDIgMy45NzkxNyAyMSA0LjQ1IDIxIDVWMTlDMjEgMTkuNTUgMjAuODA0MiAyMC4wMjA4IDIwLjQxMjUgMjAuNDEyNUMyMC4wMjA4IDIwLjgwNDIgMTkuNTUgMjEgMTkgMjFINVpNNSAxOUgxOVY1SDVWMTlaTTcgMTdIMTdDMTcuMiAxNyAxNy4zNSAxNi45MDgzIDE3LjQ1IDE2LjcyNUMxNy41NSAxNi41NDE3IDE3LjUzMzMgMTYuMzY2NyAxNy40IDE2LjJMMTQuNjUgMTIuNTI1QzE0LjU1IDEyLjM5MTcgMTQuNDE2NyAxMi4zMjUgMTQuMjUgMTIuMzI1QzE0LjA4MzMgMTIuMzI1IDEzLjk1IDEyLjM5MTcgMTMuODUgMTIuNTI1TDExLjI1IDE2TDkuNCAxMy41MjVDOS4zIDEzLjM5MTcgOS4xNjY2NyAxMy4zMjUgOSAxMy4zMjVDOC44MzMzMyAxMy4zMjUgOC43IDEzLjM5MTcgOC42IDEzLjUyNUw2LjYgMTYuMkM2LjQ2NjY3IDE2LjM2NjcgNi40NSAxNi41NDE3IDYuNTUgMTYuNzI1QzYuNjUgMTYuOTA4MyA2LjggMTcgNyAxN1pNOC41IDEwQzguOTE2NjcgMTAgOS4yNzA4MyA5Ljg1NDE3IDkuNTYyNSA5LjU2MjVDOS44NTQxNyA5LjI3MDgzIDEwIDguOTE2NjcgMTAgOC41QzEwIDguMDgzMzMgOS44NTQxNyA3LjcyOTE3IDkuNTYyNSA3LjQzNzVDOS4yNzA4MyA3LjE0NTgzIDguOTE2NjcgNyA4LjUgN0M4LjA4MzMzIDcgNy43MjkxNyA3LjE0NTgzIDcuNDM3NSA3LjQzNzVDNy4xNDU4MyA3LjcyOTE3IDcgOC4wODMzMyA3IDguNUM3IDguOTE2NjcgNy4xNDU4MyA5LjI3MDgzIDcuNDM3NSA5LjU2MjVDNy43MjkxNyA5Ljg1NDE3IDguMDgzMzMgMTAgOC41IDEwWiIgZmlsbD0iIzFDMUIxRiIvPgo8L2c+CjwvZz4KPC9zdmc+Cg==',mic:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJtaWMiPgo8bWFzayBpZD0ibWFzazBfMF8xMTIiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF8xMTIpIj4KPHBhdGggaWQ9Im1pY18yIiBkPSJNMTIgMTRDMTEuMTY2NyAxNCAxMC40NTgzIDEzLjcwODMgOS44NzUgMTMuMTI1QzkuMjkxNjcgMTIuNTQxNyA5IDExLjgzMzMgOSAxMVY1QzkgNC4xNjY2NyA5LjI5MTY3IDMuNDU4MzMgOS44NzUgMi44NzVDMTAuNDU4MyAyLjI5MTY3IDExLjE2NjcgMiAxMiAyQzEyLjgzMzMgMiAxMy41NDE3IDIuMjkxNjcgMTQuMTI1IDIuODc1QzE0LjcwODMgMy40NTgzMyAxNSA0LjE2NjY3IDE1IDVWMTFDMTUgMTEuODMzMyAxNC43MDgzIDEyLjU0MTcgMTQuMTI1IDEzLjEyNUMxMy41NDE3IDEzLjcwODMgMTIuODMzMyAxNCAxMiAxNFpNMTEgMjBWMTcuOTI1QzkuNDY2NjcgMTcuNzA4MyA4LjE1NDE3IDE3LjA1ODMgNy4wNjI1IDE1Ljk3NUM1Ljk3MDgzIDE0Ljg5MTcgNS4zMDgzMyAxMy41NzUgNS4wNzUgMTIuMDI1QzUuMDQxNjcgMTEuNzQxNyA1LjExNjY3IDExLjUgNS4zIDExLjNDNS40ODMzMyAxMS4xIDUuNzE2NjcgMTEgNiAxMUM2LjI4MzMzIDExIDYuNTIwODMgMTEuMDk1OCA2LjcxMjUgMTEuMjg3NUM2LjkwNDE3IDExLjQ3OTIgNy4wMzMzMyAxMS43MTY3IDcuMSAxMkM3LjMzMzMzIDEzLjE2NjcgNy45MTI1IDE0LjEyNSA4LjgzNzUgMTQuODc1QzkuNzYyNSAxNS42MjUgMTAuODE2NyAxNiAxMiAxNkMxMy4yIDE2IDE0LjI1ODMgMTUuNjIwOCAxNS4xNzUgMTQuODYyNUMxNi4wOTE3IDE0LjEwNDIgMTYuNjY2NyAxMy4xNSAxNi45IDEyQzE2Ljk2NjcgMTEuNzE2NyAxNy4wOTU4IDExLjQ3OTIgMTcuMjg3NSAxMS4yODc1QzE3LjQ3OTIgMTEuMDk1OCAxNy43MTY3IDExIDE4IDExQzE4LjI4MzMgMTEgMTguNTE2NyAxMS4xIDE4LjcgMTEuM0MxOC44ODMzIDExLjUgMTguOTU4MyAxMS43NDE3IDE4LjkyNSAxMi4wMjVDMTguNjkxNyAxMy41NDE3IDE4LjAzMzMgMTQuODUgMTYuOTUgMTUuOTVDMTUuODY2NyAxNy4wNSAxNC41NSAxNy43MDgzIDEzIDE3LjkyNVYyMEMxMyAyMC4yODMzIDEyLjkwNDIgMjAuNTIwOCAxMi43MTI1IDIwLjcxMjVDMTIuNTIwOCAyMC45MDQyIDEyLjI4MzMgMjEgMTIgMjFDMTEuNzE2NyAyMSAxMS40NzkyIDIwLjkwNDIgMTEuMjg3NSAyMC43MTI1QzExLjA5NTggMjAuNTIwOCAxMSAyMC4yODMzIDExIDIwWk0xMiAxMkMxMi4yODMzIDEyIDEyLjUyMDggMTEuOTA0MiAxMi43MTI1IDExLjcxMjVDMTIuOTA0MiAxMS41MjA4IDEzIDExLjI4MzMgMTMgMTFWNUMxMyA0LjcxNjY3IDEyLjkwNDIgNC40NzkxNyAxMi43MTI1IDQuMjg3NUMxMi41MjA4IDQuMDk1ODMgMTIuMjgzMyA0IDEyIDRDMTEuNzE2NyA0IDExLjQ3OTIgNC4wOTU4MyAxMS4yODc1IDQuMjg3NUMxMS4wOTU4IDQuNDc5MTcgMTEgNC43MTY2NyAxMSA1VjExQzExIDExLjI4MzMgMTEuMDk1OCAxMS41MjA4IDExLjI4NzUgMTEuNzEyNUMxMS40NzkyIDExLjkwNDIgMTEuNzE2NyAxMiAxMiAxMloiIGZpbGw9IiMxQzFCMUYiLz4KPC9nPgo8L2c+Cjwvc3ZnPgo=',send:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJzZW5kIj4KPHBhdGggaWQ9IlZlY3RvciIgZD0iTTMuNjcxMjUgMjAuNEwyMS4xMjEzIDEyLjkyQzIxLjkzMTIgMTIuNTcgMjEuOTMxMiAxMS40MyAyMS4xMjEzIDExLjA4TDMuNjcxMjUgMy42QzMuMDExMjUgMy4zMSAyLjI4MTI1IDMuOCAyLjI4MTI1IDQuNTFMMi4yNzEyNSA5LjEyQzIuMjcxMjUgOS42MiAyLjY0MTI1IDEwLjA1IDMuMTQxMjUgMTAuMTFMMTcuMjcxMiAxMkwzLjE0MTI1IDEzLjg4QzIuNjQxMjUgMTMuOTUgMi4yNzEyNSAxNC4zOCAyLjI3MTI1IDE0Ljg4TDIuMjgxMjUgMTkuNDlDMi4yODEyNSAyMC4yIDMuMDExMjUgMjAuNjkgMy42NzEyNSAyMC40WiIgZmlsbD0iIzlGOUY5RiIvPgo8L2c+Cjwvc3ZnPgo=',right:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9Ijc3LjQwMTIiIGhlaWdodD0iMTMiIHZpZXdCb3g9IjAgMCA3Ny40MDEyIDEzIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZyBpZD0iUmlnaHQgU2lkZSI+CjxnIGlkPSJfU3RhdHVzQmFyLWJhdHRlcnkiPgo8bWFzayBpZD0ic3Ryb2tlMF8wXzYxIiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik01MCA0QzUwIDEuNzkwODYgNTEuNzkwOSAwIDU0IDBINzFDNzMuMjA5MSAwIDc1IDEuNzkwODYgNzUgNFY5Qzc1IDExLjIwOTEgNzMuMjA5MSAxMyA3MSAxM0g1NEM1MS43OTA5IDEzIDUwIDExLjIwOTEgNTAgOVY0WiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz4KPC9tYXNrPgo8cGF0aCBpZD0iT3V0bGluZSIgb3BhY2l0eT0iMC4zNSIgZD0iTTU0IDEzSDcxQzczLjIwOTEgMTMgNzUgMTEuMjA5MSA3NSA5VjRDNzUgMS43OTA4NiA3My4yMDkxIDAgNzEgMEg1NEM1MS43OTA5IDAgNTAgMS43OTA4NiA1MCA0VjlDNTAgMTEuMjA5MSA1MS43OTA5IDEzIDU0IDEzWiIgc3Ryb2tlLXdpZHRoPSIyLjExMDE3IiBzdHJva2U9IndoaXRlIiBtYXNrPSJ1cmwoI3N0cm9rZTBfMF82MSkiLz4KPHBhdGggaWQ9IkJhdHRlcnkgRW5kIiBvcGFjaXR5PSIwLjQiIGQ9Ik03NiA1VjkuMjIwMzRDNzYuODQ5MSA4Ljg2MjkxIDc3LjQwMTIgOC4wMzE0IDc3LjQwMTIgNy4xMTAxN0M3Ny40MDEyIDYuMTg4OTQgNzYuODQ5MSA1LjM1NzQ0IDc2IDUiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGlkPSJGaWxsIiBkPSJNNTIgNEM1MiAyLjg5NTQzIDUyLjg5NTQgMiA1NCAySDY1QzY2LjEwNDYgMiA2NyAyLjg5NTQzIDY3IDRWOUM2NyAxMC4xMDQ2IDY2LjEwNDYgMTEgNjUgMTFINTRDNTIuODk1NCAxMSA1MiAxMC4xMDQ2IDUyIDlWNFoiIGZpbGw9IndoaXRlIi8+CjwvZz4KPHBhdGggaWQ9IldpZmkiIGQ9Ik0zNC41MDA1IDMuNTg3NTNDMzYuOTY3IDMuNTg3NjQgMzkuMzM5MyA0LjU1NTA1IDQxLjEyNjkgNi4yODk4MkM0MS4yNjE1IDYuNDIzNzUgNDEuNDc2NiA2LjQyMjA2IDQxLjYwOTIgNi4yODYwM0w0Mi44OTYgNC45NjA0NUM0Mi45NjMxIDQuODkxNDYgNDMuMDAwNiA0Ljc5OCA0MyA0LjcwMDc2QzQyLjk5OTQgNC42MDM1MyA0Mi45NjA5IDQuNTEwNTIgNDIuODkzIDQuNDQyMzRDMzguMjAxMSAtMC4xNDc0NDYgMzAuNzk5MSAtMC4xNDc0NDYgMjYuMTA3MiA0LjQ0MjM0QzI2LjAzOTIgNC41MTA0NyAyNi4wMDA2IDQuNjAzNDUgMjYgNC43MDA2OUMyNS45OTk0IDQuNzk3OTIgMjYuMDM2NyA0Ljg5MTQxIDI2LjEwMzggNC45NjA0NUwyNy4zOTEgNi4yODYwM0MyNy41MjM1IDYuNDIyMjYgMjcuNzM4OCA2LjQyMzk2IDI3Ljg3MzMgNi4yODk4MkMyOS42NjEyIDQuNTU0OTQgMzIuMDMzNyAzLjU4NzUyIDM0LjUwMDUgMy41ODc1M1pNMzQuNTM1OSA3LjU4OTM4QzM1Ljg5MTEgNy41ODkyOSAzNy4xOTggOC4xMDM0NiAzOC4yMDI1IDkuMDMxOTlDMzguMzM4NCA5LjE2Mzc2IDM4LjU1MjQgOS4xNjA5MSAzOC42ODQ5IDkuMDI1NTVMMzkuOTcwMiA3LjY5OTk3QzQwLjAzNzkgNy42MzA0NCA0MC4wNzU0IDcuNTM2MTEgNDAuMDc0NCA3LjQzODFDNDAuMDczNSA3LjM0MDA4IDQwLjAzNCA3LjI0NjU2IDM5Ljk2NSA3LjE3ODQ0QzM2LjkwNTkgNC4yNzM4NSAzMi4xNjg1IDQuMjczODUgMjkuMTA5NCA3LjE3ODQ0QzI5LjA0MDMgNy4yNDY1NiAyOS4wMDA5IDcuMzQwMTMgMjkgNy40MzgxN0MyOC45OTkxIDcuNTM2MjIgMjkuMDM2OCA3LjYzMDU0IDI5LjEwNDYgNy42OTk5N0wzMC4zODk1IDkuMDI1NTVDMzAuNTIyIDkuMTYwOTEgMzAuNzM2IDkuMTYzNzYgMzAuODcxOSA5LjAzMTk5QzMxLjg3NTggOC4xMDQwOCAzMy4xODE2IDcuNTg5OTUgMzQuNTM1OSA3LjU4OTM4Wk0zNy4xNDk2IDEwLjE3NjdDMzcuMTUxNSAxMC4yNzUgMzcuMTEzNyAxMC4zNjk4IDM3LjA0NDkgMTAuNDM4NkwzNC44MjE3IDEyLjcyODlDMzQuNzU2NSAxMi43OTYyIDM0LjY2NzYgMTIuODM0IDM0LjU3NDkgMTIuODM0QzM0LjQ4MjIgMTIuODM0IDM0LjM5MzMgMTIuNzk2MiAzNC4zMjgyIDEyLjcyODlMMzIuMTA0NSAxMC40Mzg2QzMyLjAzNTggMTAuMzY5NyAzMS45OTggMTAuMjc0OSAzMi4wMDAxIDEwLjE3NjZDMzIuMDAyMSAxMC4wNzgzIDMyLjA0MzggOS45ODUyNyAzMi4xMTUzIDkuOTE5MzhDMzMuNTM1MSA4LjY5MzU0IDM1LjYxNDcgOC42OTM1NCAzNy4wMzQ1IDkuOTE5MzhDMzcuMTA2IDkuOTg1MzIgMzcuMTQ3NiAxMC4wNzg0IDM3LjE0OTYgMTAuMTc2N1oiIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsPSJ3aGl0ZSIvPgo8ZyBpZD0iSWNvbiAvIE1vYmlsZSBTaWduYWwiPgo8cGF0aCBkPSJNMTAgNEMxMCAzLjQ0NzcyIDEwLjQ0NzcgMyAxMSAzSDEyQzEyLjU1MjMgMyAxMyAzLjQ0NzcyIDEzIDRWMTJDMTMgMTIuNTUyMyAxMi41NTIzIDEzIDEyIDEzSDExQzEwLjQ0NzcgMTMgMTAgMTIuNTUyMyAxMCAxMlY0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE1IDJDMTUgMS40NDc3MiAxNS40NDc3IDEgMTYgMUgxN0MxNy41NTIzIDEgMTggMS40NDc3MiAxOCAyVjEyQzE4IDEyLjU1MjMgMTcuNTUyMyAxMyAxNyAxM0gxNkMxNS40NDc3IDEzIDE1IDEyLjU1MjMgMTUgMTJWMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik01IDcuNUM1IDYuOTQ3NzIgNS40NDc3MiA2LjUgNiA2LjVIN0M3LjU1MjI4IDYuNSA4IDYuOTQ3NzIgOCA3LjVWMTJDOCAxMi41NTIzIDcuNTUyMjggMTMgNyAxM0g2QzUuNDQ3NzIgMTMgNSAxMi41NTIzIDUgMTJWNy41WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTAgMTBDMCA5LjQ0NzcyIDAuNDQ3NzE1IDkgMSA5SDJDMi41NTIyOCA5IDMgOS40NDc3MiAzIDEwVjEyQzMgMTIuNTUyMyAyLjU1MjI4IDEzIDIgMTNIMUMwLjQ0NzcxNSAxMyAwIDEyLjU1MjMgMCAxMlYxMFoiIGZpbGw9IndoaXRlIi8+CjwvZz4KPC9nPgo8L3N2Zz4K'};
+const ic=(n,w=24,h=24,cls='')=>`<img src="${ICON[n]}" alt="" width="${w}" height="${h}"${cls?` class="${cls}"`:''}>`;
+const cache={};
+function paint(id,html,keepBottom=true){
+  if(cache[id]===html) return false;
+  const el=$(id); const near=el.scrollHeight-el.scrollTop-el.clientHeight<60;
+  el.innerHTML=html; cache[id]=html;
+  if(keepBottom&&near) el.scrollTop=el.scrollHeight;
+  return true;
+}
+function replyHead(p){
+  if(!p.replyTo) return '';
+  const par=byId(p.replyTo);
+  return `<div class="rq"><span class="av ${par.author}">${AV[par.author]}</span><div class="rt"><b>${esc(NAME[par.author])} に返信</b><span>${esc(par.text)}</span></div></div>`;
+}
+const bubble=(p,off)=>`<div class="bub${off?' off':''}">${replyHead(p)}<div class="tx">${esc(p.text)}</div></div>`;
+function artistPill(k){
+  const P=st.phase;
+  if(P==='idle') return st.trig==='schedule'
+    ?`<div class="l"><span class="st-wait">収録前</span><span class="t">20:00 から収録（予約）・あと${Math.max(0,Math.ceil(START-st.now))}秒</span></div>`
+    :`<div class="l"><span class="st-wait">収録前</span><span class="t">マネの収録開始を待っています</span></div>`;
+  if(P==='rec'){
+    return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・ファンにはまだ公開されていません</span></div>`;
+  }
+  if(P==='review') return `<div class="l"><span class="st-rv">確認中</span><span class="t">マネが収録内容を確認しています・まだ公開されていません</span></div>`;
+  return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)} にファンへ公開しました</span></div>`;
+}
+function sessWrap(inner){
+  const rng=`収録 ${hm(st.recStart)}〜${st.recEnd!=null?hm(st.recEnd):''}`;
+  const pubt=st.phase==='pub'?`<span class="pubt">公開 ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?'<span class="pend">未公開（確認中）</span>':'<span class="recn">収録中・未公開</span>';
+  return `<div class="sess"><div class="shd"><span>${rng}</span></div>${inner}<div class="shd sft">${pubt}</div></div>`;
+}
+function artistFeed(k){
+  if(!st.posts.length) return `<div class="empty">${st.phase==='idle'?'収録が始まると投稿できます':(st.phase==='rec'?'下の入力欄から投稿できます':'まだ投稿はありません')}</div>`;
+  const pub=st.phase==='pub', canReply=st.phase==='rec';
+  return st.posts.map(p=>{
+    const off=pub&&p.del;
+    const more=canReply?`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`:'';
+    if(p.author===k){
+      const label=off?'<span class="tm ng">非公開</span>':(pub&&p.edited?'<span class="tm">マネが書き換え</span>':'');
+      return `<div class="me"><div class="side">${more}${label||`<span class="tm">${hm(p.t)}</span>`}</div>${bubble(p,off)}</div>`;
+    }
+    const status=pub?(p.del?'<span class="s ng">非公開（マネが削除）</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
+    return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
+      <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${hm(p.t)}</span></div></div></div></div>`;
+  }).join('').replace(/^/,'').replace(/[\s\S]*/,m=>sessWrap(m));
+}
+function mgrPill(){
+  const P=st.phase, d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
+  if(P==='idle') return `<div class="l"><span class="st-wait">収録前</span><span class="t">${st.trig==='schedule'?'20:00 に自動で始まります（予約）':'下のボタンで始めます'}</span></div>`;
+  if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・削除はいまから選べます</span></div>`;
+  if(P==='review') return `<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。問題なければそのまま公開</span></div>`;
+  return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)}・${st.posts.length-d}件を公開（削除${d}・書き換え${e}）</span></div>`;
+}
+function mgrAct(){
+  const P=st.phase;
+  if(P==='idle'&&st.trig==='manual') return `<button class="ab rec wide" data-act="mstart">● 収録を開始</button>`;
+  if(P==='rec') return `<button class="ab dk wide" data-act="mend">■ 収録を終了</button>`;
+  if(P==='review') return `<button class="ab ok wide" data-act="pub">この内容で公開</button>`;
+  return '';
+}
+function mgrFeed(){
+  const ntc=st.notice&&st.phase!=='pub'?`<div class="ntc">🔔 ${esc(st.notice)}</div>`:'';
+  if(!st.posts.length) return ntc+`<div class="empty">${st.phase==='idle'?'収録が始まると、ここに投稿が並びます':'まだ投稿はありません'}</div>`;
+  const locked=st.phase==='pub';
+  return ntc+st.posts.map(p=>{
+    const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del);
+    const warn=p.del&&reps.length&&!locked?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます<button class="ab gh sm" data-act="delrep" data-id="${p.id}">返信も削除</button></div>`:'';
+    const status=p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
+    const acts=locked?'':`<div class="racts">${p.del
+      ?`<button class="ab gh" data-act="del" data-id="${p.id}">削除を取り消す</button>`
+      :`<button class="ab ng" data-act="del" data-id="${p.id}">削除</button><button class="ab dk" data-act="edit" data-id="${p.id}">書き換え</button>`}</div>`;
+    return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
+      <div class="brow">${bubble(p,p.del)}<span class="tm">${hms(p.t)}</span></div>
+      ${p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}${acts}</div></div>`;
+  }).join('').replace(/[\s\S]*/,m=>sessWrap(m));
+}
+function startDialog(){
+  const d=st.dlg, opt=(v,l)=>`<button class="opt" data-act="dsel" data-v="${v}" aria-pressed="${d.sel===v}">${l}</button>`;
+  return `<div class="sheet" role="dialog" aria-label="収録を開始"><h4>収録を開始しますか？</h4>
+    <div class="note">開始すると、トークルームに「収録中」と表示されます。収録中の投稿はファンに公開されず、終了後に審査してから公開します。</div>
+    <div class="lbl">終了時刻</div>
+    <div class="opts">${opt('none','決めない')}${opt('2','2分後')}${opt('5','5分後')}${opt('10','10分後')}${opt('at','時刻を指定')}</div>
+    ${d.sel==='at'?`<input type="time" id="dt" class="tin" value="${d.at0}" aria-label="終了時刻">`:''}
+    <div class="note">${d.sel==='none'?'終了は「収録を終了」ボタンで行います（上限30分）':d.sel==='at'?'指定した時刻に自動で終了します':`${hm(st.now+(+d.sel)*60)} ごろに自動で終了します`}。途中で終了することもできます。</div>
+    <button class="ab rec wide" data-act="dok">● 収録を開始</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
+}
+function mgrModal(){
+  if(st.dlg) return startDialog();
+  if(!st.editing) return '';
+  const p=byId(st.editing);
+  return `<div class="sheet" role="dialog" aria-label="投稿を書き換える"><h4>投稿を書き換える</h4><span class="av ${p.author}">${AV[p.author]}</span><div class="who">${NAME[p.author]}</div>
+    <textarea id="ed" aria-label="書き換え後の本文">${esc(st.draft0)}</textarea>
+    <div class="note">元の投稿：${esc(p.orig)}<br>話した時刻：${hms(p.t)}</div>
+    <button class="ab dk wide" data-act="save" data-id="${p.id}">保存</button><button class="cancel" data-act="cancel">キャンセル</button></div>`;
+}
+function fanFeed(){
+  const P=st.phase, teaser=$('teaser').value==='on';
+  if(P==='idle'||(!teaser&&P!=='pub')) return `<div class="empty">トークが始まるのを待っています</div>`;
+  if(P==='rec') return `<div class="teaser"><div class="ic">🎙</div><b>アーティストが収録中</b><span>終わり次第、このトークルームに公開されます</span></div>`;
+  if(P==='review') return `<div class="teaser"><div class="ic">⏳</div><b>まもなく公開</b><span>収録が終わりました</span></div>`;
+  const list=fanList(), useSpoken=$('timeMode').value==='spoken';
+  const all=st.posts.filter(p=>!p.del).length;
+  const html=list.map(({p,at})=>{
+    const par=p.replyTo?byId(p.replyTo):null;
+    const fq=par&&!par.del?`<div class="fq"><div class="fql">返信</div><div class="fqt">${esc(par.text)}</div></div>`:'';
+    return `<div class="fmsg"><div class="fnm"><span class="av ${p.author}">${AV[p.author]}</span>${NAME[p.author]}</div>
+      <div class="frow"><div class="fbub">${fq}<div class="fbody">${esc(p.text)}<div class="ftr">Translate</div></div></div><span class="ftime">${hm(useSpoken?p.t:at)}</span></div>
+      <div class="facts"><span class="fbtn" aria-hidden="true">☺︎</span><span class="fbtn">💬 コメント</span></div></div>`;
+  }).join('');
+  const more=list.length<all?`<div class="typing">•••</div>`:'';
+  return `<div class="fdate">2026年11月13日</div>`+html+more;
+}
+function render(){
+  $('clock').textContent=hms(st.now);
+  const ph=$('phase'); ph.className='phase '+st.phase; ph.textContent={idle:'収録前',rec:'● 収録中',review:'審査中',pub:'公開済み'}[st.phase];
+  $('bPause').textContent=st.run?'一時停止':'再開';
+  ART.forEach(k=>{
+    paint('feed-'+k,artistFeed(k));
+    const can=st.phase==='rec';
+    const inp=$('in-'+k); inp.disabled=!can;
+    inp.placeholder=can?'コメントする':{idle:'収録前は投稿できません',review:'審査中は投稿できません',pub:'収録は終わりました'}[st.phase];
+    const r=st.rep[k]&&byId(st.rep[k]);
+    paint('rp-'+k,r&&can?`<span><b>${esc(NAME[r.author])} に返信</b>　${esc(r.text)}</span><button data-act="unrep" data-k="${k}" aria-label="返信をやめる">×</button>`:'',false);
+    $('rp-'+k).hidden=!(r&&can);
+  });
+  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn '+st.phase; });
+  paint('feed-D',mgrFeed(),false);
+  paint('act-D',mgrAct(),false);
+  paint('modal-D',mgrModal(),false);
+  paint('feed-F',fanFeed());
+  paint('log',st.log.map(l=>`<div><span class="t">${hms(l.t)}</span><span class="${l.cls}">${esc(l.txt)}</span></div>`).join(''));
+}
+
+function navRight(){
+  if(st.phase==='idle'&&st.trig==='schedule') return `<span class="nrsv"><small>収録開始</small>${hm(START)}</span>`;
+  if(st.phase==='rec') return `<span class="nrrec">REC</span>`;
+  return '';
+}
+function statusBar(k){ return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>`; }
+
+/* ---- 組み立て ---- */
+function buildModes(){
+  $('modes').innerHTML=Object.entries(TRIG).map(([id,m])=>`<button class="mode" data-trig="${id}" aria-pressed="${st.trig===id}">
+    <div class="mt"><span class="k">${m.k}</span>${m.t}${m.rec?'<span class="rec-tag">おすすめ</span>':''}</div>
+    <div class="md">${m.d}</div>
+    <div class="pc">${m.g.map(s=>`<span class="g">＋ ${s}</span>`).join('')}${m.x.map(s=>`<span class="x">－ ${s}</span>`).join('')}<span class="e">${m.e}</span></div></button>`).join('');
+}
+const navTop=(title,id)=>`<div class="nav"><div class="sbar"><span>9:41</span>${ic('right',77,13)}</div><div class="navc">${ic('back',28,28)}<b>${title}</b><span class="nr" id="nr-${id}"></span></div></div><div class="recbn" id="rb-${id}"></div>`;
+function buildStage(){
+  const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>アーティスト用アプリ</small></div>
+    <div class="phone">${navTop('フェス楽屋トーク',k)}<div class="feed" id="feed-${k}"></div>
+      <div class="foot"><div class="as"><span class="av ${k}">${AV[k]}</span>${NAME[k]} として投稿します</div>
+        <div class="tab"><div class="replying" id="rp-${k}" hidden></div>
+          <div class="crow">${ic('img',24,24,'ic')}${ic('mic',24,24,'ic')}<input id="in-${k}" data-k="${k}" aria-label="${NAME[k]}のメッセージ"><button class="send" data-act="send" data-k="${k}" aria-label="送信">${ic('send')}</button></div>
+          <div class="home"></div></div></div></div></div>`;
+  $('stage').innerHTML=`<div class="col"><div class="cap"><span class="dot" style="background:var(--mgr)"></span>審査マネD<small>CMS App（審査）</small></div>
+    <div class="phone">${navTop('フェス楽屋トーク','D')}<div class="feed" id="feed-D"></div>
+      <div class="foot"><div class="tab"><div class="mact" id="act-D"></div><div class="home"></div></div></div>
+      <div class="modal" id="modal-D"></div></div></div>`+ART.map(art).join('')+
+   `<div class="col"><div class="cap"><span class="dot" style="background:#232323"></span>ファン<small>BwithU App</small></div>
+    <div class="phone fan"><div class="fhead"><span class="fback" aria-hidden="true">‹</span><span class="ftitle">フェス楽屋トーク（3）</span><span></span></div>
+      <div class="feed" id="feed-F"></div></div></div>`;
+}
+function fit(){
+  const c=document.querySelector('#stage .col'); if(!c) return;
+  const w=c.clientWidth; if(!w) return;
+  $('stage').style.setProperty('--z',Math.min(1,w/387).toFixed(4));
+}
+function reset(trig,scn=false){
+  st=fresh(trig||(st&&st.trig)||'schedule'); st.scn=scn;
+  for(const k in cache) delete cache[k];
+  ART.forEach(k=>{const i=$('in-'+k); if(i) i.value=''});
+  log('R',`方式：${TRIG[st.trig].t}${scn?'（シナリオ再生）':''}`);
+  buildModes(); render();
+}
+
+document.addEventListener('click',e=>{
+  const m=e.target.closest('[data-trig]'); if(m){reset(m.dataset.trig);return}
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const k=b.dataset.k, id=+b.dataset.id;
+  switch(b.dataset.act){
+    case 'reply': st.rep[k]=id; $('in-'+k).focus(); break;
+    case 'unrep': st.rep[k]=null; break;
+    case 'send': sendFrom(k); break;
+    case 'mstart': st.dlg={sel:'none',at0:hm(st.now+180)}; break;
+    case 'dsel': st.dlg.sel=b.dataset.v; break;
+    case 'dok': confirmStart(); break;
+    case 'dcancel': st.dlg=null; break;
+    case 'mend': endRec('マネD'); break;
+    case 'pub': publish(); break;
+    case 'del': toggleDel(id); break;
+    case 'delrep': delReplies(id); break;
+    case 'edit': st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
+    case 'save': saveEdit(id,$('ed').value); break;
+    case 'cancel': st.editing=null; break;
+  }
+  render();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.isComposing&&e.target.matches('.crow input')){e.preventDefault();sendFrom(e.target.dataset.k);render()}
+});
+function sendFrom(k){
+  const i=$('in-'+k); const p=post(k,i.value,st.rep[k]);
+  if(p){i.value='';st.rep[k]=null}
+}
+
+$('bPause').onclick=()=>{st.run=!st.run;render()};
+$('bReset').onclick=()=>reset();
+$('bScn').onclick=()=>reset(null,true);
+['delivery','timeMode','teaser'].forEach(id=>$(id).onchange=()=>render());
+
+buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
+let last=performance.now();
+setInterval(()=>{const n=performance.now(),dt=(n-last)/1000;last=n; if(st.run) advance(dt*+$('speed').value); render()},200);
+</script>
+
+</body>
+</html>
