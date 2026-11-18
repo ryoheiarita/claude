@@ -318,6 +318,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>収録中はナビ右上が「収録終了」、確認中は「公開」になる。終了後はマネが確認（削除・書き換え）→「公開」から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
         <li>投稿の時刻表示は、収録中・確認中は収録開始からの経過時間（0:21 など）。公開後はアーティスト・マネ・ファンとも公開時刻を起点にした時刻（20:05 公開なら 20:05〜）</li>
         <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
+        <li>公開後は、削除した投稿はアーティスト・マネの画面からも消える（ファンと同じ並びになる）</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
@@ -510,9 +511,12 @@ function paint(id,html,keepBottom=true){
   if(keepBottom&&near) el.scrollTop=el.scrollHeight;
   return true;
 }
+// 公開後は削除した投稿を表示しない
+const shown=()=>st.phase==='pub'?st.posts.filter(p=>!p.del):st.posts;
 function replyHead(p){
   if(!p.replyTo) return '';
   const par=byId(p.replyTo);
+  if(st.phase==='pub'&&par.del) return '';
   return `<div class="rq"><span class="av ${par.author}">${AV[par.author]}</span><div class="rt"><b>${esc(NAME[par.author])} に返信</b><span>${esc(par.text)}</span></div></div>`;
 }
 const bubble=(p,off)=>`<div class="bub${off?' off':''}">${replyHead(p)}<div class="tx">${esc(p.text)}</div></div>`;
@@ -537,7 +541,7 @@ function sessWrap(inner){
 function artistFeed(k){
   if(!st.posts.length) return `<div class="empty">${st.phase==='idle'?'収録が始まると投稿できます':(st.phase==='rec'?'下の入力欄から投稿できます':'まだ投稿はありません')}</div>`;
   const pub=st.phase==='pub', canReply=st.phase==='rec';
-  return st.posts.map(p=>{
+  return shown().map(p=>{
     const off=pub&&p.del;
     const more=canReply?`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`:'';
     if(p.author===k){
@@ -589,7 +593,7 @@ function mgrFeed(){
   if(!st.posts.length) return ntc+`<div class="here"><div class="ht">ルームにいるアーティスト</div>${ART.map(k=>`<div class="hi${st.here.has(k)?'':' off'}"><span class="av ${k}">${AV[k]}</span><b>${NAME[k]}</b><span class="hs">${st.here.has(k)?'参加中':'まだ来ていません'}</span></div>`).join('')}
     <div class="hn">そろっていなくても開始できます。遅れて来たアーティストの投稿も、話した順に公開されます。</div></div>`;
   const locked=st.phase==='pub';
-  return ntc+st.posts.map(p=>{
+  return ntc+shown().map(p=>{
     const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del);
     const warn=p.del&&reps.length&&!locked?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます（••• から「返信も削除」できます）</div>`:'';
     const status=p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
