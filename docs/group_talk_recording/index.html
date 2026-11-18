@@ -64,7 +64,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .phase.review{background:#fff1dc;color:#9a5a00}
 .phase.pub{background:#dff3e6;color:#1f7a44}
 
-/* 5画面：アプリは Figma【WIP】BwithU_UI 872-1919（CMS App トークルーム）準拠。375pt 幅で組み、列幅に合わせて zoom で縮小 */
+/* 5画面：アプリは Figma【WIP】BwithU_UI 872-1919（B with U Manager トークルーム）準拠。375pt 幅で組み、列幅に合わせて zoom で縮小 */
 .stage{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;flex-wrap:wrap}
@@ -687,17 +687,17 @@ function buildModes(){
 }
 const navTop=(title,id)=>`<div class="nav"><div class="sbar"><span>9:41</span>${ic('right',77,13)}</div><div class="navc">${ic('back',28,28)}<b>${title}</b><span class="nr" id="nr-${id}"></span></div></div><div class="recbn" id="rb-${id}"></div>`;
 function buildStage(){
-  const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>アーティスト用アプリ</small></div>
+  const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>B with U Manager</small></div>
     <div class="phone">${navTop('フェス楽屋トーク',k)}<div class="feed" id="feed-${k}"></div>
       <div class="foot"><div class="as"><span class="av ${k}">${AV[k]}</span>${NAME[k]} として投稿します</div>
         <div class="tab"><div class="replying" id="rp-${k}" hidden></div>
           <div class="crow">${ic('img',24,24,'ic')}${ic('mic',24,24,'ic')}<input id="in-${k}" data-k="${k}" aria-label="${NAME[k]}のメッセージ"><button class="send" data-act="send" data-k="${k}" aria-label="送信">${ic('send')}</button></div>
           <div class="home"></div></div></div></div></div>`;
-  $('stage').innerHTML=`<div class="col"><div class="cap"><span class="dot" style="background:var(--mgr)"></span>審査マネD<small>CMS App（審査）</small></div>
+  $('stage').innerHTML=`<div class="col"><div class="cap"><span class="dot" style="background:var(--mgr)"></span>審査マネD<small>B with U Manager</small></div>
     <div class="phone">${navTop('フェス楽屋トーク','D')}<div class="feed" id="feed-D"></div>
       <div class="foot"><div class="tab"><div class="mact" id="act-D"></div><div class="home"></div></div></div>
       <div class="modal" id="modal-D"></div></div></div>`+ART.map(art).join('')+
-   `<div class="col"><div class="cap"><span class="dot" style="background:#232323"></span>ファン<small>BwithU App</small></div>
+   `<div class="col"><div class="cap"><span class="dot" style="background:#232323"></span>ファン<small>B with U App</small></div>
     <div class="phone fan"><div class="fhead"><span class="fback" aria-hidden="true">‹</span><span class="ftitle">フェス楽屋トーク（3）</span><span></span></div>
       <div class="feed" id="feed-F"></div></div></div>`;
 }
