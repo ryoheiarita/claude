@@ -484,11 +484,13 @@ function advance(dt){
 /* ---- ファンに見えるもの ---- */
 const elapsed=t=>{t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); return h?`${h}:${p2(Math.floor(t/60)%60)}:${p2(t%60)}`:`${Math.floor(t/60)}:${p2(t%60)}`;};
 // 公開時刻を起点にした各投稿の時刻（話した間隔で流す場合は間隔を保つ）
-function pubTimeOf(p){
+function pubTimeOf(p,at=st.pubAt){
   const vis=st.posts.filter(q=>!q.del), base=vis.length?vis[0].t:p.t;
-  return $('delivery').value==='replay'?st.pubAt+Math.max(0,p.t-base):st.pubAt;
+  return $('delivery').value==='replay'?at+Math.max(0,p.t-base):at;
 }
-const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p)):`開始後 ${elapsed(p.t-st.recStart)}`;
+const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p))
+  :st.phase==='review'&&st.pubRsv?`${hm(pubTimeOf(p,st.pubRsv))} 予定`
+  :`開始後 ${elapsed(p.t-st.recStart)}`;
 function fanList(){
   if(st.phase!=='pub') return [];
   const vis=st.posts.filter(p=>!p.del);
