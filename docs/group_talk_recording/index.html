@@ -353,7 +353,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <ul>
           <li>ファンには話した間隔のまま順番に流れる。時刻は公開時刻が起点（20:05 公開なら 20:05〜）</li>
           <li>削除した投稿は全員の画面から消える</li>
-          <li>収録分は角丸の背景でまとめ、上に「収録 20:00:00〜20:03:00」、下に「公開 2026/11/18 20:05」</li>
+          <li>収録分は角丸の背景でまとめ、上に「収録 20:00:00〜20:03:00」、下に「公開済み 2026/11/18 20:05」。公開後は上部バーを出さない</li>
         </ul></li>
     </ol>
 
@@ -580,7 +580,7 @@ function artistPill(k){
 }
 function sessWrap(inner){
   const rng=`収録 ${hms(st.recStart)}〜${st.recEnd!=null?hms(st.recEnd):''}`;
-  const pubt=st.phase==='pub'?`<span class="pubt">公開 ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?(st.pubRsv?`<span class="pend">公開予定 ${DATE} ${hm(st.pubRsv)}</span>`:'<span class="pend">未公開（確認中）</span>'):'<span class="recn">収録中・未公開</span>';
+  const pubt=st.phase==='pub'?`<span class="pubt">公開済み ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?(st.pubRsv?`<span class="pend">公開予定 ${DATE} ${hm(st.pubRsv)}</span>`:'<span class="pend">未公開（確認中）</span>'):'<span class="recn">収録中・未公開</span>';
   return `<div class="sess"><div class="shd"><span>${rng}</span></div>${inner}<div class="shd sft">${pubt}</div></div>`;
 }
 function artistFeed(k){
@@ -737,7 +737,7 @@ function navRight(k){
   return st.rsv?`<span class="nrsv"><small>収録開始</small>${hm(st.rsv.start)}</span>`:'';
 }
 function statusBar(k){
-  if(st.phase==='idle'&&!st.rsv) return '';
+  if((st.phase==='idle'&&!st.rsv)||st.phase==='pub') return '';
   return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>`;
 }
 
