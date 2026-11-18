@@ -198,6 +198,9 @@ h2{font-size:16px;font-weight:700;margin:0}
 .tab{background:#fff;border-top:1px solid #dfdfdf;width:100%;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px}
 .pillbar{background:#efefef;border:1px solid #dfdfdf;border-radius:28px;padding:4px 8px 4px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.6;min-height:34px}
 .pillbar:empty{display:none}
+.asbar{min-height:0;padding:4px 12px 4px 6px;justify-content:flex-start}
+.asbar .av{width:20px;height:20px;font-size:10px}
+.asbar .l span:last-child{color:#000}
 .pillbar .l{display:flex;gap:8px;align-items:center;min-width:0}
 .pillbar .l>span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pillbar .mono{font-size:12px}
@@ -825,8 +828,8 @@ const navTop=(title,id)=>`<div class="nav"><div class="sbar"><span>9:41</span>${
 function buildStage(){
   const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>B with U Manager</small></div>
     <div class="phone">${navTop('フェス楽屋トーク',k)}<div class="feed" id="feed-${k}"></div>
-      <div class="foot"><div class="as"><span class="av ${k}">${AV[k]}</span>${NAME[k]} として投稿します</div>
-        <div class="tab"><div class="replying" id="rp-${k}" hidden></div>
+      <div class="foot">
+        <div class="tab"><div class="pillbar asbar"><div class="l"><span class="av ${k}">${AV[k]}</span><span>${NAME[k]} として投稿します</span></div></div><div class="replying" id="rp-${k}" hidden></div>
           <div class="crow">${ic('img',24,24,'ic')}${ic('mic',24,24,'ic')}<input id="in-${k}" data-k="${k}" aria-label="${NAME[k]}のメッセージ"><button class="send" data-act="send" data-k="${k}" aria-label="送信">${ic('send')}</button></div>
           <div class="home"></div></div></div></div></div>`;
   $('stage').innerHTML=`<div class="col"><div class="cap"><span class="dot" style="background:var(--mgr)"></span>審査マネD<small>B with U Manager</small></div>
