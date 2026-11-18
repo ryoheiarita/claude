@@ -310,7 +310,6 @@ h2{font-size:16px;font-weight:700;margin:0}
       <button class="btn" id="bReset">リセット</button>
       <label class="ctl">シナリオ<select id="scnSel"><option value="schedule">予約して開始 → 送信予約</option><option value="manual">今すぐ開始 → 今すぐ公開</option></select></label>
       <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
-      <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
     </div>
     <div class="stage" id="stage"></div>
   </div>
@@ -328,7 +327,8 @@ h2{font-size:16px;font-weight:700;margin:0}
       <li class="step" data-jump="idle" data-st="idle"><div class="sh"><span class="no">1</span>収録前</div>
         <ul>
           <li>マネが右上の「収録」→「今すぐ収録を開始」か「日時を指定して予約」</li>
-          <li>予約は開始日時を設定（終了は任意）。全員の画面上部に「2026年11月18日 20:00 から収録を開始します」、右上に開始時刻。時刻になると自動で開始</li>
+          <li>未審査の通常の投稿が残っているときは「収録を始める前に審査を完了してください」のアラートを出す</li>
+          <li>予約は開始日時だけを設定。全員の画面上部に「2026年11月18日 20:00 から収録を開始します」、右上に開始時刻。時刻になると自動で開始</li>
           <li>予約後も「予約済み」から前倒し開始・変更・取消ができる</li>
           <li>収録前は通常の投稿。マネの画面に「承認／削除」が出て、承認するとその時刻でファンに公開される（未審査の間はグレー）</li>
           <li>アーティストの準備完了は待たない</li>
@@ -366,7 +366,9 @@ h2{font-size:16px;font-weight:700;margin:0}
       <h2>このプロトの決まりごと</h2>
       <ul>
         <li>開始・予約・終了・公開の操作はマネだけ。ナビ右上のボタンが状態に合わせて「収録 → 予約済み → 収録終了 → 公開」と変わり、押すとアクションシートが出る</li>
-        <li>予約するとアーティストに通知が届く想定</li>
+        <li>予約の項目は開始日時だけ。予約するとアーティストに通知が届く想定</li>
+        <li>公開はファンに話した間隔のまま流す</li>
+        <li>審査なしのアーティストの投稿も、マネがすべて見られる（削除・書き換えできる）</li>
         <li>収録前（予約なし）は上部バーを出さない</li>
         <li>トークルームには、通常の投稿と収録のまとまりが時刻順に並ぶ</li>
         <li>遅れて来たアーティストの投稿も、収録内では話した順に公開される</li>
@@ -374,12 +376,9 @@ h2{font-size:16px;font-weight:700;margin:0}
       <h3>決めたいこと</h3>
       <ul>
         <li>収録が終わってから公開までの間に通常の投稿を承認すると、収録分より先にファンに出る。許容するか、公開まで止めるか</li>
-        <li>収録が始まった時点で未審査の通常の投稿が残っていたら、どう扱うか（そのまま1件ずつ審査で問題ないか）</li>
-        <li>収録を開始・予約できるのはマネだけでよいか（アーティストからの申請も受けるか）</li>
-        <li>予約の項目は「開始日時だけ」か「開始＋終了（任意）」か</li>
-        <li>公開時の流し方：話した間隔で流すか、まとめて出すか</li>
+        <li>収録を始めるときに未審査の通常の投稿が残っていたら、「収録を始める前に審査を完了してください」のアラートを出す、でよいか</li>
         <li>公開前に次の収録を始めてよいか</li>
-        <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか／書き換えを本人に通知するか</li>
+        <li>マネが書き換えたことを本人に通知するか</li>
       </ul>
     </section>
   </aside>
@@ -443,7 +442,7 @@ function setRsv(start,endMin){
 function confirmDlg(){
   const d=st.dlg; if(!d) return;
   if(d.kind==='start') return confirmStart();
-  if(d.kind==='rsv'){ const t=parseHM(($('rs')&&$('rs').value)||d.s0); if(t==null) return; st.dlg=null; setRsv(t,d.sel==='none'?0:+d.sel); return; }
+  if(d.kind==='rsv'){ const t=parseHM(($('rs')&&$('rs').value)||d.s0); if(t==null) return; st.dlg=null; setRsv(t,0); return; }
   if(d.kind==='pub'){ const t=parseHM(($('pt')&&$('pt').value)||d.p0); if(t==null) return; st.dlg=null; st.pubRsv=t; log('M',`マネD：送信予約 ${dj(t)} に公開`); }
 }
 const endText=()=>st.endAt?`${hm(st.endAt)} に終了予定`:'終了時刻は未定（マネが終了）';
@@ -457,7 +456,7 @@ function publish(by='今すぐ公開'){
   st.phase='pub';st.pubAt=st.now;st.editing=null;st.pubRsv=null;st.sheet=null;
   const d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
   log('M',`${by==='予約時刻'?'送信予約の時刻になり公開':'マネD：今すぐ公開'}（削除${d}件・書き換え${e}件）`);
-  log('F',$('delivery').value==='replay'?'ファン：話した間隔で順に表示':'ファン：まとめて表示');
+  log('F','ファン：話した間隔で順に表示');
 }
 function post(k,text,replyTo=null){
   text=text.trim(); if(!text) return null;
@@ -492,15 +491,17 @@ const OPEN='みんな今日のフェスおつかれさま！';
 const SCN=[
   {at:2,f:()=>{ st.here.add('S'); log('S','SOTA がトークルームを開いた'); }},
   {at:1,f:()=>{ if(st.trig==='schedule') st.sheet={kind:'room'}; }},
-  {at:3,f:()=>{ if(st.trig==='schedule'){ st.sheet=null; st.dlg={kind:'rsv',sel:'3',s0:'20:00'}; } }},
+  {at:3,f:()=>{ if(st.trig==='schedule'){ st.sheet=null; st.dlg={kind:'rsv',s0:'20:00'}; } }},
   {at:4,f:()=>{ st.ref.n1=post('S','今日のライブ、来てくれたみんなありがとう！'); }},
   {at:6,f:()=>{ st.here.add('N'); log('N','Novel Core がトークルームを開いた'); }},
   {at:11,f:()=>{ if(st.ref.n1) approve(st.ref.n1.id); }},
   {at:13,f:()=>{ st.ref.n2=post('N','このあとみんなで楽屋トークします'); }},
   {at:17,f:()=>{ if(st.ref.n2) approve(st.ref.n2.id); }},
-  {at:8,f:()=>{ if(st.trig==='schedule'){ st.dlg=null; setRsv(START,3); } }},
-  {at:14,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
-  {at:16,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg={kind:'start',sel:'2',at0:hm(st.now+180)}; } }},
+  {at:8,f:()=>{ if(st.trig==='schedule'){ st.dlg=null; setRsv(START,0); } }},
+  {at:13.5,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
+  {at:14.5,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg=st.normals.some(n=>n.st==='pend')?{kind:'alert'}:null; } }},
+  {at:16.5,f:()=>{ if(st.trig==='manual'&&st.dlg&&st.dlg.kind==='alert') st.dlg=null; }},
+  {at:18,f:()=>{ if(st.trig==='manual') st.dlg={kind:'start',sel:'2',at0:hm(st.now+180)}; }},
   {at:20,f:()=>{ if(st.trig==='manual') confirmStart(); }},
   {at:21,f:()=>{ st.ref.open=post('S',OPEN); }},
   {at:28,f:()=>post('N','おつかれ〜！めっちゃ楽しかった')},
@@ -511,6 +512,8 @@ const SCN=[
   {at:62,f:()=>post('S','それまだ言っちゃダメなやつ笑',st.ref.leak?.id)},
   {at:75,f:()=>st.ref.typo=post('A','みんな最後までみてくれてありがと！！')},
   {at:85,f:()=>post('N','このあと打ち上げいってきます🍻')},
+  {at:180,f:()=>{ if(st.trig==='schedule') st.sheet={kind:'room'}; }},
+  {at:182,f:()=>{ if(st.trig==='schedule'){ st.sheet=null; endRec('マネD'); } }},
 ];
 const SCN_R=[
   {at:4,f:()=>{ const p=st.ref.leak; if(p) st.sheet={kind:'post',id:p.id}; }},
@@ -555,7 +558,7 @@ const elapsed=t=>{t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); retur
 // 公開時刻を起点にした各投稿の時刻（話した間隔で流す場合は間隔を保つ）
 function pubTimeOf(p,at=st.pubAt){
   const vis=st.posts.filter(q=>!q.del), base=vis.length?vis[0].t:p.t;
-  return $('delivery').value==='replay'?at+Math.max(0,p.t-base):at;
+  return at+Math.max(0,p.t-base);
 }
 const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p))
   :st.phase==='review'&&st.pubRsv?(p.del?'削除':`${hm(pubTimeOf(p,st.pubRsv))} 予定`)
@@ -564,7 +567,7 @@ function fanList(){
   if(st.phase!=='pub') return [];
   const vis=st.posts.filter(p=>!p.del);
   if(!vis.length) return [];
-  const replay=$('delivery').value==='replay', base=vis[0].t;
+  const replay=true, base=vis[0].t;
   return vis.map(p=>({p,at:replay?st.pubAt+(p.t-base):st.pubAt})).filter(x=>x.at<=st.now);
 }
 
@@ -695,15 +698,18 @@ function mgrSess(){
   }).join('').replace(/[\s\S]*/,m=>sessWrap(m));
 }
 function rsvDialog(){
-  const d=st.dlg, opt=(v,l)=>`<button class="opt" data-act="dsel" data-v="${v}" aria-pressed="${d.sel===v}">${l}</button>`;
+  const d=st.dlg;
   return `<div class="sheet" role="dialog" aria-label="収録を予約"><h4>${st.rsv?'収録予約を変更':'収録を予約'}</h4>
-    <div class="note">開始時刻になると自動で収録が始まります。予約するとアーティストに通知が届き、トークルーム上部に開始日時が表示されます。</div>
+    <div class="note">開始時刻になると自動で収録が始まります。予約するとアーティストに通知が届き、トークルーム上部に開始日時が表示されます。終了はマネが「収録終了」で行います（上限30分）。</div>
     <div class="lbl">開始日時</div>
     <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="rs" class="tin" value="${d.s0}" aria-label="開始時刻"></div>
-    <div class="lbl">終了（任意）</div>
-    <div class="opts">${opt('none','決めない')}${opt('3','開始から3分')}${opt('10','10分')}${opt('30','30分')}</div>
-    <div class="note">${d.sel==='none'?'終了はマネが「収録を終了」で行います（上限30分）':`開始から${d.sel}分で自動で終了します`}。予約後も前倒しで開始できます。</div>
     <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
+}
+function alertDialog(){
+  const n=st.normals.filter(x=>x.st==='pend').length;
+  return `<div class="sheet" role="alertdialog" aria-label="未審査の投稿があります"><h4>未審査の投稿があります</h4>
+    <div class="note">未審査の投稿が${n}件あります。収録を始める前に、承認か削除で審査を完了してください。</div>
+    <button class="ab dk wide" data-act="dcancel">OK</button></div>`;
 }
 function pubDialog(){
   const d=st.dlg;
@@ -724,7 +730,7 @@ function startDialog(){
     <button class="ab rec wide" data-act="dok">● 収録を開始</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
 }
 function mgrModal(){
-  if(st.dlg) return st.dlg.kind==='rsv'?rsvDialog():st.dlg.kind==='pub'?pubDialog():startDialog();
+  if(st.dlg) return st.dlg.kind==='rsv'?rsvDialog():st.dlg.kind==='pub'?pubDialog():st.dlg.kind==='alert'?alertDialog():startDialog();
   if(st.sheet) return actionSheet();
   if(!st.editing) return '';
   const p=byId(st.editing);
@@ -798,7 +804,7 @@ const JUMP={
 function jump(k){
   reset(st.trig,true);
   for(let i=0;i<20000&&!JUMP[k]();i++) advance(0.5);
-  st.run=false; st.sheet=null; st.dlg=null; st.editing=null;
+  st.run=false; st.sheet=null; st.editing=null; if(!(st.dlg&&st.dlg.kind==='alert')) st.dlg=null;
   for(const c in cache) delete cache[c];
   render();
   ['D',...ART,'F'].forEach(x=>{const f=$('feed-'+x); if(f) f.scrollTop=f.scrollHeight});
@@ -851,8 +857,8 @@ document.addEventListener('click',e=>{
     case 'pmore': st.sheet={kind:'post',id}; break;
     case 'rmore': st.sheet={kind:'room'}; break;
     case 'scancel': st.sheet=null; break;
-    case 'mstart': st.sheet=null; st.dlg={kind:'start',sel:'none',at0:hm(st.now+180)}; break;
-    case 'rsvopen': st.sheet=null; st.dlg={kind:'rsv',sel:st.rsv&&st.rsv.end?String((st.rsv.end-st.rsv.start)/60):'none',s0:st.rsv?hm(st.rsv.start):hm(ceilMin(st.now)+120)}; break;
+    case 'mstart': st.sheet=null; st.dlg=st.normals.some(n=>n.st==='pend')?{kind:'alert'}:{kind:'start',sel:'none',at0:hm(st.now+180)}; break;
+    case 'rsvopen': st.sheet=null; st.dlg={kind:'rsv',s0:st.rsv?hm(st.rsv.start):hm(ceilMin(st.now)+120)}; break;
     case 'rsvcancel': st.sheet=null; st.rsv=null; log('M','マネD：収録予約を取り消し'); log('R','🔔 アーティストに通知「収録予約が取り消されました」'); break;
     case 'pubrsvopen': st.sheet=null; st.dlg={kind:'pub',p0:st.pubRsv?hm(st.pubRsv):hm(ceilMin(st.now)+120)}; break;
     case 'pubrsvcancel': st.sheet=null; st.pubRsv=null; log('M','マネD：送信予約を取り消し（確認中に戻る）'); break;
@@ -880,7 +886,6 @@ function sendFrom(k){
 $('bPause').onclick=()=>{st.run=!st.run;render()};
 $('bReset').onclick=()=>reset();
 $('bScn').onclick=()=>reset(null,true);
-['delivery'].forEach(id=>$(id).onchange=()=>render());
 $('scnSel').onchange=e=>reset(e.target.value,true);
 
 buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
