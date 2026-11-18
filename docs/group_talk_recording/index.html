@@ -139,6 +139,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .asb:focus-visible{outline:2px solid #007aff;outline-offset:-2px}
 .asb.cancel{background:rgba(242,242,242,.98);border-radius:14px;font-weight:600;border:0}
 .recbn.rec{background:#fff0f2;border-color:#ffd6dc}
+.recbn.rec{justify-content:center}
 .recbn.review{background:#fff6e6;border-color:#ffe2b3}
 .recbn.pub{background:#eef8f1;border-color:#cfeadb}
 .sess{margin:0 8px;background:#e3e3e7;border-radius:16px;padding:10px 0 12px;display:flex;flex-direction:column;gap:16px}
@@ -609,7 +610,7 @@ function artistPill(k){
     ?`<div class="l"><span class="st-wait">収録予約</span><span class="t">${dj(st.rsv.start)} から収録を開始します</span></div>`
     :`<div class="l"><span class="st-wait">収録前</span><span class="t">マネの収録開始を待っています</span></div>`;
   if(P==='rec'){
-    return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・ファンにはまだ公開されていません</span></div>`;
+    return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${hms(st.now-st.recStart)}</span></div>`;
   }
   if(P==='review') return st.pubRsv
     ?`<div class="l"><span class="st-rv">公開予約</span><span class="t">${dj(st.pubRsv)} にファンへ公開予定</span></div>`
@@ -657,7 +658,7 @@ function mgrPill(){
   if(P==='idle') return st.rsv
     ?`<div class="l"><span class="st-wait">収録予約</span><span class="t">${dj(st.rsv.start)} から収録を開始します</span></div>`
     :`<div class="l"><span class="st-wait">収録前</span><span class="t">右上の「収録予約」か ••• の「今すぐ開始」で始めます</span></div>`;
-  if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・右上の「収録終了」で終了</span></div>`;
+  if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${hms(st.now-st.recStart)}</span></div>`;
   if(P==='review') return st.pubRsv
     ?`<div class="l"><span class="st-rv">公開予約</span><span class="t">${dj(st.pubRsv)} に公開・それまで削除や書き換えができます</span></div>`
     :`<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。右上の「公開」から公開</span></div>`;
