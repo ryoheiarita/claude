@@ -428,7 +428,7 @@ function saveEdit(id,text){
 }
 
 /* ---- シナリオ ---- */
-const OPEN='収録はじまりました！今日のフェスおつかれさま！';
+const OPEN='みんな今日のフェスおつかれさま！';
 const SCN=[
   {at:2,f:()=>{ st.here.add('S'); log('S','SOTA がトークルームを開いた'); }},
   {at:1,f:()=>{ if(st.trig==='schedule') st.sheet={kind:'room'}; }},
