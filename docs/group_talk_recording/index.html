@@ -488,7 +488,7 @@ function pubTimeOf(p){
   const vis=st.posts.filter(q=>!q.del), base=vis.length?vis[0].t:p.t;
   return $('delivery').value==='replay'?st.pubAt+Math.max(0,p.t-base):st.pubAt;
 }
-const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p)):elapsed(p.t-st.recStart);
+const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p)):`開始後 ${elapsed(p.t-st.recStart)}`;
 function fanList(){
   if(st.phase!=='pub') return [];
   const vis=st.posts.filter(p=>!p.del);
