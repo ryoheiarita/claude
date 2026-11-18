@@ -86,8 +86,8 @@ h2{font-size:16px;font-weight:700;margin:0}
 .recbn{justify-content:space-between}
 .recbn .l{display:flex;align-items:center;gap:8px;min-width:0}
 .recbn .more{flex:none;margin:-4px -6px -4px 0}
-.modal.bottom{place-items:end stretch;padding:8px 8px 34px;background:rgba(0,0,0,.2)}
-.asheet{width:100%;display:flex;flex-direction:column;gap:8px}
+.modal.bottom{place-items:end stretch;grid-template-columns:minmax(0,1fr);padding:8px 8px 34px;background:rgba(0,0,0,.2)}
+.asheet{width:100%;min-width:0;display:flex;flex-direction:column;gap:8px}
 .asg{border-radius:14px;overflow:hidden;background:rgba(236,236,236,.97);display:flex;flex-direction:column}
 .ash{padding:14px 16px;font-size:13px;line-height:18px;color:#8a8a8e;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .asb{all:unset;cursor:pointer;display:block;height:56px;line-height:56px;text-align:center;font-size:17px;letter-spacing:-.43px;color:#007aff;border-top:.5px solid rgba(128,128,128,.55)}
@@ -194,7 +194,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .mact:empty{display:none}
 
 /* 書き換えモーダル（審査：編集 の「投稿申請を編集して投稿」準拠） */
-.modal{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:24px;z-index:5}
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;z-index:5}
 .modal:empty{display:none}
 .sheet{background:#fff;border-radius:16px;padding:24px 16px 12px;width:100%;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
 .sheet h4{margin:0;font-size:17px;font-weight:600;letter-spacing:-.408px}
