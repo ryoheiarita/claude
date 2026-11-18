@@ -530,8 +530,8 @@ const SCN_R=[
   {at:28,f:()=>{ if(st.trig==='schedule') confirmDlg(); }},
 ];
 const SCN_P=[
-  {at:15,f:()=>{ st.ref.n3=post('A','また来週もよろしく！'); }},
-  {at:22,f:()=>{ if(st.ref.n3) approve(st.ref.n3.id); }},
+  {at:70,f:()=>{ st.ref.n3=post('A','また来週もよろしく！'); }},
+  {at:76,f:()=>{ if(st.ref.n3) approve(st.ref.n3.id); }},
 ];
 function runScn(){
   if(!st.scn) return;
@@ -562,6 +562,13 @@ function pubTimeOf(p,at=st.pubAt){
   const vis=st.posts.filter(q=>!q.del), base=vis.length?vis[0].t:p.t;
   return at+Math.max(0,p.t-base);
 }
+function replayEnd(){
+  if(st.pubAt==null) return null;
+  const vis=st.posts.filter(q=>!q.del); if(!vis.length) return st.pubAt;
+  return st.pubAt+(vis[vis.length-1].t-vis[0].t);
+}
+// 通常の投稿の公開時刻：収録分を流している間に承認されたものは、流し終わった時刻に出す
+function normAt(n){ const e=replayEnd(); return e!=null&&n.apAt>=st.pubAt&&n.apAt<e?e:n.apAt; }
 const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p))
   :st.phase==='review'&&st.pubRsv?(p.del?'削除':`${hm(pubTimeOf(p,st.pubRsv))} 予定`)
   :`開始後 ${elapsed(p.t-st.recStart)}`;
@@ -619,9 +626,9 @@ function timeline(normHtml,sessHtml){
 }
 function normArtist(n,k){
   const pend=n.st==='pend', bub=`<div class="bub${pend?' pend':''}"><div class="tx">${esc(n.text)}</div></div>`;
-  if(n.author===k) return `<div class="me"><div class="side"><span class="tm${pend?' ng':''}">${pend?'未審査':hm(n.apAt)}</span></div>${bub}</div>`;
+  if(n.author===k) return `<div class="me"><div class="side"><span class="tm${pend?' ng':''}">${pend?'未審査':hm(normAt(n))}</span></div>${bub}</div>`;
   return `<div class="fa"><span class="av ${n.author}">${AV[n.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[n.author]}</b>${pend?'<span class="s">未審査</span>':''}</div>
-    <div class="brow">${bub}<div class="side"><span class="tm">${pend?'':hm(n.apAt)}</span></div></div></div></div>`;
+    <div class="brow">${bub}<div class="side"><span class="tm">${pend?'':hm(normAt(n))}</span></div></div></div></div>`;
 }
 function artistFeed(k){
   if(!st.normals.some(n=>n.st!=='del')&&st.recStart==null) return `<div class="empty">まだ投稿はありません</div>`;
@@ -680,7 +687,7 @@ function actionSheet(){
 function normMgr(n){
   const pend=n.st==='pend';
   return `<div class="fa"><span class="av ${n.author}">${AV[n.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[n.author]}</b>${pend?'<span class="s">未審査</span>':''}</div>
-    <div class="brow"><div class="bub${pend?' pend':''}"><div class="tx">${esc(n.text)}</div></div><div class="side"><span class="tm">${pend?'':hm(n.apAt)}</span></div></div>
+    <div class="brow"><div class="bub${pend?' pend':''}"><div class="tx">${esc(n.text)}</div></div><div class="side"><span class="tm">${pend?'':hm(normAt(n))}</span></div></div>
     ${pend?`<div class="racts"><button class="ab ok" data-act="nap" data-id="${n.id}">承認</button><button class="ab ng" data-act="ndel" data-id="${n.id}">削除</button></div>`:''}</div></div>`;
 }
 function mgrFeed(){
@@ -743,7 +750,7 @@ function mgrModal(){
 }
 function fanFeed(){
   const sess=fanList();
-  const list=[...st.normals.filter(n=>n.st==='ok').map(n=>({p:n,at:n.apAt})),...sess].sort((a,b)=>a.at-b.at);
+  const list=[...st.normals.filter(n=>n.st==='ok'&&normAt(n)<=st.now).map(n=>({p:n,at:normAt(n)})),...sess].sort((a,b)=>a.at-b.at);
   if(!list.length) return `<div class="empty">メッセージはまだありません</div>`;
   const all=st.phase==='pub'?st.posts.filter(p=>!p.del).length:0;
   const html=list.map(({p,at})=>{
@@ -801,7 +808,7 @@ const JUMP={
   rec:()=>st.phase==='rec'&&st.now-T0>=90,
   review:()=>st.phase==='review'&&st.now-st.recEnd>=12,
   done:()=>st.phase==='review'&&st.now-st.recEnd>=(st.trig==='schedule'?29:20),
-  pub:()=>st.phase==='pub'&&fanList().length===st.posts.filter(p=>!p.del).length,
+  pub:()=>st.phase==='pub'&&st.now-st.pubAt>=78,
 };
 function jump(k){
   reset(st.trig,true);
