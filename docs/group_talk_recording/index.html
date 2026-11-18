@@ -295,7 +295,6 @@ h2{font-size:16px;font-weight:700;margin:0}
     <button class="btn" id="bReset">リセット</button>
     <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
     <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
-    <label class="ctl">表示時刻<select id="timeMode"><option value="spoken">話した時刻</option><option value="pub">公開した時刻</option></select></label>
     <label class="ctl">収録中のファン画面<select id="teaser"><option value="on">収録中と知らせる</option><option value="off">何も出さない</option></select></label>
   </div>
 
@@ -312,6 +311,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
         <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
         <li>収録中はナビ右上が「収録終了」、確認中は「公開」になる。終了後はマネが確認（削除・書き換え）→「公開」から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
+        <li>投稿の時刻表示は、収録中・確認中は収録開始からの経過時間（0:21 など）。公開後はアーティスト・マネ・ファンとも公開時刻を起点にした時刻（20:05 公開なら 20:05〜）</li>
         <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
       </ul>
       <h3>決めたいこと</h3>
@@ -322,7 +322,6 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>準備完了制は入れず、在室の表示だけでよいか</li>
         <li>送信予約のとき、ファンに「◯時公開予定」と出すか。公開時の流し方（話した間隔で流す／まとめて出す）は今すぐ公開と同じでよいか</li>
         <li>公開前に次の収録を始めてよいか</li>
-        <li>表示時刻を「話した時刻」にするか「公開した時刻」にするか（現行の「送信日時＝承認時刻」の変更になる）</li>
         <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか／書き換えを本人に通知するか</li>
       </ul>
     </div>
@@ -478,6 +477,13 @@ function advance(dt){
 }
 
 /* ---- ファンに見えるもの ---- */
+const elapsed=t=>{t=Math.max(0,Math.floor(t)); const h=Math.floor(t/3600); return h?`${h}:${p2(Math.floor(t/60)%60)}:${p2(t%60)}`:`${Math.floor(t/60)}:${p2(t%60)}`;};
+// 公開時刻を起点にした各投稿の時刻（話した間隔で流す場合は間隔を保つ）
+function pubTimeOf(p){
+  const vis=st.posts.filter(q=>!q.del), base=vis.length?vis[0].t:p.t;
+  return $('delivery').value==='replay'?st.pubAt+Math.max(0,p.t-base):st.pubAt;
+}
+const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p)):elapsed(p.t-st.recStart);
 function fanList(){
   if(st.phase!=='pub') return [];
   const vis=st.posts.filter(p=>!p.del);
@@ -529,11 +535,11 @@ function artistFeed(k){
     const more=canReply?`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`:'';
     if(p.author===k){
       const label=off?'<span class="tm ng">非公開</span>':(pub&&p.edited?'<span class="tm">マネが書き換え</span>':'');
-      return `<div class="me"><div class="side">${more}${label||`<span class="tm">${hm(p.t)}</span>`}</div>${bubble(p,off)}</div>`;
+      return `<div class="me"><div class="side">${more}${label||`<span class="tm">${stamp(p)}</span>`}</div>${bubble(p,off)}</div>`;
     }
     const status=pub?(p.del?'<span class="s ng">非公開（マネが削除）</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
     return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
-      <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${hm(p.t)}</span></div></div></div></div>`;
+      <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div></div></div>`;
   }).join('').replace(/^/,'').replace(/[\s\S]*/,m=>sessWrap(m));
 }
 function mgrPill(){
@@ -582,7 +588,7 @@ function mgrFeed(){
     const status=p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
     const more=locked?'':`<button class="more" data-act="pmore" data-id="${p.id}" title="操作" aria-label="操作メニュー">${ic('more')}</button>`;
     return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
-      <div class="brow">${bubble(p,p.del)}<div class="side">${more}<span class="tm">${hms(p.t)}</span></div></div>
+      <div class="brow">${bubble(p,p.del)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div>
       ${p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}</div></div>`;
   }).join('').replace(/[\s\S]*/,m=>sessWrap(m));
 }
@@ -622,7 +628,7 @@ function mgrModal(){
   const p=byId(st.editing);
   return `<div class="sheet" role="dialog" aria-label="投稿を書き換える"><h4>投稿を書き換える</h4><span class="av ${p.author}">${AV[p.author]}</span><div class="who">${NAME[p.author]}</div>
     <textarea id="ed" aria-label="書き換え後の本文">${esc(st.draft0)}</textarea>
-    <div class="note">元の投稿：${esc(p.orig)}<br>話した時刻：${hms(p.t)}</div>
+    <div class="note">元の投稿：${esc(p.orig)}<br>収録開始から ${elapsed(p.t-st.recStart)}</div>
     <button class="ab dk wide" data-act="save" data-id="${p.id}">保存</button><button class="cancel" data-act="cancel">キャンセル</button></div>`;
 }
 function fanFeed(){
@@ -631,13 +637,13 @@ function fanFeed(){
   if(P==='idle'||(!teaser&&P!=='pub')) return `<div class="empty">トークが始まるのを待っています</div>`;
   if(P==='rec') return `<div class="teaser"><div class="ic">🎙</div><b>アーティストが収録中</b><span>終わり次第、このトークルームに公開されます</span></div>`;
   if(P==='review') return `<div class="teaser"><div class="ic">⏳</div><b>${st.pubRsv?`${hm(st.pubRsv)} 公開予定`:'まもなく公開'}</b><span>収録が終わりました</span></div>`;
-  const list=fanList(), useSpoken=$('timeMode').value==='spoken';
+  const list=fanList();
   const all=st.posts.filter(p=>!p.del).length;
   const html=list.map(({p,at})=>{
     const par=p.replyTo?byId(p.replyTo):null;
     const fq=par&&!par.del?`<div class="fq"><div class="fql">返信</div><div class="fqt">${esc(par.text)}</div></div>`:'';
     return `<div class="fmsg"><div class="fnm"><span class="av ${p.author}">${AV[p.author]}</span>${NAME[p.author]}</div>
-      <div class="frow"><div class="fbub">${fq}<div class="fbody">${esc(p.text)}<div class="ftr">Translate</div></div></div><span class="ftime">${hm(useSpoken?p.t:at)}</span></div>
+      <div class="frow"><div class="fbub">${fq}<div class="fbody">${esc(p.text)}<div class="ftr">Translate</div></div></div><span class="ftime">${hm(at)}</span></div>
       <div class="facts"><span class="fbtn" aria-hidden="true">☺︎</span><span class="fbtn">💬 コメント</span></div></div>`;
   }).join('');
   const more=list.length<all?`<div class="typing">•••</div>`:'';
@@ -754,7 +760,7 @@ function sendFrom(k){
 $('bPause').onclick=()=>{st.run=!st.run;render()};
 $('bReset').onclick=()=>reset();
 $('bScn').onclick=()=>reset(null,true);
-['delivery','timeMode','teaser'].forEach(id=>$(id).onchange=()=>render());
+['delivery','teaser'].forEach(id=>$(id).onchange=()=>render());
 
 buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
 let last=performance.now();
