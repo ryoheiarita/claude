@@ -901,7 +901,7 @@ $('bReset').onclick=()=>reset();
 $('bScn').onclick=()=>reset(null,true);
 $('scnSel').onchange=e=>reset(e.target.value,true);
 
-buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
+buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true); st.run=false; render();
 let last=performance.now();
 setInterval(()=>{const n=performance.now(),dt=(n-last)/1000;last=n; if(st.run) advance(dt*+$('speed').value); render()},200);
 </script>
