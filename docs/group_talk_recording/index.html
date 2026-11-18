@@ -112,7 +112,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .dtrow{display:flex;gap:8px;align-self:stretch;align-items:center}
 .dbox{flex:1;border:1px solid #dfdfdf;background:#fafafa;border-radius:12px;padding:8px 12px;font-size:15px;text-align:left;white-space:nowrap}
 .dtrow .tin{flex:1;min-width:0}
-.here{margin:auto 16px;background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.here{margin:0 16px;background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .ht{font-size:12px;font-weight:700;color:#838383}
 .hi{display:flex;align-items:center;gap:8px;font-size:14px}
 .hi b{font-weight:600}
@@ -168,6 +168,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .bub{font-size:14px;line-height:20px;border-radius:12px;overflow:hidden;overflow-wrap:anywhere;min-width:0}
 .bub .tx{padding:12px}
 .fa .bub{background:#fff;max-width:243px}
+.bub.pend{background:#e2e2e2!important;color:#191919!important}
 .bub.off{background:transparent!important;color:#191919!important;box-shadow:none;border:1px solid #b9b9bf}
 .bub.off .tx{text-decoration:line-through;color:#838383}
 .tm{font-size:11px;line-height:normal;color:#838383;letter-spacing:-.24px;white-space:nowrap}
@@ -317,7 +318,9 @@ h2{font-size:16px;font-weight:700;margin:0}
   <aside class="side-col">
     <section class="ov">
       <h2>概要</h2>
-      <p>審査ありのアーティストが混ざるグループトークを「収録」として扱います。アーティスト同士は時間内にリアルタイムで自由に話し、そのあいだファンには出しません。終わったらマネが中身を確認し、消すものだけ選んで（必要なら書き換えて）、話した順番のまま公開します。</p>
+      <p>アーティストの投稿は、ふだんはマネが1件ずつ審査（承認／削除）し、承認した時点でファンに公開されます。</p>
+      <p>収録モードは、この審査をまとめて行う機能です。収録中はアーティスト同士がリアルタイムで自由に話し、ファンにはまだ出しません。終わったらマネが中身を確認し、消すものだけ選んで（必要なら書き換えて）、話した順番のまま公開します。</p>
+      <p>通常の投稿と収録はシームレスに行き来できます。ただし収録中は、収録が終わるまで通常の投稿はできません（投稿はすべて収録分になる）。</p>
       <p class="hint">各ステップを押すと、その状態の画面まで進めて止まります。「再開」で続きから動きます。</p>
     </section>
 
@@ -327,11 +330,12 @@ h2{font-size:16px;font-weight:700;margin:0}
           <li>マネが右上の「収録」→「今すぐ収録を開始」か「日時を指定して予約」</li>
           <li>予約は開始日時を設定（終了は任意）。全員の画面上部に「2026年11月18日 20:00 から収録を開始します」、右上に開始時刻。時刻になると自動で開始</li>
           <li>予約後も「予約済み」から前倒し開始・変更・取消ができる</li>
-          <li>アーティストは収録前は投稿できない。マネには誰がルームにいるかを表示（準備完了は待たない）</li>
+          <li>収録前は通常の投稿。マネの画面に「承認／削除」が出て、承認するとその時刻でファンに公開される（未審査の間はグレー）</li>
+          <li>アーティストの準備完了は待たない</li>
         </ul></li>
       <li class="step" data-jump="rec" data-st="rec"><div class="sh"><span class="no">2</span>収録中</div>
         <ul>
-          <li>アーティスト同士はリアルタイムでやり取り。返信もできる</li>
+          <li>投稿はすべて収録分になり、通常の投稿はできない。アーティスト同士はリアルタイムでやり取りでき、返信もできる</li>
           <li>画面上部に「収録中」、右上に「REC」（マネは「収録終了」ボタン）</li>
           <li>投稿の時刻は「開始後 0:21」のように収録開始からの経過時間</li>
           <li>決めた終了時刻か、マネの「収録終了」で終わる（上限30分）</li>
@@ -353,6 +357,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <ul>
           <li>ファンには話した間隔のまま順番に流れる。時刻は公開時刻が起点（20:05 公開なら 20:05〜）</li>
           <li>削除した投稿は全員の画面から消える</li>
+          <li>公開後は通常の投稿に戻る（1件ずつ審査）</li>
           <li>収録分は角丸の背景でまとめ、上に「収録 20:00:00〜20:03:00」、下に「公開済み 2026/11/18 20:05」。公開後は上部バーを出さない</li>
         </ul></li>
     </ol>
@@ -363,11 +368,13 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>開始・予約・終了・公開の操作はマネだけ。ナビ右上のボタンが状態に合わせて「収録 → 予約済み → 収録終了 → 公開」と変わり、押すとアクションシートが出る</li>
         <li>予約するとアーティストに通知が届く想定</li>
         <li>収録前（予約なし）は上部バーを出さない</li>
-        <li>投稿できるのは収録中だけ。遅れて来たアーティストの投稿も話した順に公開される</li>
+        <li>トークルームには、通常の投稿と収録のまとまりが時刻順に並ぶ</li>
+        <li>遅れて来たアーティストの投稿も、収録内では話した順に公開される</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
-        <li>収録していないとき、アーティストは投稿できない前提でよいか</li>
+        <li>収録が終わってから公開までの間に通常の投稿を承認すると、収録分より先にファンに出る。許容するか、公開まで止めるか</li>
+        <li>収録が始まった時点で未審査の通常の投稿が残っていたら、どう扱うか（そのまま1件ずつ審査で問題ないか）</li>
         <li>収録を開始・予約できるのはマネだけでよいか（アーティストからの申請も受けるか）</li>
         <li>予約の項目は「開始日時だけ」か「開始＋終了（任意）」か</li>
         <li>公開時の流し方：話した間隔で流すか、まとめて出すか</li>
@@ -405,7 +412,7 @@ let st=null;
 function fresh(trig){
   return {now:T0,run:true,trig,phase:'idle',recStart:null,recEnd:null,lastPost:null,pubAt:null,
     posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null,sheet:null,
-    rsv:null,pubRsv:null,here:new Set(ART)};
+    rsv:null,pubRsv:null,here:new Set(ART),normals:[]};
 }
 const byId=id=>st.posts.find(p=>p.id===id);
 function log(cls,txt){st.log.push({t:st.now,cls,txt})}
@@ -454,12 +461,19 @@ function publish(by='今すぐ公開'){
 }
 function post(k,text,replyTo=null){
   text=text.trim(); if(!text) return null;
-  if(st.phase!=='rec') return null;
+  if(st.phase!=='rec'){
+    // 収録外は通常の投稿：マネが1件ずつ承認／削除し、承認した時点でファンに公開
+    const n={id:++st.seq,author:k,text,t:st.now,st:'pend',apAt:null};
+    st.normals.push(n); log(k,`${NAME[k]}（通常の投稿・未審査）：${text}`); return n;
+  }
   const p={id:++st.seq,author:k,text,orig:text,replyTo,t:st.now,del:false,edited:false};
   st.posts.push(p);st.lastPost=st.now;
   log(k,`${NAME[k]}：${replyTo?'↩ ':''}${text}`);
   return p;
 }
+const nById=id=>st.normals.find(n=>n.id===id);
+function approve(id){ const n=nById(id); if(!n||n.st!=='pend') return; n.st='ok'; n.apAt=st.now; log('M',`マネD：承認 → ファンに公開「${n.text}」`); }
+function rejectN(id){ const n=nById(id); if(!n||n.st!=='pend') return; n.st='del'; log('M',`マネD：削除「${n.text}」`); }
 function toggleDel(id){
   const p=byId(id); if(!p||st.phase==='pub') return;
   p.del=!p.del; log('M',`マネD：${p.del?'削除に選択':'削除を取り消し'}「${p.text}」`);
@@ -479,7 +493,11 @@ const SCN=[
   {at:2,f:()=>{ st.here.add('S'); log('S','SOTA がトークルームを開いた'); }},
   {at:1,f:()=>{ if(st.trig==='schedule') st.sheet={kind:'room'}; }},
   {at:3,f:()=>{ if(st.trig==='schedule'){ st.sheet=null; st.dlg={kind:'rsv',sel:'3',s0:'20:00'}; } }},
+  {at:4,f:()=>{ st.ref.n1=post('S','今日のライブ、来てくれたみんなありがとう！'); }},
   {at:6,f:()=>{ st.here.add('N'); log('N','Novel Core がトークルームを開いた'); }},
+  {at:11,f:()=>{ if(st.ref.n1) approve(st.ref.n1.id); }},
+  {at:13,f:()=>{ st.ref.n2=post('N','このあとみんなで楽屋トークします'); }},
+  {at:17,f:()=>{ if(st.ref.n2) approve(st.ref.n2.id); }},
   {at:8,f:()=>{ if(st.trig==='schedule'){ st.dlg=null; setRsv(START,3); } }},
   {at:14,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
   {at:16,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg={kind:'start',sel:'2',at0:hm(st.now+180)}; } }},
@@ -506,10 +524,15 @@ const SCN_R=[
   {at:25,f:()=>{ st.sheet=null; if(st.trig==='manual') publish(); else st.dlg={kind:'pub',p0:hm(ceilMin(st.now)+60)}; }},
   {at:28,f:()=>{ if(st.trig==='schedule') confirmDlg(); }},
 ];
+const SCN_P=[
+  {at:15,f:()=>{ st.ref.n3=post('A','また来週もよろしく！'); }},
+  {at:22,f:()=>{ if(st.ref.n3) approve(st.ref.n3.id); }},
+];
 function runScn(){
   if(!st.scn) return;
   SCN.forEach((s,i)=>{ if(!st.done.has('a'+i)&&st.now-T0>=s.at){st.done.add('a'+i);s.f()} });
   if(st.recEnd!=null) SCN_R.forEach((s,i)=>{ if(!st.done.has('r'+i)&&st.now-st.recEnd>=s.at){st.done.add('r'+i);s.f()} });
+  if(st.pubAt!=null) SCN_P.forEach((s,i)=>{ if(!st.done.has('p'+i)&&st.now-st.pubAt>=s.at){st.done.add('p'+i);s.f()} });
 }
 
 /* ---- 時計 ---- */
@@ -583,8 +606,23 @@ function sessWrap(inner){
   const pubt=st.phase==='pub'?`<span class="pubt">公開済み ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?(st.pubRsv?`<span class="pend">公開予定 ${DATE} ${hm(st.pubRsv)}</span>`:'<span class="pend">未公開（確認中）</span>'):'<span class="recn">収録中・未公開</span>';
   return `<div class="sess"><div class="shd"><span>${rng}</span></div>${inner}<div class="shd sft">${pubt}</div></div>`;
 }
+// 通常の投稿と収録のまとまりを時刻順に並べる
+function timeline(normHtml,sessHtml){
+  const items=st.normals.filter(n=>n.st!=='del').map(n=>({t:n.t,h:normHtml(n)}));
+  if(st.recStart!=null) items.push({t:st.recStart,h:sessHtml()});
+  return items.sort((a,b)=>a.t-b.t).map(i=>i.h).join('');
+}
+function normArtist(n,k){
+  const pend=n.st==='pend', bub=`<div class="bub${pend?' pend':''}"><div class="tx">${esc(n.text)}</div></div>`;
+  if(n.author===k) return `<div class="me"><div class="side"><span class="tm${pend?' ng':''}">${pend?'未審査':hm(n.apAt)}</span></div>${bub}</div>`;
+  return `<div class="fa"><span class="av ${n.author}">${AV[n.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[n.author]}</b>${pend?'<span class="s">未審査</span>':''}</div>
+    <div class="brow">${bub}<div class="side"><span class="tm">${pend?'':hm(n.apAt)}</span></div></div></div></div>`;
+}
 function artistFeed(k){
-  if(!st.posts.length) return `<div class="empty">${st.phase==='idle'?'収録が始まると投稿できます':(st.phase==='rec'?'下の入力欄から投稿できます':'まだ投稿はありません')}</div>`;
+  if(!st.normals.some(n=>n.st!=='del')&&st.recStart==null) return `<div class="empty">まだ投稿はありません</div>`;
+  return timeline(n=>normArtist(n,k),()=>artistSess(k));
+}
+function artistSess(k){
   // 確認中以降は、マネの削除・書き換えをアーティストにも反映して見せる
   const rv=st.phase==='review'||st.phase==='pub', canReply=st.phase==='rec';
   return shown().map(p=>{
@@ -634,12 +672,19 @@ function actionSheet(){
   return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg">${head}${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}"${p?` data-id="${p.id}"`:''}>${l}</button>`).join('')}</div>
     <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
 }
+function normMgr(n){
+  const pend=n.st==='pend';
+  return `<div class="fa"><span class="av ${n.author}">${AV[n.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[n.author]}</b>${pend?'<span class="s">未審査</span>':''}</div>
+    <div class="brow"><div class="bub${pend?' pend':''}"><div class="tx">${esc(n.text)}</div></div><div class="side"><span class="tm">${pend?'':hm(n.apAt)}</span></div></div>
+    ${pend?`<div class="racts"><button class="ab ok" data-act="nap" data-id="${n.id}">承認</button><button class="ab ng" data-act="ndel" data-id="${n.id}">削除</button></div>`:''}</div></div>`;
+}
 function mgrFeed(){
-  const ntc=st.notice&&st.phase!=='pub'?`<div class="ntc">🔔 ${esc(st.notice)}</div>`:'';
-  if(!st.posts.length) return ntc+`<div class="here"><div class="ht">ルームにいるアーティスト</div>${ART.map(k=>`<div class="hi${st.here.has(k)?'':' off'}"><span class="av ${k}">${AV[k]}</span><b>${NAME[k]}</b><span class="hs">${st.here.has(k)?'参加中':'まだ来ていません'}</span></div>`).join('')}
-    <div class="hn">そろっていなくても開始できます。遅れて来たアーティストの投稿も、話した順に公開されます。</div></div>`;
+  if(!st.normals.some(n=>n.st!=='del')&&st.recStart==null) return `<div class="empty">まだ投稿はありません</div>`;
+  return timeline(normMgr,mgrSess);
+}
+function mgrSess(){
   const locked=st.phase==='pub';
-  return ntc+shown().map(p=>{
+  return shown().map(p=>{
     const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del);
     const warn=p.del&&reps.length&&!locked?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます（••• から「返信も削除」できます）</div>`:'';
     const status=p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
@@ -689,9 +734,10 @@ function mgrModal(){
     <button class="ab dk wide" data-act="save" data-id="${p.id}">保存</button><button class="cancel" data-act="cancel">キャンセル</button></div>`;
 }
 function fanFeed(){
-  if(st.phase!=='pub') return `<div class="empty">メッセージはまだありません</div>`;
-  const list=fanList();
-  const all=st.posts.filter(p=>!p.del).length;
+  const sess=fanList();
+  const list=[...st.normals.filter(n=>n.st==='ok').map(n=>({p:n,at:n.apAt})),...sess].sort((a,b)=>a.at-b.at);
+  if(!list.length) return `<div class="empty">メッセージはまだありません</div>`;
+  const all=st.phase==='pub'?st.posts.filter(p=>!p.del).length:0;
   const html=list.map(({p,at})=>{
     const par=p.replyTo?byId(p.replyTo):null;
     const fq=par&&!par.del?`<div class="fq"><div class="fql">返信</div><div class="fqt">${esc(par.text)}</div></div>`:'';
@@ -699,7 +745,7 @@ function fanFeed(){
       <div class="frow"><div class="fbub">${fq}<div class="fbody">${esc(p.text)}<div class="ftr">Translate</div></div></div><span class="ftime">${hm(at)}</span></div>
       <div class="facts"><span class="fbtn" aria-hidden="true">☺︎</span><span class="fbtn">💬 コメント</span></div></div>`;
   }).join('');
-  const more=list.length<all?`<div class="typing">•••</div>`:'';
+  const more=sess.length<all?`<div class="typing">•••</div>`:'';
   return `<div class="fdate">${DATEJ}</div>`+html+more;
 }
 function render(){
@@ -709,8 +755,8 @@ function render(){
   ART.forEach(k=>{
     paint('feed-'+k,artistFeed(k));
     const can=st.phase==='rec';
-    const inp=$('in-'+k); inp.disabled=!can;
-    inp.placeholder=can?'コメントする':{idle:'収録前は投稿できません',review:'審査中は投稿できません',pub:'収録は終わりました'}[st.phase];
+    const inp=$('in-'+k); inp.disabled=false;
+    inp.placeholder=can?'コメントする（収録中）':'コメントする（マネの審査後に公開）';
     const r=st.rep[k]&&byId(st.rep[k]);
     paint('rp-'+k,r&&can?`<span><b>${esc(NAME[r.author])} に返信</b>　${esc(r.text)}</span><button data-act="unrep" data-k="${k}" aria-label="返信をやめる">×</button>`:'',false);
     $('rp-'+k).hidden=!(r&&can);
@@ -743,7 +789,7 @@ function statusBar(k){
 
 /* ---- 状態へスキップ：シナリオを早送りして止める ---- */
 const JUMP={
-  idle:()=>st.now-T0>=12,
+  idle:()=>st.now-T0>=15,
   rec:()=>st.phase==='rec'&&st.now-T0>=90,
   review:()=>st.phase==='review'&&st.now-st.recEnd>=12,
   done:()=>st.phase==='review'&&st.now-st.recEnd>=(st.trig==='schedule'?29:20),
@@ -800,6 +846,8 @@ document.addEventListener('click',e=>{
     case 'reply': st.rep[k]=id; $('in-'+k).focus(); break;
     case 'unrep': st.rep[k]=null; break;
     case 'send': sendFrom(k); break;
+    case 'nap': approve(id); break;
+    case 'ndel': rejectN(id); break;
     case 'pmore': st.sheet={kind:'post',id}; break;
     case 'rmore': st.sheet={kind:'room'}; break;
     case 'scancel': st.sheet=null; break;
