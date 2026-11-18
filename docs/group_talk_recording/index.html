@@ -99,6 +99,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .nrrec::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
 .recbn{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:#f6f6f6;border-bottom:1px solid #dfdfdf;font-size:12px;line-height:1.4;min-width:0}
 .recbn{justify-content:space-between}
+.recbn:empty{display:none}
 .recbn .l{display:flex;align-items:center;gap:8px;min-width:0}
 .recbn .more{flex:none;margin:-4px -6px -4px 0}
 .modal.bottom{place-items:end stretch;grid-template-columns:minmax(0,1fr);padding:8px 8px 34px;background:rgba(0,0,0,.2)}
@@ -303,8 +304,8 @@ h2{font-size:16px;font-weight:700;margin:0}
     <div class="panel spec">
       <h2>このプロトの決まりごと</h2>
       <ul>
-        <li>開始は2通り。①マネがナビ右上の「収録予約」から開始時刻を設定（終了は任意）→ 時刻になると自動で開始。②マネが ••• から「今すぐ収録を開始」</li>
-        <li>予約中は、全員の画面の上部バーに「2026年11月18日 20:00 から収録を開始します」、ナビ右上に開始時刻を表示。予約するとアーティストに通知（ログに表示）。予約後も前倒し開始・変更・取消ができる</li>
+        <li>開始はマネがナビ右上の「収録」ボタンから。アクションシートで「今すぐ収録を開始」か「日時を指定して予約」（終了は任意）を選ぶ。予約は時刻になると自動で開始</li><li>収録前（予約なし）は上部バーを出さない</li>
+        <li>予約中は、全員の画面の上部バーに「2026年11月18日 20:00 から収録を開始します」、ナビ右上に開始時刻を表示。予約するとアーティストに通知（ログに表示）。予約後はナビ右上が「予約済み 20:00」になり、そこから前倒し開始・変更・取消ができる</li>
         <li>準備完了の確認はしない。マネの画面で誰がルームにいるかだけ見える。遅れて来ても話した順に公開される</li>
         <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
         <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
@@ -333,9 +334,9 @@ const AV={S:'S',N:'N',A:'A'};
 const DATE='2026/11/18', DATEJ='2026年11月18日';
 const T0=71980, START=72000;
 const TRIG={
-  schedule:{k:'A',t:'収録予約',rec:true,d:'マネがナビ右上の「収録予約」から開始時刻を設定。上部バーに「2026年11月18日 20:00 から収録を開始します」と出て、時刻になると自動で始まる。前倒しで今すぐ開始もできる',
+  schedule:{k:'A',t:'収録予約',rec:true,d:'マネがナビ右上の「収録」→「日時を指定して予約」で開始時刻を設定。上部バーに「2026年11月18日 20:00 から収録を開始します」と出て、時刻になると自動で始まる。前倒しで今すぐ開始もできる',
     g:['事前に告知でき、アーティストが予定を立てられる','予約後も前倒し・変更・取消ができる'],x:['開始時に全員そろっているとは限らない（遅れて来ても話した順に公開されるので影響は小さい）'],e:'シナリオ：予約 → 自動で開始 → 送信予約で公開'},
-  manual:{k:'B',t:'マネが今すぐ開始',d:'予約せず、マネが ••• から「今すぐ収録を開始」。ダイアログで終了時刻を決める（決めなくてもよい）',
+  manual:{k:'B',t:'マネが今すぐ開始',d:'予約せず、マネがナビ右上の「収録」→「今すぐ収録を開始」。ダイアログで終了時刻を決める（決めなくてもよい）',
     g:['思い立ったらすぐ始められる'],x:['事前の告知ができない'],e:'シナリオ：今すぐ開始 → 今すぐ公開'},
 };
 const $=id=>document.getElementById(id);
@@ -424,7 +425,8 @@ function saveEdit(id,text){
 const OPEN='収録はじまりました！今日のフェスおつかれさま！';
 const SCN=[
   {at:2,f:()=>{ st.here.add('S'); log('S','SOTA がトークルームを開いた'); }},
-  {at:3,f:()=>{ if(st.trig==='schedule') st.dlg={kind:'rsv',sel:'3',s0:'20:00'}; }},
+  {at:1,f:()=>{ if(st.trig==='schedule') st.sheet={kind:'room'}; }},
+  {at:3,f:()=>{ if(st.trig==='schedule'){ st.sheet=null; st.dlg={kind:'rsv',sel:'3',s0:'20:00'}; } }},
   {at:6,f:()=>{ st.here.add('N'); log('N','Novel Core がトークルームを開いた'); }},
   {at:8,f:()=>{ if(st.trig==='schedule'){ st.dlg=null; setRsv(START,3); } }},
   {at:14,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
@@ -547,7 +549,7 @@ function roomActs(){
   const P=st.phase;
   if(P==='idle') return st.rsv
     ?[['mstart','今すぐ開始（前倒し）',''],['rsvopen','予約を変更',''],['rsvcancel','予約を取り消す','red']]
-    :[['mstart','今すぐ収録を開始',''],['rsvopen','収録を予約','']];
+    :[['mstart','今すぐ収録を開始',''],['rsvopen','日時を指定して予約','']];
   if(P==='rec') return [['mend','収録を終了','red']];
   if(P==='review') return st.pubRsv
     ?[['pub','今すぐ公開',''],['pubrsvopen','送信予約の時刻を変更',''],['pubrsvcancel','送信予約を取り消す','red']]
@@ -563,7 +565,7 @@ function actionSheet(){
   const sh=st.sheet; if(!sh) return '';
   const p=sh.kind==='post'?byId(sh.id):null;
   const acts=p?postActs(p):roomActs();
-  const head=p?`<div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>`:`<div class="ash">フェス楽屋トーク</div>`;
+  const head=p?`<div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>`:`<div class="ash">${st.phase==='idle'?(st.rsv?`${dj(st.rsv.start)} から収録予定`:'収録を始める'):'フェス楽屋トーク'}</div>`;
   return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg">${head}${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}"${p?` data-id="${p.id}"`:''}>${l}</button>`).join('')}</div>
     <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
 }
@@ -663,11 +665,12 @@ function navRight(k){
   if(st.phase==='rec') return `<span class="nrrec">REC</span>`;
   if(st.phase!=='idle') return '';
   if(k==='D') return st.rsv
-    ?`<button class="nrbtn on" data-act="rmore" aria-label="収録予約の操作"><small>収録予約</small>${hm(st.rsv.start)}</button>`
-    :`<button class="nrbtn" data-act="rsvopen">収録予約</button>`;
+    ?`<button class="nrbtn on" data-act="rmore" aria-label="収録予約の操作"><small>予約済み</small>${hm(st.rsv.start)}</button>`
+    :`<button class="nrbtn" data-act="rmore">収録</button>`;
   return st.rsv?`<span class="nrsv"><small>収録開始</small>${hm(st.rsv.start)}</span>`:'';
 }
 function statusBar(k){
+  if(st.phase==='idle'&&!st.rsv) return '';
   const more=k==='D'&&roomActs().length?`<button class="more" data-act="rmore" title="操作" aria-label="収録の操作メニュー">${ic('more')}</button>`:'';
   return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>${more}`;
 }
