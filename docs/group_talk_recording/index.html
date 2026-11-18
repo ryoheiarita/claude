@@ -83,7 +83,18 @@ h2{font-size:16px;font-weight:700;margin:0}
 .nrrec{display:inline-flex;align-items:center;gap:4px;background:#ff3e55;color:#fff;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.04em}
 .nrrec::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
 .recbn{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:#f6f6f6;border-bottom:1px solid #dfdfdf;font-size:12px;line-height:1.4;min-width:0}
+.recbn{justify-content:space-between}
 .recbn .l{display:flex;align-items:center;gap:8px;min-width:0}
+.recbn .more{flex:none;margin:-4px -6px -4px 0}
+.modal.bottom{place-items:end stretch;padding:8px 8px 34px;background:rgba(0,0,0,.2)}
+.asheet{width:100%;display:flex;flex-direction:column;gap:8px}
+.asg{border-radius:14px;overflow:hidden;background:rgba(236,236,236,.97);display:flex;flex-direction:column}
+.ash{padding:14px 16px;font-size:13px;line-height:18px;color:#8a8a8e;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asb{all:unset;cursor:pointer;display:block;height:56px;line-height:56px;text-align:center;font-size:17px;letter-spacing:-.43px;color:#007aff;border-top:.5px solid rgba(128,128,128,.55)}
+.asb.red{color:#ff3b30}
+.asb:hover{background:rgba(0,0,0,.04)}
+.asb:focus-visible{outline:2px solid #007aff;outline-offset:-2px}
+.asb.cancel{background:rgba(242,242,242,.98);border-radius:14px;font-weight:600;border:0}
 .recbn.rec{background:#fff0f2;border-color:#ffd6dc}
 .recbn.review{background:#fff6e6;border-color:#ffe2b3}
 .recbn.pub{background:#eef8f1;border-color:#cfeadb}
@@ -318,7 +329,7 @@ const mmss=t=>{t=Math.max(0,Math.floor(t));return `${p2(Math.floor(t/60))}:${p2(
 let st=null;
 function fresh(trig){
   return {now:T0,run:true,trig,phase:'idle',recStart:null,recEnd:null,lastPost:null,pubAt:null,
-    posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null};
+    posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null,sheet:null};
 }
 const byId=id=>st.posts.find(p=>p.id===id);
 function log(cls,txt){st.log.push({t:st.now,cls,txt})}
@@ -375,7 +386,8 @@ function saveEdit(id,text){
 /* ---- シナリオ ---- */
 const OPEN='収録はじまりました！今日のフェスおつかれさま！';
 const SCN=[
-  {at:16,f:()=>{ if(st.trig==='manual') st.dlg={sel:'2',at0:hm(st.now+180)}; }},
+  {at:14,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
+  {at:16,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg={sel:'2',at0:hm(st.now+180)}; } }},
   {at:20,f:()=>{ if(st.trig==='manual') confirmStart(); }},
   {at:21,f:()=>{ st.ref.open=post('S',OPEN); }},
   {at:28,f:()=>post('N','おつかれ〜！めっちゃ楽しかった')},
@@ -387,10 +399,15 @@ const SCN=[
   {at:85,f:()=>post('N','このあと打ち上げいってきます🍻')},
 ];
 const SCN_R=[
-  {at:6,f:()=>{ const p=st.ref.leak; if(p&&!p.del) toggleDel(p.id); }},
-  {at:11,f:()=>{ const p=st.ref.leak; if(p) delReplies(p.id); }},
-  {at:17,f:()=>{ const p=st.ref.typo; if(p) saveEdit(p.id,'みんな最後まで見てくれてありがとう！！'); }},
-  {at:26,f:()=>publish()},
+  {at:4,f:()=>{ const p=st.ref.leak; if(p) st.sheet={kind:'post',id:p.id}; }},
+  {at:6,f:()=>{ st.sheet=null; const p=st.ref.leak; if(p&&!p.del) toggleDel(p.id); }},
+  {at:9,f:()=>{ const p=st.ref.leak; if(p) st.sheet={kind:'post',id:p.id}; }},
+  {at:11,f:()=>{ st.sheet=null; const p=st.ref.leak; if(p) delReplies(p.id); }},
+  {at:13,f:()=>{ const p=st.ref.typo; if(p) st.sheet={kind:'post',id:p.id}; }},
+  {at:15,f:()=>{ st.sheet=null; const p=st.ref.typo; if(p){st.editing=p.id; st.draft0='みんな最後まで見てくれてありがとう！！';} }},
+  {at:18,f:()=>{ const p=st.ref.typo; if(p) saveEdit(p.id,'みんな最後まで見てくれてありがとう！！'); }},
+  {at:23,f:()=>{ st.sheet={kind:'room'}; }},
+  {at:26,f:()=>{ st.sheet=null; publish(); }},
 ];
 function runScn(){
   if(!st.scn) return;
@@ -471,17 +488,30 @@ function artistFeed(k){
 }
 function mgrPill(){
   const P=st.phase, d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
-  if(P==='idle') return `<div class="l"><span class="st-wait">収録前</span><span class="t">${st.trig==='schedule'?'20:00 に自動で始まります（予約）':'下のボタンで始めます'}</span></div>`;
+  if(P==='idle') return `<div class="l"><span class="st-wait">収録前</span><span class="t">${st.trig==='schedule'?'20:00 に自動で始まります（予約）':'右の ••• から開始します'}</span></div>`;
   if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・削除はいまから選べます</span></div>`;
   if(P==='review') return `<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。問題なければそのまま公開</span></div>`;
   return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)}・${st.posts.length-d}件を公開（削除${d}・書き換え${e}）</span></div>`;
 }
-function mgrAct(){
+function roomActs(){
   const P=st.phase;
-  if(P==='idle'&&st.trig==='manual') return `<button class="ab rec wide" data-act="mstart">● 収録を開始</button>`;
-  if(P==='rec') return `<button class="ab dk wide" data-act="mend">■ 収録を終了</button>`;
-  if(P==='review') return `<button class="ab ok wide" data-act="pub">この内容で公開</button>`;
-  return '';
+  if(P==='idle'&&st.trig==='manual') return [['mstart','収録を開始','']];
+  if(P==='rec') return [['mend','収録を終了','red']];
+  if(P==='review') return [['pub','この内容で公開','']];
+  return [];
+}
+function postActs(p){
+  const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del).length;
+  if(p.del) return [['del','削除を取り消す',''],...(reps?[['delrep',`返信も削除（${reps}件）`,'red']]:[])];
+  return [['edit','投稿を書き換える',''],['del','投稿を削除','red']];
+}
+function actionSheet(){
+  const sh=st.sheet; if(!sh) return '';
+  const p=sh.kind==='post'?byId(sh.id):null;
+  const acts=p?postActs(p):roomActs();
+  const head=p?`<div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>`:`<div class="ash">フェス楽屋トーク</div>`;
+  return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg">${head}${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}"${p?` data-id="${p.id}"`:''}>${l}</button>`).join('')}</div>
+    <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
 }
 function mgrFeed(){
   const ntc=st.notice&&st.phase!=='pub'?`<div class="ntc">🔔 ${esc(st.notice)}</div>`:'';
@@ -489,14 +519,12 @@ function mgrFeed(){
   const locked=st.phase==='pub';
   return ntc+st.posts.map(p=>{
     const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del);
-    const warn=p.del&&reps.length&&!locked?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます<button class="ab gh sm" data-act="delrep" data-id="${p.id}">返信も削除</button></div>`:'';
+    const warn=p.del&&reps.length&&!locked?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます（••• から「返信も削除」できます）</div>`:'';
     const status=p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
-    const acts=locked?'':`<div class="racts">${p.del
-      ?`<button class="ab gh" data-act="del" data-id="${p.id}">削除を取り消す</button>`
-      :`<button class="ab ng" data-act="del" data-id="${p.id}">削除</button><button class="ab dk" data-act="edit" data-id="${p.id}">書き換え</button>`}</div>`;
+    const more=locked?'':`<button class="more" data-act="pmore" data-id="${p.id}" title="操作" aria-label="操作メニュー">${ic('more')}</button>`;
     return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
-      <div class="brow">${bubble(p,p.del)}<span class="tm">${hms(p.t)}</span></div>
-      ${p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}${acts}</div></div>`;
+      <div class="brow">${bubble(p,p.del)}<div class="side">${more}<span class="tm">${hms(p.t)}</span></div></div>
+      ${p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}</div></div>`;
   }).join('').replace(/[\s\S]*/,m=>sessWrap(m));
 }
 function startDialog(){
@@ -511,6 +539,7 @@ function startDialog(){
 }
 function mgrModal(){
   if(st.dlg) return startDialog();
+  if(st.sheet) return actionSheet();
   if(!st.editing) return '';
   const p=byId(st.editing);
   return `<div class="sheet" role="dialog" aria-label="投稿を書き換える"><h4>投稿を書き換える</h4><span class="av ${p.author}">${AV[p.author]}</span><div class="who">${NAME[p.author]}</div>
@@ -550,8 +579,7 @@ function render(){
   });
   ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn '+st.phase; });
   paint('feed-D',mgrFeed(),false);
-  paint('act-D',mgrAct(),false);
-  paint('modal-D',mgrModal(),false);
+  paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
   paint('feed-F',fanFeed());
   paint('log',st.log.map(l=>`<div><span class="t">${hms(l.t)}</span><span class="${l.cls}">${esc(l.txt)}</span></div>`).join(''));
 }
@@ -561,7 +589,10 @@ function navRight(){
   if(st.phase==='rec') return `<span class="nrrec">REC</span>`;
   return '';
 }
-function statusBar(k){ return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>`; }
+function statusBar(k){
+  const more=k==='D'&&roomActs().length?`<button class="more" data-act="rmore" title="操作" aria-label="収録の操作メニュー">${ic('more')}</button>`:'';
+  return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>${more}`;
+}
 
 /* ---- 組み立て ---- */
 function buildModes(){
@@ -607,15 +638,18 @@ document.addEventListener('click',e=>{
     case 'reply': st.rep[k]=id; $('in-'+k).focus(); break;
     case 'unrep': st.rep[k]=null; break;
     case 'send': sendFrom(k); break;
-    case 'mstart': st.dlg={sel:'none',at0:hm(st.now+180)}; break;
+    case 'pmore': st.sheet={kind:'post',id}; break;
+    case 'rmore': st.sheet={kind:'room'}; break;
+    case 'scancel': st.sheet=null; break;
+    case 'mstart': st.sheet=null; st.dlg={sel:'none',at0:hm(st.now+180)}; break;
     case 'dsel': st.dlg.sel=b.dataset.v; break;
     case 'dok': confirmStart(); break;
     case 'dcancel': st.dlg=null; break;
-    case 'mend': endRec('マネD'); break;
-    case 'pub': publish(); break;
-    case 'del': toggleDel(id); break;
-    case 'delrep': delReplies(id); break;
-    case 'edit': st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
+    case 'mend': st.sheet=null; endRec('マネD'); break;
+    case 'pub': st.sheet=null; publish(); break;
+    case 'del': st.sheet=null; toggleDel(id); break;
+    case 'delrep': st.sheet=null; delReplies(id); break;
+    case 'edit': st.sheet=null; st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
     case 'save': saveEdit(id,$('ed').value); break;
     case 'cancel': st.editing=null; break;
   }
