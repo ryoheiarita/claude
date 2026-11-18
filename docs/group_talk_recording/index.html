@@ -490,7 +490,7 @@ function pubTimeOf(p,at=st.pubAt){
   return $('delivery').value==='replay'?at+Math.max(0,p.t-base):at;
 }
 const stamp=p=>st.phase==='pub'?hm(pubTimeOf(p))
-  :st.phase==='review'&&st.pubRsv?(p.del?'公開しない':`${hm(pubTimeOf(p,st.pubRsv))} 予定`)
+  :st.phase==='review'&&st.pubRsv?(p.del?'削除':`${hm(pubTimeOf(p,st.pubRsv))} 予定`)
   :`開始後 ${elapsed(p.t-st.recStart)}`;
 function fanList(){
   if(st.phase!=='pub') return [];
@@ -546,10 +546,10 @@ function artistFeed(k){
     const off=rv&&p.del;
     const more=canReply?`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`:'';
     if(p.author===k){
-      const label=off?'<span class="tm ng">非公開</span>':(rv&&p.edited?'<span class="tm">マネが書き換え</span>':'');
+      const label=off?'<span class="tm ng">削除</span>':(rv&&p.edited?'<span class="tm">マネが書き換え</span>':'');
       return `<div class="me"><div class="side">${more}${label||`<span class="tm">${stamp(p)}</span>`}</div>${bubble(p,off)}</div>`;
     }
-    const status=rv?(p.del?'<span class="s ng">非公開（マネが削除）</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
+    const status=rv?(p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
     return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
       <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div></div></div>`;
   }).join('').replace(/^/,'').replace(/[\s\S]*/,m=>sessWrap(m));
