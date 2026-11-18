@@ -28,7 +28,26 @@
   --acc:#9d88ff; --acc-soft:#2a2448; --mgr:#f0a43a; --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6;margin:0}
-.wrap{max-width:1500px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+.wrap{width:100%;margin:0;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,22vw,420px);gap:16px;align-items:start}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}}
+.main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bar h1{font-size:17px;margin:0 6px 0 0}
+.side-col{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+@media (max-width:1100px){.side-col{position:static;max-height:none}}
+.ov h2,.spec h2{font-size:15px;margin:0 0 6px}
+.ov p{margin:0 0 6px;font-size:13.5px;line-height:1.7}
+.ov .hint{font-size:12px;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+.step:hover{border-color:var(--muted)}
+.step.on{border-color:var(--acc);background:var(--acc-soft)}
+.sh{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.sh .no{width:22px;height:22px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:12px;font-family:var(--f-mono)}
+.step.on .no{background:var(--acc);color:#fff}
+.step ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.65;display:flex;flex-direction:column;gap:2px}
+.spec{border-top:1px solid var(--line);padding-top:12px}
+.spec ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.65;display:flex;flex-direction:column;gap:3px}
+.spec h3{font-size:13.5px;margin:10px 0 4px}
 h1{font-size:24px;font-weight:700;margin:0;text-wrap:balance}
 h2{font-size:16px;font-weight:700;margin:0}
 .lead{color:var(--muted);margin:6px 0 0;max-width:80ch}
@@ -68,9 +87,13 @@ h2{font-size:16px;font-weight:700;margin:0}
 .skip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .skip .lb{font-size:13px;font-weight:700;margin-right:4px}
 .skip .hint{font-size:12px;color:var(--muted);flex-basis:100%}
-.stage{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.col{display:flex;flex-direction:column;gap:8px;min-width:0}
-.cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;flex-wrap:wrap}
+.stage{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1250px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.stage{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0;align-items:center}
+.col .cap{align-self:stretch}
+.cap{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}
+.cap small{overflow:hidden;text-overflow:ellipsis}
 .cap .dot{width:10px;height:10px;border-radius:50%}
 .cap small{font-weight:400;color:var(--muted);font-size:12px}
 
@@ -233,26 +256,27 @@ h2{font-size:16px;font-weight:700;margin:0}
 @media (prefers-reduced-motion:reduce){.st-rec::before{animation:none}}
 
 /* ファン画面（Figma Renewal_UI_Design: 黒地・#232323 バブル） */
-.phone.fan{width:auto;zoom:1;height:calc(812px*var(--z,1));border-radius:24px;background:#101010;color:#fff;font-family:var(--f-body);font-size:13px;line-height:1.6}
-.fhead{background:#060606;display:grid;grid-template-columns:40px 1fr 40px;align-items:center;padding:10px 10px 12px;text-align:center}
-.fback{width:34px;height:34px;border-radius:50%;border:1px solid #2a2a2a;display:grid;place-items:center;font-size:20px;line-height:1}
-.ftitle{font-size:14px;font-weight:700}
-.fan .feed{gap:16px;padding:12px 12px 20px}
-.fan .empty{color:#777}
-.fdate{align-self:center;background:#232323;color:#9a9a9a;font-size:10.5px;border-radius:999px;padding:3px 12px}
-.fmsg{display:flex;flex-direction:column;gap:6px;min-width:0}
-.fnm{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700}
-.fnm .av{width:26px;height:26px;font-size:11px}
-.frow{display:flex;align-items:flex-end;gap:6px;padding-left:34px;min-width:0}
-.fbub{background:#232323;border-radius:18px;overflow:hidden;max-width:86%;min-width:0}
-.fbody{padding:9px 12px 8px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.ftr{font-size:10px;color:#676767;margin-top:4px}
-.fq{padding:9px 12px;border-bottom:1px solid #444;display:flex;flex-direction:column;gap:2px}
-.fql{font-size:10.5px}
-.fqt{font-size:11px;color:#cfcfcf;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.ftime{font-size:9.5px;color:#8a8a8a;white-space:nowrap}
-.facts{display:flex;gap:6px;padding-left:34px}
-.fbtn{border:1px solid #2c2c2c;border-radius:999px;padding:3px 11px;font-size:10.5px;color:#cfcfcf}
+.phone.fan{border-radius:46px;background:#101010;color:#fff;font-family:var(--f-body);font-size:15px;line-height:1.6}
+.fsbar{height:47px;flex:none;display:flex;align-items:center;padding:2px 26px 0 46px;font-size:17px;font-weight:600;background:#060606}
+.fhead{background:#060606;display:grid;grid-template-columns:52px 1fr 52px;align-items:center;padding:4px 12px 12px;text-align:center}
+.fback{width:40px;height:40px;border-radius:50%;border:1px solid #2a2a2a;display:grid;place-items:center;font-size:24px;line-height:1}
+.ftitle{font-size:17px;font-weight:700}
+.fan .feed{gap:20px;padding:16px 16px 24px}
+.fan .empty{color:#777;font-size:14px}
+.fdate{align-self:center;background:#232323;color:#9a9a9a;font-size:12px;border-radius:999px;padding:4px 14px}
+.fmsg{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fnm{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+.fnm .av{width:32px;height:32px;font-size:13px}
+.frow{display:flex;align-items:flex-end;gap:8px;padding-left:40px;min-width:0}
+.fbub{background:#232323;border-radius:20px;overflow:hidden;max-width:86%;min-width:0}
+.fbody{padding:11px 14px 10px;font-size:15px;line-height:1.6;overflow-wrap:anywhere}
+.ftr{font-size:11.5px;color:#676767;margin-top:4px}
+.fq{padding:11px 14px;border-bottom:1px solid #444;display:flex;flex-direction:column;gap:2px}
+.fql{font-size:12px}
+.fqt{font-size:13px;color:#cfcfcf;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ftime{font-size:11px;color:#8a8a8a;white-space:nowrap}
+.facts{display:flex;gap:8px;padding-left:40px}
+.fbtn{border:1px solid #2c2c2c;border-radius:999px;padding:4px 13px;font-size:12px;color:#cfcfcf}
 .teaser{margin:auto 0;align-self:center;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 16px}
 .teaser .ic{width:56px;height:56px;border-radius:50%;background:#232323;display:grid;place-items:center;font-size:24px}
 .teaser b{font-size:14px}
@@ -275,64 +299,85 @@ h2{font-size:16px;font-weight:700;margin:0}
 <body>
 
 <div class="wrap">
-  <header>
-    <h1>グループトーク 収録モード</h1>
-    <p class="lead">アーティスト同士は決まった時間内に自由に話し、そのあいだファンにはまだ出しません。収録が終わったら審査マネが中身を見て、消す投稿だけを選び（必要なら書き換えて）、話した順番のままファンに公開します。</p>
-    <div class="conds">
-      <span class="cond"><b>①</b>審査は外せない → 公開前に必ずマネが見る</span>
-      <span class="cond"><b>②</b>LINEのようなテンポ → アーティスト同士はリアルタイム</span>
-      <span class="cond"><b>③</b>投稿順を守る → 話した順で公開</span>
+  <div class="main">
+    <div class="bar">
+      <h1>グループトーク 収録モード</h1>
+      <span class="clock" id="clock">19:59:40</span>
+      <span class="phase" id="phase">収録前</span>
+      <button class="btn" id="bPause">一時停止</button>
+      <button class="btn pri" id="bScn">▶ シナリオ再生</button>
+      <button class="btn" id="bReset">リセット</button>
+      <label class="ctl">シナリオ<select id="scnSel"><option value="schedule">予約して開始 → 送信予約</option><option value="manual">今すぐ開始 → 今すぐ公開</option></select></label>
+      <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
+      <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
     </div>
-  </header>
-
-  <section class="sec">
-    <h2>収録の始め方（シナリオ）</h2>
-    <div class="modes" id="modes"></div>
-  </section>
-
-  <div class="bar">
-    <span class="clock" id="clock">19:59:40</span>
-    <span class="phase" id="phase">収録前</span>
-    <button class="btn" id="bPause">一時停止</button>
-    <button class="btn pri" id="bScn">▶ シナリオ再生</button>
-    <button class="btn" id="bReset">リセット</button>
-    <label class="ctl">速さ<select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
-    <label class="ctl">ファンへの公開<select id="delivery"><option value="replay">話した間隔で流す</option><option value="bulk">まとめて出す</option></select></label>
+    <div class="stage" id="stage"></div>
   </div>
 
-  <div class="skip" id="skip"><span class="lb">状態へスキップ</span>
-    <button class="btn" data-jump="idle">収録前</button><button class="btn" data-jump="rec">収録中</button><button class="btn" data-jump="review">確認中</button><button class="btn" data-jump="done">確認後・公開前</button><button class="btn" data-jump="pub">公開後</button>
-    <span class="hint">今のシナリオ（A／B）をその状態まで進めて一時停止します。「再開」で続きから動きます</span></div>
-  <div class="stage" id="stage"></div>
+  <aside class="side-col">
+    <section class="ov">
+      <h2>概要</h2>
+      <p>審査ありのアーティストが混ざるグループトークを「収録」として扱います。アーティスト同士は時間内にリアルタイムで自由に話し、そのあいだファンには出しません。終わったらマネが中身を確認し、消すものだけ選んで（必要なら書き換えて）、話した順番のまま公開します。</p>
+      <p class="hint">各ステップを押すと、その状態の画面まで進めて止まります。「再開」で続きから動きます。</p>
+    </section>
 
-  <div class="lower">
-    <div class="panel"><h2>ログ</h2><div class="log" id="log"></div></div>
-    <div class="panel spec">
+    <ol class="steps">
+      <li class="step" data-jump="idle" data-st="idle"><div class="sh"><span class="no">1</span>収録前</div>
+        <ul>
+          <li>マネが右上の「収録」→「今すぐ収録を開始」か「日時を指定して予約」</li>
+          <li>予約は開始日時を設定（終了は任意）。全員の画面上部に「2026年11月18日 20:00 から収録を開始します」、右上に開始時刻。時刻になると自動で開始</li>
+          <li>予約後も「予約済み」から前倒し開始・変更・取消ができる</li>
+          <li>アーティストは収録前は投稿できない。マネには誰がルームにいるかを表示（準備完了は待たない）</li>
+        </ul></li>
+      <li class="step" data-jump="rec" data-st="rec"><div class="sh"><span class="no">2</span>収録中</div>
+        <ul>
+          <li>アーティスト同士はリアルタイムでやり取り。返信もできる</li>
+          <li>画面上部に「収録中」、右上に「REC」（マネは「収録終了」ボタン）</li>
+          <li>投稿の時刻は「開始後 0:21」のように収録開始からの経過時間</li>
+          <li>決めた終了時刻か、マネの「収録終了」で終わる（上限30分）</li>
+          <li>ファンには何も出さない（収録していることも知らせない）</li>
+        </ul></li>
+      <li class="step" data-jump="review" data-st="review"><div class="sh"><span class="no">3</span>確認中</div>
+        <ul>
+          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。問題なければ何もしない</li>
+          <li>返信が付いた投稿を削除すると、返信は引用なしで公開。「返信も削除」も選べる</li>
+          <li>アーティストにもマネの削除・書き換えが見える</li>
+        </ul></li>
+      <li class="step" data-jump="done" data-st="done"><div class="sh"><span class="no">4</span>確認後・公開前</div>
+        <ul>
+          <li>右上の「公開」→「今すぐ公開」か「送信予約」</li>
+          <li>送信予約中は時刻が「20:05 予定」、削除した投稿は「削除」</li>
+          <li>公開までは削除・書き換え、予約の変更・取消ができる</li>
+        </ul></li>
+      <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">5</span>公開後</div>
+        <ul>
+          <li>ファンには話した間隔のまま順番に流れる。時刻は公開時刻が起点（20:05 公開なら 20:05〜）</li>
+          <li>削除した投稿は全員の画面から消える</li>
+          <li>収録分は角丸の背景でまとめ、上に「収録 20:00:00〜20:03:00」、下に「公開 2026/11/18 20:05」</li>
+        </ul></li>
+    </ol>
+
+    <section class="spec">
       <h2>このプロトの決まりごと</h2>
       <ul>
-        <li>開始はマネがナビ右上の「収録」ボタンから。アクションシートで「今すぐ収録を開始」か「日時を指定して予約」（終了は任意）を選ぶ。予約は時刻になると自動で開始</li><li>収録前（予約なし）は上部バーを出さない</li>
-        <li>予約中は、全員の画面の上部バーに「2026年11月18日 20:00 から収録を開始します」、ナビ右上に開始時刻を表示。予約するとアーティストに通知（ログに表示）。予約後はナビ右上が「予約済み 20:00」になり、そこから前倒し開始・変更・取消ができる</li>
-        <li>準備完了の確認はしない。マネの画面で誰がルームにいるかだけ見える。遅れて来ても話した順に公開される</li>
-        <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない（ファン画面では収録していることも知らせない）。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
-        <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
-        <li>収録中はナビ右上が「収録終了」、確認中は「公開」になる。終了後はマネが確認（削除・書き換え）→「公開」から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
-        <li>投稿の時刻表示は、収録中・確認中は収録開始からの経過時間（0:21 など）。公開後はアーティスト・マネ・ファンとも公開時刻を起点にした時刻（20:05 公開なら 20:05〜）</li>
-        <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
-        <li>公開後は、削除した投稿はアーティスト・マネの画面からも消える（ファンと同じ並びになる）</li>
+        <li>開始・予約・終了・公開の操作はマネだけ。ナビ右上のボタンが状態に合わせて「収録 → 予約済み → 収録終了 → 公開」と変わり、押すとアクションシートが出る</li>
+        <li>予約するとアーティストに通知が届く想定</li>
+        <li>収録前（予約なし）は上部バーを出さない</li>
+        <li>投稿できるのは収録中だけ。遅れて来たアーティストの投稿も話した順に公開される</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
         <li>収録していないとき、アーティストは投稿できない前提でよいか</li>
-        <li>収録予約を設定できるのはマネだけか（アーティストからの申請も受けるか）</li>
+        <li>収録を開始・予約できるのはマネだけでよいか（アーティストからの申請も受けるか）</li>
         <li>予約の項目は「開始日時だけ」か「開始＋終了（任意）」か</li>
-        <li>準備完了制は入れず、在室の表示だけでよいか</li>
-        <li>送信予約のときの流し方（話した間隔で流す／まとめて出す）は、今すぐ公開と同じでよいか</li>
+        <li>公開時の流し方：話した間隔で流すか、まとめて出すか</li>
         <li>公開前に次の収録を始めてよいか</li>
         <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか／書き換えを本人に通知するか</li>
       </ul>
-    </div>
-  </div>
+    </section>
+  </aside>
 </div>
+
 
 <script>
 const ART=['S','N','A'];
@@ -674,7 +719,11 @@ function render(){
   paint('feed-D',mgrFeed(),false);
   paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
   paint('feed-F',fanFeed());
-  paint('log',st.log.map(l=>`<div><span class="t">${hms(l.t)}</span><span class="${l.cls}">${esc(l.txt)}</span></div>`).join(''));
+  const cur=st.phase==='review'?(st.pubRsv?'done':'review'):st.phase;
+  if(render.cur!==cur){ render.cur=cur;
+    document.querySelectorAll('.step').forEach(el=>el.classList.toggle('on',el.dataset.st===cur));
+    const on=document.querySelector('.step.on'), col=document.querySelector('.side-col');
+    if(on&&col) col.scrollTo({top:on.offsetTop-col.offsetTop-12,behavior:'smooth'}); }
 }
 
 function navRight(k){
@@ -710,12 +759,7 @@ function jump(k){
 }
 
 /* ---- 組み立て ---- */
-function buildModes(){
-  $('modes').innerHTML=Object.entries(TRIG).map(([id,m])=>`<button class="mode" data-trig="${id}" aria-pressed="${st.trig===id}">
-    <div class="mt"><span class="k">${m.k}</span>${m.t}${m.rec?'<span class="rec-tag">おすすめ</span>':''}</div>
-    <div class="md">${m.d}</div>
-    <div class="pc">${m.g.map(s=>`<span class="g">＋ ${s}</span>`).join('')}${m.x.map(s=>`<span class="x">－ ${s}</span>`).join('')}<span class="e">${m.e}</span></div></button>`).join('');
-}
+function buildModes(){ $('scnSel').value=st.trig; }
 const navTop=(title,id)=>`<div class="nav"><div class="sbar"><span>9:41</span>${ic('right',77,13)}</div><div class="navc">${ic('back',28,28)}<b>${title}</b><span class="nr" id="nr-${id}"></span></div></div><div class="recbn" id="rb-${id}"></div>`;
 function buildStage(){
   const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>B with U Manager</small></div>
@@ -729,13 +773,15 @@ function buildStage(){
       <div class="foot"><div class="tab"><div class="mact" id="act-D"></div><div class="home"></div></div></div>
       <div class="modal" id="modal-D"></div></div></div>`+ART.map(art).join('')+
    `<div class="col"><div class="cap"><span class="dot" style="background:#232323"></span>ファン<small>B with U App</small></div>
-    <div class="phone fan"><div class="fhead"><span class="fback" aria-hidden="true">‹</span><span class="ftitle">フェス楽屋トーク（3）</span><span></span></div>
+    <div class="phone fan"><div class="fsbar">9:41</div><div class="fhead"><span class="fback" aria-hidden="true">‹</span><span class="ftitle">フェス楽屋トーク（3）</span><span></span></div>
       <div class="feed" id="feed-F"></div></div></div>`;
 }
 function fit(){
   const c=document.querySelector('#stage .col'); if(!c) return;
   const w=c.clientWidth; if(!w) return;
-  $('stage').style.setProperty('--z',Math.min(1,w/387).toFixed(4));
+  // 列の幅と、画面の高さの残り（ラベル分を除く）の両方に収まる倍率
+  const top=$('stage').getBoundingClientRect().top+scrollY, h=innerHeight-Math.min(top,140)-48;
+  $('stage').style.setProperty('--z',Math.max(.4,Math.min(1.4,w/387,h/812)).toFixed(4));
 }
 function reset(trig,scn=false){
   st=fresh(trig||(st&&st.trig)||'schedule'); st.scn=scn; if(scn) st.here=new Set();
@@ -787,6 +833,7 @@ $('bPause').onclick=()=>{st.run=!st.run;render()};
 $('bReset').onclick=()=>reset();
 $('bScn').onclick=()=>reset(null,true);
 ['delivery'].forEach(id=>$(id).onchange=()=>render());
+$('scnSel').onchange=e=>reset(e.target.value,true);
 
 buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset('schedule',true);
 let last=performance.now();
