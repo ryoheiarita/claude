@@ -528,7 +528,7 @@ function artistPill(k){
   return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)} にファンへ公開しました</span></div>`;
 }
 function sessWrap(inner){
-  const rng=`収録 ${hm(st.recStart)}〜${st.recEnd!=null?hm(st.recEnd):''}`;
+  const rng=`収録 ${hms(st.recStart)}〜${st.recEnd!=null?hms(st.recEnd):''}`;
   const pubt=st.phase==='pub'?`<span class="pubt">公開 ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?(st.pubRsv?`<span class="pend">公開予定 ${DATE} ${hm(st.pubRsv)}</span>`:'<span class="pend">未公開（確認中）</span>'):'<span class="recn">収録中・未公開</span>';
   return `<div class="sess"><div class="shd"><span>${rng}</span></div>${inner}<div class="shd sft">${pubt}</div></div>`;
 }
