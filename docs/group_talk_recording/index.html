@@ -79,6 +79,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .navc{height:42px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .nr{justify-self:end;padding-right:12px;display:flex;align-items:center}
 .nrbtn{all:unset;cursor:pointer;border:1.5px solid #191919;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;line-height:1.2;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.nrbtn.rec{border-color:#ff3e55;color:#ff3e55}
 .nrbtn.on{border-color:#ff3e55;padding:2px 12px}
 .nrbtn small{font-size:9px;color:#ff3e55;font-weight:700}
 .nrbtn:focus-visible{outline:2px solid #191919;outline-offset:2px}
@@ -114,13 +115,14 @@ h2{font-size:16px;font-weight:700;margin:0}
 .recbn.rec{background:#fff0f2;border-color:#ffd6dc}
 .recbn.review{background:#fff6e6;border-color:#ffe2b3}
 .recbn.pub{background:#eef8f1;border-color:#cfeadb}
-.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;gap:16px}
+.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;padding:10px 0 12px;display:flex;flex-direction:column;gap:16px}
 .sess .fa,.sess .me{padding:0 8px}
 .shd.sft{}
-.shd{display:flex;justify-content:center;align-items:center;gap:8px;padding:6px 12px;background:#d4d4da;font-size:11px;line-height:1.4;color:#838383;white-space:nowrap}
-.shd .pubt{font-weight:600;color:#1f7a44}
-.shd .pend{font-weight:600;color:#b86a00}
-.shd .recn{font-weight:600;color:#ff3e55}
+.shd{display:flex;justify-content:center;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap}
+.shd>span{border-radius:999px;padding:3px 12px;background:#d4d4da;color:#5a5a5a;font-weight:600}
+.shd .pubt{background:#47b152;color:#fff}
+.shd .pend{background:#e08a00;color:#fff}
+.shd .recn{background:#ff3e55;color:#fff}
 .recbn .mono{font-size:12px;flex:none}
 .recbn .l .t{color:#5a5a5a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .navc img{margin-left:16px;width:28px;height:28px;display:block}
@@ -309,7 +311,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>準備完了の確認はしない。マネの画面で誰がルームにいるかだけ見える。遅れて来ても話した順に公開される</li>
         <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
         <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
-        <li>終了後はマネが確認（削除・書き換え）→ ••• から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
+        <li>収録中はナビ右上が「収録終了」、確認中は「公開」になる。終了後はマネが確認（削除・書き換え）→「公開」から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
         <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
       </ul>
       <h3>決めたいこと</h3>
@@ -539,10 +541,10 @@ function mgrPill(){
   if(P==='idle') return st.rsv
     ?`<div class="l"><span class="st-wait">収録予約</span><span class="t">${dj(st.rsv.start)} から収録を開始します</span></div>`
     :`<div class="l"><span class="st-wait">収録前</span><span class="t">右上の「収録予約」か ••• の「今すぐ開始」で始めます</span></div>`;
-  if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・削除はいまから選べます</span></div>`;
+  if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・右上の「収録終了」で終了</span></div>`;
   if(P==='review') return st.pubRsv
     ?`<div class="l"><span class="st-rv">公開予約</span><span class="t">${dj(st.pubRsv)} に公開・それまで削除や書き換えができます</span></div>`
-    :`<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。問題なければ ••• から公開</span></div>`;
+    :`<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。右上の「公開」から公開</span></div>`;
   return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)}・${st.posts.length-d}件を公開（削除${d}・書き換え${e}）</span></div>`;
 }
 function roomActs(){
@@ -662,6 +664,8 @@ function render(){
 }
 
 function navRight(k){
+  if(k==='D'&&st.phase==='rec') return `<button class="nrbtn rec" data-act="rmore">収録終了</button>`;
+  if(k==='D'&&st.phase==='review') return `<button class="nrbtn" data-act="rmore">公開</button>`;
   if(st.phase==='rec') return `<span class="nrrec">REC</span>`;
   if(st.phase!=='idle') return '';
   if(k==='D') return st.rsv
@@ -671,8 +675,7 @@ function navRight(k){
 }
 function statusBar(k){
   if(st.phase==='idle'&&!st.rsv) return '';
-  const more=k==='D'&&roomActs().length?`<button class="more" data-act="rmore" title="操作" aria-label="収録の操作メニュー">${ic('more')}</button>`:'';
-  return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>${more}`;
+  return `<div class="l">${(k==='D'?mgrPill():artistPill(k)).replace(/^<div class="l">|<\/div>$/g,'')}</div>`;
 }
 
 /* ---- 組み立て ---- */
