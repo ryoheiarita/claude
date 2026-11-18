@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>グループトーク収録モード</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: 上に「収録を何で始めるか」4案、操作バー、中段に5画面（アーティスト3人 / 審査マネD / ファン）、下にログと決まりごと。
    アプリ画面は Figma【WIP】BwithU_UI（明るいグレー地）、ファン画面は Renewal_UI_Design（黒地）に寄せる */
@@ -17,7 +17,7 @@
   --ok:#1f8a4c; --warn:#b86a00; --bad:#c23a3a;
   --ph-bg:#eeeeee; --ph-bar:#f8f8f8; --ph-fg:#1a1a1a; --ph-muted:#8a8a8a; --ph-card:#ffffff; --ph-line:#dcdcdc;
   --ph-ok:#3dae4f; --ph-ng:#ff4560; --ph-dark:#1a1a1a; --rec:#e5243b;
-  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -72,12 +72,27 @@ h2{font-size:16px;font-weight:700;margin:0}
 .cap small{font-weight:400;color:var(--muted);font-size:12px}
 
 .phone{width:387px;height:812px;zoom:var(--z,1);background:#efefef;color:#191919;border-radius:46px;border:6px solid #1a1a1a;display:flex;flex-direction:column;overflow:hidden;position:relative;color-scheme:light;
-  font-family:-apple-system,"SF Pro Text","Hiragino Sans","Noto Sans JP",var(--f-body);font-size:14px;line-height:20px}
+  font-family:var(--f-body);font-size:14px;line-height:20px}
 .sbar{height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 26px 0 46px;font-size:17px;font-weight:600;letter-spacing:-.408px}
 .sbar img{width:77px;height:13px;display:block}
 .nav{background:#fafafa;border-bottom:1px solid #dfdfdf;flex:none}
 .navc{height:42px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .nr{justify-self:end;padding-right:12px;display:flex;align-items:center}
+.nrbtn{all:unset;cursor:pointer;border:1.5px solid #191919;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;line-height:1.2;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.nrbtn.on{border-color:#ff3e55;padding:2px 12px}
+.nrbtn small{font-size:9px;color:#ff3e55;font-weight:700}
+.nrbtn:focus-visible{outline:2px solid #191919;outline-offset:2px}
+.dtrow{display:flex;gap:8px;align-self:stretch;align-items:center}
+.dbox{flex:1;border:1px solid #dfdfdf;background:#fafafa;border-radius:12px;padding:8px 12px;font-size:15px;text-align:left;white-space:nowrap}
+.dtrow .tin{flex:1;min-width:0}
+.here{margin:auto 16px;background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ht{font-size:12px;font-weight:700;color:#838383}
+.hi{display:flex;align-items:center;gap:8px;font-size:14px}
+.hi b{font-weight:600}
+.hi .hs{margin-left:auto;font-size:12px;color:#47b152;font-weight:700}
+.hi.off{opacity:.45}
+.hi.off .hs{color:#838383;font-weight:400}
+.hn{font-size:11.5px;line-height:1.5;color:#838383}
 .nrsv{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;font-size:15px;font-weight:600;letter-spacing:-.24px}
 .nrsv small{font-size:10px;font-weight:600;color:#ff3e55}
 .nrrec{display:inline-flex;align-items:center;gap:4px;background:#ff3e55;color:#fff;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.04em}
@@ -98,10 +113,10 @@ h2{font-size:16px;font-weight:700;margin:0}
 .recbn.rec{background:#fff0f2;border-color:#ffd6dc}
 .recbn.review{background:#fff6e6;border-color:#ffe2b3}
 .recbn.pub{background:#eef8f1;border-color:#cfeadb}
-.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;padding:10px 0 16px;display:flex;flex-direction:column;gap:16px}
+.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;gap:16px}
 .sess .fa,.sess .me{padding:0 8px}
-.shd.sft{justify-content:flex-end}
-.shd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px;font-size:11px;line-height:1.4;color:#838383;white-space:nowrap}
+.shd.sft{}
+.shd{display:flex;justify-content:center;align-items:center;gap:8px;padding:6px 12px;background:#d4d4da;font-size:11px;line-height:1.4;color:#838383;white-space:nowrap}
 .shd .pubt{font-weight:600;color:#1f7a44}
 .shd .pend{font-weight:600;color:#b86a00}
 .shd .recn{font-weight:600;color:#ff3e55}
@@ -124,7 +139,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .bub{font-size:14px;line-height:20px;border-radius:12px;overflow:hidden;overflow-wrap:anywhere;min-width:0}
 .bub .tx{padding:12px}
 .fa .bub{background:#fff;max-width:243px}
-.bub.off{background:#f7f7f8!important;color:#191919!important;box-shadow:none;border:1px dashed #b9b9bf}
+.bub.off{background:transparent!important;color:#191919!important;box-shadow:none;border:1px solid #b9b9bf}
 .bub.off .tx{text-decoration:line-through;color:#838383}
 .tm{font-size:11px;line-height:normal;color:#838383;letter-spacing:-.24px;white-space:nowrap}
 .tm.ng{color:#ff3e55}
@@ -265,7 +280,7 @@ h2{font-size:16px;font-weight:700;margin:0}
   </header>
 
   <section class="sec">
-    <h2>収録を何で始めるか</h2>
+    <h2>収録の始め方（シナリオ）</h2>
     <div class="modes" id="modes"></div>
   </section>
 
@@ -288,20 +303,24 @@ h2{font-size:16px;font-weight:700;margin:0}
     <div class="panel spec">
       <h2>このプロトの決まりごと</h2>
       <ul>
-        <li>収録中、アーティスト同士の投稿はお互いにすぐ見える。ファンには出ない</li>
-        <li>終わり方は、予約なら「予約した終了時刻」、マネ開始なら「開始ダイアログで決めた終了時刻（指定しなくてもよい）」。どちらもマネが手動で終了でき、上限は30分</li><li>収録中はトークルームの上部に「収録中」を表示。予約の場合は、始まるまで画面右上に収録開始時刻を表示</li>
-        <li>マネは収録中から削除を選び始められる。終了後は「削除」と「書き換え」だけ行い、問題なければ何もしない（＝全部公開）</li>
+        <li>開始は2通り。①マネがナビ右上の「収録予約」から開始時刻を設定（終了は任意）→ 時刻になると自動で開始。②マネが ••• から「今すぐ収録を開始」</li>
+        <li>予約中は、全員の画面の上部バーに「2026年11月18日 20:00 から収録を開始します」、ナビ右上に開始時刻を表示。予約するとアーティストに通知（ログに表示）。予約後も前倒し開始・変更・取消ができる</li>
+        <li>準備完了の確認はしない。マネの画面で誰がルームにいるかだけ見える。遅れて来ても話した順に公開される</li>
+        <li>収録中だけ投稿できる。アーティスト同士の投稿はお互いにすぐ見え、ファンには出ない。トークルーム上部に「収録中」、ナビ右上に「REC」</li>
+        <li>終わり方は、予約や開始時に決めた終了時刻か、マネの「収録を終了」。上限は30分</li>
+        <li>終了後はマネが確認（削除・書き換え）→ ••• から「今すぐ公開」か「送信予約」。送信予約中も公開までは削除・書き換えができ、予約の変更・取消もできる</li>
         <li>返信がついた投稿を削除すると、返信は引用なしで公開される。「返信も削除」も選べる</li>
-        <li>公開後、アーティストのアプリには削除・書き換えの結果が表示される</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
-        <li>予約とマネ開始のどちらを基本にするか（両方持つか）と、終わり方の組み合わせ</li>
-        <li>ファンへの公開を「話した間隔で流す」か「まとめて出す」か</li>
+        <li>収録していないとき、アーティストは投稿できない前提でよいか</li>
+        <li>収録予約を設定できるのはマネだけか（アーティストからの申請も受けるか）</li>
+        <li>予約の項目は「開始日時だけ」か「開始＋終了（任意）」か</li>
+        <li>準備完了制は入れず、在室の表示だけでよいか</li>
+        <li>送信予約のとき、ファンに「◯時公開予定」と出すか。公開時の流し方（話した間隔で流す／まとめて出す）は今すぐ公開と同じでよいか</li>
+        <li>公開前に次の収録を始めてよいか</li>
         <li>表示時刻を「話した時刻」にするか「公開した時刻」にするか（現行の「送信日時＝承認時刻」の変更になる）</li>
-        <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか</li>
-        <li>書き換えを本人に通知するか、了承を取るか</li>
-        <li>収録中、ファンに「収録中」と知らせるか</li>
+        <li>審査なしのアーティストの投稿も、マネが削除・書き換えしてよいか／書き換えを本人に通知するか</li>
       </ul>
     </div>
   </div>
@@ -311,13 +330,13 @@ h2{font-size:16px;font-weight:700;margin:0}
 const ART=['S','N','A'];
 const NAME={S:'SOTA',N:'Novel Core',A:'Aile The Shota'};
 const AV={S:'S',N:'N',A:'A'};
-const DATE='2026/11/13';
-const T0=71980, START=72000, SCHED_END=72180, IDLE=60;
+const DATE='2026/11/18', DATEJ='2026年11月18日';
+const T0=71980, START=72000;
 const TRIG={
-  schedule:{k:'A',t:'予約',rec:true,d:'ルームに収録の開始・終了時刻を入れておく。時刻になったら自動で始まり、自動で終わる',
-    g:['審査する人を先に押さえられる','フェスなど決まった企画と相性が良い'],x:['予定外の盛り上がりは拾えない'],e:'終了：予約した終了時刻（マネが早めに終了も可）'},
-  manual:{k:'B',t:'マネが開始',d:'審査マネが「収録を開始」を押し、ダイアログで終了時刻を決める',
-    g:['審査できる状態でしか始まらない','予定外の盛り上がりにも対応できる'],x:['マネがいないと始められない'],e:'終了：開始時のダイアログで決める（決めなくてもよい）'},
+  schedule:{k:'A',t:'収録予約',rec:true,d:'マネがナビ右上の「収録予約」から開始時刻を設定。上部バーに「2026年11月18日 20:00 から収録を開始します」と出て、時刻になると自動で始まる。前倒しで今すぐ開始もできる',
+    g:['事前に告知でき、アーティストが予定を立てられる','予約後も前倒し・変更・取消ができる'],x:['開始時に全員そろっているとは限らない（遅れて来ても話した順に公開されるので影響は小さい）'],e:'シナリオ：予約 → 自動で開始 → 送信予約で公開'},
+  manual:{k:'B',t:'マネが今すぐ開始',d:'予約せず、マネが ••• から「今すぐ収録を開始」。ダイアログで終了時刻を決める（決めなくてもよい）',
+    g:['思い立ったらすぐ始められる'],x:['事前の告知ができない'],e:'シナリオ：今すぐ開始 → 今すぐ公開'},
 };
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -326,10 +345,14 @@ const hms=t=>{t=Math.floor(t);return `${p2(Math.floor(t/3600)%24)}:${p2(Math.flo
 const hm=t=>hms(t).slice(0,5);
 const mmss=t=>{t=Math.max(0,Math.floor(t));return `${p2(Math.floor(t/60))}:${p2(t%60)}`};
 
+const dj=t=>`${DATEJ} ${hm(t)}`;
+const ceilMin=t=>Math.ceil(t/60)*60;
+
 let st=null;
 function fresh(trig){
   return {now:T0,run:true,trig,phase:'idle',recStart:null,recEnd:null,lastPost:null,pubAt:null,
-    posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null,sheet:null};
+    posts:[],log:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',scn:false,done:new Set(),ref:{},seq:0,startedBy:null,notice:null,endAt:null,dlg:null,sheet:null,
+    rsv:null,pubRsv:null,here:new Set(ART)};
 }
 const byId=id=>st.posts.find(p=>p.id===id);
 function log(cls,txt){st.log.push({t:st.now,cls,txt})}
@@ -337,6 +360,8 @@ function log(cls,txt){st.log.push({t:st.now,cls,txt})}
 /* ---- 状態遷移 ---- */
 function startRec(by,endAt=null){
   if(st.phase!=='idle') return;
+  if(st.rsv&&by!=='予約時刻') log('M',`マネD：予約（${hm(st.rsv.start)}）より前倒しで開始`);
+  st.rsv=null;
   st.phase='rec';st.recStart=st.now;st.lastPost=st.now;st.startedBy=by;st.endAt=endAt;
   log('R',`● 収録開始（${by}）・${endAt?`${hm(endAt)} に終了予定`:'終了時刻は指定なし'}`);
 }
@@ -349,17 +374,29 @@ function confirmStart(){
   } else if(d.sel!=='none') endAt=st.now+(+d.sel)*60;
   st.dlg=null; startRec('マネD',endAt);
 }
+function parseHM(v){ const [h,m]=String(v||'').split(':').map(Number); if(isNaN(h)||isNaN(m)) return null; let t=h*3600+m*60; while(t<=st.now) t+=86400; return t; }
+function setRsv(start,endMin){
+  st.rsv={start,end:endMin?start+endMin*60:null};
+  log('M',`マネD：収録予約 ${dj(start)} 開始${st.rsv.end?`（${hm(st.rsv.end)} 終了）`:''}`);
+  log('R',`🔔 アーティストに通知「${dj(start)} から収録を開始します」`);
+}
+function confirmDlg(){
+  const d=st.dlg; if(!d) return;
+  if(d.kind==='start') return confirmStart();
+  if(d.kind==='rsv'){ const t=parseHM(($('rs')&&$('rs').value)||d.s0); if(t==null) return; st.dlg=null; setRsv(t,d.sel==='none'?0:+d.sel); return; }
+  if(d.kind==='pub'){ const t=parseHM(($('pt')&&$('pt').value)||d.p0); if(t==null) return; st.dlg=null; st.pubRsv=t; log('M',`マネD：送信予約 ${dj(t)} に公開`); }
+}
 const endText=()=>st.endAt?`${hm(st.endAt)} に終了予定`:'終了時刻は未定（マネが終了）';
 function endRec(by){
   if(st.phase!=='rec') return;
   st.phase='review';st.recEnd=st.now;
   log('R',`■ 収録終了（${by}）→ マネの審査へ`);
 }
-function publish(){
+function publish(by='今すぐ公開'){
   if(st.phase!=='review') return;
-  st.phase='pub';st.pubAt=st.now;st.editing=null;
+  st.phase='pub';st.pubAt=st.now;st.editing=null;st.pubRsv=null;st.sheet=null;
   const d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
-  log('M',`マネD：公開（削除${d}件・書き換え${e}件）`);
+  log('M',`${by==='予約時刻'?'送信予約の時刻になり公開':'マネD：今すぐ公開'}（削除${d}件・書き換え${e}件）`);
   log('F',$('delivery').value==='replay'?'ファン：話した間隔で順に表示':'ファン：まとめて表示');
 }
 function post(k,text,replyTo=null){
@@ -386,11 +423,16 @@ function saveEdit(id,text){
 /* ---- シナリオ ---- */
 const OPEN='収録はじまりました！今日のフェスおつかれさま！';
 const SCN=[
+  {at:2,f:()=>{ st.here.add('S'); log('S','SOTA がトークルームを開いた'); }},
+  {at:3,f:()=>{ if(st.trig==='schedule') st.dlg={kind:'rsv',sel:'3',s0:'20:00'}; }},
+  {at:6,f:()=>{ st.here.add('N'); log('N','Novel Core がトークルームを開いた'); }},
+  {at:8,f:()=>{ if(st.trig==='schedule'){ st.dlg=null; setRsv(START,3); } }},
   {at:14,f:()=>{ if(st.trig==='manual') st.sheet={kind:'room'}; }},
-  {at:16,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg={sel:'2',at0:hm(st.now+180)}; } }},
+  {at:16,f:()=>{ if(st.trig==='manual'){ st.sheet=null; st.dlg={kind:'start',sel:'2',at0:hm(st.now+180)}; } }},
   {at:20,f:()=>{ if(st.trig==='manual') confirmStart(); }},
   {at:21,f:()=>{ st.ref.open=post('S',OPEN); }},
   {at:28,f:()=>post('N','おつかれ〜！めっちゃ楽しかった')},
+  {at:33,f:()=>{ st.here.add('A'); log('A','Aile The Shota が遅れてトークルームを開いた'); }},
   {at:35,f:()=>st.ref.goose=post('A','2曲目のとこ、客席の声で鳥肌立った')},
   {at:42,f:()=>post('S','あそこ練習した甲斐あった😂',st.ref.goose?.id)},
   {at:55,f:()=>st.ref.leak=post('N','ちなみに来月の新曲、タイトル「〇〇」でいくらしい')},
@@ -406,8 +448,9 @@ const SCN_R=[
   {at:13,f:()=>{ const p=st.ref.typo; if(p) st.sheet={kind:'post',id:p.id}; }},
   {at:15,f:()=>{ st.sheet=null; const p=st.ref.typo; if(p){st.editing=p.id; st.draft0='みんな最後まで見てくれてありがとう！！';} }},
   {at:18,f:()=>{ const p=st.ref.typo; if(p) saveEdit(p.id,'みんな最後まで見てくれてありがとう！！'); }},
-  {at:23,f:()=>{ st.sheet={kind:'room'}; }},
-  {at:26,f:()=>{ st.sheet=null; publish(); }},
+  {at:22,f:()=>{ st.sheet={kind:'room'}; }},
+  {at:25,f:()=>{ st.sheet=null; if(st.trig==='manual') publish(); else st.dlg={kind:'pub',p0:hm(ceilMin(st.now)+60)}; }},
+  {at:28,f:()=>{ if(st.trig==='schedule') confirmDlg(); }},
 ];
 function runScn(){
   if(!st.scn) return;
@@ -420,7 +463,8 @@ function advance(dt){
   const target=st.now+dt;
   while(st.now<target){
     st.now=Math.min(target,st.now+0.5);
-    if(st.phase==='idle'&&st.trig==='schedule'&&st.now>=START) startRec('予約時刻',SCHED_END);
+    if(st.phase==='idle'&&st.rsv&&st.now>=st.rsv.start) startRec('予約時刻',st.rsv.end);
+    if(st.phase==='review'&&st.pubRsv&&st.now>=st.pubRsv) publish('予約時刻');
     if(st.phase==='rec'){
       if(st.endAt&&st.now>=st.endAt) endRec('終了時刻');
       else if(st.now-st.recStart>=1800) endRec('上限30分');
@@ -457,18 +501,20 @@ function replyHead(p){
 const bubble=(p,off)=>`<div class="bub${off?' off':''}">${replyHead(p)}<div class="tx">${esc(p.text)}</div></div>`;
 function artistPill(k){
   const P=st.phase;
-  if(P==='idle') return st.trig==='schedule'
-    ?`<div class="l"><span class="st-wait">収録前</span><span class="t">20:00 から収録（予約）・あと${Math.max(0,Math.ceil(START-st.now))}秒</span></div>`
+  if(P==='idle') return st.rsv
+    ?`<div class="l"><span class="st-wait">収録予約</span><span class="t">${dj(st.rsv.start)} から収録を開始します</span></div>`
     :`<div class="l"><span class="st-wait">収録前</span><span class="t">マネの収録開始を待っています</span></div>`;
   if(P==='rec'){
     return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・ファンにはまだ公開されていません</span></div>`;
   }
-  if(P==='review') return `<div class="l"><span class="st-rv">確認中</span><span class="t">マネが収録内容を確認しています・まだ公開されていません</span></div>`;
+  if(P==='review') return st.pubRsv
+    ?`<div class="l"><span class="st-rv">公開予約</span><span class="t">${dj(st.pubRsv)} にファンへ公開予定</span></div>`
+    :`<div class="l"><span class="st-rv">確認中</span><span class="t">マネが収録内容を確認しています・まだ公開されていません</span></div>`;
   return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)} にファンへ公開しました</span></div>`;
 }
 function sessWrap(inner){
   const rng=`収録 ${hm(st.recStart)}〜${st.recEnd!=null?hm(st.recEnd):''}`;
-  const pubt=st.phase==='pub'?`<span class="pubt">公開 ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?'<span class="pend">未公開（確認中）</span>':'<span class="recn">収録中・未公開</span>';
+  const pubt=st.phase==='pub'?`<span class="pubt">公開 ${DATE} ${hm(st.pubAt)}</span>`:st.phase==='review'?(st.pubRsv?`<span class="pend">公開予定 ${DATE} ${hm(st.pubRsv)}</span>`:'<span class="pend">未公開（確認中）</span>'):'<span class="recn">収録中・未公開</span>';
   return `<div class="sess"><div class="shd"><span>${rng}</span></div>${inner}<div class="shd sft">${pubt}</div></div>`;
 }
 function artistFeed(k){
@@ -488,16 +534,24 @@ function artistFeed(k){
 }
 function mgrPill(){
   const P=st.phase, d=st.posts.filter(p=>p.del).length, e=st.posts.filter(p=>p.edited&&!p.del).length;
-  if(P==='idle') return `<div class="l"><span class="st-wait">収録前</span><span class="t">${st.trig==='schedule'?'20:00 に自動で始まります（予約）':'右の ••• から開始します'}</span></div>`;
+  if(P==='idle') return st.rsv
+    ?`<div class="l"><span class="st-wait">収録予約</span><span class="t">${dj(st.rsv.start)} から収録を開始します</span></div>`
+    :`<div class="l"><span class="st-wait">収録前</span><span class="t">右上の「収録予約」か ••• の「今すぐ開始」で始めます</span></div>`;
   if(P==='rec') return `<div class="l"><span class="st-rec">収録中</span><span class="mono">${mmss(st.now-st.recStart)}</span><span class="t">${endText()}・削除はいまから選べます</span></div>`;
-  if(P==='review') return `<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。問題なければそのまま公開</span></div>`;
+  if(P==='review') return st.pubRsv
+    ?`<div class="l"><span class="st-rv">公開予約</span><span class="t">${dj(st.pubRsv)} に公開・それまで削除や書き換えができます</span></div>`
+    :`<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。問題なければ ••• から公開</span></div>`;
   return `<div class="l"><span class="st-ok">公開済み</span><span class="t">${DATE} ${hm(st.pubAt)}・${st.posts.length-d}件を公開（削除${d}・書き換え${e}）</span></div>`;
 }
 function roomActs(){
   const P=st.phase;
-  if(P==='idle'&&st.trig==='manual') return [['mstart','収録を開始','']];
+  if(P==='idle') return st.rsv
+    ?[['mstart','今すぐ開始（前倒し）',''],['rsvopen','予約を変更',''],['rsvcancel','予約を取り消す','red']]
+    :[['mstart','今すぐ収録を開始',''],['rsvopen','収録を予約','']];
   if(P==='rec') return [['mend','収録を終了','red']];
-  if(P==='review') return [['pub','この内容で公開','']];
+  if(P==='review') return st.pubRsv
+    ?[['pub','今すぐ公開',''],['pubrsvopen','送信予約の時刻を変更',''],['pubrsvcancel','送信予約を取り消す','red']]
+    :[['pub','今すぐ公開',''],['pubrsvopen','送信予約','']];
   return [];
 }
 function postActs(p){
@@ -515,7 +569,8 @@ function actionSheet(){
 }
 function mgrFeed(){
   const ntc=st.notice&&st.phase!=='pub'?`<div class="ntc">🔔 ${esc(st.notice)}</div>`:'';
-  if(!st.posts.length) return ntc+`<div class="empty">${st.phase==='idle'?'収録が始まると、ここに投稿が並びます':'まだ投稿はありません'}</div>`;
+  if(!st.posts.length) return ntc+`<div class="here"><div class="ht">ルームにいるアーティスト</div>${ART.map(k=>`<div class="hi${st.here.has(k)?'':' off'}"><span class="av ${k}">${AV[k]}</span><b>${NAME[k]}</b><span class="hs">${st.here.has(k)?'参加中':'まだ来ていません'}</span></div>`).join('')}
+    <div class="hn">そろっていなくても開始できます。遅れて来たアーティストの投稿も、話した順に公開されます。</div></div>`;
   const locked=st.phase==='pub';
   return ntc+st.posts.map(p=>{
     const reps=st.posts.filter(q=>q.replyTo===p.id&&!q.del);
@@ -527,10 +582,29 @@ function mgrFeed(){
       ${p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}</div></div>`;
   }).join('').replace(/[\s\S]*/,m=>sessWrap(m));
 }
+function rsvDialog(){
+  const d=st.dlg, opt=(v,l)=>`<button class="opt" data-act="dsel" data-v="${v}" aria-pressed="${d.sel===v}">${l}</button>`;
+  return `<div class="sheet" role="dialog" aria-label="収録を予約"><h4>${st.rsv?'収録予約を変更':'収録を予約'}</h4>
+    <div class="note">開始時刻になると自動で収録が始まります。予約するとアーティストに通知が届き、トークルーム上部に開始日時が表示されます。</div>
+    <div class="lbl">開始日時</div>
+    <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="rs" class="tin" value="${d.s0}" aria-label="開始時刻"></div>
+    <div class="lbl">終了（任意）</div>
+    <div class="opts">${opt('none','決めない')}${opt('3','開始から3分')}${opt('10','10分')}${opt('30','30分')}</div>
+    <div class="note">${d.sel==='none'?'終了はマネが「収録を終了」で行います（上限30分）':`開始から${d.sel}分で自動で終了します`}。予約後も前倒しで開始できます。</div>
+    <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
+}
+function pubDialog(){
+  const d=st.dlg;
+  return `<div class="sheet" role="dialog" aria-label="送信予約"><h4>送信予約</h4>
+    <div class="note">指定した時刻に、この収録をファンへ公開します。公開までは削除・書き換えができ、予約の変更・取り消しもできます。</div>
+    <div class="lbl">公開日時</div>
+    <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="pt" class="tin" value="${d.p0}" aria-label="公開時刻"></div>
+    <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
+}
 function startDialog(){
   const d=st.dlg, opt=(v,l)=>`<button class="opt" data-act="dsel" data-v="${v}" aria-pressed="${d.sel===v}">${l}</button>`;
-  return `<div class="sheet" role="dialog" aria-label="収録を開始"><h4>収録を開始しますか？</h4>
-    <div class="note">開始すると、トークルームに「収録中」と表示されます。収録中の投稿はファンに公開されず、終了後に審査してから公開します。</div>
+  return `<div class="sheet" role="dialog" aria-label="収録を開始"><h4>${st.rsv?'予約より前に開始しますか？':'収録を開始しますか？'}</h4>
+    <div class="note">${st.rsv?`${hm(st.rsv.start)} の予約は取り消され、今すぐ始まります。`:''}開始すると、トークルームに「収録中」と表示されます。収録中の投稿はファンに公開されず、終了後に確認してから公開します。</div>
     <div class="lbl">終了時刻</div>
     <div class="opts">${opt('none','決めない')}${opt('2','2分後')}${opt('5','5分後')}${opt('10','10分後')}${opt('at','時刻を指定')}</div>
     ${d.sel==='at'?`<input type="time" id="dt" class="tin" value="${d.at0}" aria-label="終了時刻">`:''}
@@ -538,7 +612,7 @@ function startDialog(){
     <button class="ab rec wide" data-act="dok">● 収録を開始</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
 }
 function mgrModal(){
-  if(st.dlg) return startDialog();
+  if(st.dlg) return st.dlg.kind==='rsv'?rsvDialog():st.dlg.kind==='pub'?pubDialog():startDialog();
   if(st.sheet) return actionSheet();
   if(!st.editing) return '';
   const p=byId(st.editing);
@@ -549,9 +623,10 @@ function mgrModal(){
 }
 function fanFeed(){
   const P=st.phase, teaser=$('teaser').value==='on';
+  if(teaser&&P==='idle'&&st.rsv) return `<div class="teaser"><div class="ic">📅</div><b>${hm(st.rsv.start)} からアーティストが収録予定</b><span>収録が終わり次第、このトークルームに公開されます</span></div>`;
   if(P==='idle'||(!teaser&&P!=='pub')) return `<div class="empty">トークが始まるのを待っています</div>`;
   if(P==='rec') return `<div class="teaser"><div class="ic">🎙</div><b>アーティストが収録中</b><span>終わり次第、このトークルームに公開されます</span></div>`;
-  if(P==='review') return `<div class="teaser"><div class="ic">⏳</div><b>まもなく公開</b><span>収録が終わりました</span></div>`;
+  if(P==='review') return `<div class="teaser"><div class="ic">⏳</div><b>${st.pubRsv?`${hm(st.pubRsv)} 公開予定`:'まもなく公開'}</b><span>収録が終わりました</span></div>`;
   const list=fanList(), useSpoken=$('timeMode').value==='spoken';
   const all=st.posts.filter(p=>!p.del).length;
   const html=list.map(({p,at})=>{
@@ -562,7 +637,7 @@ function fanFeed(){
       <div class="facts"><span class="fbtn" aria-hidden="true">☺︎</span><span class="fbtn">💬 コメント</span></div></div>`;
   }).join('');
   const more=list.length<all?`<div class="typing">•••</div>`:'';
-  return `<div class="fdate">2026年11月13日</div>`+html+more;
+  return `<div class="fdate">${DATEJ}</div>`+html+more;
 }
 function render(){
   $('clock').textContent=hms(st.now);
@@ -577,17 +652,20 @@ function render(){
     paint('rp-'+k,r&&can?`<span><b>${esc(NAME[r.author])} に返信</b>　${esc(r.text)}</span><button data-act="unrep" data-k="${k}" aria-label="返信をやめる">×</button>`:'',false);
     $('rp-'+k).hidden=!(r&&can);
   });
-  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn '+st.phase; });
+  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(k),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn '+st.phase; });
   paint('feed-D',mgrFeed(),false);
   paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
   paint('feed-F',fanFeed());
   paint('log',st.log.map(l=>`<div><span class="t">${hms(l.t)}</span><span class="${l.cls}">${esc(l.txt)}</span></div>`).join(''));
 }
 
-function navRight(){
-  if(st.phase==='idle'&&st.trig==='schedule') return `<span class="nrsv"><small>収録開始</small>${hm(START)}</span>`;
+function navRight(k){
   if(st.phase==='rec') return `<span class="nrrec">REC</span>`;
-  return '';
+  if(st.phase!=='idle') return '';
+  if(k==='D') return st.rsv
+    ?`<button class="nrbtn on" data-act="rmore" aria-label="収録予約の操作"><small>収録予約</small>${hm(st.rsv.start)}</button>`
+    :`<button class="nrbtn" data-act="rsvopen">収録予約</button>`;
+  return st.rsv?`<span class="nrsv"><small>収録開始</small>${hm(st.rsv.start)}</span>`:'';
 }
 function statusBar(k){
   const more=k==='D'&&roomActs().length?`<button class="more" data-act="rmore" title="操作" aria-label="収録の操作メニュー">${ic('more')}</button>`:'';
@@ -623,7 +701,7 @@ function fit(){
   $('stage').style.setProperty('--z',Math.min(1,w/387).toFixed(4));
 }
 function reset(trig,scn=false){
-  st=fresh(trig||(st&&st.trig)||'schedule'); st.scn=scn;
+  st=fresh(trig||(st&&st.trig)||'schedule'); st.scn=scn; if(scn) st.here=new Set();
   for(const k in cache) delete cache[k];
   ART.forEach(k=>{const i=$('in-'+k); if(i) i.value=''});
   log('R',`方式：${TRIG[st.trig].t}${scn?'（シナリオ再生）':''}`);
@@ -631,7 +709,7 @@ function reset(trig,scn=false){
 }
 
 document.addEventListener('click',e=>{
-  const m=e.target.closest('[data-trig]'); if(m){reset(m.dataset.trig);return}
+  const m=e.target.closest('[data-trig]'); if(m){reset(m.dataset.trig,true);return}
   const b=e.target.closest('[data-act]'); if(!b) return;
   const k=b.dataset.k, id=+b.dataset.id;
   switch(b.dataset.act){
@@ -641,9 +719,13 @@ document.addEventListener('click',e=>{
     case 'pmore': st.sheet={kind:'post',id}; break;
     case 'rmore': st.sheet={kind:'room'}; break;
     case 'scancel': st.sheet=null; break;
-    case 'mstart': st.sheet=null; st.dlg={sel:'none',at0:hm(st.now+180)}; break;
-    case 'dsel': st.dlg.sel=b.dataset.v; break;
-    case 'dok': confirmStart(); break;
+    case 'mstart': st.sheet=null; st.dlg={kind:'start',sel:'none',at0:hm(st.now+180)}; break;
+    case 'rsvopen': st.sheet=null; st.dlg={kind:'rsv',sel:st.rsv&&st.rsv.end?String((st.rsv.end-st.rsv.start)/60):'none',s0:st.rsv?hm(st.rsv.start):hm(ceilMin(st.now)+120)}; break;
+    case 'rsvcancel': st.sheet=null; st.rsv=null; log('M','マネD：収録予約を取り消し'); log('R','🔔 アーティストに通知「収録予約が取り消されました」'); break;
+    case 'pubrsvopen': st.sheet=null; st.dlg={kind:'pub',p0:st.pubRsv?hm(st.pubRsv):hm(ceilMin(st.now)+120)}; break;
+    case 'pubrsvcancel': st.sheet=null; st.pubRsv=null; log('M','マネD：送信予約を取り消し（確認中に戻る）'); break;
+    case 'dsel': { const r=$('rs'); if(r&&st.dlg.kind==='rsv') st.dlg.s0=r.value; st.dlg.sel=b.dataset.v; } break;
+    case 'dok': confirmDlg(); break;
     case 'dcancel': st.dlg=null; break;
     case 'mend': st.sheet=null; endRec('マネD'); break;
     case 'pub': st.sheet=null; publish(); break;
