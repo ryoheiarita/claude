@@ -332,6 +332,17 @@ h2{font-size:16px;font-weight:700;margin:0}
 .asb:disabled{color:#b8b8bd;cursor:default;pointer-events:none}
 .lwhy{flex-basis:100%;font-size:11px;color:#838383}
 .lrow .racts{align-items:center}
+.lhead{display:flex;align-items:center;gap:8px}
+.avs{display:flex;flex:none}
+.avs .av{width:26px;height:26px;font-size:11px;border:2px solid #fff;box-sizing:content-box}
+.avs .av+.av{margin-left:-9px}
+.lcnt{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.lcnt small{font-size:12px;font-weight:600;margin-left:1px}
+.lhead .dt{margin-left:auto;font-size:12px}
+.ldet{margin:2px 0 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px;line-height:1.5}
+.ldet div{display:contents}
+.ldet dt{color:#838383}
+.ldet dd{margin:0;color:#191919;font-variant-numeric:tabular-nums}
 .sess .sft{justify-content:space-between;align-items:center}
 .sbtn{background:#fff;font-size:12px}
 </style>
@@ -622,20 +633,27 @@ function mgrRow(p){
 }
 // ステータス一覧：区切ったブロックの履歴と、いま収録中（未審査）のブロック
 function listSheet(){
-  const row=(b,cls,tag,range,n,meta,acts)=>`<div class="lrow ${cls}"${b?` data-act="goblk" data-b="${b.id}"`:''}><div class="ltop">${tag}<span class="lrng">${range}</span></div>
-    <div class="lmeta">${n}件${meta}</div>${acts?`<div class="racts">${acts}</div>`:''}</div>`;
+  // 見出し：投稿したアーティストのアイコン（横に重ねる）＋件数。その下に詳細
+  const avs=ps=>{ const ks=[...new Set(ps.map(p=>p.author))]; return `<span class="avs">${ks.map(k=>`<span class="av ${k}">${AV[k]}</span>`).join('')}</span>`; };
+  const STL={open:'収録中',review:'確認中',sched:'公開予定',pub:'公開済み'};
+  const row=(b,key,ps,n,det,acts)=>`<div class="lrow s-${key}"${b?` data-act="goblk" data-b="${b.id}"`:''}>
+    <div class="lhead">${avs(ps)}<b class="lcnt">${n}<small>件</small></b><span class="dt ${key}">${STL[key]}</span></div>
+    <dl class="ldet">${det.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${acts?`<div class="racts">${acts}</div>`:''}</div>`;
   const rows=sortedB().map(b=>{
     const ps=postsOf(b), d=ps.filter(p=>p.del).length, e=ps.filter(p=>p.edited&&!p.del).length;
-    const meta=d||e?`・削除${d}・書き換え${e}`:'';
+    const det=[['投稿',rng(b)]];
+    if(b.st!=='review'||d||e) det.push(['審査',`削除 ${d}件・書き換え ${e}件`]);
+    if(b.st==='sched') det.push(['公開',`${DATE} ${hm(b.pubRsv)} 予定`],['最後の投稿',hms(endOf(b))]);
+    if(b.st==='pub') det.push(['公開',`${DATE} ${hm(b.pubAt)}`],['最後の投稿',hms(endOf(b))]);
     const blk=b.st==='review'&&blockedBy(b), now=nowOk(b);
     const A=(act,l,c,off)=>`<button class="ab ${c} sm" data-act="${act}" data-b="${b.id}"${off?' disabled':''}>${l}</button>`;
     let acts=b.st==='review'?A('pub','今すぐ公開','dk',!now)+A('pubrsvopen','送信予約','gh',blk)
       :b.st==='sched'?A('pub','今すぐ公開','dk',!now)+A('pubrsvopen','時刻を変更','gh')+A('pubrsvcancel','予約を取り消す','gh red'):'';
     if(blk) acts+=`<span class="lwhy">前のブロックを先に公開・送信予約してください</span>`;
-    return row(b,'s-'+b.st,tagOf(b),rng(b),b.st==='pub'?visOf(b).length:ps.length,meta,acts);
+    return row(b,b.st,b.st==='pub'?visOf(b):ps,b.st==='pub'?visOf(b).length:ps.length,det,acts);
   });
   const op=openPosts();
-  if(op.length) rows.push(row(null,'s-open',tagOf(null),`${hms(op[0].t)}〜`,op.length,'',`<button class="ab dk sm" data-act="cutall">ここまでを審査</button>`));
+  if(op.length) rows.push(row(null,'open',op,op.length,[['投稿',`${hms(op[0].t)}〜`]],`<button class="ab dk sm" data-act="cutall">ここまでを審査</button>`));
   return `<div class="lsheet" role="dialog" aria-label="ステータス一覧"><div class="lhd"><b>ステータス一覧</b><button class="lx" data-act="scancel" aria-label="閉じる">×</button></div>
     <div class="lbody">${rows.join('')||'<div class="empty">まだ投稿はありません</div>'}</div>
     <div class="lnote">ブロックは古いものから順に、前のブロックの最後の投稿より後に公開します</div></div>`;
