@@ -324,6 +324,8 @@ h2{font-size:16px;font-weight:700;margin:0}
 .ab.gh.red{color:#ff3b30}
 .lnote{font-size:11px;color:#838383;text-align:center;padding:8px 0 12px;border-top:1px solid #eee}
 .modal.bottom .lsheet{align-self:end}
+.sess .sft{justify-content:space-between;align-items:center}
+.sbtn{background:#fff;font-size:12px}
 </style>
 </head>
 <body>
@@ -564,11 +566,12 @@ const tagOf=b=>!b?'<span class="dt open">収録中・未審査</span>'
   :b.st==='pub'?`<span class="dt pub">公開済み ${DATE} ${hm(b.pubAt)}</span>`
   :b.st==='sched'?`<span class="dt sched">公開予定 ${DATE} ${hm(b.pubRsv)}</span>`:'<span class="dt review">確認中・未公開</span>';
 // まとまり（区切った分）と、まだ区切っていない「収録中・未審査」を時刻順に並べる
-function blocks(row){
+function blocks(row,mgr=false){
   const out=[];
   sortedB().forEach(b=>{
     const ps=postsOf(b).filter(p=>!(b.st==='pub'&&p.del));
-    out.push(`<div class="sess s-${b.st}" id="blk-${b.id}"><div class="shd"><span>${rng(b)}</span></div>${ps.map(row).join('')}<div class="shd sft">${tagOf(b)}</div></div>`);
+    const pb=mgr&&b.st==='review'?`<button class="nrbtn sbtn" data-act="bmore" data-b="${b.id}">公開</button>`:'';
+    out.push(`<div class="sess s-${b.st}" id="blk-${b.id}"><div class="shd"><span>${rng(b)}</span></div>${ps.map(row).join('')}<div class="shd sft">${tagOf(b)}${pb}</div></div>`);
   });
   const op=openPosts();
   if(op.length) out.push(`<div class="sess s-open"><div class="shd"><span>${hms(op[0].t)}〜</span></div>${op.map(row).join('')}<div class="shd sft">${tagOf(null)}</div></div>`);
@@ -639,6 +642,12 @@ function postActs(p){
 function actionSheet(){
   const sh=st.sheet; if(!sh) return '';
   if(sh.kind==='list') return listSheet();
+  if(sh.kind==='blk'){
+    const b=bById(sh.b);
+    return `<div class="asheet" role="dialog" aria-label="ブロックを公開"><div class="asg"><div class="ash">${rng(b)} の ${postsOf(b).length}件</div>
+      <button class="asb" data-act="pub" data-b="${b.id}">今すぐ公開</button><button class="asb" data-act="pubrsvopen" data-b="${b.id}">送信予約</button></div>
+      <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
+  }
   const p=byId(sh.id), acts=postActs(p);
   return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg"><div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}" data-id="${p.id}">${l}</button>`).join('')}</div>
     <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
@@ -710,7 +719,7 @@ function render(){
     $('rp-'+k).hidden=!r;
   });
   ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(k),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn'; });
-  paint('feed-D',blocks(mgrRow),false);
+  paint('feed-D',blocks(mgrRow,true),false);
   paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
   paint('feed-F',fanFeed());
   const cur=curStep();
@@ -779,15 +788,16 @@ document.addEventListener('click',e=>{
     case 'send': sendFrom(k); break;
     case 'pmore': st.sheet={kind:'post',id}; break;
     case 'rmore': st.sheet={kind:'list'}; break;
+    case 'bmore': st.sheet={kind:'blk',b:+b.dataset.b}; break;
     case 'scancel': st.sheet=null; break;
     case 'cutall': cut(); break;
     case 'cutto': st.sheet=null; cut(id); break;
     case 'goblk': { st.sheet=null; render(); const el=$('blk-'+b.dataset.b); if(el) el.scrollIntoView({block:'start',behavior:'smooth'}); } return;
-    case 'pubrsvopen': { const x=bById(+b.dataset.b); st.dlg={kind:'pub',bid:x.id,p0:x.pubRsv?hm(x.pubRsv):hm(ceilMin(st.now)+120)}; } break;
+    case 'pubrsvopen': { if(st.sheet&&st.sheet.kind==='blk') st.sheet=null; const x=bById(+b.dataset.b); st.dlg={kind:'pub',bid:x.id,p0:x.pubRsv?hm(x.pubRsv):hm(ceilMin(st.now)+120)}; } break;
     case 'pubrsvcancel': { const x=bById(+b.dataset.b); if(x){x.st='review';x.pubRsv=null;} } break;
     case 'dok': confirmDlg(); break;
     case 'dcancel': st.dlg=null; break;
-    case 'pub': tryPublish(bById(+b.dataset.b)); break;
+    case 'pub': tryPublish(bById(+b.dataset.b)); if(st.sheet&&st.sheet.kind==='blk') st.sheet=null; break;
     case 'del': st.sheet=null; toggleDel(id); break;
     case 'delrep': st.sheet=null; delReplies(id); break;
     case 'edit': st.sheet=null; st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
