@@ -327,6 +327,7 @@ h2{font-size:16px;font-weight:700;margin:0}
 .lastp{align-self:stretch;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;background:#e7eefb;border-radius:12px;padding:10px 12px;text-align:left;font-size:13px}
 .lastp b{font-size:18px;font-variant-numeric:tabular-nums}
 .lastp small{flex-basis:100%;font-size:11px;color:#5a5a5a}
+.lastp small.ng{color:#ff3b30;font-weight:600}
 .sess .sft{justify-content:space-between;align-items:center}
 .sbtn{background:#fff;font-size:12px}
 </style>
@@ -374,16 +375,16 @@ h2{font-size:16px;font-weight:700;margin:0}
         <ul>
           <li>確認中のまま次を区切ってよい。「ステータス」に、公開済み・確認中・公開予定・収録中のブロックが履歴として並ぶ</li>
           <li>各ブロックから「今すぐ公開」「送信予約」「時刻を変更」「予約を取り消す」ができる。行を押すとそのブロックへ移動</li>
-          <li>新しいブロックを古いブロックより先に公開しようとすると「公開の順番が逆になります」のエラー</li>
+          <li>前のブロックが未公開のとき、または前のブロックの最後の投稿時刻以前に公開しようとすると「この時刻には公開できません」のエラー</li>
         </ul></li>
       <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">4</span>いつ送信するか決める</div>
         <ul>
           <li>今すぐ公開か送信予約。送信予約中のブロックは薄い青で、時刻は「20:03 予定」、削除した投稿は「削除」</li>
-          <li>送信予約は古いブロックより後の時刻だけ（前の時刻はエラー）</li>
+          <li>送信予約・今すぐ公開は、前のブロックの最後の投稿時刻より後だけ。予約ダイアログに「最後の投稿」と、前のブロックの最後の投稿時刻を出す</li>
         </ul></li>
       <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">5</span>公開</div>
         <ul>
-          <li>ファンには話した間隔のまま流れる。前の分が流れている途中なら、流し終わってから続けて流す</li>
+          <li>ファンには話した間隔のまま流れる。ブロックどうしが重なることはない</li>
           <li>公開済みのブロックはグレーで控えめに。削除した投稿は全員の画面から消える</li>
         </ul></li>
     </ol>
@@ -393,14 +394,13 @@ h2{font-size:16px;font-weight:700;margin:0}
       <ul>
         <li>収録の開始・終了・予約はない。投稿はすべて収録中ブロックに入り、マネが区切って審査する</li>
         <li>区切る・公開する操作はマネだけ。ナビ右上の「ステータス」から、ブロックごとに操作する</li>
-        <li>ブロックは古いものから順に公開する。逆になる公開・送信予約はエラーにする</li>
+        <li>ブロックは古いものから順に、前のブロックの最後の投稿時刻より後にしか公開できない（今すぐ公開・送信予約とも）。できない時刻はエラーにする</li>
         <li>ブロックの色：収録中＝薄いピンク／確認中＝薄い黄色／公開予定＝薄い青／公開済み＝グレー。ステータスは色付きの丸とテキストで左下に出す</li>
         <li>審査なしのアーティストの投稿も、マネがすべて見られる（削除・書き換えできる）</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
-        <li>前の公開分がファンに流れている途中で次を公開したら、流し終わってから続けて流す、でよいか</li>
-        <li>マネが区切らずに放置したときの扱い（一定時間・件数でマネに通知する、など）</li>
+                <li>マネが区切らずに放置したときの扱い（一定時間・件数でマネに通知する、など）</li>
         <li>ソロ（審査なし）のトークは今までどおり即時公開のままでよいか</li>
         <li>マネが書き換えたことを本人に通知するか</li>
       </ul>
@@ -456,17 +456,22 @@ function replayEndOf(b){
 function publish(b){
   if(!b||b.st==='pub') return;
   const prev=st.batches.filter(x=>x.st==='pub').map(replayEndOf);
-  b.st='pub'; b.pubAt=st.now; b.pubRsv=null; b.start=Math.max(st.now,...prev);
+  b.st='pub'; b.pubAt=st.now; b.pubRsv=null; b.start=st.now;
   if(st.editing&&byId(st.editing).bid===b.id) st.editing=null;
 }
 function schedule(b,t){ b.st='sched'; b.pubRsv=t; }
 // 公開の順番チェック：古いブロックより先に新しいブロックが公開されるならエラー（t=null は今すぐ公開）
 function orderErr(b,t=null){
   const at=t??st.now;
-  for(const a of st.batches.filter(a=>a.from<b.from&&a.st!=='pub'))
-    if(t==null||a.st!=='sched'||a.pubRsv>at) return {kind:'err',older:a,b,t};
-  const c=st.batches.find(c=>c.from>b.from&&c.st==='sched'&&c.pubRsv<at);
-  if(c) return {kind:'err',newer:c,b,t};
+  // 古いブロック：未公開ならエラー。公開済み・公開予定なら、その最後の投稿より後でないとエラー
+  for(const a of sortedB().filter(a=>a.from<b.from)){
+    if(a.st==='review') return {kind:'err',older:a,b,t};
+    const e=endOf(a); if(at<=e) return {kind:'err',older:a,end:e,b,t};
+  }
+  // 新しいブロックが公開予定なら、このブロックの最後の投稿がそれより前でないとエラー
+  const myEnd=at+spanOf(b);
+  const c=sortedB().find(c=>c.from>b.from&&c.st==='sched'&&c.pubRsv<=myEnd);
+  if(c) return {kind:'err',newer:c,end:myEnd,b,t};
   return null;
 }
 function tryPublish(b){ if(!b||b.st==='pub') return; const e=orderErr(b); if(e){st.dlg=e;return} publish(b); }
@@ -536,13 +541,12 @@ function advance(dt){
 }
 
 /* ---- 時刻 ---- */
-// 送信予約したときに実際に流れ始める時刻：前のブロックを流し終わってから続けて流す
 const spanOf=b=>{const v=visOf(b); return v.length?v[v.length-1].t-v[0].t:0;};
-function endOf(a){ if(a.st==='pub') return replayEndOf(a); if(a.st==='sched') return planStart(a,a.pubRsv)+spanOf(a); return null; }
-function planStart(b,t){
-  const prev=st.batches.filter(a=>a.from<b.from).map(endOf).filter(x=>x!=null);
-  return Math.max(t,...prev);
-}
+// ブロックの最後の投稿がファンに出る時刻
+function endOf(a){ if(a.st==='pub') return replayEndOf(a); if(a.st==='sched') return a.pubRsv+spanOf(a); return null; }
+const planStart=(b,t)=>t;
+// 前のブロック（公開済み・公開予定）の最後の投稿時刻
+function prevEnd(b){ const e=st.batches.filter(a=>a.from<b.from).map(endOf).filter(x=>x!=null); return e.length?Math.max(...e):null; }
 const planEnd=(b,t)=>planStart(b,t)+spanOf(b);
 function pubTimeOf(p,start){ const v=visOf(bById(p.bid)); return start+Math.max(0,p.t-(v.length?v[0].t:p.t)); }
 function stamp(p){
@@ -627,18 +631,18 @@ function listSheet(){
   if(op.length) rows.push(row(null,'s-open',tagOf(null),`${hms(op[0].t)}〜`,op.length,'',`<button class="ab dk sm" data-act="cutall">ここまでを審査</button>`));
   return `<div class="lsheet" role="dialog" aria-label="ステータス一覧"><div class="lhd"><b>ステータス一覧</b><button class="lx" data-act="scancel" aria-label="閉じる">×</button></div>
     <div class="lbody">${rows.join('')||'<div class="empty">まだ投稿はありません</div>'}</div>
-    <div class="lnote">ブロックは古いものから順に公開します</div></div>`;
+    <div class="lnote">ブロックは古いものから順に、前のブロックの最後の投稿より後に公開します</div></div>`;
 }
 function errDialog(){
   const d=st.dlg;
   const when=d.t==null?'今すぐ公開':`${hm(d.t)} に送信予約`;
   const body=d.older
-    ?(d.older.st==='sched'
-      ?`${rng(d.older)} のブロックは ${hm(d.older.pubRsv)} に公開予定です。${rng(d.b)} はそれより後の時刻にしてください。`
+    ?(d.end!=null
+      ?`${rng(d.older)} のブロックの最後の投稿が ${hms(d.end)} に流れます。それより後の時刻にしてください。`
       :`${rng(d.older)} のブロックがまだ公開されていません。先にそちらを公開するか送信予約してください。`)
-    :`${rng(d.newer)} のブロックが ${hm(d.newer.pubRsv)} に公開予定です。${rng(d.b)} はそれより前の時刻にしてください。`;
-  return `<div class="sheet" role="alertdialog" aria-label="公開の順番が逆になります"><h4>公開の順番が逆になります</h4>
-    <div class="note">${when}できません。ブロックは古いものから順に公開します。<br>${body}</div>
+    :`${rng(d.newer)} のブロックが ${hm(d.newer.pubRsv)} に公開予定です。このブロックの最後の投稿（${hms(d.end)}）がそれより前になる時刻にしてください。`;
+  return `<div class="sheet" role="alertdialog" aria-label="この時刻には公開できません"><h4>この時刻には公開できません</h4>
+    <div class="note">${when}はできません。ブロックは古いものから順に、前のブロックの最後の投稿より後に公開します。<br>${body}</div>
     <button class="ab dk wide" data-act="dcancel">OK</button></div>`;
 }
 function postActs(p){
@@ -667,7 +671,8 @@ function parseT(v){ const [h,m]=String(v||'').split(':').map(Number); if(isNaN(h
 function lastLine(b,v){
   const t=parseT(v); if(t==null) return '';
   const s0=planStart(b,t), n=visOf(b).length;
-  return `<span>最後の投稿</span><b>${hms(s0+spanOf(b))}</b><small>${n}件を ${hms(s0)} から流します${s0>t?'（前のブロックを流し終わってから）':''}</small>`;
+  const pe=prevEnd(b);
+  return `<span>最後の投稿</span><b>${hms(s0+spanOf(b))}</b><small>${n}件を ${hms(s0)} から流します</small>${pe!=null?`<small class="${t<=pe?'ng':''}">前のブロックの最後の投稿 ${hms(pe)} より後にしてください</small>`:''}`;
 }
 function pubDialog(){
   const d=st.dlg;
@@ -811,7 +816,7 @@ document.addEventListener('click',e=>{
     case 'cutall': cut(); break;
     case 'cutto': st.sheet=null; cut(id); break;
     case 'goblk': { st.sheet=null; render(); const el=$('blk-'+b.dataset.b); if(el) el.scrollIntoView({block:'start',behavior:'smooth'}); } return;
-    case 'pubrsvopen': { if(st.sheet&&st.sheet.kind==='blk') st.sheet=null; const x=bById(+b.dataset.b); st.dlg={kind:'pub',bid:x.id,p0:x.pubRsv?hm(x.pubRsv):hm(ceilMin(st.now)+120)}; } break;
+    case 'pubrsvopen': { if(st.sheet&&st.sheet.kind==='blk') st.sheet=null; const x=bById(+b.dataset.b); st.dlg={kind:'pub',bid:x.id,p0:x.pubRsv?hm(x.pubRsv):hm(ceilMin(Math.max(st.now+60,(prevEnd(x)??0)+1)))}; } break;
     case 'pubrsvcancel': { const x=bById(+b.dataset.b); if(x){x.st='review';x.pubRsv=null;} } break;
     case 'dok': confirmDlg(); break;
     case 'dcancel': st.dlg=null; break;
