@@ -324,6 +324,9 @@ h2{font-size:16px;font-weight:700;margin:0}
 .ab.gh.red{color:#ff3b30}
 .lnote{font-size:11px;color:#838383;text-align:center;padding:8px 0 12px;border-top:1px solid #eee}
 .modal.bottom .lsheet{align-self:end}
+.lastp{align-self:stretch;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;background:#e7eefb;border-radius:12px;padding:10px 12px;text-align:left;font-size:13px}
+.lastp b{font-size:18px;font-variant-numeric:tabular-nums}
+.lastp small{flex-basis:100%;font-size:11px;color:#5a5a5a}
 .sess .sft{justify-content:space-between;align-items:center}
 .sbtn{background:#fff;font-size:12px}
 </style>
@@ -533,11 +536,19 @@ function advance(dt){
 }
 
 /* ---- 時刻 ---- */
+// 送信予約したときに実際に流れ始める時刻：前のブロックを流し終わってから続けて流す
+const spanOf=b=>{const v=visOf(b); return v.length?v[v.length-1].t-v[0].t:0;};
+function endOf(a){ if(a.st==='pub') return replayEndOf(a); if(a.st==='sched') return planStart(a,a.pubRsv)+spanOf(a); return null; }
+function planStart(b,t){
+  const prev=st.batches.filter(a=>a.from<b.from).map(endOf).filter(x=>x!=null);
+  return Math.max(t,...prev);
+}
+const planEnd=(b,t)=>planStart(b,t)+spanOf(b);
 function pubTimeOf(p,start){ const v=visOf(bById(p.bid)); return start+Math.max(0,p.t-(v.length?v[0].t:p.t)); }
 function stamp(p){
   const b=p.bid!=null&&bById(p.bid);
   if(b&&b.st==='pub') return hm(pubTimeOf(p,b.start));
-  if(b&&b.st==='sched') return p.del?'削除':`${hm(pubTimeOf(p,b.pubRsv))} 予定`;
+  if(b&&b.st==='sched') return p.del?'削除':`${hm(pubTimeOf(p,planStart(b,b.pubRsv)))} 予定`;
   return hms(p.t);
 }
 
@@ -564,7 +575,7 @@ const sortedB=()=>st.batches.slice().sort((a,b)=>a.from-b.from);
 const rng=b=>`${hms(b.from)}〜${hms(b.to)}`;
 const tagOf=b=>!b?'<span class="dt open">収録中・未審査</span>'
   :b.st==='pub'?`<span class="dt pub">公開済み ${DATE} ${hm(b.pubAt)}</span>`
-  :b.st==='sched'?`<span class="dt sched">公開予定 ${DATE} ${hm(b.pubRsv)}</span>`:'<span class="dt review">確認中・未公開</span>';
+  :b.st==='sched'?`<span class="dt sched">公開予定 ${hm(b.pubRsv)}・最後の投稿 ${hms(planEnd(b,b.pubRsv))}</span>`:'<span class="dt review">確認中・未公開</span>';
 // まとまり（区切った分）と、まだ区切っていない「収録中・未審査」を時刻順に並べる
 function blocks(row,mgr=false){
   const out=[];
@@ -652,12 +663,19 @@ function actionSheet(){
   return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg"><div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}" data-id="${p.id}">${l}</button>`).join('')}</div>
     <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
 }
+function parseT(v){ const [h,m]=String(v||'').split(':').map(Number); if(isNaN(h)||isNaN(m)) return null; let t=h*3600+m*60; while(t<=st.now) t+=86400; return t; }
+function lastLine(b,v){
+  const t=parseT(v); if(t==null) return '';
+  const s0=planStart(b,t), n=visOf(b).length;
+  return `<span>最後の投稿</span><b>${hms(s0+spanOf(b))}</b><small>${n}件を ${hms(s0)} から流します${s0>t?'（前のブロックを流し終わってから）':''}</small>`;
+}
 function pubDialog(){
   const d=st.dlg;
   return `<div class="sheet" role="dialog" aria-label="送信予約"><h4>送信予約</h4>
     <div class="note">${rng(bById(d.bid))} のブロックを、指定した時刻にファンへ公開します。公開までは削除・書き換えができ、予約の変更・取り消しもできます。</div>
     <div class="lbl">公開日時</div>
     <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="pt" class="tin" value="${d.p0}" aria-label="公開時刻"></div>
+    <div class="lastp" id="lastp">${lastLine(bById(d.bid),d.p0)}</div>
     <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
 }
 function mgrModal(){
@@ -805,6 +823,9 @@ document.addEventListener('click',e=>{
     case 'cancel': st.editing=null; break;
   }
   render();
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='pt'&&st.dlg&&st.dlg.kind==='pub'){ const el=$('lastp'); if(el) el.innerHTML=lastLine(bById(st.dlg.bid),e.target.value); }
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.isComposing&&e.target.matches('.crow input')){e.preventDefault();sendFrom(e.target.dataset.k);render()}
