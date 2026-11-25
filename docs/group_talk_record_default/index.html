@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script src="../gate.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>グループトーク収録デフォルト</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 上に「収録を何で始めるか」4案、操作バー、中段に5画面（アーティスト3人 / 審査マネD / ファン）、下にログと決まりごと。
+   アプリ画面は Figma【WIP】BwithU_UI（明るいグレー地）、ファン画面は Renewal_UI_Design（黒地）に寄せる */
+:root{
+  --bg:#f3f3f6; --surface:#ffffff; --sunk:#e9e9ef; --fg:#18181f; --muted:#666675; --line:#d9d9e2;
+  --acc:#6a4cf0; --acc-soft:#ece8ff;
+  --S:#6a4cf0; --N:#0f8f7f; --A:#d0602a; --mgr:#b86a00;
+  --ok:#1f8a4c; --warn:#b86a00; --bad:#c23a3a;
+  --ph-bg:#eeeeee; --ph-bar:#f8f8f8; --ph-fg:#1a1a1a; --ph-muted:#8a8a8a; --ph-card:#ffffff; --ph-line:#dcdcdc;
+  --ph-ok:#3dae4f; --ph-ng:#ff4560; --ph-dark:#1a1a1a; --rec:#e5243b;
+  --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --acc:#9d88ff; --acc-soft:#2a2448; --mgr:#f0a43a; --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121217; --surface:#1b1b22; --sunk:#24242d; --fg:#ececf2; --muted:#9a9aab; --line:#30303b;
+  --acc:#9d88ff; --acc-soft:#2a2448; --mgr:#f0a43a; --ok:#4cc27e; --warn:#f0a43a; --bad:#ff7676; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6;margin:0}
+.wrap{width:100%;margin:0;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,22vw,420px);gap:16px;align-items:start}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}}
+.main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bar h1{font-size:17px;margin:0 6px 0 0}
+.side-col{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+@media (max-width:1100px){.side-col{position:static;max-height:none}}
+.ov h2,.spec h2{font-size:15px;margin:0 0 6px}
+.ov p{margin:0 0 6px;font-size:13.5px;line-height:1.7}
+.ov .hint{font-size:12px;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .15s,background .15s}
+.step:hover{border-color:var(--muted)}
+.step.on{border-color:var(--acc);background:var(--acc-soft)}
+.sh{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.sh .no{width:22px;height:22px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-size:12px;font-family:var(--f-mono)}
+.step.on .no{background:var(--acc);color:#fff}
+.step ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;line-height:1.65;display:flex;flex-direction:column;gap:2px}
+.spec{border-top:1px solid var(--line);padding-top:12px}
+.spec ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.65;display:flex;flex-direction:column;gap:3px}
+.spec h3{font-size:13.5px;margin:10px 0 4px}
+h1{font-size:24px;font-weight:700;margin:0;text-wrap:balance}
+h2{font-size:16px;font-weight:700;margin:0}
+.lead{color:var(--muted);margin:6px 0 0;max-width:80ch}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.conds{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.cond{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.cond b{color:var(--acc);margin-right:6px;font-family:var(--f-mono)}
+
+/* 開始トリガー */
+.sec{display:flex;flex-direction:column;gap:10px}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.modes{grid-template-columns:1fr}}
+.mode{all:unset;cursor:pointer;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mode:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.mode[aria-pressed="true"]{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.mt{font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mt .k{font-family:var(--f-mono);color:var(--acc)}
+.md{color:var(--muted);font-size:12.5px}
+.pc{font-size:12px;display:flex;flex-direction:column;gap:2px}
+.pc .g{color:var(--ok)} .pc .x{color:var(--bad)} .pc .e{color:var(--muted)}
+.rec-tag{font-size:11px;background:var(--acc);color:#fff;border-radius:4px;padding:0 6px;font-weight:500}
+
+/* 操作バー */
+.bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.btn{all:unset;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;background:var(--sunk);color:var(--fg);white-space:nowrap}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn.pri{background:var(--acc);color:#fff}
+.clock{font-family:var(--f-mono);font-size:20px;font-weight:500}
+.ctl{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.ctl select{font:inherit;color:var(--fg);background:var(--sunk);border:0;border-radius:6px;padding:3px 6px}
+.phase{font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--sunk)}
+.phase.rec{background:var(--rec);color:#fff}
+.phase.review{background:#fff1dc;color:#9a5a00}
+.phase.pub{background:#dff3e6;color:#1f7a44}
+
+/* 5画面：アプリは Figma【WIP】BwithU_UI 872-1919（B with U Manager トークルーム）準拠。375pt 幅で組み、列幅に合わせて zoom で縮小 */
+.skip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.skip .lb{font-size:13px;font-weight:700;margin-right:4px}
+.skip .hint{font-size:12px;color:var(--muted);flex-basis:100%}
+.stage{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1250px){.stage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.stage{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0;align-items:center}
+.col .cap{align-self:stretch}
+.cap{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;min-width:0}
+.cap small{overflow:hidden;text-overflow:ellipsis}
+.cap .dot{width:10px;height:10px;border-radius:50%}
+.cap small{font-weight:400;color:var(--muted);font-size:12px}
+
+.phone{width:387px;height:812px;zoom:var(--z,1);background:#efefef;color:#191919;border-radius:46px;border:6px solid #1a1a1a;display:flex;flex-direction:column;overflow:hidden;position:relative;color-scheme:light;
+  font-family:var(--f-body);font-size:14px;line-height:20px}
+.sbar{height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:2px 26px 0 46px;font-size:17px;font-weight:600;letter-spacing:-.408px}
+.sbar img{width:77px;height:13px;display:block}
+.nav{background:#fafafa;border-bottom:1px solid #dfdfdf;flex:none}
+.navc{height:42px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.nr{justify-self:end;padding-right:12px;display:flex;align-items:center}
+.nrbtn{all:unset;cursor:pointer;border:1.5px solid #191919;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;line-height:1.2;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.nrbtn.rec{border-color:#ff3e55;color:#ff3e55}
+.nrbtn.on{border-color:#ff3e55;padding:2px 12px}
+.nrbtn small{font-size:9px;color:#ff3e55;font-weight:700}
+.nrbtn:focus-visible{outline:2px solid #191919;outline-offset:2px}
+.dtrow{display:flex;gap:8px;align-self:stretch;align-items:center}
+.dbox{flex:1;border:1px solid #dfdfdf;background:#fafafa;border-radius:12px;padding:8px 12px;font-size:15px;text-align:left;white-space:nowrap}
+.dtrow .tin{flex:1;min-width:0}
+.here{margin:0 16px;background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ht{font-size:12px;font-weight:700;color:#838383}
+.hi{display:flex;align-items:center;gap:8px;font-size:14px}
+.hi b{font-weight:600}
+.hi .hs{margin-left:auto;font-size:12px;color:#47b152;font-weight:700}
+.hi.off{opacity:.45}
+.hi.off .hs{color:#838383;font-weight:400}
+.hn{font-size:11.5px;line-height:1.5;color:#838383}
+.nrsv{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;font-size:15px;font-weight:600;letter-spacing:-.24px}
+.nrsv small{font-size:10px;font-weight:600;color:#ff3e55}
+.nrrec{display:inline-flex;align-items:center;gap:4px;background:#ff3e55;color:#fff;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.nrrec::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+.recbn{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;background:#f6f6f6;border-bottom:1px solid #dfdfdf;font-size:12px;line-height:1.4;min-width:0}
+.recbn{justify-content:space-between}
+.recbn:empty{display:none}
+.recbn .l{display:flex;align-items:center;gap:8px;min-width:0}
+.recbn .more{flex:none;margin:-4px -6px -4px 0}
+.modal.bottom{place-items:end stretch;grid-template-columns:minmax(0,1fr);padding:8px 8px 34px;background:rgba(0,0,0,.2)}
+.asheet{width:100%;min-width:0;display:flex;flex-direction:column;gap:8px}
+.asg{border-radius:14px;overflow:hidden;background:rgba(236,236,236,.97);display:flex;flex-direction:column}
+.ash{padding:14px 16px;font-size:13px;line-height:18px;color:#8a8a8e;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asb{all:unset;cursor:pointer;display:block;height:56px;line-height:56px;text-align:center;font-size:17px;letter-spacing:-.43px;color:#007aff;border-top:.5px solid rgba(128,128,128,.55)}
+.asb.red{color:#ff3b30}
+.asb:hover{background:rgba(0,0,0,.04)}
+.asb:focus-visible{outline:2px solid #007aff;outline-offset:-2px}
+.asb.cancel{background:rgba(242,242,242,.98);border-radius:14px;font-weight:600;border:0}
+.recbn.rec{background:#fff0f2;border-color:#ffd6dc}
+.recbn.rec{justify-content:center}
+.recbn.review{background:#fff6e6;border-color:#ffe2b3}
+.recbn.pub{background:#eef8f1;border-color:#cfeadb}
+.sess{margin:0 8px;background:#e3e3e7;border-radius:16px;padding:10px 0 12px;display:flex;flex-direction:column;gap:16px}
+.sess .fa,.sess .me{padding:0 8px}
+.shd.sft{}
+.shd{display:flex;justify-content:center;align-items:center;font-size:11px;line-height:1.4;white-space:nowrap}
+.shd>span{border-radius:999px;padding:3px 12px;background:#d4d4da;color:#5a5a5a;font-weight:600}
+.shd .pubt{background:#47b152;color:#fff}
+.shd .pend{background:#e08a00;color:#fff}
+.shd .recn{background:#ff3e55;color:#fff}
+.recbn .mono{font-size:12px;flex:none}
+.recbn .l .t{color:#5a5a5a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navc img{margin-left:16px;width:28px;height:28px;display:block}
+.navc b{font-size:17px;font-weight:600;letter-spacing:-.408px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed{flex:1;overflow-y:auto;padding:16px 0 12px;display:flex;flex-direction:column;gap:16px}
+.empty{color:#9f9f9f;font-size:13px;text-align:center;margin:auto 0;padding:0 24px}
+
+/* 他メンバーの投稿（talkroom/bubble/from_artist/text） */
+.fa{display:flex;gap:6px;align-items:flex-start;padding:0 16px;min-width:0}
+.av{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
+.av.S{background:var(--S)} .av.N{background:var(--N)} .av.A{background:var(--A)}
+.fcol{display:flex;flex-direction:column;gap:4px;max-width:280px;min-width:0}
+.nmr{display:flex;gap:4px;font-size:12px;line-height:normal;letter-spacing:-.408px;white-space:nowrap}
+.nmr b{font-weight:600}
+.nmr .s{color:#9f9f9f} .nmr .s.ng{color:#ff3e55}
+.brow{display:flex;gap:8px;align-items:flex-end;min-width:0}
+.bub{font-size:14px;line-height:20px;border-radius:12px;overflow:hidden;overflow-wrap:anywhere;min-width:0}
+.bub .tx{padding:12px}
+.fa .bub{background:#fff;max-width:243px}
+.bub.pend{background:#e2e2e2!important;color:#191919!important}
+.bub.off{background:transparent!important;color:#191919!important;box-shadow:none;border:1px solid #b9b9bf}
+.bub.off .tx{text-decoration:line-through;color:#838383}
+.tm{font-size:11px;line-height:normal;color:#838383;letter-spacing:-.24px;white-space:nowrap}
+.tm.ng{color:#ff3e55}
+.side{display:flex;flex-direction:column;gap:6px;align-items:flex-start;flex:none}
+
+/* 自分の投稿（talkroom/bubble/send_from_artist） */
+.me{display:flex;gap:6px;align-items:flex-end;justify-content:flex-end;padding:0 16px;min-width:0}
+.me .side{align-items:flex-end}
+.me .bub{background:#191919;color:#fff;max-width:280px}
+.more{all:unset;cursor:pointer;width:24px;height:24px;display:block;border-radius:50%}
+.more img{width:24px;height:24px;display:block}
+.more:hover{background:rgba(0,0,0,.08)}
+.more:focus-visible{outline:2px solid #191919}
+
+/* 返信（talkroom/bubble/send_from_artist/reply） */
+.rq{display:flex;gap:6px;align-items:center;padding:12px;border-bottom:1px solid #dfdfdf;min-width:0}
+.me .rq{border-color:#3d3d3d}
+.rt{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:12px;line-height:normal;letter-spacing:-.408px}
+.rt b{font-weight:600}
+.rt span{color:#9f9f9f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:18px}
+
+/* 下部（投稿者チップ＋TabBar） */
+.foot{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:8px}
+.as{background:#fff;border-radius:30px;padding:6px 12px 6px 8px;display:flex;gap:5px;align-items:center;font-size:14px;font-weight:600;letter-spacing:-.408px;line-height:normal}
+.as .av{width:32px;height:32px;font-size:13px}
+.tab{background:#fff;border-top:1px solid #dfdfdf;width:100%;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px}
+.pillbar{background:#efefef;border:1px solid #dfdfdf;border-radius:28px;padding:4px 8px 4px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:1.6;min-height:34px}
+.pillbar:empty{display:none}
+.asbar{min-height:0;padding:4px 12px 4px 6px;justify-content:flex-start}
+.asbar .av{width:20px;height:20px;font-size:10px}
+.asbar .l span:last-child{color:#000}
+.pillbar .l{display:flex;gap:8px;align-items:center;min-width:0}
+.pillbar .l>span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pillbar .mono{font-size:12px}
+.st-rec{color:#ff3e55;display:inline-flex;gap:5px;align-items:center;font-weight:700;white-space:nowrap}
+.st-rec::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff3e55;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.st-rv{color:#b86a00;font-weight:700;white-space:nowrap}
+.st-ok{color:#47b152;font-weight:700;white-space:nowrap}
+.st-wait{font-weight:700;white-space:nowrap}
+.replying{display:flex;gap:8px;align-items:center;font-size:12px;line-height:normal;color:#838383;min-width:0;padding:0 4px}
+.replying[hidden]{display:none}
+.replying span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.replying b{color:#191919;font-weight:600}
+.replying button{all:unset;cursor:pointer;color:#191919;font-size:16px;padding:0 4px}
+.crow{display:flex;gap:10px;align-items:center}
+.crow .ic{width:24px;height:24px;padding:8px 0;flex:none;display:block;box-sizing:content-box}
+.crow input{flex:1;min-width:0;font:inherit;font-size:14px;line-height:20px;border:1px solid #dfdfdf;border-radius:12px;padding:9px 16px;background:#fff;color:#191919}
+.crow input::placeholder{color:#9f9f9f}
+.crow input:disabled{background:#f6f6f6}
+.crow input:focus{outline:none;border-color:#9f9f9f}
+.send{all:unset;cursor:pointer;flex:none;padding:8px 0;display:block}
+.send img{width:24px;height:24px;display:block}
+.send:focus-visible{outline:2px solid #191919}
+.home{height:34px;position:relative;width:calc(100% + 32px);margin:0 -16px;background:#fff;flex:none}
+.home::after{content:"";position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:100px;background:#191919}
+
+/* 審査マネ */
+.racts{display:flex;gap:4px;flex-wrap:wrap}
+.ab{all:unset;cursor:pointer;border-radius:12px;padding:6px 16px;font-size:14px;font-weight:700;line-height:normal;letter-spacing:-.24px;color:#fff;white-space:nowrap;text-align:center}
+.ab:focus-visible{outline:2px solid #191919;outline-offset:1px}
+.ab.ng{background:#ff3e55} .ab.dk{background:#191919} .ab.ok{background:#47b152} .ab.rec{background:#ff3e55}
+.ab.gh{background:#fff;color:#191919;box-shadow:inset 0 0 0 1px #dfdfdf}
+.ab.wide{display:block;padding:12px 0;border-radius:24px;width:100%;box-sizing:border-box;font-size:15px}
+.ab.sm{padding:4px 12px;font-size:12px}
+.orig{font-size:11px;line-height:1.5;color:#838383;text-decoration:line-through;overflow-wrap:anywhere}
+.warn{font-size:12px;line-height:1.5;color:#a36a00;background:#fff4d9;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ntc{margin:0 16px;background:#fff;border:1px solid #ffd2a0;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5}
+.mact{width:100%;display:flex;flex-direction:column;gap:6px}
+.mact:empty{display:none}
+
+/* 書き換えモーダル（審査：編集 の「投稿申請を編集して投稿」準拠） */
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;z-index:5}
+.modal:empty{display:none}
+.sheet{background:#fff;border-radius:16px;padding:24px 16px 12px;width:100%;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.sheet h4{margin:0;font-size:17px;font-weight:600;letter-spacing:-.408px}
+.sheet .av{width:56px;height:56px;font-size:22px}
+.sheet .who{font-size:14px;font-weight:600;margin-top:-6px}
+.sheet textarea{width:100%;font:inherit;font-size:14px;line-height:20px;border:1px solid #dfdfdf;background:#fafafa;border-radius:12px;padding:10px 12px;min-height:88px;resize:vertical;color:#191919;box-sizing:border-box}
+.sheet .note{font-size:11px;color:#838383;align-self:stretch;text-align:left;line-height:1.5}
+.sheet .cancel{all:unset;cursor:pointer;font-size:14px;padding:8px}
+.sheet .lbl{align-self:flex-start;font-size:12px;font-weight:700;margin-bottom:-4px}
+.opts{display:flex;flex-wrap:wrap;gap:6px;align-self:stretch}
+.opt{all:unset;cursor:pointer;border:1px solid #dfdfdf;border-radius:999px;padding:6px 12px;font-size:13px;line-height:normal;background:#fff}
+.opt[aria-pressed="true"]{background:#191919;color:#fff;border-color:#191919}
+.opt:focus-visible{outline:2px solid #191919;outline-offset:1px}
+.tin{align-self:stretch;font:inherit;font-size:16px;border:1px solid #dfdfdf;border-radius:12px;padding:8px 12px;background:#fafafa;color:#191919}
+@media (prefers-reduced-motion:reduce){.st-rec::before{animation:none}}
+
+/* ファン画面（Figma Renewal_UI_Design: 黒地・#232323 バブル） */
+.phone.fan{border-radius:46px;background:#101010;color:#fff;font-family:var(--f-body);font-size:15px;line-height:1.6}
+.fsbar{height:47px;flex:none;display:flex;align-items:center;padding:2px 26px 0 46px;font-size:17px;font-weight:600;background:#060606}
+.fhead{background:#060606;display:grid;grid-template-columns:52px 1fr 52px;align-items:center;padding:4px 12px 12px;text-align:center}
+.fback{width:40px;height:40px;border-radius:50%;border:1px solid #2a2a2a;display:grid;place-items:center;font-size:24px;line-height:1}
+.ftitle{font-size:17px;font-weight:700}
+.fan .feed{gap:20px;padding:16px 16px 24px}
+.fan .empty{color:#777;font-size:14px}
+.fdate{align-self:center;background:#232323;color:#9a9a9a;font-size:12px;border-radius:999px;padding:4px 14px}
+.fmsg{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fnm{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700}
+.fnm .av{width:32px;height:32px;font-size:13px}
+.frow{display:flex;align-items:flex-end;gap:8px;padding-left:40px;min-width:0}
+.fbub{background:#232323;border-radius:20px;overflow:hidden;max-width:86%;min-width:0}
+.fbody{padding:11px 14px 10px;font-size:15px;line-height:1.6;overflow-wrap:anywhere}
+.ftr{font-size:11.5px;color:#676767;margin-top:4px}
+.fq{padding:11px 14px;border-bottom:1px solid #444;display:flex;flex-direction:column;gap:2px}
+.fql{font-size:12px}
+.fqt{font-size:13px;color:#cfcfcf;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ftime{font-size:11px;color:#8a8a8a;white-space:nowrap}
+.facts{display:flex;gap:8px;padding-left:40px}
+.fbtn{border:1px solid #2c2c2c;border-radius:999px;padding:4px 13px;font-size:12px;color:#cfcfcf}
+.teaser{margin:auto 0;align-self:center;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 16px}
+.teaser .ic{width:56px;height:56px;border-radius:50%;background:#232323;display:grid;place-items:center;font-size:24px}
+.teaser b{font-size:14px}
+.teaser span{font-size:11.5px;color:#9a9a9a}
+.typing{align-self:flex-start;margin-left:34px;background:#232323;border-radius:18px;padding:8px 14px;font-size:12px;color:#9a9a9a;letter-spacing:2px}
+
+/* 下段 */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px}
+@media (max-width:900px){.lower{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.log{font-family:var(--f-mono);font-size:12px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.log div{display:flex;gap:10px}
+.log .t{color:var(--muted);flex:none}
+.log .S{color:var(--S)} .log .N{color:var(--N)} .log .A{color:var(--A)} .log .M{color:var(--mgr)} .log .F{color:var(--ok)} .log .R{color:var(--bad)}
+.spec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.spec li{max-width:72ch}
+.spec h3{font-size:14px;margin:6px 0 0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="main">
+    <div class="bar">
+      <h1>グループトーク 収録デフォルト</h1>
+      <span class="clock" id="clock">20:00:00</span>
+      <span class="phase" id="phase">収録中</span>
+      <button class="btn" id="bPause">一時停止</button>
+      <button class="btn pri" id="bScn">▶ シナリオ再生</button>
+      <button class="btn" id="bReset">リセット</button>
+      <label class="ctl">速さ<select id="speed"><option value="1" selected>×1</option><option value="5">×5</option><option value="10">×10</option><option value="20">×20</option></select></label>
+    </div>
+    <div class="stage" id="stage"></div>
+  </div>
+
+  <aside class="side-col">
+    <section class="ov">
+      <h2>概要</h2>
+      <p>収録モードを常にオンにしたパターンです。グループトークの投稿は、いつでもすべて「収録」として扱います。収録の開始や終了の操作はなく、開始時刻も決めません。</p>
+      <p>アーティストはいつでも自由に話せます。投稿はすぐにはファンに出ず、「未審査」のまとまりにたまっていきます。</p>
+      <p>マネは好きなタイミングで「ここまで」を区切って審査します。消すものだけ選び、必要なら書き換えて、いつ送信するか（今すぐ／送信予約）を決めます。公開すると、話した順番と間隔のままファンに流れます。</p>
+      <p>区切ったあとの投稿は、次の未審査のまとまりに入ります。審査中もアーティストは話し続けられます。</p>
+      <p class="hint">各ステップを押すと、その状態の画面まで進めて止まります。「再開」で続きから動きます。</p>
+    </section>
+
+    <ol class="steps">
+      <li class="step" data-jump="talk" data-st="talk"><div class="sh"><span class="no">1</span>話す（いつも収録中）</div>
+        <ul>
+          <li>アーティストはいつでも投稿・返信できる。開始・終了の操作も予約もない</li>
+          <li>投稿は灰色のまとまり「収録中・未審査」にたまり、ファンには出ない</li>
+          <li>投稿の時刻は「20:00:21」のように秒まで出す</li>
+          <li>マネの画面上部に「未審査 n件」</li>
+        </ul></li>
+      <li class="step" data-jump="review" data-st="review"><div class="sh"><span class="no">2</span>ここまでを審査</div>
+        <ul>
+          <li>マネが右上の「審査」→「ここまでを審査（n件）」。投稿の「•••」→「この投稿までを審査」で途中で区切ることもできる</li>
+          <li>区切った分は「確認中」のまとまりになる。区切ったあとの投稿は次の未審査に入る（審査中も話し続けられる）</li>
+          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。返信が付いた投稿を消すときは「返信も削除」も選べる</li>
+          <li>アーティストにもマネの削除・書き換えが見える</li>
+        </ul></li>
+      <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">3</span>いつ送信するか決める</div>
+        <ul>
+          <li>右上の「公開」→「今すぐ公開」か「送信予約」</li>
+          <li>送信予約中は時刻が「20:03 予定」、削除した投稿は「削除」</li>
+          <li>公開までは削除・書き換え、予約の変更・取消ができる</li>
+        </ul></li>
+      <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">4</span>公開</div>
+        <ul>
+          <li>ファンには話した間隔のまま順番に流れる。時刻は公開時刻が起点</li>
+          <li>削除した投稿は全員の画面から消える</li>
+          <li>まとまりの下に「公開済み 2026/11/18 20:03」</li>
+        </ul></li>
+      <li class="step" data-jump="next" data-st="next"><div class="sh"><span class="no">5</span>次の区切り</div>
+        <ul>
+          <li>審査中に届いた投稿は、そのまま次の未審査のまとまりになっている</li>
+          <li>同じように区切って審査・送信する。前の分が流れている途中なら、流し終わってから続けて流す</li>
+        </ul></li>
+    </ol>
+
+    <section class="spec">
+      <h2>このプロトの決まりごと</h2>
+      <ul>
+        <li>収録の開始・終了・予約はない。投稿はすべて未審査として入り、マネが区切って審査する</li>
+        <li>区切る・公開する操作はマネだけ。ナビ右上のボタンが「審査 → 公開 → 公開予定」と変わり、押すとアクションシートが出る</li>
+        <li>確認中・公開予約中のまとまりがある間は、次の区切りは作れない（1つずつ審査）</li>
+        <li>公開はファンに話した間隔のまま流す</li>
+        <li>審査なしのアーティストの投稿も、マネがすべて見られる（削除・書き換えできる）</li>
+      </ul>
+      <h3>決めたいこと</h3>
+      <ul>
+        <li>確認中の間に、さらに次の区切りを作れるようにするか（今は1つずつ）</li>
+        <li>前の公開分がファンに流れている途中で次を公開したら、流し終わってから続けて流す、でよいか</li>
+        <li>マネが区切らずに放置したときの扱い（一定時間・件数でマネに通知する、など）</li>
+        <li>ソロ（審査なし）のトークは今までどおり即時公開のままでよいか</li>
+        <li>マネが書き換えたことを本人に通知するか</li>
+      </ul>
+    </section>
+  </aside>
+</div>
+
+
+<script>
+const ART=['S','N','A'];
+const NAME={S:'SOTA',N:'Novel Core',A:'Aile The Shota'};
+const AV={S:'S',N:'N',A:'A'};
+const DATE='2026/11/18', DATEJ='2026年11月18日';
+const T0=72000;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const hms=t=>{t=Math.floor(t);return `${p2(Math.floor(t/3600)%24)}:${p2(Math.floor(t/60)%60)}:${p2(t%60)}`};
+const hm=t=>hms(t).slice(0,5);
+const dj=t=>`${DATEJ} ${hm(t)}`;
+const ceilMin=t=>Math.ceil(t/60)*60;
+
+let st=null;
+function fresh(){
+  return {now:T0,run:true,posts:[],batches:[],rep:{S:null,N:null,A:null},editing:null,draft0:'',sheet:null,dlg:null,
+    scn:false,done:new Set(),ref:{},seq:0,bseq:0};
+}
+const byId=id=>st.posts.find(p=>p.id===id);
+const bById=id=>st.batches.find(b=>b.id===id);
+const openPosts=()=>st.posts.filter(p=>p.bid==null);
+const pendingB=()=>st.batches.find(b=>b.st!=='pub');
+const postsOf=b=>st.posts.filter(p=>p.bid===b.id);
+const visOf=b=>postsOf(b).filter(p=>!p.del);
+const locked=p=>{const b=p.bid!=null&&bById(p.bid); return !b||b.st==='pub';};
+
+/* ---- 操作 ---- */
+function post(k,text,replyTo=null){
+  text=text.trim(); if(!text) return null;
+  const p={id:++st.seq,author:k,text,orig:text,replyTo,t:st.now,del:false,edited:false,bid:null};
+  st.posts.push(p); return p;
+}
+// 「ここまで」を区切って審査のまとまりにする（uptoId を指定すると、その投稿まで）
+function cut(uptoId){
+  if(pendingB()) return;
+  const lim=uptoId?byId(uptoId).t:st.now;
+  const ps=openPosts().filter(p=>p.t<=lim); if(!ps.length) return;
+  const b={id:++st.bseq,from:ps[0].t,to:ps[ps.length-1].t,st:'review',pubRsv:null,pubAt:null,start:null};
+  ps.forEach(p=>p.bid=b.id); st.batches.push(b);
+}
+function replayEndOf(b){
+  if(b.start==null) return null;
+  const v=visOf(b); return v.length?b.start+(v[v.length-1].t-v[0].t):b.start;
+}
+function publish(b){
+  if(!b||b.st==='pub') return;
+  const prev=st.batches.filter(x=>x.st==='pub').map(replayEndOf);
+  b.st='pub'; b.pubAt=st.now; b.pubRsv=null; b.start=Math.max(st.now,...prev);
+  st.sheet=null; st.editing=null;
+}
+function schedule(b,t){ b.st='sched'; b.pubRsv=t; }
+function toggleDel(id){ const p=byId(id); if(!p||locked(p)) return; p.del=!p.del; }
+function delReplies(id){ const p=byId(id); st.posts.filter(q=>q.replyTo===id&&q.bid===p.bid&&!q.del).forEach(q=>q.del=true); }
+function saveEdit(id,text){
+  const p=byId(id); text=text.trim(); if(!p||!text) return;
+  p.text=text; p.edited=text!==p.orig; st.editing=null;
+}
+function confirmDlg(){
+  const d=st.dlg, b=pendingB(); if(!d||!b) return;
+  const v=($('pt')&&$('pt').value)||d.p0; const [h,m]=v.split(':').map(Number); if(isNaN(h)||isNaN(m)) return;
+  let t=h*3600+m*60; while(t<=st.now) t+=86400;
+  st.dlg=null; schedule(b,t);
+}
+
+/* ---- シナリオ（T0 からの秒） ---- */
+const SCN=[
+  {at:2,f:()=>post('S','みんな今日のフェスおつかれさま！')},
+  {at:8,f:()=>post('N','おつかれ〜！めっちゃ楽しかった')},
+  {at:14,f:()=>st.ref.goose=post('A','2曲目のとこ、客席の声で鳥肌立った')},
+  {at:20,f:()=>post('S','あそこ練習した甲斐あった😂',st.ref.goose?.id)},
+  {at:28,f:()=>st.ref.leak=post('N','ちなみに来月の新曲、タイトル「〇〇」でいくらしい')},
+  {at:34,f:()=>post('S','それまだ言っちゃダメなやつ笑',st.ref.leak?.id)},
+  {at:40,f:()=>st.ref.typo=post('A','みんな最後までみてくれてありがと！！')},
+  {at:46,f:()=>{ st.sheet={kind:'room'}; }},
+  {at:48,f:()=>{ st.sheet=null; cut(); }},
+  {at:51,f:()=>st.ref.party=post('N','このあと打ち上げいってきます🍻')},
+  {at:53,f:()=>{ st.sheet={kind:'post',id:st.ref.leak.id}; }},
+  {at:55,f:()=>{ st.sheet=null; toggleDel(st.ref.leak.id); }},
+  {at:57,f:()=>{ st.sheet={kind:'post',id:st.ref.leak.id}; }},
+  {at:59,f:()=>{ st.sheet=null; delReplies(st.ref.leak.id); }},
+  {at:61,f:()=>{ st.sheet={kind:'post',id:st.ref.typo.id}; }},
+  {at:63,f:()=>{ st.sheet=null; st.editing=st.ref.typo.id; st.draft0='みんな最後まで見てくれてありがとう！！'; }},
+  {at:66,f:()=>saveEdit(st.ref.typo.id,'みんな最後まで見てくれてありがとう！！')},
+  {at:70,f:()=>{ st.sheet={kind:'room'}; }},
+  {at:72,f:()=>{ st.sheet=null; st.dlg={kind:'pub',p0:hm(ceilMin(st.now)+60)}; }},
+  {at:75,f:()=>confirmDlg()},
+];
+// 1回目の公開時刻からの秒
+const SCN_P=[
+  {at:45,f:()=>post('S','また来週もよろしく！')},
+  {at:50,f:()=>{ st.sheet={kind:'post',id:st.ref.party.id}; }},
+  {at:52,f:()=>{ st.sheet=null; cut(st.ref.party.id); }},
+  {at:56,f:()=>{ st.sheet={kind:'room'}; }},
+  {at:58,f:()=>{ st.sheet=null; publish(pendingB()); }},
+];
+function runScn(){
+  if(!st.scn) return;
+  SCN.forEach((s,i)=>{ if(!st.done.has('a'+i)&&st.now-T0>=s.at){st.done.add('a'+i);s.f()} });
+  const b1=st.batches[0];
+  if(b1&&b1.pubAt!=null) SCN_P.forEach((s,i)=>{ if(!st.done.has('p'+i)&&st.now-b1.pubAt>=s.at){st.done.add('p'+i);s.f()} });
+}
+function advance(dt){
+  const target=st.now+dt;
+  while(st.now<target){
+    st.now=Math.min(target,st.now+0.5);
+    st.batches.forEach(b=>{ if(b.st==='sched'&&st.now>=b.pubRsv) publish(b); });
+    runScn();
+  }
+}
+
+/* ---- 時刻 ---- */
+function pubTimeOf(p,start){ const v=visOf(bById(p.bid)); return start+Math.max(0,p.t-(v.length?v[0].t:p.t)); }
+function stamp(p){
+  const b=p.bid!=null&&bById(p.bid);
+  if(b&&b.st==='pub') return hm(pubTimeOf(p,b.start));
+  if(b&&b.st==='sched') return p.del?'削除':`${hm(pubTimeOf(p,b.pubRsv))} 予定`;
+  return hms(p.t);
+}
+
+/* ---- 描画 ---- */
+const ICON={more:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJtb3JlX2hvcml6Ij4KPG1hc2sgaWQ9Im1hc2swXzBfODgiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF84OCkiPgo8cGF0aCBpZD0ibW9yZV9ob3Jpel8yIiBkPSJNNi4yMzA3NSAxMy41QzUuODE4MjUgMTMuNSA1LjQ2NTE3IDEzLjM1MzEgNS4xNzE1IDEzLjA1OTJDNC44Nzc2NyAxMi43NjU2IDQuNzMwNzUgMTIuNDEyNSA0LjczMDc1IDEyQzQuNzMwNzUgMTEuNTg3NSA0Ljg3NzY3IDExLjIzNDQgNS4xNzE1IDEwLjk0MDhDNS40NjUxNyAxMC42NDY5IDUuODE4MjUgMTAuNSA2LjIzMDc1IDEwLjVDNi42NDMyNSAxMC41IDYuOTk2NDIgMTAuNjQ2OSA3LjI5MDI1IDEwLjk0MDhDNy41ODM5MiAxMS4yMzQ0IDcuNzMwNzUgMTEuNTg3NSA3LjczMDc1IDEyQzcuNzMwNzUgMTIuNDEyNSA3LjU4MzkyIDEyLjc2NTYgNy4yOTAyNSAxMy4wNTkyQzYuOTk2NDIgMTMuMzUzMSA2LjY0MzI1IDEzLjUgNi4yMzA3NSAxMy41Wk0xMiAxMy41QzExLjU4NzUgMTMuNSAxMS4yMzQ0IDEzLjM1MzEgMTAuOTQwOCAxMy4wNTkyQzEwLjY0NjkgMTIuNzY1NiAxMC41IDEyLjQxMjUgMTAuNSAxMkMxMC41IDExLjU4NzUgMTAuNjQ2OSAxMS4yMzQ0IDEwLjk0MDggMTAuOTQwOEMxMS4yMzQ0IDEwLjY0NjkgMTEuNTg3NSAxMC41IDEyIDEwLjVDMTIuNDEyNSAxMC41IDEyLjc2NTYgMTAuNjQ2OSAxMy4wNTkzIDEwLjk0MDhDMTMuMzUzMSAxMS4yMzQ0IDEzLjUgMTEuNTg3NSAxMy41IDEyQzEzLjUgMTIuNDEyNSAxMy4zNTMxIDEyLjc2NTYgMTMuMDU5MyAxMy4wNTkyQzEyLjc2NTYgMTMuMzUzMSAxMi40MTI1IDEzLjUgMTIgMTMuNVpNMTcuNzY5MyAxMy41QzE3LjM1NjggMTMuNSAxNy4wMDM2IDEzLjM1MzEgMTYuNzA5OCAxMy4wNTkyQzE2LjQxNjEgMTIuNzY1NiAxNi4yNjkzIDEyLjQxMjUgMTYuMjY5MyAxMkMxNi4yNjkzIDExLjU4NzUgMTYuNDE2MSAxMS4yMzQ0IDE2LjcwOTggMTAuOTQwOEMxNy4wMDM2IDEwLjY0NjkgMTcuMzU2OCAxMC41IDE3Ljc2OTMgMTAuNUMxOC4xODE4IDEwLjUgMTguNTM0OCAxMC42NDY5IDE4LjgyODUgMTAuOTQwOEMxOS4xMjIzIDExLjIzNDQgMTkuMjY5MyAxMS41ODc1IDE5LjI2OTMgMTJDMTkuMjY5MyAxMi40MTI1IDE5LjEyMjMgMTIuNzY1NiAxOC44Mjg1IDEzLjA1OTJDMTguNTM0OCAxMy4zNTMxIDE4LjE4MTggMTMuNSAxNy43NjkzIDEzLjVaIiBmaWxsPSIjODM4MzgzIi8+CjwvZz4KPC9nPgo8L3N2Zz4K',back:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI4IiB2aWV3Qm94PSIwIDAgMjggMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJHcm91cCAyIj4KPGNpcmNsZSBpZD0iRWxsaXBzZSAxIiBjeD0iMTQiIGN5PSIxNCIgcj0iMTQiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNSIvPgo8ZyBpZD0iQmFjayBJY29uIj4KPHBhdGggaWQ9Ikljb24gLyBjaGV2cm9uLmxlZnQiIGQ9Ik05IDE0QzkgMTQuMjY4OSA5LjEwMjI2IDE0LjQ5ODMgOS4zMTQ2NSAxNC43MDRMMTUuNDUwMyAyMC43MzlDMTUuNjE1NSAyMC45MTMgMTUuODM1OCAyMSAxNi4wODc1IDIxQzE2LjU5ODggMjEgMTcgMjAuNjA0NSAxNyAyMC4wODI1QzE3IDE5LjgyOTQgMTYuODk3NyAxOS42IDE2LjcyNDcgMTkuNDI2TDExLjE5NDcgMTRMMTYuNzI0NyA4LjU3NDAxQzE2Ljg5NzcgOC4zOTIwOSAxNyA4LjE2MjcxIDE3IDcuOTA5NkMxNyA3LjM5NTQ4IDE2LjU5ODggNyAxNi4wODc1IDdDMTUuODM1OCA3IDE1LjYxNTUgNy4wODcwMSAxNS40NTAzIDcuMjYxMDJMOS4zMTQ2NSAxMy4yOTZDOS4xMDIyNiAxMy41MDE3IDkuMDA3ODcgMTMuNzMxMSA5IDE0WiIgZmlsbD0iIzE5MTkxOSIvPgo8L2c+CjwvZz4KPC9zdmc+Cg==',img:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJpbWFnZXNtb2RlIj4KPG1hc2sgaWQ9Im1hc2swXzBfNzUiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF83NSkiPgo8cGF0aCBpZD0iaW1hZ2VzbW9kZV8yIiBkPSJNNSAyMUM0LjQ1IDIxIDMuOTc5MTcgMjAuODA0MiAzLjU4NzUgMjAuNDEyNUMzLjE5NTgzIDIwLjAyMDggMyAxOS41NSAzIDE5VjVDMyA0LjQ1IDMuMTk1ODMgMy45NzkxNyAzLjU4NzUgMy41ODc1QzMuOTc5MTcgMy4xOTU4MyA0LjQ1IDMgNSAzSDE5QzE5LjU1IDMgMjAuMDIwOCAzLjE5NTgzIDIwLjQxMjUgMy41ODc1QzIwLjgwNDIgMy45NzkxNyAyMSA0LjQ1IDIxIDVWMTlDMjEgMTkuNTUgMjAuODA0MiAyMC4wMjA4IDIwLjQxMjUgMjAuNDEyNUMyMC4wMjA4IDIwLjgwNDIgMTkuNTUgMjEgMTkgMjFINVpNNSAxOUgxOVY1SDVWMTlaTTcgMTdIMTdDMTcuMiAxNyAxNy4zNSAxNi45MDgzIDE3LjQ1IDE2LjcyNUMxNy41NSAxNi41NDE3IDE3LjUzMzMgMTYuMzY2NyAxNy40IDE2LjJMMTQuNjUgMTIuNTI1QzE0LjU1IDEyLjM5MTcgMTQuNDE2NyAxMi4zMjUgMTQuMjUgMTIuMzI1QzE0LjA4MzMgMTIuMzI1IDEzLjk1IDEyLjM5MTcgMTMuODUgMTIuNTI1TDExLjI1IDE2TDkuNCAxMy41MjVDOS4zIDEzLjM5MTcgOS4xNjY2NyAxMy4zMjUgOSAxMy4zMjVDOC44MzMzMyAxMy4zMjUgOC43IDEzLjM5MTcgOC42IDEzLjUyNUw2LjYgMTYuMkM2LjQ2NjY3IDE2LjM2NjcgNi40NSAxNi41NDE3IDYuNTUgMTYuNzI1QzYuNjUgMTYuOTA4MyA2LjggMTcgNyAxN1pNOC41IDEwQzguOTE2NjcgMTAgOS4yNzA4MyA5Ljg1NDE3IDkuNTYyNSA5LjU2MjVDOS44NTQxNyA5LjI3MDgzIDEwIDguOTE2NjcgMTAgOC41QzEwIDguMDgzMzMgOS44NTQxNyA3LjcyOTE3IDkuNTYyNSA3LjQzNzVDOS4yNzA4MyA3LjE0NTgzIDguOTE2NjcgNyA4LjUgN0M4LjA4MzMzIDcgNy43MjkxNyA3LjE0NTgzIDcuNDM3NSA3LjQzNzVDNy4xNDU4MyA3LjcyOTE3IDcgOC4wODMzMyA3IDguNUM3IDguOTE2NjcgNy4xNDU4MyA5LjI3MDgzIDcuNDM3NSA5LjU2MjVDNy43MjkxNyA5Ljg1NDE3IDguMDgzMzMgMTAgOC41IDEwWiIgZmlsbD0iIzFDMUIxRiIvPgo8L2c+CjwvZz4KPC9zdmc+Cg==',mic:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJtaWMiPgo8bWFzayBpZD0ibWFzazBfMF8xMTIiIHN0eWxlPSJtYXNrLXR5cGU6YWxwaGEiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHg9IjAiIHk9IjAiIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IGlkPSJCb3VuZGluZyBib3giIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0Q5RDlEOSIvPgo8L21hc2s+CjxnIG1hc2s9InVybCgjbWFzazBfMF8xMTIpIj4KPHBhdGggaWQ9Im1pY18yIiBkPSJNMTIgMTRDMTEuMTY2NyAxNCAxMC40NTgzIDEzLjcwODMgOS44NzUgMTMuMTI1QzkuMjkxNjcgMTIuNTQxNyA5IDExLjgzMzMgOSAxMVY1QzkgNC4xNjY2NyA5LjI5MTY3IDMuNDU4MzMgOS44NzUgMi44NzVDMTAuNDU4MyAyLjI5MTY3IDExLjE2NjcgMiAxMiAyQzEyLjgzMzMgMiAxMy41NDE3IDIuMjkxNjcgMTQuMTI1IDIuODc1QzE0LjcwODMgMy40NTgzMyAxNSA0LjE2NjY3IDE1IDVWMTFDMTUgMTEuODMzMyAxNC43MDgzIDEyLjU0MTcgMTQuMTI1IDEzLjEyNUMxMy41NDE3IDEzLjcwODMgMTIuODMzMyAxNCAxMiAxNFpNMTEgMjBWMTcuOTI1QzkuNDY2NjcgMTcuNzA4MyA4LjE1NDE3IDE3LjA1ODMgNy4wNjI1IDE1Ljk3NUM1Ljk3MDgzIDE0Ljg5MTcgNS4zMDgzMyAxMy41NzUgNS4wNzUgMTIuMDI1QzUuMDQxNjcgMTEuNzQxNyA1LjExNjY3IDExLjUgNS4zIDExLjNDNS40ODMzMyAxMS4xIDUuNzE2NjcgMTEgNiAxMUM2LjI4MzMzIDExIDYuNTIwODMgMTEuMDk1OCA2LjcxMjUgMTEuMjg3NUM2LjkwNDE3IDExLjQ3OTIgNy4wMzMzMyAxMS43MTY3IDcuMSAxMkM3LjMzMzMzIDEzLjE2NjcgNy45MTI1IDE0LjEyNSA4LjgzNzUgMTQuODc1QzkuNzYyNSAxNS42MjUgMTAuODE2NyAxNiAxMiAxNkMxMy4yIDE2IDE0LjI1ODMgMTUuNjIwOCAxNS4xNzUgMTQuODYyNUMxNi4wOTE3IDE0LjEwNDIgMTYuNjY2NyAxMy4xNSAxNi45IDEyQzE2Ljk2NjcgMTEuNzE2NyAxNy4wOTU4IDExLjQ3OTIgMTcuMjg3NSAxMS4yODc1QzE3LjQ3OTIgMTEuMDk1OCAxNy43MTY3IDExIDE4IDExQzE4LjI4MzMgMTEgMTguNTE2NyAxMS4xIDE4LjcgMTEuM0MxOC44ODMzIDExLjUgMTguOTU4MyAxMS43NDE3IDE4LjkyNSAxMi4wMjVDMTguNjkxNyAxMy41NDE3IDE4LjAzMzMgMTQuODUgMTYuOTUgMTUuOTVDMTUuODY2NyAxNy4wNSAxNC41NSAxNy43MDgzIDEzIDE3LjkyNVYyMEMxMyAyMC4yODMzIDEyLjkwNDIgMjAuNTIwOCAxMi43MTI1IDIwLjcxMjVDMTIuNTIwOCAyMC45MDQyIDEyLjI4MzMgMjEgMTIgMjFDMTEuNzE2NyAyMSAxMS40NzkyIDIwLjkwNDIgMTEuMjg3NSAyMC43MTI1QzExLjA5NTggMjAuNTIwOCAxMSAyMC4yODMzIDExIDIwWk0xMiAxMkMxMi4yODMzIDEyIDEyLjUyMDggMTEuOTA0MiAxMi43MTI1IDExLjcxMjVDMTIuOTA0MiAxMS41MjA4IDEzIDExLjI4MzMgMTMgMTFWNUMxMyA0LjcxNjY3IDEyLjkwNDIgNC40NzkxNyAxMi43MTI1IDQuMjg3NUMxMi41MjA4IDQuMDk1ODMgMTIuMjgzMyA0IDEyIDRDMTEuNzE2NyA0IDExLjQ3OTIgNC4wOTU4MyAxMS4yODc1IDQuMjg3NUMxMS4wOTU4IDQuNDc5MTcgMTEgNC43MTY2NyAxMSA1VjExQzExIDExLjI4MzMgMTEuMDk1OCAxMS41MjA4IDExLjI4NzUgMTEuNzEyNUMxMS40NzkyIDExLjkwNDIgMTEuNzE2NyAxMiAxMiAxMloiIGZpbGw9IiMxQzFCMUYiLz4KPC9nPgo8L2c+Cjwvc3ZnPgo=',send:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGlkPSJzZW5kIj4KPHBhdGggaWQ9IlZlY3RvciIgZD0iTTMuNjcxMjUgMjAuNEwyMS4xMjEzIDEyLjkyQzIxLjkzMTIgMTIuNTcgMjEuOTMxMiAxMS40MyAyMS4xMjEzIDExLjA4TDMuNjcxMjUgMy42QzMuMDExMjUgMy4zMSAyLjI4MTI1IDMuOCAyLjI4MTI1IDQuNTFMMi4yNzEyNSA5LjEyQzIuMjcxMjUgOS42MiAyLjY0MTI1IDEwLjA1IDMuMTQxMjUgMTAuMTFMMTcuMjcxMiAxMkwzLjE0MTI1IDEzLjg4QzIuNjQxMjUgMTMuOTUgMi4yNzEyNSAxNC4zOCAyLjI3MTI1IDE0Ljg4TDIuMjgxMjUgMTkuNDlDMi4yODEyNSAyMC4yIDMuMDExMjUgMjAuNjkgMy42NzEyNSAyMC40WiIgZmlsbD0iIzlGOUY5RiIvPgo8L2c+Cjwvc3ZnPgo=',right:'data:image/svg+xml;base64,PHN2ZyBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBvdmVyZmxvdz0idmlzaWJsZSIgc3R5bGU9ImRpc3BsYXk6IGJsb2NrOyIgd2lkdGg9Ijc3LjQwMTIiIGhlaWdodD0iMTMiIHZpZXdCb3g9IjAgMCA3Ny40MDEyIDEzIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZyBpZD0iUmlnaHQgU2lkZSI+CjxnIGlkPSJfU3RhdHVzQmFyLWJhdHRlcnkiPgo8bWFzayBpZD0ic3Ryb2tlMF8wXzYxIiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik01MCA0QzUwIDEuNzkwODYgNTEuNzkwOSAwIDU0IDBINzFDNzMuMjA5MSAwIDc1IDEuNzkwODYgNzUgNFY5Qzc1IDExLjIwOTEgNzMuMjA5MSAxMyA3MSAxM0g1NEM1MS43OTA5IDEzIDUwIDExLjIwOTEgNTAgOVY0WiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz4KPC9tYXNrPgo8cGF0aCBpZD0iT3V0bGluZSIgb3BhY2l0eT0iMC4zNSIgZD0iTTU0IDEzSDcxQzczLjIwOTEgMTMgNzUgMTEuMjA5MSA3NSA5VjRDNzUgMS43OTA4NiA3My4yMDkxIDAgNzEgMEg1NEM1MS43OTA5IDAgNTAgMS43OTA4NiA1MCA0VjlDNTAgMTEuMjA5MSA1MS43OTA5IDEzIDU0IDEzWiIgc3Ryb2tlLXdpZHRoPSIyLjExMDE3IiBzdHJva2U9IndoaXRlIiBtYXNrPSJ1cmwoI3N0cm9rZTBfMF82MSkiLz4KPHBhdGggaWQ9IkJhdHRlcnkgRW5kIiBvcGFjaXR5PSIwLjQiIGQ9Ik03NiA1VjkuMjIwMzRDNzYuODQ5MSA4Ljg2MjkxIDc3LjQwMTIgOC4wMzE0IDc3LjQwMTIgNy4xMTAxN0M3Ny40MDEyIDYuMTg4OTQgNzYuODQ5MSA1LjM1NzQ0IDc2IDUiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGlkPSJGaWxsIiBkPSJNNTIgNEM1MiAyLjg5NTQzIDUyLjg5NTQgMiA1NCAySDY1QzY2LjEwNDYgMiA2NyAyLjg5NTQzIDY3IDRWOUM2NyAxMC4xMDQ2IDY2LjEwNDYgMTEgNjUgMTFINTRDNTIuODk1NCAxMSA1MiAxMC4xMDQ2IDUyIDlWNFoiIGZpbGw9IndoaXRlIi8+CjwvZz4KPHBhdGggaWQ9IldpZmkiIGQ9Ik0zNC41MDA1IDMuNTg3NTNDMzYuOTY3IDMuNTg3NjQgMzkuMzM5MyA0LjU1NTA1IDQxLjEyNjkgNi4yODk4MkM0MS4yNjE1IDYuNDIzNzUgNDEuNDc2NiA2LjQyMjA2IDQxLjYwOTIgNi4yODYwM0w0Mi44OTYgNC45NjA0NUM0Mi45NjMxIDQuODkxNDYgNDMuMDAwNiA0Ljc5OCA0MyA0LjcwMDc2QzQyLjk5OTQgNC42MDM1MyA0Mi45NjA5IDQuNTEwNTIgNDIuODkzIDQuNDQyMzRDMzguMjAxMSAtMC4xNDc0NDYgMzAuNzk5MSAtMC4xNDc0NDYgMjYuMTA3MiA0LjQ0MjM0QzI2LjAzOTIgNC41MTA0NyAyNi4wMDA2IDQuNjAzNDUgMjYgNC43MDA2OUMyNS45OTk0IDQuNzk3OTIgMjYuMDM2NyA0Ljg5MTQxIDI2LjEwMzggNC45NjA0NUwyNy4zOTEgNi4yODYwM0MyNy41MjM1IDYuNDIyMjYgMjcuNzM4OCA2LjQyMzk2IDI3Ljg3MzMgNi4yODk4MkMyOS42NjEyIDQuNTU0OTQgMzIuMDMzNyAzLjU4NzUyIDM0LjUwMDUgMy41ODc1M1pNMzQuNTM1OSA3LjU4OTM4QzM1Ljg5MTEgNy41ODkyOSAzNy4xOTggOC4xMDM0NiAzOC4yMDI1IDkuMDMxOTlDMzguMzM4NCA5LjE2Mzc2IDM4LjU1MjQgOS4xNjA5MSAzOC42ODQ5IDkuMDI1NTVMMzkuOTcwMiA3LjY5OTk3QzQwLjAzNzkgNy42MzA0NCA0MC4wNzU0IDcuNTM2MTEgNDAuMDc0NCA3LjQzODFDNDAuMDczNSA3LjM0MDA4IDQwLjAzNCA3LjI0NjU2IDM5Ljk2NSA3LjE3ODQ0QzM2LjkwNTkgNC4yNzM4NSAzMi4xNjg1IDQuMjczODUgMjkuMTA5NCA3LjE3ODQ0QzI5LjA0MDMgNy4yNDY1NiAyOS4wMDA5IDcuMzQwMTMgMjkgNy40MzgxN0MyOC45OTkxIDcuNTM2MjIgMjkuMDM2OCA3LjYzMDU0IDI5LjEwNDYgNy42OTk5N0wzMC4zODk1IDkuMDI1NTVDMzAuNTIyIDkuMTYwOTEgMzAuNzM2IDkuMTYzNzYgMzAuODcxOSA5LjAzMTk5QzMxLjg3NTggOC4xMDQwOCAzMy4xODE2IDcuNTg5OTUgMzQuNTM1OSA3LjU4OTM4Wk0zNy4xNDk2IDEwLjE3NjdDMzcuMTUxNSAxMC4yNzUgMzcuMTEzNyAxMC4zNjk4IDM3LjA0NDkgMTAuNDM4NkwzNC44MjE3IDEyLjcyODlDMzQuNzU2NSAxMi43OTYyIDM0LjY2NzYgMTIuODM0IDM0LjU3NDkgMTIuODM0QzM0LjQ4MjIgMTIuODM0IDM0LjM5MzMgMTIuNzk2MiAzNC4zMjgyIDEyLjcyODlMMzIuMTA0NSAxMC40Mzg2QzMyLjAzNTggMTAuMzY5NyAzMS45OTggMTAuMjc0OSAzMi4wMDAxIDEwLjE3NjZDMzIuMDAyMSAxMC4wNzgzIDMyLjA0MzggOS45ODUyNyAzMi4xMTUzIDkuOTE5MzhDMzMuNTM1MSA4LjY5MzU0IDM1LjYxNDcgOC42OTM1NCAzNy4wMzQ1IDkuOTE5MzhDMzcuMTA2IDkuOTg1MzIgMzcuMTQ3NiAxMC4wNzg0IDM3LjE0OTYgMTAuMTc2N1oiIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsPSJ3aGl0ZSIvPgo8ZyBpZD0iSWNvbiAvIE1vYmlsZSBTaWduYWwiPgo8cGF0aCBkPSJNMTAgNEMxMCAzLjQ0NzcyIDEwLjQ0NzcgMyAxMSAzSDEyQzEyLjU1MjMgMyAxMyAzLjQ0NzcyIDEzIDRWMTJDMTMgMTIuNTUyMyAxMi41NTIzIDEzIDEyIDEzSDExQzEwLjQ0NzcgMTMgMTAgMTIuNTUyMyAxMCAxMlY0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE1IDJDMTUgMS40NDc3MiAxNS40NDc3IDEgMTYgMUgxN0MxNy41NTIzIDEgMTggMS40NDc3MiAxOCAyVjEyQzE4IDEyLjU1MjMgMTcuNTUyMyAxMyAxNyAxM0gxNkMxNS40NDc3IDEzIDE1IDEyLjU1MjMgMTUgMTJWMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik01IDcuNUM1IDYuOTQ3NzIgNS40NDc3MiA2LjUgNiA2LjVIN0M3LjU1MjI4IDYuNSA4IDYuOTQ3NzIgOCA3LjVWMTJDOCAxMi41NTIzIDcuNTUyMjggMTMgNyAxM0g2QzUuNDQ3NzIgMTMgNSAxMi41NTIzIDUgMTJWNy41WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTAgMTBDMCA5LjQ0NzcyIDAuNDQ3NzE1IDkgMSA5SDJDMi41NTIyOCA5IDMgOS40NDc3MiAzIDEwVjEyQzMgMTIuNTUyMyAyLjU1MjI4IDEzIDIgMTNIMUMwLjQ0NzcxNSAxMyAwIDEyLjU1MjMgMCAxMlYxMFoiIGZpbGw9IndoaXRlIi8+CjwvZz4KPC9nPgo8L3N2Zz4K'};
+const ic=(n,w=24,h=24,cls='')=>`<img src="${ICON[n]}" alt="" width="${w}" height="${h}"${cls?` class="${cls}"`:''}>`;
+const cache={};
+function paint(id,html,keepBottom=true){
+  if(cache[id]===html) return false;
+  const el=$(id); const near=el.scrollHeight-el.scrollTop-el.clientHeight<60;
+  el.innerHTML=html; cache[id]=html;
+  if(keepBottom&&near) el.scrollTop=el.scrollHeight;
+  return true;
+}
+function replyHead(p){
+  if(!p.replyTo) return '';
+  const par=byId(p.replyTo);
+  if(par.del&&locked(par)) return '';
+  return `<div class="rq"><span class="av ${par.author}">${AV[par.author]}</span><div class="rt"><b>${esc(NAME[par.author])} に返信</b><span>${esc(par.text)}</span></div></div>`;
+}
+const bubble=(p,off)=>`<div class="bub${off?' off':''}">${replyHead(p)}<div class="tx">${esc(p.text)}</div></div>`;
+
+// まとまり（区切った分）と、まだ区切っていない「収録中・未審査」を時刻順に並べる
+function blocks(row){
+  const out=[];
+  st.batches.slice().sort((a,b)=>a.from-b.from).forEach(b=>{
+    const ps=postsOf(b).filter(p=>!(b.st==='pub'&&p.del));
+    const ft=b.st==='pub'?`<span class="pubt">公開済み ${DATE} ${hm(b.pubAt)}</span>`
+      :b.st==='sched'?`<span class="pend">公開予定 ${DATE} ${hm(b.pubRsv)}</span>`:'<span class="pend">確認中・未公開</span>';
+    out.push(`<div class="sess"><div class="shd"><span>${hms(b.from)}〜${hms(b.to)}</span></div>${ps.map(row).join('')}<div class="shd sft">${ft}</div></div>`);
+  });
+  const op=openPosts();
+  if(op.length) out.push(`<div class="sess"><div class="shd"><span>${hms(op[0].t)}〜</span></div>${op.map(row).join('')}<div class="shd sft"><span class="recn">収録中・未審査</span></div></div>`);
+  return out.join('')||'<div class="empty">まだ投稿はありません</div>';
+}
+function artistRow(k){
+  return p=>{
+    const b=p.bid!=null&&bById(p.bid), rv=!!b, off=rv&&p.del;
+    const more=off?'':`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`;
+    if(p.author===k){
+      const label=off?'<span class="tm ng">削除</span>':(rv&&p.edited?'<span class="tm">マネが書き換え</span>':'');
+      return `<div class="me"><div class="side">${more}${label||`<span class="tm">${stamp(p)}</span>`}</div>${bubble(p,off)}</div>`;
+    }
+    const status=rv?(p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
+    return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
+      <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div></div></div>`;
+  };
+}
+function mgrRow(p){
+  const b=p.bid!=null&&bById(p.bid), lk=b&&b.st==='pub';
+  const reps=st.posts.filter(q=>q.replyTo===p.id&&q.bid===p.bid&&!q.del);
+  const warn=b&&p.del&&reps.length&&!lk?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます（••• から「返信も削除」できます）</div>`:'';
+  const status=!b?'':p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
+  const more=lk?'':`<button class="more" data-act="pmore" data-id="${p.id}" title="操作" aria-label="操作メニュー">${ic('more')}</button>`;
+  return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
+    <div class="brow">${bubble(p,b&&p.del)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div>
+    ${b&&p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}</div></div>`;
+}
+function roomActs(){
+  const pb=pendingB();
+  if(pb&&pb.st==='review') return [['pub','今すぐ公開',''],['pubrsvopen','送信予約','']];
+  if(pb) return [['pub','今すぐ公開',''],['pubrsvopen','送信予約の時刻を変更',''],['pubrsvcancel','送信予約を取り消す','red']];
+  const n=openPosts().length;
+  return n?[['cutall',`ここまでを審査（${n}件）`,'']]:[];
+}
+function postActs(p){
+  if(p.bid==null){
+    if(pendingB()) return [];
+    const n=openPosts().filter(q=>q.t<=p.t).length;
+    return [['cutto',`この投稿までを審査（${n}件）`,'']];
+  }
+  const reps=st.posts.filter(q=>q.replyTo===p.id&&q.bid===p.bid&&!q.del).length;
+  if(p.del) return [['del','削除を取り消す',''],...(reps?[['delrep',`返信も削除（${reps}件）`,'red']]:[])];
+  return [['edit','投稿を書き換える',''],['del','投稿を削除','red']];
+}
+function actionSheet(){
+  const sh=st.sheet; if(!sh) return '';
+  const p=sh.kind==='post'?byId(sh.id):null, pb=pendingB();
+  const acts=p?postActs(p):roomActs();
+  const head=p?`${esc(NAME[p.author])}：${esc(p.text)}${!acts.length?'<br>確認中の分を公開してから、次を区切れます':''}`
+    :pb?`${hms(pb.from)}〜${hms(pb.to)} の ${postsOf(pb).length}件`:(openPosts().length?'未審査の投稿を区切って審査します':'未審査の投稿はありません');
+  return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg"><div class="ash">${head}</div>${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}"${p?` data-id="${p.id}"`:''}>${l}</button>`).join('')}</div>
+    <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
+}
+function pubDialog(){
+  const d=st.dlg;
+  return `<div class="sheet" role="dialog" aria-label="送信予約"><h4>送信予約</h4>
+    <div class="note">指定した時刻に、このまとまりをファンへ公開します。公開までは削除・書き換えができ、予約の変更・取り消しもできます。</div>
+    <div class="lbl">公開日時</div>
+    <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="pt" class="tin" value="${d.p0}" aria-label="公開時刻"></div>
+    <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
+}
+function mgrModal(){
+  if(st.dlg) return pubDialog();
+  if(st.sheet) return actionSheet();
+  if(!st.editing) return '';
+  const p=byId(st.editing);
+  return `<div class="sheet" role="dialog" aria-label="投稿を書き換える"><h4>投稿を書き換える</h4><span class="av ${p.author}">${AV[p.author]}</span><div class="who">${NAME[p.author]}</div>
+    <textarea id="ed" aria-label="書き換え後の本文">${esc(st.draft0)}</textarea>
+    <div class="note">元の投稿：${esc(p.orig)}<br>${hms(p.t)} の投稿</div>
+    <button class="ab dk wide" data-act="save" data-id="${p.id}">保存</button><button class="cancel" data-act="cancel">キャンセル</button></div>`;
+}
+function fanFeed(){
+  const all=[];
+  st.batches.filter(b=>b.st==='pub').forEach(b=>visOf(b).forEach(p=>all.push({p,at:pubTimeOf(p,b.start)})));
+  const list=all.filter(x=>x.at<=st.now).sort((a,b)=>a.at-b.at);
+  if(!list.length) return `<div class="empty">メッセージはまだありません</div>`;
+  const html=list.map(({p,at})=>{
+    const par=p.replyTo?byId(p.replyTo):null;
+    const fq=par&&!par.del?`<div class="fq"><div class="fql">返信</div><div class="fqt">${esc(par.text)}</div></div>`:'';
+    return `<div class="fmsg"><div class="fnm"><span class="av ${p.author}">${AV[p.author]}</span>${NAME[p.author]}</div>
+      <div class="frow"><div class="fbub">${fq}<div class="fbody">${esc(p.text)}<div class="ftr">Translate</div></div></div><span class="ftime">${hm(at)}</span></div>
+      <div class="facts"><span class="fbtn" aria-hidden="true">☺︎</span><span class="fbtn">💬 コメント</span></div></div>`;
+  }).join('');
+  return `<div class="fdate">${DATEJ}</div>`+html+(list.length<all.length?`<div class="typing">•••</div>`:'');
+}
+function navRight(k){
+  if(k!=='D') return '';
+  const pb=pendingB();
+  if(pb&&pb.st==='review') return `<button class="nrbtn" data-act="rmore">公開</button>`;
+  if(pb) return `<button class="nrbtn on" data-act="rmore" aria-label="送信予約の操作"><small>公開予定</small>${hm(pb.pubRsv)}</button>`;
+  return `<button class="nrbtn" data-act="rmore">審査</button>`;
+}
+function statusBar(k){
+  const pb=pendingB();
+  if(pb&&pb.st==='review'){
+    if(k!=='D') return `<div class="l"><span class="st-rv">確認中</span><span class="t">マネが ${hms(pb.from)}〜${hms(pb.to)} の投稿を確認しています</span></div>`;
+    const ps=postsOf(pb), d=ps.filter(p=>p.del).length, e=ps.filter(p=>p.edited&&!p.del).length;
+    return `<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。右上の「公開」から送信</span></div>`;
+  }
+  if(pb) return `<div class="l"><span class="st-rv">公開予定</span><span class="t">${dj(pb.pubRsv)} にファンへ公開</span></div>`;
+  const n=openPosts().length;
+  if(k==='D'&&n) return `<div class="l"><span class="st-wait">未審査 ${n}件</span></div>`;
+  return '';
+}
+function curStep(){
+  const pb=pendingB(), pubs=st.batches.filter(b=>b.st==='pub').length;
+  if(pb) return pb.st==='review'?(pubs?'next':'review'):'sched';
+  if(pubs>=2) return 'next';
+  if(pubs) return 'pub';
+  return 'talk';
+}
+function render(){
+  $('clock').textContent=hms(st.now);
+  const pb=pendingB(), ph=$('phase');
+  ph.className='phase '+(pb?'review':'rec'); ph.textContent=pb?(pb.st==='review'?'審査中':'公開予約'):'● 収録中';
+  $('bPause').textContent=st.run?'一時停止':'再開';
+  ART.forEach(k=>{
+    paint('feed-'+k,blocks(artistRow(k)));
+    $('in-'+k).placeholder='コメントする（マネの審査後に公開）';
+    const r=st.rep[k]&&byId(st.rep[k]);
+    paint('rp-'+k,r?`<span><b>${esc(NAME[r.author])} に返信</b>　${esc(r.text)}</span><button data-act="unrep" data-k="${k}" aria-label="返信をやめる">×</button>`:'',false);
+    $('rp-'+k).hidden=!r;
+  });
+  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(k),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn'+(pb?' review':''); });
+  paint('feed-D',blocks(mgrRow),false);
+  paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
+  paint('feed-F',fanFeed());
+  const cur=curStep();
+  if(render.cur!==cur){ render.cur=cur;
+    document.querySelectorAll('.step').forEach(el=>el.classList.toggle('on',el.dataset.st===cur));
+    const on=document.querySelector('.step.on'), col=document.querySelector('.side-col');
+    if(on&&col) col.scrollTo({top:on.offsetTop-col.offsetTop-12,behavior:'smooth'}); }
+}
+
+/* ---- 状態へスキップ：シナリオを早送りして止める ---- */
+const b1=()=>st.batches[0], b2=()=>st.batches[1];
+const JUMP={
+  talk:()=>st.now-T0>=44,
+  review:()=>st.now-T0>=67,
+  sched:()=>st.now-T0>=80,
+  pub:()=>b1()&&b1().st==='pub'&&st.now>=b1().start+40,
+  next:()=>b2()&&b2().st==='pub'&&st.now>=b2().pubAt+3,
+};
+function jump(k){
+  reset(true);
+  for(let i=0;i<20000&&!JUMP[k]();i++) advance(0.5);
+  st.run=false; st.sheet=null; st.editing=null; st.dlg=null;
+  for(const c in cache) delete cache[c];
+  render();
+  ['D',...ART,'F'].forEach(x=>{const f=$('feed-'+x); if(f) f.scrollTop=f.scrollHeight});
+}
+
+/* ---- 組み立て ---- */
+const navTop=(title,id)=>`<div class="nav"><div class="sbar"><span>9:41</span>${ic('right',77,13)}</div><div class="navc">${ic('back',28,28)}<b>${title}</b><span class="nr" id="nr-${id}"></span></div></div><div class="recbn" id="rb-${id}"></div>`;
+function buildStage(){
+  const art=k=>`<div class="col"><div class="cap"><span class="dot" style="background:var(--${k})"></span>${NAME[k]}<small>B with U Manager</small></div>
+    <div class="phone">${navTop('フェス楽屋トーク',k)}<div class="feed" id="feed-${k}"></div>
+      <div class="foot">
+        <div class="tab"><div class="pillbar asbar"><div class="l"><span class="av ${k}">${AV[k]}</span><span>${NAME[k]} として投稿します</span></div></div><div class="replying" id="rp-${k}" hidden></div>
+          <div class="crow">${ic('img',24,24,'ic')}${ic('mic',24,24,'ic')}<input id="in-${k}" data-k="${k}" aria-label="${NAME[k]}のメッセージ"><button class="send" data-act="send" data-k="${k}" aria-label="送信">${ic('send')}</button></div>
+          <div class="home"></div></div></div></div></div>`;
+  $('stage').innerHTML=`<div class="col"><div class="cap"><span class="dot" style="background:var(--mgr)"></span>審査マネD<small>B with U Manager</small></div>
+    <div class="phone">${navTop('フェス楽屋トーク','D')}<div class="feed" id="feed-D"></div>
+      <div class="foot"><div class="tab"><div class="home"></div></div></div>
+      <div class="modal" id="modal-D"></div></div></div>`+ART.map(art).join('')+
+   `<div class="col"><div class="cap"><span class="dot" style="background:#232323"></span>ファン<small>B with U App</small></div>
+    <div class="phone fan"><div class="fsbar">9:41</div><div class="fhead"><span class="fback" aria-hidden="true">‹</span><span class="ftitle">フェス楽屋トーク（3）</span><span></span></div>
+      <div class="feed" id="feed-F"></div></div></div>`;
+}
+function fit(){
+  const c=document.querySelector('#stage .col'); if(!c) return;
+  const w=c.clientWidth; if(!w) return;
+  const top=$('stage').getBoundingClientRect().top+scrollY, h=innerHeight-Math.min(top,140)-48;
+  $('stage').style.setProperty('--z',Math.max(.4,Math.min(1.4,w/387,h/812)).toFixed(4));
+}
+function reset(scn=false){
+  st=fresh(); st.scn=scn;
+  for(const k in cache) delete cache[k];
+  ART.forEach(k=>{const i=$('in-'+k); if(i) i.value=''});
+  render();
+}
+
+document.addEventListener('click',e=>{
+  const jb=e.target.closest('[data-jump]'); if(jb){jump(jb.dataset.jump);return}
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const k=b.dataset.k, id=+b.dataset.id;
+  switch(b.dataset.act){
+    case 'reply': st.rep[k]=id; $('in-'+k).focus(); break;
+    case 'unrep': st.rep[k]=null; break;
+    case 'send': sendFrom(k); break;
+    case 'pmore': st.sheet={kind:'post',id}; break;
+    case 'rmore': st.sheet={kind:'room'}; break;
+    case 'scancel': st.sheet=null; break;
+    case 'cutall': st.sheet=null; cut(); break;
+    case 'cutto': st.sheet=null; cut(id); break;
+    case 'pubrsvopen': { st.sheet=null; const pb=pendingB(); st.dlg={kind:'pub',p0:pb&&pb.pubRsv?hm(pb.pubRsv):hm(ceilMin(st.now)+120)}; } break;
+    case 'pubrsvcancel': { st.sheet=null; const pb=pendingB(); if(pb){pb.st='review';pb.pubRsv=null;} } break;
+    case 'dok': confirmDlg(); break;
+    case 'dcancel': st.dlg=null; break;
+    case 'pub': st.sheet=null; publish(pendingB()); break;
+    case 'del': st.sheet=null; toggleDel(id); break;
+    case 'delrep': st.sheet=null; delReplies(id); break;
+    case 'edit': st.sheet=null; st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
+    case 'save': saveEdit(id,$('ed').value); break;
+    case 'cancel': st.editing=null; break;
+  }
+  render();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.isComposing&&e.target.matches('.crow input')){e.preventDefault();sendFrom(e.target.dataset.k);render()}
+});
+function sendFrom(k){
+  const i=$('in-'+k); const p=post(k,i.value,st.rep[k]);
+  if(p){i.value='';st.rep[k]=null}
+}
+
+$('bPause').onclick=()=>{st.run=!st.run;render()};
+$('bReset').onclick=()=>reset();
+$('bScn').onclick=()=>reset(true);
+
+buildStage(); fit(); addEventListener('resize',fit); if(window.ResizeObserver) new ResizeObserver(fit).observe($('stage')); reset(true); st.run=false; render();
+let last=performance.now();
+setInterval(()=>{const n=performance.now(),dt=(n-last)/1000;last=n; if(st.run) advance(dt*+$('speed').value); render()},200);
+</script>
+
+</body>
+</html>
