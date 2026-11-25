@@ -328,6 +328,10 @@ h2{font-size:16px;font-weight:700;margin:0}
 .lastp b{font-size:18px;font-variant-numeric:tabular-nums}
 .lastp small{flex-basis:100%;font-size:11px;color:#5a5a5a}
 .lastp small.ng{color:#ff3b30;font-weight:600}
+.nrbtn:disabled,.ab:disabled{opacity:.35;cursor:default;pointer-events:none}
+.asb:disabled{color:#b8b8bd;cursor:default;pointer-events:none}
+.lwhy{flex-basis:100%;font-size:11px;color:#838383}
+.lrow .racts{align-items:center}
 .sess .sft{justify-content:space-between;align-items:center}
 .sbtn{background:#fff;font-size:12px}
 </style>
@@ -375,7 +379,8 @@ h2{font-size:16px;font-weight:700;margin:0}
         <ul>
           <li>確認中のまま次を区切ってよい。「ステータス」に、公開済み・確認中・公開予定・収録中のブロックが履歴として並ぶ</li>
           <li>各ブロックから「今すぐ公開」「送信予約」「時刻を変更」「予約を取り消す」ができる。行を押すとそのブロックへ移動</li>
-          <li>前のブロックが未公開のとき、または前のブロックの最後の投稿時刻以前に公開しようとすると「この時刻には公開できません」のエラー</li>
+          <li>前に確認中のブロックがあるときは、後ろのブロックの「公開」「今すぐ公開」「送信予約」は押せない（グレー）。前のブロックが公開予定のときは「今すぐ公開」だけ押せない</li>
+          <li>送信予約で前のブロックの最後の投稿時刻以前を選ぶと「この時刻には公開できません」のエラー</li>
         </ul></li>
       <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">4</span>いつ送信するか決める</div>
         <ul>
@@ -474,6 +479,9 @@ function orderErr(b,t=null){
   if(c) return {kind:'err',newer:c,end:myEnd,b,t};
   return null;
 }
+// 前に確認中のブロックがあると、このブロックは何もできない
+const blockedBy=b=>sortedB().find(a=>a.from<b.from&&a.st==='review');
+const nowOk=b=>!orderErr(b);
 function tryPublish(b){ if(!b||b.st==='pub') return; const e=orderErr(b); if(e){st.dlg=e;return} publish(b); }
 function toggleDel(id){ const p=byId(id); if(!p||locked(p)) return; p.del=!p.del; }
 function delReplies(id){ const p=byId(id); st.posts.filter(q=>q.replyTo===id&&q.bid===p.bid&&!q.del).forEach(q=>q.del=true); }
@@ -512,9 +520,6 @@ const SCN=[
   // 2つ目のブロックを区切る → 確認中が2つ
   {at:68,f:()=>{ st.sheet={kind:'list'}; }},
   {at:70,f:()=>{ cut(); }},
-  // 新しいブロックを先に公開しようとしてエラー
-  {at:73,f:()=>{ tryPublish(st.batches[1]); }},
-  {at:78,f:()=>{ st.dlg=null; }},
   {at:80,f:()=>{ st.dlg={kind:'pub',bid:st.batches[0].id,p0:'20:03'}; }},
   {at:83,f:()=>confirmDlg()},
   {at:85,f:()=>{ st.dlg={kind:'pub',bid:st.batches[1].id,p0:'20:04'}; }},
@@ -585,7 +590,7 @@ function blocks(row,mgr=false){
   const out=[];
   sortedB().forEach(b=>{
     const ps=postsOf(b).filter(p=>!(b.st==='pub'&&p.del));
-    const pb=mgr&&b.st==='review'?`<button class="nrbtn sbtn" data-act="bmore" data-b="${b.id}">公開</button>`:'';
+    const pb=mgr&&b.st==='review'?`<button class="nrbtn sbtn" data-act="bmore" data-b="${b.id}"${blockedBy(b)?' disabled title="前のブロックを先に公開してください"':''}>公開</button>`:'';
     out.push(`<div class="sess s-${b.st}" id="blk-${b.id}"><div class="shd"><span>${rng(b)}</span></div>${ps.map(row).join('')}<div class="shd sft">${tagOf(b)}${pb}</div></div>`);
   });
   const op=openPosts();
@@ -622,9 +627,11 @@ function listSheet(){
   const rows=sortedB().map(b=>{
     const ps=postsOf(b), d=ps.filter(p=>p.del).length, e=ps.filter(p=>p.edited&&!p.del).length;
     const meta=d||e?`・削除${d}・書き換え${e}`:'';
-    const A=(act,l,c)=>`<button class="ab ${c} sm" data-act="${act}" data-b="${b.id}">${l}</button>`;
-    const acts=b.st==='review'?A('pub','今すぐ公開','dk')+A('pubrsvopen','送信予約','gh')
-      :b.st==='sched'?A('pub','今すぐ公開','dk')+A('pubrsvopen','時刻を変更','gh')+A('pubrsvcancel','予約を取り消す','gh red'):'';
+    const blk=b.st==='review'&&blockedBy(b), now=nowOk(b);
+    const A=(act,l,c,off)=>`<button class="ab ${c} sm" data-act="${act}" data-b="${b.id}"${off?' disabled':''}>${l}</button>`;
+    let acts=b.st==='review'?A('pub','今すぐ公開','dk',!now)+A('pubrsvopen','送信予約','gh',blk)
+      :b.st==='sched'?A('pub','今すぐ公開','dk',!now)+A('pubrsvopen','時刻を変更','gh')+A('pubrsvcancel','予約を取り消す','gh red'):'';
+    if(blk) acts+=`<span class="lwhy">前のブロックを先に公開・送信予約してください</span>`;
     return row(b,'s-'+b.st,tagOf(b),rng(b),b.st==='pub'?visOf(b).length:ps.length,meta,acts);
   });
   const op=openPosts();
@@ -660,7 +667,7 @@ function actionSheet(){
   if(sh.kind==='blk'){
     const b=bById(sh.b);
     return `<div class="asheet" role="dialog" aria-label="ブロックを公開"><div class="asg"><div class="ash">${rng(b)} の ${postsOf(b).length}件</div>
-      <button class="asb" data-act="pub" data-b="${b.id}">今すぐ公開</button><button class="asb" data-act="pubrsvopen" data-b="${b.id}">送信予約</button></div>
+      <button class="asb" data-act="pub" data-b="${b.id}"${nowOk(b)?'':' disabled'}>今すぐ公開</button><button class="asb" data-act="pubrsvopen" data-b="${b.id}">送信予約</button></div>
       <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
   }
   const p=byId(sh.id), acts=postActs(p);
