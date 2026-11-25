@@ -384,7 +384,7 @@ h2{font-size:16px;font-weight:700;margin:0}
         <ul>
           <li>マネが右上の「ステータス」→ 収録中ブロックの「ここまでを審査」。投稿の「•••」→「この投稿までを審査」で途中で区切ることもできる</li>
           <li>区切った分は「確認中」のブロック（薄い黄色）になる。そのあとの投稿は次の収録中ブロックに入る</li>
-          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。アーティストにもその結果が見える</li>
+          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。書き換えた投稿には「編集済」と出る（本人への通知はしない）</li>
         </ul></li>
       <li class="step" data-jump="multi" data-st="multi"><div class="sh"><span class="no">3</span>確認中が複数あるとき</div>
         <ul>
@@ -396,7 +396,7 @@ h2{font-size:16px;font-weight:700;margin:0}
       <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">4</span>いつ送信するか決める</div>
         <ul>
           <li>今すぐ公開か送信予約。送信予約中のブロックは薄い青で、時刻は「20:03 予定」、削除した投稿は「削除」</li>
-          <li>送信予約・今すぐ公開は、前のブロックの最後の投稿時刻より後だけ。予約ダイアログに「最後の投稿」と、前のブロックの最後の投稿時刻を出す</li>
+          <li>送信予約・今すぐ公開は、前のブロックの最後の投稿時刻より後だけ。予約ダイアログにはこのブロックの「最後の投稿」を出す（前のブロックの最後の投稿は、そのブロックの予約時・一覧に出ているので出さない）</li>
         </ul></li>
       <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">5</span>公開</div>
         <ul>
@@ -413,12 +413,12 @@ h2{font-size:16px;font-weight:700;margin:0}
         <li>ブロックは古いものから順に、前のブロックの最後の投稿時刻より後にしか公開できない（今すぐ公開・送信予約とも）。できない時刻はエラーにする</li>
         <li>ブロックの色：収録中＝薄いピンク／確認中＝薄い黄色／公開予定＝薄い青／公開済み＝グレー。ステータスは色付きの丸とテキストで左下に出す</li>
         <li>審査なしのアーティストの投稿も、マネがすべて見られる（削除・書き換えできる）</li>
+        <li>マネが書き換えた投稿は「編集済」と表示するだけで、本人への通知はしない</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
                 <li>マネが区切らずに放置したときの扱い（一定時間・件数でマネに通知する、など）</li>
         <li>ソロ（審査なし）のトークは今までどおり即時公開のままでよいか</li>
-        <li>マネが書き換えたことを本人に通知するか</li>
       </ul>
     </section>
   </aside>
@@ -613,10 +613,10 @@ function artistRow(k){
     const b=p.bid!=null&&bById(p.bid), rv=!!b, off=rv&&p.del;
     const more=off?'':`<button class="more" data-act="reply" data-k="${k}" data-id="${p.id}" title="返信する" aria-label="返信する">${ic('more')}</button>`;
     if(p.author===k){
-      const label=off?'<span class="tm ng">削除</span>':(rv&&p.edited?'<span class="tm">マネが書き換え</span>':'');
+      const label=off?'<span class="tm ng">削除</span>':(rv&&p.edited?'<span class="tm">編集済</span>':'');
       return `<div class="me"><div class="side">${more}${label||`<span class="tm">${stamp(p)}</span>`}</div>${bubble(p,off)}</div>`;
     }
-    const status=rv?(p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">マネが書き換え</span>':'')):'';
+    const status=rv?(p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">編集済</span>':'')):'';
     return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
       <div class="brow">${bubble(p,off)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div></div></div>`;
   };
@@ -625,7 +625,7 @@ function mgrRow(p){
   const b=p.bid!=null&&bById(p.bid), lk=b&&b.st==='pub';
   const reps=st.posts.filter(q=>q.replyTo===p.id&&q.bid===p.bid&&!q.del);
   const warn=b&&p.del&&reps.length&&!lk?`<div class="warn">返信${reps.length}件が残っています。残すと引用なしで公開されます（••• から「返信も削除」できます）</div>`:'';
-  const status=!b?'':p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">書き換え済み</span>':'');
+  const status=!b?'':p.del?'<span class="s ng">削除</span>':(p.edited?'<span class="s">編集済</span>':'');
   const more=lk?'':`<button class="more" data-act="pmore" data-id="${p.id}" title="操作" aria-label="操作メニュー">${ic('more')}</button>`;
   return `<div class="fa"><span class="av ${p.author}">${AV[p.author]}</span><div class="fcol"><div class="nmr"><b>${NAME[p.author]}</b>${status}</div>
     <div class="brow">${bubble(p,b&&p.del)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div>
@@ -696,8 +696,7 @@ function parseT(v){ const [h,m]=String(v||'').split(':').map(Number); if(isNaN(h
 function lastLine(b,v){
   const t=parseT(v); if(t==null) return '';
   const s0=planStart(b,t), n=visOf(b).length;
-  const pe=prevEnd(b);
-  return `<span>最後の投稿</span><b>${hms(s0+spanOf(b))}</b><small>${n}件を ${hms(s0)} から流します</small>${pe!=null?`<small class="${t<=pe?'ng':''}">前のブロックの最後の投稿 ${hms(pe)} より後にしてください</small>`:''}`;
+  return `<span>最後の投稿</span><b>${hms(s0+spanOf(b))}</b><small>${n}件を ${hms(s0)} から流します</small>`;
 }
 function pubDialog(){
   const d=st.dlg;
