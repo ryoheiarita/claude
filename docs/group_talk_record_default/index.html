@@ -299,6 +299,31 @@ h2{font-size:16px;font-weight:700;margin:0}
 .spec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .spec li{max-width:72ch}
 .spec h3{font-size:14px;margin:6px 0 0}
+
+/* 収録デフォルト：ブロックの状態ごとの背景と、丸点＋テキストのステータス */
+.sess.s-open{background:#fdebee}
+.sess.s-review{background:#fdf3d8}
+.sess.s-sched{background:#e7eefb}
+.sess.s-pub{background:#e3e3e7}
+.sess .shd{justify-content:flex-start;padding:0 12px}
+.sess .shd>span:not(.dt){background:rgba(0,0,0,.06);font-weight:500}
+.dt{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;white-space:nowrap;color:#5a5a5a;background:none!important;padding:0!important}
+.dt::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.dt.open{color:#e5243b} .dt.review{color:#c07a00} .dt.sched{color:#2f62c9} .dt.pub{color:#8a8a8e;font-weight:500}
+.recbn .l{gap:14px}
+.lsheet{width:100%;max-height:82%;background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -4px 20px rgba(0,0,0,.12)}
+.lhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;font-size:16px;border-bottom:1px solid #eee}
+.lx{all:unset;cursor:pointer;font-size:20px;line-height:1;padding:0 4px;color:#838383}
+.lbody{overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.lrow{border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.lrow.s-open{background:#fdebee} .lrow.s-review{background:#fdf3d8} .lrow.s-sched{background:#e7eefb} .lrow.s-pub{background:#f2f2f4}
+.ltop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lrng{font-size:12px;color:#5a5a5a;font-variant-numeric:tabular-nums}
+.lmeta{font-size:11.5px;color:#838383}
+.lrow .racts{margin-top:4px}
+.ab.gh.red{color:#ff3b30}
+.lnote{font-size:11px;color:#838383;text-align:center;padding:8px 0 12px;border-top:1px solid #eee}
+.modal.bottom .lsheet{align-self:end}
 </style>
 </head>
 <body>
@@ -323,7 +348,7 @@ h2{font-size:16px;font-weight:700;margin:0}
       <p>収録モードを常にオンにしたパターンです。グループトークの投稿は、いつでもすべて「収録」として扱います。収録の開始や終了の操作はなく、開始時刻も決めません。</p>
       <p>アーティストはいつでも自由に話せます。投稿はすぐにはファンに出ず、「未審査」のまとまりにたまっていきます。</p>
       <p>マネは好きなタイミングで「ここまで」を区切って審査します。消すものだけ選び、必要なら書き換えて、いつ送信するか（今すぐ／送信予約）を決めます。公開すると、話した順番と間隔のままファンに流れます。</p>
-      <p>区切ったあとの投稿は、次の未審査のまとまりに入ります。審査中もアーティストは話し続けられます。</p>
+      <p>区切ったあとの投稿は、次の収録中ブロックに入ります。審査中もアーティストは話し続けられ、確認中のブロックが複数あっても「ステータス」でまとめて管理できます。</p>
       <p class="hint">各ステップを押すと、その状態の画面まで進めて止まります。「再開」で続きから動きます。</p>
     </section>
 
@@ -331,48 +356,44 @@ h2{font-size:16px;font-weight:700;margin:0}
       <li class="step" data-jump="talk" data-st="talk"><div class="sh"><span class="no">1</span>話す（いつも収録中）</div>
         <ul>
           <li>アーティストはいつでも投稿・返信できる。開始・終了の操作も予約もない</li>
-          <li>投稿は灰色のまとまり「収録中・未審査」にたまり、ファンには出ない</li>
+          <li>投稿は薄いピンクのブロック「収録中・未審査」にたまり、ファンには出ない</li>
           <li>投稿の時刻は「20:00:21」のように秒まで出す</li>
-          <li>マネの画面上部に「未審査 n件」</li>
         </ul></li>
       <li class="step" data-jump="review" data-st="review"><div class="sh"><span class="no">2</span>ここまでを審査</div>
         <ul>
-          <li>マネが右上の「審査」→「ここまでを審査（n件）」。投稿の「•••」→「この投稿までを審査」で途中で区切ることもできる</li>
-          <li>区切った分は「確認中」のまとまりになる。区切ったあとの投稿は次の未審査に入る（審査中も話し続けられる）</li>
-          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。返信が付いた投稿を消すときは「返信も削除」も選べる</li>
-          <li>アーティストにもマネの削除・書き換えが見える</li>
+          <li>マネが右上の「ステータス」→ 収録中ブロックの「ここまでを審査」。投稿の「•••」→「この投稿までを審査」で途中で区切ることもできる</li>
+          <li>区切った分は「確認中」のブロック（薄い黄色）になる。そのあとの投稿は次の収録中ブロックに入る</li>
+          <li>マネは各投稿の「•••」から「削除」か「書き換え」だけ。アーティストにもその結果が見える</li>
         </ul></li>
-      <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">3</span>いつ送信するか決める</div>
+      <li class="step" data-jump="multi" data-st="multi"><div class="sh"><span class="no">3</span>確認中が複数あるとき</div>
         <ul>
-          <li>右上の「公開」→「今すぐ公開」か「送信予約」</li>
-          <li>送信予約中は時刻が「20:03 予定」、削除した投稿は「削除」</li>
-          <li>公開までは削除・書き換え、予約の変更・取消ができる</li>
+          <li>確認中のまま次を区切ってよい。「ステータス」に、公開済み・確認中・公開予定・収録中のブロックが履歴として並ぶ</li>
+          <li>各ブロックから「今すぐ公開」「送信予約」「時刻を変更」「予約を取り消す」ができる。行を押すとそのブロックへ移動</li>
+          <li>新しいブロックを古いブロックより先に公開しようとすると「公開の順番が逆になります」のエラー</li>
         </ul></li>
-      <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">4</span>公開</div>
+      <li class="step" data-jump="sched" data-st="sched"><div class="sh"><span class="no">4</span>いつ送信するか決める</div>
         <ul>
-          <li>ファンには話した間隔のまま順番に流れる。時刻は公開時刻が起点</li>
-          <li>削除した投稿は全員の画面から消える</li>
-          <li>まとまりの下に「公開済み 2026/11/18 20:03」</li>
+          <li>今すぐ公開か送信予約。送信予約中のブロックは薄い青で、時刻は「20:03 予定」、削除した投稿は「削除」</li>
+          <li>送信予約は古いブロックより後の時刻だけ（前の時刻はエラー）</li>
         </ul></li>
-      <li class="step" data-jump="next" data-st="next"><div class="sh"><span class="no">5</span>次の区切り</div>
+      <li class="step" data-jump="pub" data-st="pub"><div class="sh"><span class="no">5</span>公開</div>
         <ul>
-          <li>審査中に届いた投稿は、そのまま次の未審査のまとまりになっている</li>
-          <li>同じように区切って審査・送信する。前の分が流れている途中なら、流し終わってから続けて流す</li>
+          <li>ファンには話した間隔のまま流れる。前の分が流れている途中なら、流し終わってから続けて流す</li>
+          <li>公開済みのブロックはグレーで控えめに。削除した投稿は全員の画面から消える</li>
         </ul></li>
     </ol>
 
     <section class="spec">
       <h2>このプロトの決まりごと</h2>
       <ul>
-        <li>収録の開始・終了・予約はない。投稿はすべて未審査として入り、マネが区切って審査する</li>
-        <li>区切る・公開する操作はマネだけ。ナビ右上のボタンが「審査 → 公開 → 公開予定」と変わり、押すとアクションシートが出る</li>
-        <li>確認中・公開予約中のまとまりがある間は、次の区切りは作れない（1つずつ審査）</li>
-        <li>公開はファンに話した間隔のまま流す</li>
+        <li>収録の開始・終了・予約はない。投稿はすべて収録中ブロックに入り、マネが区切って審査する</li>
+        <li>区切る・公開する操作はマネだけ。ナビ右上の「ステータス」から、ブロックごとに操作する</li>
+        <li>ブロックは古いものから順に公開する。逆になる公開・送信予約はエラーにする</li>
+        <li>ブロックの色：収録中＝薄いピンク／確認中＝薄い黄色／公開予定＝薄い青／公開済み＝グレー。ステータスは色付きの丸とテキストで左下に出す</li>
         <li>審査なしのアーティストの投稿も、マネがすべて見られる（削除・書き換えできる）</li>
       </ul>
       <h3>決めたいこと</h3>
       <ul>
-        <li>確認中の間に、さらに次の区切りを作れるようにするか（今は1つずつ）</li>
         <li>前の公開分がファンに流れている途中で次を公開したら、流し終わってから続けて流す、でよいか</li>
         <li>マネが区切らずに放置したときの扱い（一定時間・件数でマネに通知する、など）</li>
         <li>ソロ（審査なし）のトークは今までどおり即時公開のままでよいか</li>
@@ -418,7 +439,6 @@ function post(k,text,replyTo=null){
 }
 // 「ここまで」を区切って審査のまとまりにする（uptoId を指定すると、その投稿まで）
 function cut(uptoId){
-  if(pendingB()) return;
   const lim=uptoId?byId(uptoId).t:st.now;
   const ps=openPosts().filter(p=>p.t<=lim); if(!ps.length) return;
   const b={id:++st.bseq,from:ps[0].t,to:ps[ps.length-1].t,st:'review',pubRsv:null,pubAt:null,start:null};
@@ -432,9 +452,19 @@ function publish(b){
   if(!b||b.st==='pub') return;
   const prev=st.batches.filter(x=>x.st==='pub').map(replayEndOf);
   b.st='pub'; b.pubAt=st.now; b.pubRsv=null; b.start=Math.max(st.now,...prev);
-  st.sheet=null; st.editing=null;
+  if(st.editing&&byId(st.editing).bid===b.id) st.editing=null;
 }
 function schedule(b,t){ b.st='sched'; b.pubRsv=t; }
+// 公開の順番チェック：古いブロックより先に新しいブロックが公開されるならエラー（t=null は今すぐ公開）
+function orderErr(b,t=null){
+  const at=t??st.now;
+  for(const a of st.batches.filter(a=>a.from<b.from&&a.st!=='pub'))
+    if(t==null||a.st!=='sched'||a.pubRsv>at) return {kind:'err',older:a,b,t};
+  const c=st.batches.find(c=>c.from>b.from&&c.st==='sched'&&c.pubRsv<at);
+  if(c) return {kind:'err',newer:c,b,t};
+  return null;
+}
+function tryPublish(b){ if(!b||b.st==='pub') return; const e=orderErr(b); if(e){st.dlg=e;return} publish(b); }
 function toggleDel(id){ const p=byId(id); if(!p||locked(p)) return; p.del=!p.del; }
 function delReplies(id){ const p=byId(id); st.posts.filter(q=>q.replyTo===id&&q.bid===p.bid&&!q.del).forEach(q=>q.del=true); }
 function saveEdit(id,text){
@@ -442,9 +472,10 @@ function saveEdit(id,text){
   p.text=text; p.edited=text!==p.orig; st.editing=null;
 }
 function confirmDlg(){
-  const d=st.dlg, b=pendingB(); if(!d||!b) return;
+  const d=st.dlg; if(!d||d.kind!=='pub') return; const b=bById(d.bid); if(!b) return;
   const v=($('pt')&&$('pt').value)||d.p0; const [h,m]=v.split(':').map(Number); if(isNaN(h)||isNaN(m)) return;
   let t=h*3600+m*60; while(t<=st.now) t+=86400;
+  const e=orderErr(b,t); if(e){st.dlg=e;return}
   st.dlg=null; schedule(b,t);
 }
 
@@ -457,8 +488,9 @@ const SCN=[
   {at:28,f:()=>st.ref.leak=post('N','ちなみに来月の新曲、タイトル「〇〇」でいくらしい')},
   {at:34,f:()=>post('S','それまだ言っちゃダメなやつ笑',st.ref.leak?.id)},
   {at:40,f:()=>st.ref.typo=post('A','みんな最後までみてくれてありがと！！')},
-  {at:46,f:()=>{ st.sheet={kind:'room'}; }},
-  {at:48,f:()=>{ st.sheet=null; cut(); }},
+  {at:46,f:()=>{ st.sheet={kind:'list'}; }},
+  {at:48,f:()=>{ cut(); }},
+  {at:50,f:()=>{ st.sheet=null; }},
   {at:51,f:()=>st.ref.party=post('N','このあと打ち上げいってきます🍻')},
   {at:53,f:()=>{ st.sheet={kind:'post',id:st.ref.leak.id}; }},
   {at:55,f:()=>{ st.sheet=null; toggleDel(st.ref.leak.id); }},
@@ -467,17 +499,21 @@ const SCN=[
   {at:61,f:()=>{ st.sheet={kind:'post',id:st.ref.typo.id}; }},
   {at:63,f:()=>{ st.sheet=null; st.editing=st.ref.typo.id; st.draft0='みんな最後まで見てくれてありがとう！！'; }},
   {at:66,f:()=>saveEdit(st.ref.typo.id,'みんな最後まで見てくれてありがとう！！')},
-  {at:70,f:()=>{ st.sheet={kind:'room'}; }},
-  {at:72,f:()=>{ st.sheet=null; st.dlg={kind:'pub',p0:hm(ceilMin(st.now)+60)}; }},
-  {at:75,f:()=>confirmDlg()},
+  // 2つ目のブロックを区切る → 確認中が2つ
+  {at:68,f:()=>{ st.sheet={kind:'list'}; }},
+  {at:70,f:()=>{ cut(); }},
+  // 新しいブロックを先に公開しようとしてエラー
+  {at:73,f:()=>{ tryPublish(st.batches[1]); }},
+  {at:78,f:()=>{ st.dlg=null; }},
+  {at:80,f:()=>{ st.dlg={kind:'pub',bid:st.batches[0].id,p0:'20:03'}; }},
+  {at:83,f:()=>confirmDlg()},
+  {at:85,f:()=>{ st.dlg={kind:'pub',bid:st.batches[1].id,p0:'20:04'}; }},
+  {at:88,f:()=>confirmDlg()},
+  {at:90,f:()=>{ st.sheet=null; }},
 ];
 // 1回目の公開時刻からの秒
 const SCN_P=[
-  {at:45,f:()=>post('S','また来週もよろしく！')},
-  {at:50,f:()=>{ st.sheet={kind:'post',id:st.ref.party.id}; }},
-  {at:52,f:()=>{ st.sheet=null; cut(st.ref.party.id); }},
-  {at:56,f:()=>{ st.sheet={kind:'room'}; }},
-  {at:58,f:()=>{ st.sheet=null; publish(pendingB()); }},
+  {at:30,f:()=>post('S','また来週もよろしく！')},
 ];
 function runScn(){
   if(!st.scn) return;
@@ -522,17 +558,20 @@ function replyHead(p){
 }
 const bubble=(p,off)=>`<div class="bub${off?' off':''}">${replyHead(p)}<div class="tx">${esc(p.text)}</div></div>`;
 
+const sortedB=()=>st.batches.slice().sort((a,b)=>a.from-b.from);
+const rng=b=>`${hms(b.from)}〜${hms(b.to)}`;
+const tagOf=b=>!b?'<span class="dt open">収録中・未審査</span>'
+  :b.st==='pub'?`<span class="dt pub">公開済み ${DATE} ${hm(b.pubAt)}</span>`
+  :b.st==='sched'?`<span class="dt sched">公開予定 ${DATE} ${hm(b.pubRsv)}</span>`:'<span class="dt review">確認中・未公開</span>';
 // まとまり（区切った分）と、まだ区切っていない「収録中・未審査」を時刻順に並べる
 function blocks(row){
   const out=[];
-  st.batches.slice().sort((a,b)=>a.from-b.from).forEach(b=>{
+  sortedB().forEach(b=>{
     const ps=postsOf(b).filter(p=>!(b.st==='pub'&&p.del));
-    const ft=b.st==='pub'?`<span class="pubt">公開済み ${DATE} ${hm(b.pubAt)}</span>`
-      :b.st==='sched'?`<span class="pend">公開予定 ${DATE} ${hm(b.pubRsv)}</span>`:'<span class="pend">確認中・未公開</span>';
-    out.push(`<div class="sess"><div class="shd"><span>${hms(b.from)}〜${hms(b.to)}</span></div>${ps.map(row).join('')}<div class="shd sft">${ft}</div></div>`);
+    out.push(`<div class="sess s-${b.st}" id="blk-${b.id}"><div class="shd"><span>${rng(b)}</span></div>${ps.map(row).join('')}<div class="shd sft">${tagOf(b)}</div></div>`);
   });
   const op=openPosts();
-  if(op.length) out.push(`<div class="sess"><div class="shd"><span>${hms(op[0].t)}〜</span></div>${op.map(row).join('')}<div class="shd sft"><span class="recn">収録中・未審査</span></div></div>`);
+  if(op.length) out.push(`<div class="sess s-open"><div class="shd"><span>${hms(op[0].t)}〜</span></div>${op.map(row).join('')}<div class="shd sft">${tagOf(null)}</div></div>`);
   return out.join('')||'<div class="empty">まだ投稿はありません</div>';
 }
 function artistRow(k){
@@ -558,16 +597,38 @@ function mgrRow(p){
     <div class="brow">${bubble(p,b&&p.del)}<div class="side">${more}<span class="tm">${stamp(p)}</span></div></div>
     ${b&&p.edited&&!p.del?`<div class="orig">元：${esc(p.orig)}</div>`:''}${warn}</div></div>`;
 }
-function roomActs(){
-  const pb=pendingB();
-  if(pb&&pb.st==='review') return [['pub','今すぐ公開',''],['pubrsvopen','送信予約','']];
-  if(pb) return [['pub','今すぐ公開',''],['pubrsvopen','送信予約の時刻を変更',''],['pubrsvcancel','送信予約を取り消す','red']];
-  const n=openPosts().length;
-  return n?[['cutall',`ここまでを審査（${n}件）`,'']]:[];
+// ステータス一覧：区切ったブロックの履歴と、いま収録中（未審査）のブロック
+function listSheet(){
+  const row=(b,cls,tag,range,n,meta,acts)=>`<div class="lrow ${cls}"${b?` data-act="goblk" data-b="${b.id}"`:''}><div class="ltop">${tag}<span class="lrng">${range}</span></div>
+    <div class="lmeta">${n}件${meta}</div>${acts?`<div class="racts">${acts}</div>`:''}</div>`;
+  const rows=sortedB().map(b=>{
+    const ps=postsOf(b), d=ps.filter(p=>p.del).length, e=ps.filter(p=>p.edited&&!p.del).length;
+    const meta=d||e?`・削除${d}・書き換え${e}`:'';
+    const A=(act,l,c)=>`<button class="ab ${c} sm" data-act="${act}" data-b="${b.id}">${l}</button>`;
+    const acts=b.st==='review'?A('pub','今すぐ公開','dk')+A('pubrsvopen','送信予約','gh')
+      :b.st==='sched'?A('pub','今すぐ公開','dk')+A('pubrsvopen','時刻を変更','gh')+A('pubrsvcancel','予約を取り消す','gh red'):'';
+    return row(b,'s-'+b.st,tagOf(b),rng(b),b.st==='pub'?visOf(b).length:ps.length,meta,acts);
+  });
+  const op=openPosts();
+  if(op.length) rows.push(row(null,'s-open',tagOf(null),`${hms(op[0].t)}〜`,op.length,'',`<button class="ab dk sm" data-act="cutall">ここまでを審査</button>`));
+  return `<div class="lsheet" role="dialog" aria-label="ステータス一覧"><div class="lhd"><b>ステータス一覧</b><button class="lx" data-act="scancel" aria-label="閉じる">×</button></div>
+    <div class="lbody">${rows.join('')||'<div class="empty">まだ投稿はありません</div>'}</div>
+    <div class="lnote">ブロックは古いものから順に公開します</div></div>`;
+}
+function errDialog(){
+  const d=st.dlg;
+  const when=d.t==null?'今すぐ公開':`${hm(d.t)} に送信予約`;
+  const body=d.older
+    ?(d.older.st==='sched'
+      ?`${rng(d.older)} のブロックは ${hm(d.older.pubRsv)} に公開予定です。${rng(d.b)} はそれより後の時刻にしてください。`
+      :`${rng(d.older)} のブロックがまだ公開されていません。先にそちらを公開するか送信予約してください。`)
+    :`${rng(d.newer)} のブロックが ${hm(d.newer.pubRsv)} に公開予定です。${rng(d.b)} はそれより前の時刻にしてください。`;
+  return `<div class="sheet" role="alertdialog" aria-label="公開の順番が逆になります"><h4>公開の順番が逆になります</h4>
+    <div class="note">${when}できません。ブロックは古いものから順に公開します。<br>${body}</div>
+    <button class="ab dk wide" data-act="dcancel">OK</button></div>`;
 }
 function postActs(p){
   if(p.bid==null){
-    if(pendingB()) return [];
     const n=openPosts().filter(q=>q.t<=p.t).length;
     return [['cutto',`この投稿までを審査（${n}件）`,'']];
   }
@@ -577,23 +638,21 @@ function postActs(p){
 }
 function actionSheet(){
   const sh=st.sheet; if(!sh) return '';
-  const p=sh.kind==='post'?byId(sh.id):null, pb=pendingB();
-  const acts=p?postActs(p):roomActs();
-  const head=p?`${esc(NAME[p.author])}：${esc(p.text)}${!acts.length?'<br>確認中の分を公開してから、次を区切れます':''}`
-    :pb?`${hms(pb.from)}〜${hms(pb.to)} の ${postsOf(pb).length}件`:(openPosts().length?'未審査の投稿を区切って審査します':'未審査の投稿はありません');
-  return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg"><div class="ash">${head}</div>${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}"${p?` data-id="${p.id}"`:''}>${l}</button>`).join('')}</div>
+  if(sh.kind==='list') return listSheet();
+  const p=byId(sh.id), acts=postActs(p);
+  return `<div class="asheet" role="dialog" aria-label="アクション"><div class="asg"><div class="ash">${esc(NAME[p.author])}：${esc(p.text)}</div>${acts.map(([a,l,c])=>`<button class="asb ${c}" data-act="${a}" data-id="${p.id}">${l}</button>`).join('')}</div>
     <button class="asb cancel" data-act="scancel">キャンセル</button></div>`;
 }
 function pubDialog(){
   const d=st.dlg;
   return `<div class="sheet" role="dialog" aria-label="送信予約"><h4>送信予約</h4>
-    <div class="note">指定した時刻に、このまとまりをファンへ公開します。公開までは削除・書き換えができ、予約の変更・取り消しもできます。</div>
+    <div class="note">${rng(bById(d.bid))} のブロックを、指定した時刻にファンへ公開します。公開までは削除・書き換えができ、予約の変更・取り消しもできます。</div>
     <div class="lbl">公開日時</div>
     <div class="dtrow"><span class="dbox">${DATEJ}</span><input type="time" id="pt" class="tin" value="${d.p0}" aria-label="公開時刻"></div>
     <button class="ab dk wide" data-act="dok">予約する</button><button class="cancel" data-act="dcancel">キャンセル</button></div>`;
 }
 function mgrModal(){
-  if(st.dlg) return pubDialog();
+  if(st.dlg) return st.dlg.kind==='err'?errDialog():pubDialog();
   if(st.sheet) return actionSheet();
   if(!st.editing) return '';
   const p=byId(st.editing);
@@ -618,34 +677,30 @@ function fanFeed(){
 }
 function navRight(k){
   if(k!=='D') return '';
-  const pb=pendingB();
-  if(pb&&pb.st==='review') return `<button class="nrbtn" data-act="rmore">公開</button>`;
-  if(pb) return `<button class="nrbtn on" data-act="rmore" aria-label="送信予約の操作"><small>公開予定</small>${hm(pb.pubRsv)}</button>`;
-  return `<button class="nrbtn" data-act="rmore">審査</button>`;
+  return `<button class="nrbtn" data-act="rmore">ステータス</button>`;
 }
 function statusBar(k){
-  const pb=pendingB();
-  if(pb&&pb.st==='review'){
-    if(k!=='D') return `<div class="l"><span class="st-rv">確認中</span><span class="t">マネが ${hms(pb.from)}〜${hms(pb.to)} の投稿を確認しています</span></div>`;
-    const ps=postsOf(pb), d=ps.filter(p=>p.del).length, e=ps.filter(p=>p.edited&&!p.del).length;
-    return `<div class="l"><span class="st-rv">確認中</span><span class="t">削除${d}件・書き換え${e}件。右上の「公開」から送信</span></div>`;
+  const rv=st.batches.filter(b=>b.st==='review'), sc=st.batches.filter(b=>b.st==='sched'), n=openPosts().length;
+  if(k==='D'){
+    const parts=[n?`<span class="dt open">未審査 ${n}件</span>`:'',rv.length?`<span class="dt review">確認中 ${rv.length}</span>`:'',sc.length?`<span class="dt sched">公開予定 ${sc.length}</span>`:''].filter(Boolean);
+    return parts.length?`<div class="l">${parts.join('')}</div>`:'';
   }
-  if(pb) return `<div class="l"><span class="st-rv">公開予定</span><span class="t">${dj(pb.pubRsv)} にファンへ公開</span></div>`;
-  const n=openPosts().length;
-  if(k==='D'&&n) return `<div class="l"><span class="st-wait">未審査 ${n}件</span></div>`;
+  if(rv.length) return `<div class="l"><span class="dt review">確認中</span><span class="t">マネが投稿を確認しています</span></div>`;
+  if(sc.length) return `<div class="l"><span class="dt sched">公開予定</span><span class="t">${dj(Math.min(...sc.map(b=>b.pubRsv)))} にファンへ公開</span></div>`;
   return '';
 }
 function curStep(){
-  const pb=pendingB(), pubs=st.batches.filter(b=>b.st==='pub').length;
-  if(pb) return pb.st==='review'?(pubs?'next':'review'):'sched';
-  if(pubs>=2) return 'next';
+  const rv=st.batches.filter(b=>b.st==='review').length, sc=st.batches.filter(b=>b.st==='sched').length, pubs=st.batches.filter(b=>b.st==='pub').length;
+  if(st.dlg&&st.dlg.kind==='err'||rv>=2) return 'multi';
   if(pubs) return 'pub';
+  if(sc) return 'sched';
+  if(rv) return 'review';
   return 'talk';
 }
 function render(){
   $('clock').textContent=hms(st.now);
   const pb=pendingB(), ph=$('phase');
-  ph.className='phase '+(pb?'review':'rec'); ph.textContent=pb?(pb.st==='review'?'審査中':'公開予約'):'● 収録中';
+  ph.className='phase rec'; ph.textContent='● 収録中';
   $('bPause').textContent=st.run?'一時停止':'再開';
   ART.forEach(k=>{
     paint('feed-'+k,blocks(artistRow(k)));
@@ -654,7 +709,7 @@ function render(){
     paint('rp-'+k,r?`<span><b>${esc(NAME[r.author])} に返信</b>　${esc(r.text)}</span><button data-act="unrep" data-k="${k}" aria-label="返信をやめる">×</button>`:'',false);
     $('rp-'+k).hidden=!r;
   });
-  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(k),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn'+(pb?' review':''); });
+  ['D',...ART].forEach(k=>{ paint('nr-'+k,navRight(k),false); paint('rb-'+k,statusBar(k),false); $('rb-'+k).className='recbn'; });
   paint('feed-D',blocks(mgrRow),false);
   paint('modal-D',mgrModal(),false); $('modal-D').className='modal'+(st.sheet&&!st.dlg?' bottom':'');
   paint('feed-F',fanFeed());
@@ -670,14 +725,15 @@ const b1=()=>st.batches[0], b2=()=>st.batches[1];
 const JUMP={
   talk:()=>st.now-T0>=44,
   review:()=>st.now-T0>=67,
-  sched:()=>st.now-T0>=80,
-  pub:()=>b1()&&b1().st==='pub'&&st.now>=b1().start+40,
-  next:()=>b2()&&b2().st==='pub'&&st.now>=b2().pubAt+3,
+  multi:()=>st.now-T0>=75,
+  sched:()=>st.now-T0>=95,
+  pub:()=>b2()&&b2().st==='pub'&&st.now>=b2().pubAt+5,
 };
 function jump(k){
   reset(true);
   for(let i=0;i<20000&&!JUMP[k]();i++) advance(0.5);
-  st.run=false; st.sheet=null; st.editing=null; st.dlg=null;
+  st.run=false; st.editing=null;
+  if(k==='multi'){ st.sheet={kind:'list'}; } else { st.sheet=null; st.dlg=null; }
   for(const c in cache) delete cache[c];
   render();
   ['D',...ART,'F'].forEach(x=>{const f=$('feed-'+x); if(f) f.scrollTop=f.scrollHeight});
@@ -722,15 +778,16 @@ document.addEventListener('click',e=>{
     case 'unrep': st.rep[k]=null; break;
     case 'send': sendFrom(k); break;
     case 'pmore': st.sheet={kind:'post',id}; break;
-    case 'rmore': st.sheet={kind:'room'}; break;
+    case 'rmore': st.sheet={kind:'list'}; break;
     case 'scancel': st.sheet=null; break;
-    case 'cutall': st.sheet=null; cut(); break;
+    case 'cutall': cut(); break;
     case 'cutto': st.sheet=null; cut(id); break;
-    case 'pubrsvopen': { st.sheet=null; const pb=pendingB(); st.dlg={kind:'pub',p0:pb&&pb.pubRsv?hm(pb.pubRsv):hm(ceilMin(st.now)+120)}; } break;
-    case 'pubrsvcancel': { st.sheet=null; const pb=pendingB(); if(pb){pb.st='review';pb.pubRsv=null;} } break;
+    case 'goblk': { st.sheet=null; render(); const el=$('blk-'+b.dataset.b); if(el) el.scrollIntoView({block:'start',behavior:'smooth'}); } return;
+    case 'pubrsvopen': { const x=bById(+b.dataset.b); st.dlg={kind:'pub',bid:x.id,p0:x.pubRsv?hm(x.pubRsv):hm(ceilMin(st.now)+120)}; } break;
+    case 'pubrsvcancel': { const x=bById(+b.dataset.b); if(x){x.st='review';x.pubRsv=null;} } break;
     case 'dok': confirmDlg(); break;
     case 'dcancel': st.dlg=null; break;
-    case 'pub': st.sheet=null; publish(pendingB()); break;
+    case 'pub': tryPublish(bById(+b.dataset.b)); break;
     case 'del': st.sheet=null; toggleDel(id); break;
     case 'delrep': st.sheet=null; delReplies(id); break;
     case 'edit': st.sheet=null; st.editing=id; st.draft0=byId(id).text; render(); {const t=$('ed'); if(t){t.focus();t.selectionStart=t.selectionEnd=t.value.length}} return;
